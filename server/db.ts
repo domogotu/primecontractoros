@@ -1,6 +1,7 @@
-import { eq, and } from "drizzle-orm";
+
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, opportunities, proposals, contracts } from "../drizzle/schema";
+import { and, eq, desc } from "drizzle-orm";
+import { InsertUser, users, opportunities, proposals, contracts, aiRuns, aiSuggestions, aiFindings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -394,4 +395,127 @@ export async function updateContractHealth(
     .update(contracts)
     .set({ health })
     .where(and(eq(contracts.id, id), eq(contracts.workspaceId, workspaceId)));
+}
+
+
+// AI Runs
+export async function createAiRun(data: {
+  workspaceId: number;
+  userId: number;
+  relatedRecordType: string;
+  relatedRecordId?: number;
+  aiType: "guidance" | "analysis" | "findings";
+  purpose?: string;
+  inputSummary?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(aiRuns).values(data);
+  return result;
+}
+
+export async function getAiRun(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.query.aiRuns.findFirst({
+    where: and(eq(aiRuns.id, id), eq(aiRuns.workspaceId, workspaceId)),
+  });
+}
+
+// AI Suggestions
+export async function createAiSuggestion(data: {
+  workspaceId: number;
+  aiRunId: number;
+  relatedRecordType: string;
+  relatedRecordId?: number;
+  suggestionTitle: string;
+  suggestionText: string;
+  priority?: "low" | "medium" | "high" | "critical";
+  suggestedAction?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(aiSuggestions).values(data);
+}
+
+export async function getAiSuggestionsForRecord(
+  workspaceId: number,
+  recordType: string,
+  recordId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.query.aiSuggestions.findMany({
+    where: and(
+      eq(aiSuggestions.workspaceId, workspaceId),
+      eq(aiSuggestions.relatedRecordType, recordType),
+      eq(aiSuggestions.relatedRecordId, recordId),
+      eq(aiSuggestions.status, "new")
+    ),
+    orderBy: (suggestions) => [desc(suggestions.priority), desc(suggestions.createdAt)],
+  });
+}
+
+export async function dismissAiSuggestion(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(aiSuggestions)
+    .set({ status: "dismissed", dismissedAt: new Date() })
+    .where(and(eq(aiSuggestions.id, id), eq(aiSuggestions.workspaceId, workspaceId)));
+}
+
+export async function acceptAiSuggestion(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(aiSuggestions)
+    .set({ status: "accepted", acceptedAt: new Date() })
+    .where(and(eq(aiSuggestions.id, id), eq(aiSuggestions.workspaceId, workspaceId)));
+}
+
+// AI Findings
+export async function createAiFinding(data: {
+  workspaceId: number;
+  aiRunId: number;
+  contractId?: number;
+  fileId?: number;
+  findingType: string;
+  title: string;
+  summary: string;
+  sourceLocation?: string;
+  sourceExcerpt?: string;
+  practicalMeaning?: string;
+  confidence?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(aiFindings).values(data);
+}
+
+export async function getAiFindingsForContract(workspaceId: number, contractId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.query.aiFindings.findMany({
+    where: and(
+      eq(aiFindings.workspaceId, workspaceId),
+      eq(aiFindings.contractId, contractId),
+      eq(aiFindings.staleStatus, "current")
+    ),
+    orderBy: (findings) => [desc(findings.confidence), desc(findings.createdAt)],
+  });
+}
+
+export async function updateAiFindingReviewState(
+  id: number,
+  workspaceId: number,
+  reviewState: "unreviewed" | "acknowledged" | "approved" | "rejected" | "stale",
+  reviewedBy: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(aiFindings)
+    .set({ reviewState, reviewedBy, reviewedAt: new Date() })
+    .where(and(eq(aiFindings.id, id), eq(aiFindings.workspaceId, workspaceId)));
 }

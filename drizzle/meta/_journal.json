@@ -15,6 +15,13 @@
       "when": 1777892866808,
       "tag": "0001_demonic_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777923121552,
+      "tag": "0002_melted_scrambler",
+      "breakpoints": true
     }
   ]
 }
