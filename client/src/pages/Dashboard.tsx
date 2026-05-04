@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { LogOut, AlertCircle, CheckCircle2, Clock, TrendingUp, Users, FileText, DollarSign, Zap } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { AIGuidancePanel } from "@/components/AIGuidancePanel";
 
 /**
  * Dashboard Page
@@ -146,6 +147,17 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+
+          {/* AI Guidance Panel */}
+          {user?.id && (
+            <AIGuidancePanel
+              workspaceId={1}
+              recordType="workspace"
+              recordId={1}
+              context={`Workspace setup status: 3 of 6 complete. Active opportunities: 0, Active contracts: 0, Team members: 1, Outstanding invoices: $0`}
+              title="AI Assistant"
+            />
+          )}
 
           {/* Alerts & Tasks */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

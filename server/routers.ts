@@ -23,7 +23,13 @@ import {
   deleteContract,
   updateContractStatus,
   updateContractHealth,
+  createAiRun,
+  createAiSuggestion,
+  getAiSuggestionsForRecord,
+  dismissAiSuggestion,
+  acceptAiSuggestion,
 } from "./db";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -424,6 +430,131 @@ export const appRouter = router({
           };
         } catch (error) {
           console.error("Error fetching proposal for conversion:", error);
+          throw error;
+        }
+      }),
+  }),
+  ai: router({
+    generateGuidance: publicProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        recordType: z.string(),
+        recordId: z.number(),
+        context: z.string(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          if (!ctx.user?.id) throw new Error("User not authenticated");
+          
+          // Create AI run
+          await createAiRun({
+            workspaceId: input.workspaceId,
+            userId: ctx.user.id,
+            relatedRecordType: input.recordType,
+            relatedRecordId: input.recordId,
+            aiType: "guidance",
+            purpose: `Generate guidance for ${input.recordType}`,
+            inputSummary: input.context.substring(0, 500),
+          });
+
+          // Call LLM to generate suggestions
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are a government contracting expert. Provide 2-3 practical, actionable suggestions to help improve their government contracting process. Be specific and reference relevant FAR regulations.",
+              },
+              {
+                role: "user",
+                content: `${input.recordType} context: ${input.context}\n\nProvide suggestions in JSON format with title, text, priority, and action.`,
+              },
+            ],
+          });
+
+          const messageContent = response.choices[0]?.message?.content;
+          if (!messageContent || typeof messageContent !== "string") throw new Error("No response from LLM");
+          
+          // Parse suggestions from response
+          const suggestions = [];
+          try {
+            const parsed = JSON.parse(messageContent);
+            if (Array.isArray(parsed)) {
+              suggestions.push(...parsed);
+            } else if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+              suggestions.push(...parsed.suggestions);
+            }
+          } catch {
+            // If JSON parsing fails, extract suggestions from text
+            suggestions.push({
+              title: "AI Guidance",
+              text: messageContent.substring(0, 500),
+              priority: "medium",
+            });
+          }
+
+          // Store suggestions
+          for (const suggestion of suggestions) {
+            await createAiSuggestion({
+              workspaceId: input.workspaceId,
+              aiRunId: 1, // Placeholder - would be actual run ID
+              relatedRecordType: input.recordType,
+              relatedRecordId: input.recordId,
+              suggestionTitle: suggestion.title || "AI Suggestion",
+              suggestionText: suggestion.text || messageContent,
+              priority: suggestion.priority || "medium",
+              suggestedAction: suggestion.action,
+            });
+          }
+
+          return { success: true, suggestionsCount: suggestions.length };
+        } catch (error) {
+          console.error("Error generating guidance:", error);
+          throw error;
+        }
+      }),
+    getSuggestions: publicProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        recordType: z.string(),
+        recordId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          return await getAiSuggestionsForRecord(
+            input.workspaceId,
+            input.recordType,
+            input.recordId
+          );
+        } catch (error) {
+          console.error("Error fetching suggestions:", error);
+          throw error;
+        }
+      }),
+    dismissSuggestion: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        workspaceId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await dismissAiSuggestion(input.id, input.workspaceId);
+          return { success: true };
+        } catch (error) {
+          console.error("Error dismissing suggestion:", error);
+          throw error;
+        }
+      }),
+    acceptSuggestion: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        workspaceId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await acceptAiSuggestion(input.id, input.workspaceId);
+          return { success: true };
+        } catch (error) {
+          console.error("Error accepting suggestion:", error);
           throw error;
         }
       }),

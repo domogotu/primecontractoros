@@ -56,12 +56,13 @@ export default function ProposalForm({
       dueDate: proposal.dueDate
         ? new Date(proposal.dueDate).toISOString().split("T")[0]
         : "",
-      evaluationCriteria: proposal.evaluationCriteria?.split(',') || [],
+      evaluationCriteria: [],
     });
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === "evaluationCriteria") return; // Skip evaluation criteria
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => {
