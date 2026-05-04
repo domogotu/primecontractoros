@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { trpc } from '@/lib/trpc';
 import { Plus, Search, Filter, ExternalLink, Target, Loader2 } from 'lucide-react';
 import OpportunityForm from '@/components/OpportunityForm';
+import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
@@ -67,6 +68,15 @@ export default function Opportunities() {
             </Button>
           </div>
         </div>
+
+        {/* AI Guidance Panel */}
+        <AIGuidancePanel
+          workspaceId={workspaceId}
+          recordType="opportunities"
+          recordId={0}
+          context={`Opportunities: ${opportunities.length} total`}
+          title="Opportunity Fit Assessment"
+        />
 
         {/* Search and Filter */}
         <div className="flex gap-4 mb-6">

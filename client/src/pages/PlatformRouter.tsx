@@ -3,6 +3,7 @@ import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 import PlatformSidebar from "@/components/PlatformSidebar";
 import PlatformAdmin from "./PlatformAdmin";
 import {
+  PlatformWorkspaces,
   PlatformWorkspaceSummary,
   PlatformPlans,
   PlatformDiscounts,
@@ -41,6 +42,9 @@ export default function PlatformRouter() {
     
     if (normalizedLocation === "/platform") {
       return <PlatformAdmin />;
+    }
+    if (normalizedLocation === "/platform/workspaces") {
+      return <PlatformWorkspaces />;
     }
     if (normalizedLocation.startsWith("/platform/workspaces/")) {
       return <PlatformWorkspaceSummary />;

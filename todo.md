@@ -106,9 +106,19 @@
 - [x] Settings page with workspace and notification preferences
 - [x] Subscription Summary page with plan details
 
+### AI System Integration
+- [x] AI database tables (aiRuns, aiSuggestions, aiFindings, aiFindingHistory)
+- [x] AI tRPC procedures (generateGuidance, getSuggestions, dismissSuggestion, acceptSuggestion)
+- [x] AIGuidancePanel reusable component
+- [x] OpenAI API integration (gpt-4.1-mini model)
+- [x] AI panel integrated on Dashboard
+- [ ] AI panels on Opportunities, Proposals, Contracts pages
+- [ ] Source-linked findings implementation
+
 ### Testing & Deployment
 - [ ] End-to-end CRUD testing (forms validated with tRPC integration)
 - [ ] Status workflow testing (mutations connected)
 - [ ] Vitest coverage for all CRUD operations
+- [ ] AI system end-to-end testing
 - [ ] Save Phase 7 checkpoint
 - [ ] Deploy Phase 7

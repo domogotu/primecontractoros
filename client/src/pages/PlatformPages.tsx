@@ -4,6 +4,56 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Search, AlertCircle } from "lucide-react";
 
+// Platform Workspaces List
+export function PlatformWorkspaces() {
+  const workspaces = [
+    { id: 1, name: "TechFlow Solutions", plan: "Growth", status: "Active", users: 3, created: "2025-06-15" },
+    { id: 2, name: "BuildCorp Inc", plan: "Starter", status: "Active", users: 1, created: "2025-07-20" },
+    { id: 3, name: "Federal Contractors LLC", plan: "Advanced", status: "Active", users: 5, created: "2025-05-10" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900">Workspace Directory</h1>
+        <p className="text-gray-600">Manage all customer workspaces</p>
+      </div>
+      <div className="p-8">
+        <div className="flex gap-4 mb-6">
+          <input type="text" placeholder="Search workspaces..." className="flex-1 px-3 py-2 border border-gray-200 rounded-lg" />
+          <Button className="bg-blue-900 hover:bg-blue-800 text-white">
+            <Plus className="w-4 h-4 mr-2" /> New Workspace
+          </Button>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Workspace</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Plan</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Users</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workspaces.map((ws) => (
+                <tr key={ws.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <td className="px-6 py-4 font-medium text-blue-900">{ws.name}</td>
+                  <td className="px-6 py-4">{ws.plan}</td>
+                  <td className="px-6 py-4"><span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">{ws.status}</span></td>
+                  <td className="px-6 py-4">{ws.users}</td>
+                  <td className="px-6 py-4 text-gray-600">{ws.created}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Platform Workspace Summary
 export function PlatformWorkspaceSummary() {
   return (
