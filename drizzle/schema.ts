@@ -176,3 +176,317 @@ export const aiFindingHistory = mysqlTable("aiFindingHistory", {
 
 export type AiFindingHistory = typeof aiFindingHistory.$inferSelect;
 export type InsertAiFindingHistory = typeof aiFindingHistory.$inferInsert;
+
+// Files - Documents attached to records
+export const files = mysqlTable("files", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  url: text("url").notNull(),
+  mimeType: varchar("mimeType", { length: 100 }),
+  size: int("size"),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }), // "opportunity", "proposal", "contract"
+  linkedRecordId: int("linkedRecordId"),
+  category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence"
+  uploadedBy: int("uploadedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type File = typeof files.$inferSelect;
+export type InsertFile = typeof files.$inferInsert;
+
+// Contacts - People associated with records
+export const contacts = mysqlTable("contacts", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  firstName: varchar("firstName", { length: 100 }).notNull(),
+  lastName: varchar("lastName", { length: 100 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 50 }),
+  organization: varchar("organization", { length: 255 }),
+  title: varchar("title", { length: 255 }),
+  role: varchar("role", { length: 100 }), // "contracting_officer", "program_manager", "subcontractor", "team_member"
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Contact = typeof contacts.$inferSelect;
+export type InsertContact = typeof contacts.$inferInsert;
+
+// Messages - Internal communications
+export const messages = mysqlTable("messages", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  senderId: int("senderId").notNull(),
+  recipientId: int("recipientId"),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  isRead: boolean("isRead").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = typeof messages.$inferInsert;
+
+// Invoices
+export const invoices = mysqlTable("invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId"),
+  invoiceNumber: varchar("invoiceNumber", { length: 100 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["draft", "submitted", "approved", "paid", "rejected", "overdue"]).default("draft"),
+  issuedDate: timestamp("issuedDate"),
+  dueDate: timestamp("dueDate"),
+  paidDate: timestamp("paidDate"),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+
+// Payments
+export const payments = mysqlTable("payments", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  invoiceId: int("invoiceId"),
+  contractId: int("contractId"),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  paymentDate: timestamp("paymentDate"),
+  method: varchar("method", { length: 100 }),
+  reference: varchar("reference", { length: 255 }),
+  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).default("pending"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+// Tasks
+export const tasks = mysqlTable("tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  assignedTo: int("assignedTo"),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
+  status: mysqlEnum("status", ["todo", "in_progress", "blocked", "done", "cancelled"]).default("todo"),
+  dueDate: timestamp("dueDate"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = typeof tasks.$inferInsert;
+
+// Alerts
+export const alerts = mysqlTable("alerts", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message"),
+  type: mysqlEnum("type", ["info", "warning", "critical", "success"]).default("info"),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  isRead: boolean("isRead").default(false),
+  isDismissed: boolean("isDismissed").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Alert = typeof alerts.$inferSelect;
+export type InsertAlert = typeof alerts.$inferInsert;
+
+// Capability Statements
+export const capabilityStatements = mysqlTable("capabilityStatements", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  version: varchar("version", { length: 50 }),
+  content: text("content"),
+  naicsCodes: text("naicsCodes"),
+  pastPerformance: text("pastPerformance"),
+  differentiators: text("differentiators"),
+  status: mysqlEnum("status", ["draft", "active", "archived"]).default("draft"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CapabilityStatement = typeof capabilityStatements.$inferSelect;
+export type InsertCapabilityStatement = typeof capabilityStatements.$inferInsert;
+
+// Templates
+export const templates = mysqlTable("templates", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }), // "proposal", "invoice", "letter", "report"
+  content: text("content"),
+  isDefault: boolean("isDefault").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Template = typeof templates.$inferSelect;
+export type InsertTemplate = typeof templates.$inferInsert;
+
+// Closeout Records
+export const closeoutRecords = mysqlTable("closeoutRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId").notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "pending_review", "completed"]).default("not_started"),
+  finalInvoiceSubmitted: boolean("finalInvoiceSubmitted").default(false),
+  deliverablesComplete: boolean("deliverablesComplete").default(false),
+  governmentPropertyReturned: boolean("governmentPropertyReturned").default(false),
+  finalReportSubmitted: boolean("finalReportSubmitted").default(false),
+  notes: text("notes"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CloseoutRecord = typeof closeoutRecords.$inferSelect;
+export type InsertCloseoutRecord = typeof closeoutRecords.$inferInsert;
+
+// Lessons Learned
+export const lessonsLearned = mysqlTable("lessonsLearned", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId"),
+  proposalId: int("proposalId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }), // "process", "technical", "management", "communication"
+  description: text("description"),
+  impact: mysqlEnum("impact", ["positive", "negative", "neutral"]).default("neutral"),
+  recommendation: text("recommendation"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LessonLearned = typeof lessonsLearned.$inferSelect;
+export type InsertLessonLearned = typeof lessonsLearned.$inferInsert;
+
+// Loss Reviews
+export const lossReviews = mysqlTable("lossReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  proposalId: int("proposalId").notNull(),
+  reviewDate: timestamp("reviewDate"),
+  reasonLost: text("reasonLost"),
+  competitorInfo: text("competitorInfo"),
+  lessonsLearned: text("lessonsLearned"),
+  actionItems: text("actionItems"),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed"]).default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LossReview = typeof lossReviews.$inferSelect;
+export type InsertLossReview = typeof lossReviews.$inferInsert;
+
+// Deliverables
+export const deliverables = mysqlTable("deliverables", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["not_started", "in_progress", "submitted", "accepted", "rejected", "overdue"]).default("not_started"),
+  submittedAt: timestamp("submittedAt"),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Deliverable = typeof deliverables.$inferSelect;
+export type InsertDeliverable = typeof deliverables.$inferInsert;
+
+// Deadlines
+export const deadlines = mysqlTable("deadlines", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  dueDate: timestamp("dueDate").notNull(),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
+  status: mysqlEnum("status", ["upcoming", "due_soon", "overdue", "completed"]).default("upcoming"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Deadline = typeof deadlines.$inferSelect;
+export type InsertDeadline = typeof deadlines.$inferInsert;
+
+// Obligations
+export const obligations = mysqlTable("obligations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  obligationType: varchar("obligationType", { length: 100 }), // "reporting", "delivery", "compliance", "financial"
+  frequency: varchar("frequency", { length: 50 }), // "one_time", "weekly", "monthly", "quarterly", "annual"
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["active", "completed", "overdue", "waived"]).default("active"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Obligation = typeof obligations.$inferSelect;
+export type InsertObligation = typeof obligations.$inferInsert;
+
+// Compliance Items
+export const complianceItems = mysqlTable("complianceItems", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  regulation: varchar("regulation", { length: 255 }), // "FAR 52.219-8", "DFARS 252.204-7012"
+  category: varchar("category", { length: 100 }), // "cybersecurity", "labor", "reporting", "environmental"
+  status: mysqlEnum("status", ["compliant", "non_compliant", "at_risk", "pending_review", "not_applicable"]).default("pending_review"),
+  dueDate: timestamp("dueDate"),
+  lastReviewDate: timestamp("lastReviewDate"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ComplianceItem = typeof complianceItems.$inferSelect;
+export type InsertComplianceItem = typeof complianceItems.$inferInsert;
+
+// Notes - General notes attachable to any record
+export const notes = mysqlTable("notes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }),
+  content: text("content").notNull(),
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }),
+  linkedRecordId: int("linkedRecordId"),
+  authorId: int("authorId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Note = typeof notes.$inferSelect;
+export type InsertNote = typeof notes.$inferInsert;

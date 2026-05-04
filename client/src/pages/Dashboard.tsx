@@ -1,54 +1,43 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Link } from "wouter";
-import { Users, Target, FileText, Briefcase, DollarSign, FileCheck, Folder, MessageSquare, Contact, AlertCircle, CheckCircle2, Clock, Zap, BarChart3, Settings } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { Link, useLocation } from "wouter";
+import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact, AlertCircle, CheckCircle2, Clock, Bell, ListTodo } from "lucide-react";
 import Footer from "@/components/Footer";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  const workspaceId = 1;
+  const { data: opportunities = [] } = trpc.opportunities.list.useQuery({ workspaceId });
+  const { data: proposals = [] } = trpc.proposals.list.useQuery({ workspaceId });
+  const { data: contracts = [] } = trpc.contracts.list.useQuery({ workspaceId });
+  const { data: invoices = [] } = trpc.invoices.list.useQuery({});
+  const { data: tasks = [] } = trpc.tasks.list.useQuery({});
+  const { data: alerts = [] } = trpc.alerts.list.useQuery();
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
   }
 
+  const activeOpps = (opportunities as any[]).filter((o) => o.status === "evaluating" || o.status === "pursuing" || o.status === "draft");
+  const activeContracts = (contracts as any[]).filter((c) => c.status === "active" || c.status === "awarded");
+  const pendingInvoices = (invoices as any[]).filter((i) => i.status !== "paid");
+  const totalOutstanding = pendingInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount || "0"), 0);
+  const openTasks = (tasks as any[]).filter((t) => t.status !== "complete" && t.status !== "dismissed");
+  const activeAlerts = (alerts as any[]).filter((a) => !a.dismissed);
+
   const quickAccessButtons = [
-    { label: "Open Clients", icon: Users, color: "bg-blue-500", href: "/app/clients" },
-    { label: "Open Opportunities", icon: Target, color: "bg-purple-500", href: "/app/opportunities" },
-    { label: "Open Proposals", icon: FileText, color: "bg-pink-500", href: "/app/proposals" },
-    { label: "Open Contracts", icon: Briefcase, color: "bg-green-500", href: "/app/contracts" },
-    { label: "Open Invoices", icon: DollarSign, color: "bg-yellow-500", href: "/app/invoices" },
-    { label: "Open Payments", icon: FileCheck, color: "bg-indigo-500", href: "/app/payments" },
-    { label: "Open Files", icon: Folder, color: "bg-cyan-500", href: "/app/files" },
-    { label: "Open Messages", icon: MessageSquare, color: "bg-orange-500", href: "/app/messages" },
-    { label: "Open Contacts", icon: Contact, color: "bg-red-500", href: "/app/contacts" },
-    { label: "Open Obligations", icon: AlertCircle, color: "bg-teal-500", href: "/app/obligations" },
-    { label: "Open Deliverables", icon: CheckCircle2, color: "bg-lime-500", href: "/app/deliverables" },
-    { label: "Open Deadlines", icon: Clock, color: "bg-rose-500", href: "/app/deadlines" },
-    { label: "Open Compliance", icon: AlertCircle, color: "bg-sky-500", href: "/app/compliance" },
-    { label: "Open Reports", icon: BarChart3, color: "bg-violet-500", href: "/app/reports" },
-    { label: "Open AI Workspace", icon: Zap, color: "bg-fuchsia-500", href: "/app/ai-workspace" },
-    { label: "Open Settings", icon: Settings, color: "bg-slate-500", href: "/app/settings" },
-  ];
-
-  const countCards = [
-    { label: "Total Clients", count: 12, icon: Users },
-    { label: "Open Opportunities", count: 8, icon: Target },
-    { label: "Active Contracts", count: 5, icon: Briefcase },
-    { label: "Outstanding Invoices", count: "$125K", icon: DollarSign },
-  ];
-
-  const recentActivity = [
-    { type: "Contract", title: "IT Infrastructure Support - Year 1", status: "Active", date: "2 days ago" },
-    { type: "Proposal", title: "Defense IT Infrastructure Modernization", status: "Submitted", date: "5 days ago" },
-    { type: "Opportunity", title: "Federal IT Services RFP", status: "In Evaluation", date: "1 week ago" },
-    { type: "Invoice", title: "INV-2026-001", status: "Outstanding", date: "10 days ago" },
-  ];
-
-  const nextActions = [
-    { title: "Security Compliance Audit Due", dueDate: "June 15, 2026", priority: "Critical", color: "bg-red-50 border-red-200" },
-    { title: "Monthly Status Report Due", dueDate: "May 31, 2026", priority: "High", color: "bg-amber-50 border-amber-200" },
-    { title: "Q2 Performance Review", dueDate: "June 30, 2026", priority: "Medium", color: "bg-blue-50 border-blue-200" },
+    { label: "Opportunities", icon: Target, color: "bg-purple-500", href: "/app/opportunities" },
+    { label: "Proposals", icon: FileText, color: "bg-pink-500", href: "/app/proposals" },
+    { label: "Contracts", icon: Briefcase, color: "bg-green-500", href: "/app/contracts" },
+    { label: "Invoices", icon: DollarSign, color: "bg-yellow-600", href: "/app/invoices" },
+    { label: "Files", icon: Folder, color: "bg-cyan-500", href: "/app/files" },
+    { label: "Contacts", icon: Contact, color: "bg-red-500", href: "/app/contacts" },
+    { label: "Messages", icon: MessageSquare, color: "bg-orange-500", href: "/app/messages" },
+    { label: "Finance", icon: DollarSign, color: "bg-indigo-500", href: "/app/finance" },
   ];
 
   return (
@@ -57,92 +46,149 @@ export default function Dashboard() {
       <div className="bg-blue-900 text-white px-8 py-8">
         <div className="max-w-7xl mx-auto">
           <p className="text-blue-200 text-sm font-semibold uppercase mb-2">Dashboard</p>
-          <h1 className="text-4xl font-bold mb-2">Welcome, {user?.name?.split(" ")[0] || "User"}</h1>
-          <p className="text-blue-100">This is the guided PrimeContractorOS build. The goal of this version is to help a user understand how federal contracting work flows through the system before deeper automation and tracking are added.</p>
+          <h1 className="text-4xl font-bold mb-2">Welcome, {user?.name?.split(" ")[0] || "Contractor"}</h1>
+          <p className="text-blue-100">Your government contracting operations at a glance. Track your pipeline from opportunity through closeout.</p>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 px-8 py-8">
         <div className="max-w-7xl mx-auto space-y-8">
+          {/* Summary Cards - Real Data */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/opportunities")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Opportunities</p>
+              <p className="text-3xl font-bold text-purple-700">{activeOpps.length}</p>
+              <p className="text-xs text-gray-500 mt-1">active</p>
+            </Card>
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/proposals")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Proposals</p>
+              <p className="text-3xl font-bold text-pink-700">{(proposals as any[]).length}</p>
+              <p className="text-xs text-gray-500 mt-1">total</p>
+            </Card>
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/contracts")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Contracts</p>
+              <p className="text-3xl font-bold text-green-700">{activeContracts.length}</p>
+              <p className="text-xs text-gray-500 mt-1">active</p>
+            </Card>
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/finance")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Outstanding</p>
+              <p className="text-3xl font-bold text-amber-700">${Math.round(totalOutstanding / 1000)}K</p>
+              <p className="text-xs text-gray-500 mt-1">{pendingInvoices.length} invoices</p>
+            </Card>
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/tasks")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Open Tasks</p>
+              <p className="text-3xl font-bold text-blue-700">{openTasks.length}</p>
+              <p className="text-xs text-gray-500 mt-1">pending</p>
+            </Card>
+            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/alerts")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Alerts</p>
+              <p className="text-3xl font-bold text-red-700">{activeAlerts.length}</p>
+              <p className="text-xs text-gray-500 mt-1">active</p>
+            </Card>
+          </div>
+
           {/* Quick Access Grid */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Access</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Access</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               {quickAccessButtons.map((btn) => {
                 const Icon = btn.icon;
                 return (
                   <Link key={btn.label} href={btn.href}>
-                    <a className={`${btn.color} text-white rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer`}>
+                    <div className={`${btn.color} text-white rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer`}>
                       <Icon className="w-6 h-6" />
                       <span className="text-xs font-semibold text-center">{btn.label}</span>
-                    </a>
+                    </div>
                   </Link>
                 );
               })}
             </div>
           </div>
 
-          {/* Summary Cards */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Summary</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {countCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <Card key={card.label} className="bg-white border border-gray-200 p-6 text-center">
-                    <p className="text-xs text-gray-600 font-semibold uppercase mb-2">{card.label}</p>
-                    <p className="text-3xl font-bold text-gray-900">{card.count}</p>
-                    <Icon className="w-8 h-8 text-gray-400 mx-auto mt-3 opacity-50" />
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
+          {/* Two Column: Tasks + Alerts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Open Tasks */}
             <Card className="bg-white border border-gray-200 p-6">
-              <div className="space-y-3">
-                {recentActivity.map((activity, idx) => (
-                  <div key={idx} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div>
-                      <p className="text-xs text-gray-600 font-semibold uppercase">{activity.type}</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{activity.title}</p>
-                      <p className="text-xs text-gray-600 mt-1">{activity.date}</p>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold">{activity.status}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <ListTodo className="h-5 w-5 text-blue-500" /> Open Tasks
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/app/tasks")}>View All</Button>
               </div>
+              {openTasks.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-6">No open tasks. Create tasks from contracts, proposals, or the Tasks page.</p>
+              ) : (
+                <div className="space-y-2">
+                  {openTasks.slice(0, 5).map((task: any) => (
+                    <div key={task.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                        {task.dueDate && (
+                          <p className="text-xs text-gray-500 mt-0.5">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      <span className={`ml-2 px-2 py-0.5 text-xs rounded ${
+                        task.priority === "critical" ? "bg-red-100 text-red-800" :
+                        task.priority === "high" ? "bg-amber-100 text-amber-800" :
+                        "bg-blue-100 text-blue-800"
+                      }`}>{task.priority || "normal"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Active Alerts */}
+            <Card className="bg-white border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-red-500" /> Active Alerts
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/app/alerts")}>View All</Button>
+              </div>
+              {activeAlerts.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-6">No active alerts. Alerts are generated from compliance deadlines, overdue items, and system events.</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeAlerts.slice(0, 5).map((alert: any) => (
+                    <div key={alert.id} className="flex items-start justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{alert.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{alert.alertType || "system"}</p>
+                      </div>
+                      <span className={`ml-2 px-2 py-0.5 text-xs rounded ${
+                        alert.severity === "critical" ? "bg-red-100 text-red-800" :
+                        alert.severity === "high" ? "bg-amber-100 text-amber-800" :
+                        "bg-blue-100 text-blue-800"
+                      }`}>{alert.severity || "info"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
 
-          {/* Next Actions */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Next Actions</h2>
-            <div className="space-y-3">
-              {nextActions.map((action, idx) => (
-                <div key={idx} className={`${action.color} border rounded-lg p-4 flex items-center justify-between`}>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{action.title}</p>
-                    <p className="text-xs text-gray-600 mt-1">Due: {action.dueDate}</p>
+          {/* Pipeline Overview */}
+          <Card className="bg-white border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contracting Pipeline</h3>
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              {[
+                { label: "Opportunities", count: (opportunities as any[]).length, color: "bg-purple-100 text-purple-800 border-purple-200" },
+                { label: "Proposals", count: (proposals as any[]).length, color: "bg-pink-100 text-pink-800 border-pink-200" },
+                { label: "Contracts", count: (contracts as any[]).length, color: "bg-green-100 text-green-800 border-green-200" },
+                { label: "Invoices", count: (invoices as any[]).length, color: "bg-amber-100 text-amber-800 border-amber-200" },
+              ].map((stage, idx) => (
+                <div key={stage.label} className="flex items-center gap-2">
+                  <div className={`${stage.color} border rounded-lg px-4 py-3 text-center min-w-[120px]`}>
+                    <p className="text-2xl font-bold">{stage.count}</p>
+                    <p className="text-xs font-semibold">{stage.label}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      action.priority === "Critical" ? "bg-red-100 text-red-800" :
-                      action.priority === "High" ? "bg-amber-100 text-amber-800" :
-                      "bg-blue-100 text-blue-800"
-                    }`}>
-                      {action.priority}
-                    </span>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">Start</Button>
-                  </div>
+                  {idx < 3 && <span className="text-gray-300 text-xl">→</span>}
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 

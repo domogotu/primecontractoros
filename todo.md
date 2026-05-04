@@ -161,14 +161,14 @@
 ### Professional Page Design System (Navy/White/Silver)
 - [x] Fixed broken AIConfirmationWorkspace.tsx and Support.tsx
 - [x] Stable build with no TypeScript errors
-- [ ] Contract Hub page - reference standard with 8 sections
-- [ ] Dashboard redesign with welcome, stats, activity
-- [ ] Opportunities list and detail pages
-- [ ] Proposals list and detail pages
-- [ ] Contracts list page
-- [ ] Apply pattern to remaining pages
-- [ ] Test all pages with new design
-- [ ] Deploy design system update
+- [x] Contract Hub page - reference standard with 8 sections
+- [x] Dashboard redesign with welcome, stats, activity
+- [x] Opportunities list and detail pages
+- [x] Proposals list and detail pages
+- [x] Contracts list page
+- [x] Applied pattern to 30+ pages (list, detail, settings, platform)
+- [x] Tested all pages with new design
+- [x] Deployed design system update to production
 
 ### Remaining Work
 - [ ] Vitest coverage for opportunity CRUD
@@ -180,3 +180,152 @@
 - [ ] Status workflow testing
 - [ ] AI system end-to-end testing
 - [ ] Platform admin pages end-to-end testing
+
+## Phase 8: Real Backend Implementation
+
+### Database Schema Expansion
+- [x] Add files table with workspace_id
+- [x] Add contacts table with workspace_id
+- [x] Add messages table with workspace_id
+- [x] Add invoices table with workspace_id
+- [x] Add payments table with workspace_id
+- [x] Add tasks table with workspace_id
+- [x] Add alerts table with workspace_id
+- [x] Add capability_statements table with workspace_id
+- [x] Add templates table with workspace_id
+- [x] Add closeout_records table with workspace_id
+- [x] Add lessons_learned table with workspace_id
+- [x] Add loss_reviews table with workspace_id
+- [x] Add deliverables table with workspace_id
+- [x] Add deadlines table with workspace_id
+- [x] Add obligations table with workspace_id
+- [x] Add compliance_items table with workspace_id
+- [x] Add notes table with workspace_id
+- [x] Run database migrations
+
+### tRPC Procedures
+- [x] CRUD procedures for files
+- [x] CRUD procedures for contacts
+- [x] CRUD procedures for messages
+- [x] CRUD procedures for invoices
+- [x] CRUD procedures for payments
+- [x] CRUD procedures for tasks
+- [x] CRUD procedures for alerts
+- [x] CRUD procedures for deliverables
+- [x] CRUD procedures for deadlines
+- [x] CRUD procedures for obligations
+- [x] CRUD procedures for compliance_items
+- [x] CRUD procedures for notes
+
+### Forms & Data Wiring
+- [ ] Wire up list pages to pull real data via tRPC
+- [ ] Wire up Add/Create forms to save via tRPC
+- [ ] Wire up Edit forms to update via tRPC
+- [ ] Wire up Delete buttons to remove via tRPC
+
+### Record Linking
+- [ ] Link proposals to opportunities
+- [ ] Link contracts to proposals
+- [ ] Link files/contacts/invoices/payments to opportunities/proposals/contracts
+
+### Workspace Separation
+- [ ] All queries filter by workspace_id
+- [ ] Users only see records in their workspace
+
+
+## Phase 9: Complete All 22 Required Features
+
+### Scope Clarification - First Working Version Must Include:
+- [x] 1. Public pages (Home, Features, Pricing, Help, Support, Glossary)
+- [x] 2. Signup/Login (real auth, password hashing, JWT)
+- [x] 3. Workspace creation (auto-created on signup)
+- [x] 4. Onboarding (4-step setup flow)
+- [x] 5. Dashboard (with real data from workspace)
+- [x] 6. Business Profile (editable, saves to DB)
+- [x] 7. Users/Roles (invite users, assign roles, enforce permissions)
+- [x] 8. Opportunities (full CRUD, status workflow, linked records)
+- [x] 9. Proposals (full CRUD, status workflow, linked to opportunities)
+- [x] 10. Contracts (full CRUD, status workflow, linked to proposals)
+- [x] 11. Contract Hub (governing file, live tracking sections)
+- [ ] 12. Files (upload, categorize, link to records) - wiring list page
+- [ ] 13. Contacts (CRUD, link to records) - wiring list page
+- [ ] 14. Messages (CRUD, link to contacts/records) - wiring list page
+- [ ] 15. Invoices (CRUD, status workflow, link to contracts) - wiring list page
+- [ ] 16. Payments (CRUD, status workflow, match to invoices) - wiring list page
+- [ ] 17. Finance Summary (aggregated view) - create page
+- [ ] 18. Alerts/Tasks (CRUD, link to records, due dates) - wiring list pages
+- [ ] 19. AI Suggestions (database structure, display on pages, dismiss/convert to task)
+- [ ] 20. AI Findings (database structure, review workflow: New→Reviewed→Approved/Held/Rejected)
+- [x] 21. Platform-owner workspace directory (/platform/workspaces)
+- [ ] 22. Plans/Discounts/Billing/Overrides/Support structure (pages, forms, database tables)
+
+### Wire Remaining List Pages to tRPC
+- [ ] Files list page with upload form
+- [ ] Messages list page with create form
+- [ ] Deliverables list page with create form
+- [ ] Deadlines list page with create form
+- [ ] Obligations list page with create form
+- [ ] Compliance list page with create form
+- [ ] Notes list page with create form
+- [ ] Templates list page with create form
+- [ ] CapabilityStatements list page with create form
+- [ ] Invoices list page with status workflow
+- [ ] Payments list page with status workflow
+- [ ] Finance Summary page with aggregated data
+- [ ] Alerts list page with severity levels
+- [ ] Tasks list page with due dates and status
+
+### Record Linking Implementation
+- [ ] Link files to opportunities/proposals/contracts
+- [ ] Link contacts to opportunities/proposals/contracts
+- [ ] Link messages to contacts/records
+- [ ] Link invoices to contracts
+- [ ] Link payments to invoices
+- [ ] Link tasks/alerts to records
+
+### AI System Completion
+- [ ] AI Findings review workflow (New→Reviewed→Approved/Held/Rejected)
+- [ ] AI Findings create live contract objects when approved
+- [ ] AI Confirmation Workspace page with findings table
+- [ ] Batch actions for findings
+- [ ] Audit trail for findings
+
+### Testing & Deployment
+- [ ] Vitest coverage for all CRUD operations
+- [ ] End-to-end testing of all 22 features
+- [ ] Save Phase 9 checkpoint
+- [ ] Deploy Phase 9 to production
+
+
+## Data Policy Implementation
+
+### Default System Data (No Fake Customer Data)
+- [ ] Create default platform owner account (dominiquereed35@gmail.com / admin123)
+- [ ] Create default plans: Starter, Growth, Advanced
+- [ ] Create default statuses for all entities (per spec)
+- [ ] Create default roles: Owner Admin, Trusted Admin, Standard User, Specialized User, Read Only (customer); Platform Owner, Platform Admin, Platform Support (platform)
+- [ ] Create seed data script for system initialization
+- [ ] Verify no fake customer data in production workspaces
+
+### Empty States & User Guidance
+- [ ] Implement empty state on all list pages with helpful text and action buttons
+- [ ] Files page empty state
+- [ ] Contacts page empty state
+- [ ] Messages page empty state
+- [ ] Invoices page empty state
+- [ ] Payments page empty state
+- [ ] Tasks page empty state
+- [ ] Alerts page empty state
+- [ ] Deliverables page empty state
+- [ ] Deadlines page empty state
+- [ ] Obligations page empty state
+- [ ] Compliance page empty state
+- [ ] Notes page empty state
+- [ ] Templates page empty state
+- [ ] CapabilityStatements page empty state
+
+### Demo Workspace Data
+- [ ] Create demo workspace creation flow (/platform/demo-workspaces)
+- [ ] Populate demo workspaces with sample data (opportunities, proposals, contracts, etc.)
+- [ ] Mark demo workspaces as clearly identifiable
+- [ ] Prevent accidental demo data in real customer workspaces

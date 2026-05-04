@@ -30,9 +30,32 @@ import {
   acceptAiSuggestion,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
+import {
+  filesRouter, contactsRouter, messagesRouter, invoicesRouter, paymentsRouter,
+  tasksRouter, alertsRouter, deliverablesRouter, deadlinesRouter, obligationsRouter,
+  complianceRouter, notesRouter, capabilityStatementsRouter, templatesRouter,
+  closeoutRouter, lessonsRouter, lossReviewsRouter
+} from "./entityRouters";
 
 export const appRouter = router({
   system: systemRouter,
+  files: filesRouter,
+  contacts: contactsRouter,
+  messages: messagesRouter,
+  invoices: invoicesRouter,
+  payments: paymentsRouter,
+  tasks: tasksRouter,
+  alerts: alertsRouter,
+  deliverables: deliverablesRouter,
+  deadlines: deadlinesRouter,
+  obligations: obligationsRouter,
+  compliance: complianceRouter,
+  notes: notesRouter,
+  capabilityStatements: capabilityStatementsRouter,
+  templates: templatesRouter,
+  closeout: closeoutRouter,
+  lessons: lessonsRouter,
+  lossReviews: lossReviewsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     signup: publicProcedure

@@ -1,31 +1,116 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Plus, Search, Trash2, AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Bell, AlertTriangle, CheckCircle2 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 
 export default function Alerts() {
+  const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [form, setForm] = useState({ title: "", message: "", type: "info", linkedRecordId: "" });
+
+  const { data: alerts = [], isLoading, refetch } = trpc.alerts.list.useQuery();
+  const createMutation = trpc.alerts.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ title: "", message: "", type: "info", linkedRecordId: "" }); } });
+  const dismissMutation = trpc.alerts.dismiss.useMutation({ onSuccess: () => refetch() });
+
+  const filtered = (alerts as any[]).filter((a) =>
+    a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.message?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleCreate = () => {
+    if (!form.title) return;
+    createMutation.mutate({
+      title: form.title,
+      message: form.message || undefined,
+      type: form.type,
+      linkedRecordId: form.linkedRecordId ? parseInt(form.linkedRecordId) : undefined,
+    } as any);
+  };
+
+  const typeColors: Record<string, string> = {
+    critical: "bg-red-100 text-red-800 border-red-300",
+    warning: "bg-amber-100 text-amber-800 border-amber-300",
+    info: "bg-blue-100 text-blue-800 border-blue-300",
+  };
+
   return (
     <PageLayout
       title="Alerts"
-      subtitle="System notifications, compliance reminders, and deadline warnings"
+      subtitle="Track important alerts and notifications"
       label="Notifications"
       summaryCards={[
-        { label: "Active Alerts", value: 0 },
-        { label: "Critical", value: 0, color: "text-red-600" },
-        { label: "Warnings", value: 0, color: "text-amber-600" },
-        { label: "Resolved Today", value: 0, color: "text-green-600" },
+        { label: "Total Alerts", value: alerts.length },
+        { label: "Critical", value: (alerts as any[]).filter((a) => a.type === "critical").length, color: "text-red-600" },
+        { label: "Warnings", value: (alerts as any[]).filter((a) => a.type === "warning").length, color: "text-amber-600" },
       ]}
       actions={
-        <Button variant="outline" className="border-gray-300 text-gray-700">
-          <CheckCircle2 className="w-4 h-4 mr-2" /> Mark All Read
+        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+          <Plus className="w-4 h-4 mr-2" /> Add Alert
         </Button>
       }
     >
-      <Card className="bg-white border border-gray-200 p-12 text-center">
-        <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-gray-900 mb-2">No Active Alerts</h3>
-        <p className="text-gray-600 mb-6">You are all caught up. Alerts will appear here when deadlines approach, compliance items need attention, or system events occur.</p>
+      {showForm && (
+        <Card className="bg-white border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold mb-4">Add New Alert</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <textarea placeholder="Message" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="info">Info</option>
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+            </select>
+            <input placeholder="Linked Record ID (optional)" value={form.linkedRecordId} onChange={(e) => setForm({ ...form, linkedRecordId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
+              {createMutation.isPending ? "Adding..." : "Add Alert"}
+            </Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+          </div>
+        </Card>
+      )}
+
+      <Card className="bg-white border border-gray-200 p-4">
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <input type="text" placeholder="Search alerts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+        </div>
       </Card>
+
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-500">Loading alerts...</div>
+      ) : filtered.length === 0 ? (
+        <Card className="bg-white border border-gray-200 p-12 text-center">
+          <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No Alerts</h3>
+          <p className="text-gray-600 mb-6">Create alerts to track important events and deadlines.</p>
+          <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Add Your First Alert
+          </Button>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((alert: any) => (
+            <Card key={alert.id} className={`border-l-4 p-4 flex justify-between items-start ${typeColors[alert.type] || typeColors.info}`}>
+              <div className="flex gap-3 flex-1">
+                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold">{alert.title}</h3>
+                  {alert.message && <p className="text-sm mt-1">{alert.message}</p>}
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => dismissMutation.mutate({ id: alert.id })}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
     </PageLayout>
   );
 }

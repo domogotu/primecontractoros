@@ -1,0 +1,2703 @@
+MANUS BUILD PROMPT — PRIMECONTRACTOROS COMPLETE BUILD SPECIFICATION
+
+You are building the full PrimeContractorOS application.
+
+Do not treat this as a design-only task. Do not only create mockups. Build the actual working app structure with routes, pages, database models, forms, navigation, permissions, AI-ready workflows, file handling, workspace logic, platform-owner controls, and route/form testing.
+
+Use this full PrimeContractorOS specification as the source of truth.
+
+If a detail is missing, make a reasonable best-practice implementation that matches the PrimeContractorOS lifecycle. Do not leave anything as a placeholder unless it is intentionally marked as a future integration, such as real payment processor or AI API key.
+
+============================================================
+1. PRODUCT IDENTITY
+============================================================
+
+App Name:
+PrimeContractorOS
+
+Purpose:
+PrimeContractorOS is a guided government-contracting operating system for prime contractors, subcontractors, business owners, and platform administrators.
+
+The app helps users move through the full government-contracting lifecycle:
+
+Public Entry
+→ Signup
+→ Workspace Creation
+→ Onboarding
+→ Dashboard
+→ Opportunities
+→ Proposals
+→ Awarded Contracts
+→ Contract Hub
+→ AI Confirmation
+→ Files / Contacts / Messages
+→ Invoices / Payments / Finance
+→ Reports / Capability Statements / Templates
+→ Closeout
+→ Lessons Learned
+→ Platform-Owner Administration
+
+PrimeContractorOS is not:
+- a generic CRM
+- a generic project manager
+- a file storage app
+- a basic accounting dashboard
+- a static landing page
+- a chatbot-only app
+- a disconnected group of pages
+
+It is a connected operating system for government contracting operations.
+
+============================================================
+2. CORE PRODUCT STANDARD
+============================================================
+
+The finished app must feel like a serious operating system for government contracting.
+
+It must help users:
+- understand where they are in the contracting lifecycle
+- know what matters now
+- know what is missing
+- know what needs action
+- keep files, contacts, messages, invoices, payments, proposals, contracts, tasks, alerts, and AI findings connected
+- manage awarded contracts from source files
+- separate invoices from payments
+- use AI safely and review-first
+- close contracts carefully
+- learn from losses and closeouts
+- let the platform owner run the software business separately from customer operations
+
+Do not simplify the app.
+
+Build the full connected system.
+
+============================================================
+3. BUILD STYLE FOR MANUS
+============================================================
+
+Work in phases.
+
+Phase 1:
+Create or stabilize the app shell, routing, layout, authentication, database schema, and workspace model.
+
+Phase 2:
+Build the public pages and signup/login flow.
+
+Phase 3:
+Build customer workspace foundation: onboarding, dashboard, business profile, users, settings, subscription, alerts, tasks.
+
+Phase 4:
+Build core workflow: opportunities, proposals, contracts, Contract Hub, AI Confirmation.
+
+Phase 5:
+Build active operations: files, contacts, messages, invoices, payments, finance.
+
+Phase 6:
+Build oversight: reports, capability statements, templates, closeout, loss review, lessons.
+
+Phase 7:
+Build platform-owner controls: workspaces, plans, discounts, billing, overrides, support, pricing history, ownership recovery, demo workspaces, platform tasks.
+
+Phase 8:
+Run final route/form/schema/permission QA.
+
+After each phase, summarize:
+- what was built
+- what files changed
+- what routes now work
+- what still needs fixing
+- what the next phase is
+
+Do not ask me to re-explain the app. Use this specification as the source of truth.
+
+============================================================
+4. TECH STACK / IMPLEMENTATION DIRECTION
+============================================================
+
+Use the stack best supported by Manus.
+
+If continuing my local build, use:
+- Python
+- Flask
+- SQLite
+- Jinja templates
+- local app at http://127.0.0.1:5000
+
+If rebuilding in another full-stack environment, preserve the same:
+- routes
+- workflows
+- data model
+- page behavior
+- workspace-based architecture
+- role-based access
+- AI review-first model
+- government-contracting lifecycle
+
+Build local-first for now, but structure the app so it can later become SaaS-ready.
+
+Do not hardcode single-user assumptions.
+
+Do not destroy existing working files without backup.
+
+Before replacing major files:
+- preserve existing structure when possible
+- create backups if supported
+- avoid deleting templates, routes, or data unless replacing them intentionally
+- keep the PrimeContractorOS design/style consistent
+
+============================================================
+5. VISUAL STYLE / DESIGN SYSTEM
+============================================================
+
+Use one consistent design system across all pages.
+
+The app should feel:
+- official
+- clean
+- business-focused
+- guided
+- calm
+- secure
+- organized
+- professional
+- government-contracting appropriate
+
+It should not feel:
+- cartoonish
+- too casual
+- cluttered
+- overly colorful
+- like social media
+- like a basic template
+- like unfinished software
+
+Colors:
+- Navy blue: headers, primary navigation, sidebar, page titles, main buttons
+- Silver/light gray: backgrounds, borders, dividers, table rows, empty states
+- Green: success, approved, active, paid, complete, ready
+- Amber/gold: warning, pending review, incomplete setup, expiring trial, missing item, needs attention
+- Red: serious issues only, such as overdue, suspended, past due, critical blocker, missing governing file
+- White: cards, forms, page panels, readable content surfaces
+
+Consistent UI components:
+- same header style
+- same sidebar/navigation style
+- same card style
+- same button styles
+- same badge colors
+- same table/card layouts
+- same AI panel design
+- same empty-state design
+
+Every internal page should generally include:
+1. Page header with title and short explanation
+2. Top action buttons
+3. Search/filter controls when relevant
+4. Summary/status cards
+5. Main working area
+6. AI guidance panel or next-step panel
+7. Related links/help links
+8. Empty state messaging when there is no data
+
+Button styles:
+- Primary: navy or green
+- Secondary: white/outline
+- Warning: amber
+- Danger: red
+- Disabled: gray with explanation
+
+Every button must either perform a real action or route to a real page.
+
+Do not create fake buttons.
+
+============================================================
+6. THREE SYSTEM LAYERS
+============================================================
+
+PrimeContractorOS has three major layers:
+
+1. Public Entry Layer
+2. Customer Workspace Layer
+3. Platform-Owner/Admin Layer
+
+These layers must remain separate.
+
+Public users should not see customer workspace data.
+
+Customer workspace users should not see platform-owner pages.
+
+Platform-owner pages live under /platform.
+
+============================================================
+7. PUBLIC ENTRY ROUTES
+============================================================
+
+Create these public routes/pages:
+
+- / Home / Landing
+- /features
+- /pricing
+- /get-started
+- /login
+- /help
+- /glossary
+- /support
+
+Purpose:
+- explain the product
+- build trust
+- explain pricing/access
+- allow support before login/payment
+- begin workspace creation correctly
+
+Public navigation:
+- Home
+- Features
+- Plans / Pricing
+- Help Center
+- Contact Support
+- Get Started
+- Sign In
+
+Public pages must not expose internal workspace pages or platform-owner controls.
+
+============================================================
+8. CUSTOMER WORKSPACE ROUTES
+============================================================
+
+Create these customer workspace routes/pages:
+
+- /app
+- /app/onboarding
+- /app/dashboard
+- /app/business-profile
+- /app/profile
+- /app/settings
+- /app/users
+- /app/subscription
+- /app/alerts
+- /app/tasks
+- /app/opportunities
+- /app/opportunities/:id
+- /app/proposal-frameworks
+- /app/proposals
+- /app/proposals/:id
+- /app/proposals/:id/loss-review
+- /app/contracts
+- /app/contracts/:id
+- /app/contracts/:id/hub
+- /app/contracts/:id/ai-confirmation
+- /app/contracts/:id/closeout
+- /app/files
+- /app/files/:id
+- /app/contacts
+- /app/contacts/:id
+- /app/messages
+- /app/messages/:id
+- /app/invoices
+- /app/invoices/:id
+- /app/payments
+- /app/payments/:id
+- /app/finance
+- /app/reports
+- /app/capability-statements
+- /app/templates
+- /app/lessons
+
+Customer workspace navigation:
+- Dashboard
+- Business Profile
+- Opportunities
+- Proposals
+- Contracts
+- Files
+- Contacts
+- Messages
+- Invoices
+- Payments
+- Finance
+- Reports
+- Capability Statements
+- Templates
+- Tasks
+- Alerts
+- Help
+- Settings
+
+Purpose:
+Run the actual customer business and government-contracting workflow.
+
+============================================================
+9. PLATFORM-OWNER ROUTES
+============================================================
+
+Create these platform-owner routes/pages:
+
+- /platform
+- /platform/workspaces/:id
+- /platform/plans
+- /platform/discounts
+- /platform/billing
+- /platform/overrides
+- /platform/support
+- /platform/pricing-history
+- /platform/ownership-recovery
+- /platform/demo-workspaces
+- /platform/tasks
+
+Platform owner navigation:
+- Platform Dashboard
+- Workspaces
+- Plans
+- Discounts
+- Billing
+- Overrides
+- Support
+- Pricing History
+- Ownership Recovery
+- Demo Workspaces
+- Platform Tasks
+
+Purpose:
+Allow the platform owner to run PrimeContractorOS as a business without mixing platform-owner controls into customer workspace pages.
+
+============================================================
+10. WORKSPACE-FIRST ARCHITECTURE
+============================================================
+
+Everything customer-side must belong to a workspace.
+
+Every customer-side record must include workspace_id.
+
+A user may only see data inside workspaces they belong to.
+
+Customer workspaces must be fully separated from each other.
+
+Platform-owner/admin users may see workspace summaries from /platform, but ordinary customer users must never see another customer’s workspace data.
+
+Customer-side records requiring workspace_id include:
+- business profile
+- users/memberships
+- opportunities
+- proposals
+- contracts
+- files
+- contacts
+- messages
+- invoices
+- payments
+- finance notes
+- reports
+- templates
+- capability statements
+- tasks
+- alerts
+- support requests
+- AI runs
+- AI suggestions
+- AI findings
+- closeout records
+- lessons learned
+
+============================================================
+11. ROLE-BASED ACCESS CONTROL
+============================================================
+
+Build real role-based permissions.
+
+Customer workspace roles:
+- Owner Admin
+- Trusted Admin
+- Standard User
+- Specialized User
+- Read Only
+
+Platform roles:
+- Platform Owner
+- Platform Admin
+- Platform Support
+- Platform Billing/Admin Recovery if needed later
+
+Permission rules:
+
+Owner Admin can:
+- manage workspace settings
+- manage users
+- manage business profile
+- create/edit/archive records
+- approve AI findings
+- manage contracts, invoices, files, contacts, messages, tasks, and alerts
+- view subscription summary
+
+Trusted Admin can:
+- help manage operations based on assigned permissions
+
+Standard User can:
+- create/edit assigned operational records where allowed
+
+Specialized User can:
+- work in narrower areas such as finance, proposals, or contract management depending on permissions
+
+Read Only can:
+- view allowed records
+- not edit
+- not delete/archive
+- not approve AI findings
+- not change billing/access
+- not manage users
+
+Platform Owner can:
+- access /platform
+- manage workspaces
+- manage plans
+- manage discounts
+- manage billing/access states
+- use owner overrides
+- view support inbox
+- view workspace summaries
+- manage platform tasks
+
+Platform Owner should not casually edit customer operational records from the platform pages.
+
+AI must respect permissions. AI cannot let a user do something their role does not allow.
+
+============================================================
+12. SECURITY REQUIREMENTS
+============================================================
+
+The app must include secure authentication and authorization.
+
+Requirements:
+- securely hash passwords
+- protect sessions
+- validate all forms
+- check permissions before every sensitive action
+- block customer users from /platform routes
+- prevent cross-workspace data leakage
+- prevent read-only users from editing
+- protect uploaded files from unauthorized access
+- restrict file upload types
+- avoid exposing internal implementation details to normal users
+- avoid showing raw stack traces to normal users
+- sanitize/validate user input
+- protect against unauthorized record access
+
+Sensitive actions must require confirmation and permission checks.
+
+Sensitive actions include:
+- changing user roles
+- approving AI findings
+- marking contract closed
+- archiving/restoring records
+- changing billing/access state
+- applying discounts
+- suspending/reactivating workspaces
+- changing ownership/admin access
+- deleting or replacing files
+- marking files as governing
+
+============================================================
+13. DATABASE REQUIREMENTS
+============================================================
+
+Create real database tables/models. Do not use static mock data only.
+
+Minimum required data models:
+
+Core:
+- workspaces
+- users
+- workspace_memberships
+- roles
+- permissions
+- business_profiles
+
+Access/Billing:
+- plans
+- subscriptions
+- access_states
+- discounts
+- discount_usage
+- billing_events
+- platform_notes
+- platform_overrides
+
+Support:
+- support_requests
+- support_messages
+- support_attachments
+
+Execution:
+- alerts
+- tasks
+
+Opportunities:
+- opportunities
+- opportunity_notes
+- opportunity_review_items
+
+Proposals:
+- proposal_frameworks
+- proposals
+- proposal_sections
+- proposal_readiness_items
+- lost_proposal_reviews
+
+Contracts:
+- contracts
+- contract_modifications
+- contract_requirements
+- contract_deliverables
+- contract_deadlines
+- contract_compliance_items
+- contract_notes
+
+Files:
+- files
+- file_links
+- file_versions
+- file_replacement_history
+
+Contacts:
+- contacts
+- contact_links
+- followups
+
+Messages:
+- messages
+- message_links
+
+Finance:
+- invoices
+- invoice_status_history
+- payments
+- invoice_payment_links
+- finance_notes
+
+Oversight:
+- reports
+- capability_statements
+- capability_statement_versions
+- templates
+- template_versions
+- closeout_reviews
+- closeout_blocking_items
+- lessons_learned
+
+AI:
+- ai_runs
+- ai_suggestions
+- ai_findings
+- ai_finding_history
+
+Audit:
+- audit_logs
+
+Every table should include where appropriate:
+- id
+- workspace_id
+- created_at
+- updated_at
+- created_by
+- updated_by
+- status
+- notes
+- archived_at
+- archived_by
+
+============================================================
+14. RECORD LINKING REQUIREMENTS
+============================================================
+
+The app must not be disconnected pages. Records must link together.
+
+Opportunity can link to:
+- files
+- contacts
+- messages
+- tasks
+- alerts
+- proposal
+
+Proposal can link to:
+- opportunity
+- files
+- contacts
+- proposal sections
+- tasks
+- alerts
+- AI suggestions
+- contract if won
+- loss review if lost
+
+Contract can link to:
+- proposal
+- governing files
+- modifications
+- requirements
+- deliverables
+- deadlines
+- compliance items
+- contacts
+- messages
+- invoices
+- payments
+- tasks
+- alerts
+- closeout
+- AI findings
+
+File can link to:
+- opportunity
+- proposal
+- contract
+- contract modification
+- invoice
+- payment
+- support request
+- closeout
+- loss review
+
+Contact can link to:
+- opportunity
+- proposal
+- contract
+- invoice/payment context
+- message
+- follow-up
+
+Message can link to:
+- contact
+- opportunity
+- proposal
+- contract
+- invoice
+- payment
+
+Invoice can link to:
+- contract
+- files
+- payments
+- messages
+- tasks
+- contacts
+
+Payment can link to:
+- contract
+- invoices
+- files
+- messages
+- tasks
+
+Tasks and alerts can link to:
+- onboarding issue
+- business profile gap
+- opportunity
+- proposal
+- contract
+- file issue
+- contact follow-up
+- invoice
+- payment
+- support request
+- closeout blocker
+- AI finding
+
+============================================================
+15. BUTTON AND ACTION REQUIREMENTS
+============================================================
+
+Every button must do something real.
+
+Do not create fake buttons.
+
+Examples:
+
+Save:
+- validate form
+- save to database
+- show confirmation
+- remain on page or route to next logical page
+
+Save and Add File:
+- save current record
+- route to file upload
+- pre-link uploaded file to current record
+
+Save and Open Workspace:
+- save proposal
+- route to proposal workspace
+
+Start Proposal From Opportunity:
+- create proposal from opportunity
+- allow selected carry-forward of files, contacts, notes, tasks, alerts, and AI suggestions
+
+Convert Toward Contract:
+- create contract from won proposal
+- allow selected carry-forward from proposal
+- keep proposal historical
+
+Upload Governing File:
+- upload file
+- categorize file
+- link file to contract
+- allow user to mark as governing
+
+Run AI Confirmation:
+- create AI run
+- analyze selected source files
+- create AI findings
+- store findings for review
+- do not auto-approve findings
+
+Approve AI Finding:
+- require authorized user
+- create live contract object
+- store reviewer/date/source
+- preserve original finding history
+
+Create Task:
+- create task linked to current record
+
+Archive:
+- soft archive record
+- preserve history
+- allow restore where appropriate
+
+Delete:
+- avoid permanent delete by default
+- prefer archive
+
+============================================================
+16. EMPTY STATE REQUIREMENTS
+============================================================
+
+Every page must have useful empty states.
+
+Empty states must include:
+- clear title
+- plain-language explanation
+- first recommended action
+- primary button
+- help/glossary link where useful
+
+Examples:
+
+No opportunities:
+Title: No Opportunities Added Yet
+Text: Add your first opportunity when you find work you may want to review or pursue.
+Button: Add Opportunity
+
+No proposals:
+Title: No Proposals Yet
+Text: Start from an opportunity or create a proposal manually.
+Buttons: Open Opportunities, Create Proposal
+
+No contracts:
+Title: No Awarded Contracts Yet
+Text: Add a contract when work has been awarded or convert a won proposal.
+Buttons: Add Contract, Open Proposals
+
+No governing file:
+Title: No Governing File Added Yet
+Text: Upload and mark the awarded contract file before relying on live requirements, deliverables, deadlines, or compliance tracking.
+Buttons: Upload Governing File, Open Help
+
+No AI findings:
+Title: No AI Confirmation Findings Yet
+Text: Select source files and run confirmation analysis. AI findings must be reviewed before becoming live tracking records.
+Button: Run AI Confirmation
+
+No invoices:
+Title: No Invoices Yet
+Text: Create an invoice when work has been billed under a contract.
+Button: Create Invoice
+
+No payments:
+Title: No Payments Recorded Yet
+Text: Record payments when money is actually received, then match them to invoices.
+Button: Record Payment
+
+============================================================
+17. SOFT DELETE / ARCHIVE REQUIREMENTS
+============================================================
+
+Do not permanently delete important records by default.
+
+Use archive/restore.
+
+Important records should support:
+- active
+- archived
+- restored
+
+Apply archive behavior to:
+- opportunities
+- proposals
+- contracts
+- files
+- contacts
+- messages
+- invoices
+- payments
+- templates
+- lessons
+- support requests where appropriate
+
+Permanent delete should be limited, permission-protected, and logged.
+
+============================================================
+18. AUDIT LOG / HISTORY REQUIREMENTS
+============================================================
+
+Important actions must be logged.
+
+Create audit/history records for:
+- workspace creation
+- user login/logout if practical
+- user creation
+- user deactivation
+- role changes
+- permission changes
+- billing/access changes
+- platform-owner overrides
+- discount application
+- support status changes
+- contract status changes
+- proposal outcome changes
+- opportunity decision changes
+- file upload
+- file replacement
+- governing file changes
+- AI run creation
+- AI finding approval/rejection/editing
+- invoice status changes
+- payment matching changes
+- closeout status changes
+- archive/restore actions
+
+Audit log fields:
+- id
+- workspace_id where applicable
+- user_id
+- action_type
+- affected_record_type
+- affected_record_id
+- old_value
+- new_value
+- reason
+- timestamp
+- ip/device info if practical later
+
+============================================================
+19. FILE UPLOAD REQUIREMENTS
+============================================================
+
+Support file uploads for:
+- opportunity source notices
+- proposal support
+- awarded contracts
+- contract modifications
+- compliance evidence
+- invoice support
+- payment support
+- closeout evidence
+- debrief/loss review support
+- support attachments
+
+Every file must store:
+- workspace_id
+- original filename
+- stored filename/path
+- file type
+- file size
+- uploaded_by
+- uploaded_at
+- category
+- stage
+- linked records
+- notes
+- governing status if linked as governing
+- version/replacement tracking
+
+Allowed file types:
+- PDF
+- DOC/DOCX if supported
+- XLS/XLSX if supported
+- CSV if supported
+- PNG/JPG screenshots
+- TXT
+
+Prevent unsupported or unsafe file types.
+
+If AI reads a file, store:
+- which AI run used it
+- whether file was governing
+- file version used
+- whether newer files later made findings stale
+
+============================================================
+20. AI API KEY / AI DISABLED MODE
+============================================================
+
+The app must run even if no AI API key is configured.
+
+If AI is not configured:
+- show AI as Disabled / Not Configured
+- keep AI panels visible as structured placeholders
+- allow manual entry of findings/tasks
+- do not crash
+- allow API key/settings to be added later
+
+AI features should be optional and upgrade-ready.
+
+Add future-ready AI settings:
+- AI enabled/disabled
+- API key field later
+- model/provider field later
+- usage logging
+- AI run history
+- manual fallback mode
+
+============================================================
+21. AI REQUIREMENTS
+============================================================
+
+Do not build AI as one loose chatbot.
+
+Build AI as a structured layer with two output types:
+
+1. AI Suggestions
+2. AI Findings
+
+AI Suggestions:
+- workflow guidance
+- next-step recommendations
+- missing information prompts
+- suggested tasks
+- readiness warnings
+- template improvement suggestions
+- contact/follow-up suggestions
+
+AI Findings:
+- source-linked document analysis
+- contract requirement extraction support
+- deliverable identification
+- deadline identification
+- compliance item identification
+- billing/payment term review
+- modification impact review
+
+AI Findings must include:
+- source file
+- source location if available
+- source excerpt or short source note if available
+- category
+- title
+- plain-language summary
+- practical meaning
+- confidence
+- review state
+- reviewer
+- reviewed_at
+- approved live object if approved
+- stale/superseded status
+
+AI review states:
+- New
+- Reviewed
+- Approved
+- Edited and Approved
+- Held
+- Needs Manual Review
+- Rejected / Not Applicable
+- Superseded
+- Stale
+
+AI confidence labels:
+- High confidence
+- Medium confidence
+- Low confidence
+- Needs manual review
+
+AI must not:
+- declare full legal compliance
+- replace legal counsel
+- replace contracting officer direction
+- invent experience
+- invent certifications
+- invent contacts
+- invent contract terms
+- approve itself
+- use one customer’s data for another customer
+- create final obligations without authorized user review
+
+AI controls:
+- AI enabled/disabled setting
+- optional API key/settings area later
+- AI usage logging
+- AI run history
+- re-run analysis
+- stale finding detection
+- dismiss suggestions
+- convert suggestions to tasks
+- approve/edit/hold/reject findings
+
+============================================================
+22. CONTRACT AI CONFIRMATION REQUIREMENTS
+============================================================
+
+The AI Confirmation Workspace must support:
+
+Source selection:
+- awarded contract file
+- modification files
+- selected carried-forward supporting files
+
+Analysis scopes:
+- Full Confirmation
+- Requirements
+- Deliverables
+- Deadlines
+- Billing / Payment Terms
+- Compliance
+- Missing Information
+- Changes Since Prior Stage
+
+AI findings must show:
+- finding title
+- category
+- source file
+- source location
+- source note/excerpt
+- why it matters
+- practical meaning
+- relationship to prior stage:
+  - New
+  - Changed
+  - Confirmed
+  - No Longer Supported
+- confidence
+- review state
+
+User actions:
+- Approve
+- Hold
+- Edit Before Approving
+- Mark Needs Manual Review
+- Reject / Not Applicable
+- Open Source
+- Create Task
+- Return to Contract Hub
+
+Approved findings can create:
+- contract requirement
+- contract deliverable
+- contract deadline
+- contract compliance item
+- finance note
+- task
+- alert
+
+Unapproved findings stay as findings only.
+
+When a new governing file or modification is added, prior findings may become stale.
+
+============================================================
+23. GOVERNMENT-CONTRACTING RULE AWARENESS
+============================================================
+
+The app should support rule-aware workflow without pretending to be legal counsel.
+
+Track and surface:
+- UEI
+- CAGE
+- SAM status
+- SAM renewal awareness
+- NAICS
+- set-aside awareness
+- prime/sub/both model
+- subcontractor usage
+- subcontracting/flowdown review notes
+- solicitation source files
+- awarded contract governing files
+- modifications
+- deliverables
+- deadlines
+- compliance evidence
+- invoice support
+- payment records
+- closeout blockers
+
+Use careful language:
+- may need review
+- appears to
+- based on the source file
+- review before approving
+- user-provided status
+- source-linked finding
+
+Do not say:
+- you are compliant
+- legal review is not needed
+- this is guaranteed
+- AI has finalized this
+- this definitely satisfies all requirements
+
+The app should help users organize rule-relevant information, surface likely obligations, track deadlines and evidence, and reduce missed steps. It should not replace legal counsel or contracting officer direction.
+
+Rule areas to support:
+
+Entity Readiness:
+- UEI
+- CAGE
+- SAM status
+- SAM renewal
+- legal entity consistency
+
+Solicitation / Offer Stage:
+- solicitation number
+- notice type
+- NAICS
+- set-aside type
+- due date
+- source files
+- proposal instructions
+
+Subcontracting / Teaming / Flowdown:
+- prime/sub/both
+- subcontractor usage
+- subcontracting-plan watch
+- limitations-on-subcontracting watch
+- consent-to-subcontract watch
+- flowdown notes
+
+Award / Contract Performance:
+- governing awarded file
+- modifications
+- clause-bearing documents
+- deadlines
+- deliverables
+- reporting requirements
+- compliance evidence
+
+Invoicing / Payment:
+- invoice records
+- invoice status
+- proper support/evidence
+- payment records
+- matching
+- overdue follow-up
+- billing contact
+
+Closeout / Final Payment:
+- unresolved deliverables
+- unresolved compliance items
+- unresolved finance balances
+- missing final evidence
+- closeout blockers
+- lessons learned
+
+============================================================
+24. INVOICE / PAYMENT REQUIREMENTS
+============================================================
+
+Invoices and payments must remain separate.
+
+Invoice:
+- what was billed
+
+Payment:
+- money actually received
+
+Use invoice_payment_links to match payments to invoices.
+
+Invoice statuses:
+- Draft
+- Submitted
+- Partially Paid
+- Paid
+- Overdue
+- Disputed
+- Archived
+
+Payment statuses:
+- Recorded
+- Matched
+- Partially Matched
+- Unmatched
+- Needs Review
+- Archived
+
+AI can suggest matches, but user should confirm.
+
+Payments should not automatically close invoices unless the rule is clear and user confirms.
+
+Finance must stay tied to:
+- contract
+- invoice
+- payment
+- support files
+- billing contact
+- finance messages
+- tasks/alerts
+
+============================================================
+25. BILLING / SUBSCRIPTION REQUIREMENTS
+============================================================
+
+Workspace access states:
+- Signup Started
+- Pending Setup
+- Trial Active
+- Limited Access
+- Pending Payment
+- Active Paid
+- Past Due
+- Suspended
+- Canceled
+- Archived
+
+Rules:
+- one 7-day trial per workspace/company
+- trial remains used once started
+- trial-linked discount expires 30 days after trial start
+- Limited Access means declining trial and trial-linked discount
+- promo codes may apply during activation
+- only one discount source applies by default
+- platform owner can override with reason/log
+- past due state may restrict access
+- suspended state blocks most internal workspace access
+- billing problems should have recovery paths
+
+Customer side:
+- user sees subscription summary
+
+Platform side:
+- owner manages billing/access from /platform/billing
+
+============================================================
+26. PLATFORM OWNER SAFETY REQUIREMENTS
+============================================================
+
+Platform-owner controls are powerful and must be logged.
+
+For actions like:
+- suspend workspace
+- reactivate workspace
+- change billing state
+- apply discount manually
+- extend grace period
+- change owner/admin
+- archive workspace
+- restore workspace
+- override plan/access state
+
+Require:
+- confirmation
+- reason
+- before/after value
+- audit log entry
+- changed_by
+- changed_at
+
+Platform-owner pages must not feel like casual customer workspace editing.
+
+============================================================
+27. SUPPORT SYSTEM REQUIREMENTS
+============================================================
+
+Support must exist before and after login.
+
+Support request categories:
+- Technical
+- Setup
+- Billing
+- Access
+- Feature Request
+- Data / Record
+- Other
+
+Support request statuses:
+- Open
+- Waiting on Platform
+- Waiting on Customer
+- In Review
+- Resolved
+- Closed
+- Escalated
+
+Customer-visible support messages and internal platform notes must stay separate.
+
+Platform Support Inbox must support:
+- reply
+- internal note
+- status change
+- escalation
+- resolution
+- trend review
+- link to workspace
+- billing-related flag
+
+============================================================
+28. ERROR HANDLING REQUIREMENTS
+============================================================
+
+Do not show raw technical errors to normal users.
+
+For user-facing errors, show:
+- what went wrong
+- what the user can do next
+- retry/back button
+- support link if useful
+
+Handle:
+- file upload failed
+- unsupported file type
+- form validation failed
+- record not found
+- permission denied
+- workspace suspended
+- AI analysis failed
+- payment/access issue
+- missing required field
+- route not found
+
+For platform owner/admin, provide more diagnostic detail where safe.
+
+============================================================
+29. NOTIFICATION / REMINDER REQUIREMENTS
+============================================================
+
+The system should support alerts and tasks now, with future notifications later.
+
+Track reminders for:
+- setup incomplete
+- SAM renewal date
+- opportunity due dates
+- proposal deadlines
+- contract deadlines
+- deliverables
+- compliance items
+- invoice due dates
+- overdue invoices
+- unmatched payments
+- closeout blockers
+- trial/discount expiration
+- past due billing
+
+Future notification channels:
+- in-app alerts
+- dashboard badges
+- email later
+- reminder settings later
+
+============================================================
+30. EXPORT / REPORTING REQUIREMENTS
+============================================================
+
+Structure data to support future exports.
+
+Export-ready areas:
+- reports
+- invoices
+- payments
+- contract summaries
+- closeout summaries
+- capability statements
+- proposal sections
+- AI findings
+- tasks/alerts
+- file index
+- contact list
+
+Future export formats:
+- PDF
+- Excel
+- CSV
+- DOCX where useful
+
+Even if export is not fully built first, structure the data so exports can be added cleanly.
+
+============================================================
+31. RESPONSIVE DESIGN REQUIREMENTS
+============================================================
+
+The app must work on desktop, tablet, and mobile.
+
+Desktop:
+- sidebar navigation
+- full tables
+- cards and dashboards
+- two-column layouts where useful
+
+Tablet:
+- cards wrap
+- filters collapse if needed
+- tables remain readable
+
+Mobile:
+- stacked cards
+- tables become record cards
+- forms are single-column
+- primary actions remain easy to reach
+- no tiny unreadable tables
+- sticky action bar where useful
+
+============================================================
+32. USER GUIDANCE REQUIREMENTS
+============================================================
+
+The app must support newer government contractors.
+
+Every major page should include:
+- what this page is for
+- why it matters
+- what to do next
+- help/glossary link
+- AI guidance where appropriate
+
+Settings should allow guidance depth:
+- Detailed
+- Balanced
+- Light
+
+Detailed mode:
+- more explanations
+- more examples
+- more guidance text
+
+Balanced mode:
+- useful guidance without too much repetition
+
+Light mode:
+- compact interface
+- fewer repeated explanations
+
+============================================================
+33. STATUS BADGE REQUIREMENTS
+============================================================
+
+Use status badges consistently.
+
+Examples:
+
+Workspace:
+- Signup Started
+- Pending Setup
+- Trial Active
+- Limited Access
+- Pending Payment
+- Active Paid
+- Past Due
+- Suspended
+- Canceled
+- Archived
+
+Opportunity:
+- New
+- In Review
+- Pursue
+- Hold
+- No Pursue
+- Moved to Proposal
+- Archived
+
+Proposal:
+- Draft
+- In Progress
+- Under Review
+- Submitted
+- Won
+- Lost
+- Withdrawn
+- Archived
+
+Contract:
+- Setup Incomplete
+- In Review
+- Active
+- Needs Governing File
+- AI Confirmation Needed
+- Modification Pending Review
+- Finance Attention
+- Closeout Review
+- Closed
+- Archived
+
+AI Finding:
+- New
+- Reviewed
+- Approved
+- Held
+- Needs Manual Review
+- Rejected
+- Superseded
+- Stale
+
+Invoice:
+- Draft
+- Submitted
+- Partially Paid
+- Paid
+- Overdue
+- Disputed
+- Archived
+
+Payment:
+- Recorded
+- Matched
+- Partially Matched
+- Unmatched
+- Needs Review
+- Archived
+
+Closeout:
+- Not Ready
+- In Review
+- Blocked
+- Ready for Closeout
+- Closed
+- Closed With Notes / Exceptions
+
+============================================================
+34. SEARCH / FILTER REQUIREMENTS
+============================================================
+
+List pages must include search and filters.
+
+Add search/filter support for:
+- opportunities
+- proposals
+- contracts
+- files
+- contacts
+- messages
+- invoices
+- payments
+- reports
+- templates
+- support requests
+- platform workspaces
+- discounts
+- billing states
+
+Filters should include:
+- status
+- date
+- owner
+- linked record
+- category
+- priority
+- due date
+- archived/active
+
+Views should include where useful:
+- Card View
+- Table View
+- Group by Status
+- Group by Due Date
+- Group by Owner
+- Group by Client/Agency
+- Group by Category
+
+============================================================
+35. PAGE-BY-PAGE BUILD REQUIREMENTS
+============================================================
+
+For every page, create:
+- route
+- page name
+- page purpose
+- header text
+- top action buttons
+- main sections
+- fields/forms
+- status badges
+- search/filter where applicable
+- user interactions
+- what happens after each action
+- AI behavior where applicable
+- rules/restrictions
+- empty state
+- mobile behavior
+
+Apply this page-preview standard to every page.
+
+============================================================
+36. PUBLIC PAGE DETAILS
+============================================================
+
+HOME /
+Purpose:
+First public page. It must answer what PrimeContractorOS is, who it is for, what it helps manage, and where the user should go next.
+
+Hero:
+PrimeContractorOS
+A Guided Workspace for Government Contracting Operations
+
+Text:
+PrimeContractorOS helps government contractors move from opportunity to closeout in one structured system, without losing track of requirements, files, contacts, invoices, payments, or next steps.
+
+Buttons:
+- Get Started
+- Review Plans
+- Open Help Center
+- Sign In
+
+Sections:
+- Who PrimeContractorOS Is Built For
+- What the Platform Helps You Manage
+- How It Works
+- Built to Help You Understand the Work, Not Just Store It
+- Start the Way That Fits Your Company
+- Need Help Before You Start
+
+FEATURES /features
+Purpose:
+Show what the platform covers.
+
+Feature cards:
+- Guided Dashboard
+- Opportunities
+- Proposals
+- Contracts
+- Contract Hub
+- AI Workspace Intelligence
+- Files
+- Contacts
+- Invoices
+- Payments
+- Reports
+- Capability Statement
+- Templates
+- Closeout
+- Help, Glossary, and Support
+
+PRICING /pricing
+Purpose:
+Explain plans, trial, limited access, promo logic, and activation.
+
+Sections:
+- Plans and Pricing hero
+- Core Rules Strip
+- Starter / Growth / Advanced plan cards
+- Fair Plan Promise
+- One-Time 7-Day Trial
+- Limited Access Path
+- Trial Discounts and Promo Codes
+- What Happens If You Do Not Activate
+- Help Before Purchase
+
+Core rules:
+- One 7-day free trial per workspace/company
+- Trial tied to selected plan
+- Trial discount remains available for 30 days from trial start
+- Limited Access means declining the trial and trial-linked discount
+- Promo codes may be accepted
+- One discount source applies by default
+- Used trial does not reset
+
+GET STARTED /get-started
+Purpose:
+Create workspace, create first owner/admin, recommend path, choose access path.
+
+Sections:
+1. Create Workspace
+2. Create First Owner/Admin
+3. AI-Guided Starting Path Questionnaire
+4. Recommended Path
+5. Choose Access Path
+6. Promo / Discount Code
+7. Progress Tracker
+
+Workspace fields:
+- Legal Business Name
+- DBA optional
+- Business Email
+- Business Phone
+- Website optional
+- Country / State
+- Entity Type
+
+Owner fields:
+- Full Name
+- Login Email
+- Password
+- Confirm Password
+- Job Title / Role
+- Phone optional
+
+LOGIN /login
+Purpose:
+Authenticate user.
+
+Fields:
+- Login Email
+- Password
+- Remember Me
+
+Buttons:
+- Sign In
+- Forgot Password
+- Need Help Signing In
+- Get Started
+
+After login:
+Route to /app.
+
+HELP /help
+Purpose:
+Teach platform, workflow, pricing, and contracting concepts.
+
+Categories:
+- Getting Started
+- Platform Features
+- Contracts
+- Proposals
+- Finance
+- Files
+- Users / Access
+- Billing / Activation
+- AI Help
+- Contracting Glossary
+- FAQ
+
+GLOSSARY /glossary
+Purpose:
+Explain government-contracting and platform terms.
+
+Terms:
+- UEI
+- CAGE
+- SAM
+- NAICS
+- Solicitation
+- RFI
+- RFQ
+- RFP
+- Sources Sought
+- IFB
+- Prime Contractor
+- Subcontractor
+- Flowdown
+- Set-Aside
+- Deliverable
+- Compliance Item
+- Contract Modification
+- Proper Invoice
+- Closeout
+- Capability Statement
+- Contract Hub
+- AI Finding
+- AI Suggestion
+
+SUPPORT /support
+Purpose:
+Allow support before or after login.
+
+Fields:
+- name
+- email
+- workspace if known
+- category
+- urgency
+- message
+- attachment optional
+
+============================================================
+37. CUSTOMER WORKSPACE PAGE DETAILS
+============================================================
+
+APP ROUTER /app
+Purpose:
+Route user after login.
+
+Routing rules:
+- Pending Setup → /app/onboarding
+- Trial Active + setup incomplete → /app/onboarding
+- Trial Active + setup mostly complete → /app/dashboard
+- Limited Access + setup incomplete → /app/onboarding
+- Limited Access + setup complete → /app/dashboard with limited-access messaging
+- Active Paid → /app/dashboard
+- Pending Payment → dashboard with billing banner
+- Past Due → restricted dashboard with billing/support emphasis
+- Suspended → suspended/restricted state page
+
+ONBOARDING /app/onboarding
+Purpose:
+Guide owner/admin through workspace setup.
+
+Sections:
+- Progress strip
+- Setup status summary
+- Business basics
+- Business context
+- Current readiness questions
+- Workspace preferences
+- AI-guided summary
+- Setup completion
+
+DASHBOARD /app/dashboard
+Purpose:
+Workspace command center.
+
+Cards:
+- Workspace Status
+- Setup Completion
+- Access Level
+- Current Plan
+- Open Support Requests
+- Alerts Needing Attention
+- Open Tasks
+
+Sections:
+- Next Best Steps
+- Access State Summary
+- AI Guidance Summary
+- Quick Links
+- Profile / Setup Health
+
+BUSINESS PROFILE /app/business-profile
+Purpose:
+Store company/workspace information.
+
+Sections:
+- Business Identity
+- Registration and Entity Information
+- NAICS, Capabilities, and Operating Model
+- Workspace Contact Defaults
+- Business Profile Completeness
+- AI Workspace Context Assistance
+
+Fields:
+- Legal Business Name
+- DBA
+- Website
+- Business Email
+- Phone
+- Address
+- State/Jurisdiction
+- Entity Type
+- UEI
+- CAGE
+- SAM Registration Status
+- SAM Renewal Date
+- Small Business Status
+- Certifications
+- Primary NAICS
+- Additional NAICS
+- Core Capabilities
+- Industries / Service Areas
+- Prime/Sub/Both
+- Uses Subcontractors
+- Primary Business Contact
+- Billing Contact
+- Proposal Contact
+- Contract Management Contact
+- Business Development Contact
+
+USER PROFILE /app/profile
+Purpose:
+Manage individual user profile.
+
+Fields:
+- Full Name
+- Login Email
+- Job Title
+- Phone
+- Role
+- Preferred Guidance Level
+- Reminder Style
+- Preferred Start Page
+- Help Visibility Preferences
+
+SETTINGS /app/settings
+Purpose:
+Control workspace behavior.
+
+Tabs:
+- Workspace
+- Guidance
+- Notifications / Reminders
+- Profiles
+- Users
+- Alerts / Tasks
+
+USER MANAGEMENT /app/users
+Purpose:
+Manage workspace login users.
+
+Visible to:
+Owner/Admin only.
+
+Roles:
+- Owner Admin
+- Trusted Admin
+- Standard User
+- Specialized User
+- Read Only
+
+SUBSCRIPTION /app/subscription
+Purpose:
+Customer-side plan/access view.
+
+Show:
+- Current Plan
+- Current Status
+- Trial Used
+- Discount Applied
+- Renewal / End Date
+- Billing Help Link
+- Trial expiration
+- Discount eligibility
+- Discount expiration
+- Promo code applied
+
+ALERTS /app/alerts
+Purpose:
+Show attention signals.
+
+Alert examples:
+- setup incomplete
+- trial discount expiring
+- opportunity due soon
+- source file missing
+- governing contract file missing
+- stale AI findings
+- overdue invoice
+- unmatched payment
+- closeout blocker
+- missing contact
+
+TASKS /app/tasks
+Purpose:
+Action item system.
+
+Task sources:
+- manual user creation
+- AI suggestion acceptance
+- alert conversion
+- system rule
+
+============================================================
+38. OPPORTUNITY / PROPOSAL PAGE DETAILS
+============================================================
+
+OPPORTUNITIES /app/opportunities
+Purpose:
+Capture and review possible work before proposal/contract.
+
+Fields:
+- Opportunity Title
+- Agency / Buyer
+- Solicitation / Notice Number
+- NAICS
+- Due Date
+- Opportunity Type
+- Source Link
+- Summary / Notes
+- Current Review Status
+
+Statuses:
+- New
+- In Review
+- Pursue
+- Hold
+- No Pursue
+
+Actions:
+- Add Opportunity
+- Save and Add Files
+- Save and Add Contacts
+- Review Opportunity
+- Start Proposal
+- Archive
+
+OPPORTUNITY DETAIL /app/opportunities/:id
+Purpose:
+Deep review of one opportunity.
+
+Sections:
+- Opportunity Summary
+- Review Checklist
+- Source Files
+- Contacts and Follow-Up
+- Pursue/Hold/No Pursue Decision
+- AI Opportunity Assistance
+- Convert to Proposal
+
+PROPOSAL FRAMEWORK SELECTOR /app/proposal-frameworks
+Purpose:
+Help user choose proposal structure.
+
+Frameworks:
+- Standard Structured Proposal
+- Technical / Compliance-Oriented Framework
+- Subcontract / Partner Support Framework
+- Simple Response / Lightweight Framework
+- Blank / Freeform Workspace
+
+PROPOSALS /app/proposals
+Purpose:
+Manage proposal records.
+
+Fields:
+- Proposal Title
+- Linked Opportunity
+- Proposal Framework
+- Proposal Status
+- Internal Due Date
+- Final Submission Date
+- Notes
+
+Statuses:
+- Draft
+- In Progress
+- Under Review
+- Submitted
+- Won
+- Lost
+- Withdrawn
+- Archived
+
+PROPOSAL WORKSPACE /app/proposals/:id
+Purpose:
+Actual proposal work area.
+
+Sections:
+- Proposal Overview
+- Proposal Structure / Sections
+- Linked Files
+- Contacts
+- Tasks
+- AI Proposal Assistance
+- Outcome
+
+Rules:
+- Do not invent past performance
+- Do not invent certifications
+- Do not claim compliance
+- User reviews all AI-drafted content
+
+LOST PROPOSAL REVIEW /app/proposals/:id/loss-review
+Purpose:
+Turn non-award outcomes into learning.
+
+Sections:
+- Outcome Record
+- Debrief Information
+- Known Facts vs Internal Inference
+- Lessons Learned
+- Apply Lessons to Template
+
+============================================================
+39. CONTRACT PAGE DETAILS
+============================================================
+
+CONTRACTS /app/contracts
+Purpose:
+Main awarded contract directory.
+
+Fields:
+- Contract Title
+- Contract Number
+- Linked Client / Agency
+- Linked Proposal optional
+- Contract Value
+- Start Date
+- End Date
+- Period of Performance Notes
+- Contract Status
+- Summary / Notes
+
+Statuses:
+- Setup Incomplete
+- In Review
+- Active
+- Needs Governing File
+- AI Confirmation Needed
+- Modification Pending Review
+- Finance Attention
+- Closeout Review
+- Closed
+- Archived
+
+CONTRACT OVERVIEW /app/contracts/:id
+Purpose:
+Summary of one contract before live operations.
+
+Sections:
+- Contract Summary
+- Readiness / Setup Checklist
+- Carried-Forward History Snapshot
+- Files Snapshot
+- Contacts Snapshot
+- Go to Contract Hub
+
+CONTRACT HUB /app/contracts/:id/hub
+Purpose:
+Main operating center for one awarded contract.
+
+Sections:
+1. Executive Summary / Contract Health
+2. Governing Source Summary
+3. Live Tracking Snapshot
+4. Prior Context vs Awarded Contract
+5. Changes / Modifications
+6. Files / Contacts / Notes Snapshot
+7. Alerts and Tasks
+8. Next Actions
+
+Live tracked objects:
+- requirements
+- deliverables
+- deadlines
+- compliance items
+- missing information flags
+
+Rules:
+- The awarded contract and modifications are current truth
+- User should always know what source the system relies on
+- Modifications must trigger review and possible stale findings
+- Contract Hub is the heart of post-award operations
+
+AI CONFIRMATION /app/contracts/:id/ai-confirmation
+Purpose:
+Source-linked contract AI review.
+
+Sections:
+- Source Files for Confirmation
+- Analysis Scope
+- Summary of Results
+- Findings List
+- Review States
+- Re-analysis / Stale Finding Warnings
+- What Happens Next
+
+CLOSEOUT /app/contracts/:id/closeout
+Purpose:
+Controlled end-of-contract review.
+
+Sections:
+- Closeout Readiness Summary
+- Blocking Items
+- Final Operational Review
+- Final Finance Review
+- Final Files and Retention
+- Final Contact / Message Review
+- Final Review Notes
+- Closeout Status / Final Action
+- AI Closeout Assistance
+
+============================================================
+40. ACTIVE OPERATIONS PAGE DETAILS
+============================================================
+
+FILES /app/files
+Purpose:
+Workspace file directory.
+
+Categories:
+- Source Notice
+- Proposal Support
+- Awarded Contract
+- Modification
+- Compliance Support
+- Invoice Backup
+- Payment Support
+- Screenshot
+- Notes / Summary
+- Closeout Evidence
+- Other
+
+FILE DETAIL /app/files/:id
+Purpose:
+Show one file’s workspace impact.
+
+Sections:
+- File Summary
+- Linked Records
+- AI Analysis Impact
+- File Replacement / Version History
+- Next Actions
+
+CONTACTS /app/contacts
+Purpose:
+Operational contact directory, not login users.
+
+Contact types:
+- Client / Agency
+- Internal
+- Partner / Teammate
+- Subcontractor
+- Billing
+- Proposal
+- Contract Management
+- Archived / Retained
+
+CONTACT DETAIL /app/contacts/:id
+Purpose:
+Full history of one contact.
+
+Sections:
+- Contact Summary
+- Linked Records
+- Follow-Up History
+- Message History
+- Retention / Relationship Continuity
+
+MESSAGES /app/messages
+Purpose:
+Operational communication log.
+
+Filters:
+- Opportunity
+- Proposal
+- Contract
+- Billing / Finance
+- Awaiting Response
+- Follow-Up Needed
+- Archived
+
+MESSAGE DETAIL /app/messages/:id
+Purpose:
+One communication record.
+
+Sections:
+- Message Summary
+- Follow-Up Status
+- Related Context
+
+INVOICES /app/invoices
+Purpose:
+Track what was billed.
+
+Statuses:
+- Draft
+- Submitted
+- Partially Paid
+- Paid
+- Overdue
+- Disputed
+- Archived
+
+INVOICE DETAIL /app/invoices/:id
+Purpose:
+Full invoice context.
+
+Sections:
+- Invoice Summary
+- Linked Contract
+- Support Files
+- Applied Payments
+- Follow-Up / Message History
+
+PAYMENTS /app/payments
+Purpose:
+Track money actually received.
+
+Statuses:
+- Recorded
+- Matched
+- Partially Matched
+- Unmatched
+- Needs Review
+- Archived
+
+PAYMENT DETAIL /app/payments/:id
+Purpose:
+Full payment context.
+
+Sections:
+- Payment Summary
+- Linked Contract
+- Matched Invoices
+- Receipt / Support Files
+- Notes
+- Review State
+
+FINANCE SUMMARY /app/finance
+Purpose:
+Contract-centered financial view.
+
+Sections:
+- total billed
+- total paid
+- outstanding balance
+- overdue invoices
+- unmatched payments
+- contracts with finance attention
+- missing billing contacts
+- missing support files
+
+============================================================
+41. OVERSIGHT / REUSE / LEARNING PAGE DETAILS
+============================================================
+
+REPORTS /app/reports
+Purpose:
+Workspace oversight.
+
+Tabs:
+- Executive Summary
+- Opportunities
+- Proposals
+- Contracts
+- Finance
+- Tasks / Alerts
+- Files / Contacts
+- Historical / Archive
+
+CAPABILITY STATEMENTS /app/capability-statements
+Purpose:
+Build and maintain capability statements.
+
+Sections:
+- What This Page Is For
+- Build From Business Profile
+- Capability Statement Builder
+- Tailored Versions
+- Experience / Past Performance Support
+- Quality Checks
+- Version History
+- AI Capability Assistance
+
+Default sections:
+- Company Overview
+- Core Capabilities
+- Differentiators
+- NAICS
+- Certifications / Set-Aside Status
+- UEI / CAGE
+- Contact Information
+- Past Performance / Experience Highlights
+- Optional Industry / Agency Focus
+- Optional Teaming / Partnership Language
+
+Rules:
+- Do not invent or overstate experience
+- Use business profile to prefill
+- Support multiple tailored versions
+
+TEMPLATES /app/templates
+Purpose:
+Reusable structures/checklists/workflow pieces.
+
+Template types:
+- Proposal Framework
+- Capability Statement
+- Contract Setup Checklist
+- Finance / Invoice
+- Compliance
+- File Structure
+- Message / Follow-Up
+- Internal Workflow
+- Closeout Checklist
+
+LESSONS /app/lessons
+Purpose:
+Capture lessons from:
+- lost proposals
+- closeout
+- support patterns
+- invoice issues
+- missing files
+- recurring alerts
+- AI insights
+
+Actions:
+- Save Lesson
+- Link to Template
+- Create Improvement Task
+- Archive Lesson
+
+============================================================
+42. PLATFORM OWNER PAGE DETAILS
+============================================================
+
+PLATFORM ADMIN /platform
+Purpose:
+Owner-side control center for customer workspaces.
+
+Directory fields:
+- Workspace/company name
+- Owner/admin
+- Current plan
+- Current status
+- Billing state
+- Support state
+- Setup completion
+- Active user count
+- Trial used yes/no
+- Last activity
+
+PLATFORM WORKSPACE SUMMARY /platform/workspaces/:id
+Purpose:
+Single customer workspace summary from platform-owner view.
+
+Sections:
+- Access and Billing Summary
+- Support Summary
+- Customer Health Summary
+- History Snapshot
+
+PLANS /platform/plans
+Purpose:
+Manage plans and pricing.
+
+Fields:
+- Plan Name
+- Plan Description
+- Base Price
+- Billing Terms Supported
+- Trial Allowed
+- Limited Access Available
+- Usage Limits Summary
+- Active / Inactive
+
+DISCOUNTS /platform/discounts
+Purpose:
+Manage promo/discount codes.
+
+Fields:
+- Code Name
+- Discount Type
+- Discount Value
+- Eligible Plans
+- Expiration Date
+- Usage Limit
+- One-Time / Reusable
+- Workspace-Specific
+- Active / Inactive
+
+BILLING /platform/billing
+Purpose:
+Manage customer billing, activation, grace periods, and broken states.
+
+Filters:
+- Pending Payment
+- Trial Active
+- Discount Active
+- Payment Failed
+- Activation Incomplete
+- Past Due
+- Grace Period
+- Suspended
+- Reactivated
+
+OVERRIDES /platform/overrides
+Purpose:
+Safe correction controls.
+
+Override types:
+- manual discount apply/remove
+- change access state
+- correct activation state
+- restore archived workspace
+- suspend/reactivate workspace
+- extend discount window
+- extend trial/grace period
+- mark grandfathered
+- correct wrong plan assignment
+- fix ownership/admin state
+
+SUPPORT /platform/support
+Purpose:
+Manage customer support requests.
+
+PRICING HISTORY /platform/pricing-history
+Purpose:
+Track pricing changes and exceptions.
+
+OWNERSHIP RECOVERY /platform/ownership-recovery
+Purpose:
+Secure recovery when workspace ownership/admin control must change.
+
+DEMO WORKSPACES /platform/demo-workspaces
+Purpose:
+Manage internal/demo workspaces.
+
+PLATFORM TASKS /platform/tasks
+Purpose:
+Internal tasks for running PrimeContractorOS.
+
+============================================================
+43. DEFAULT SYSTEM DATA
+============================================================
+
+Do not fill the production app with fake customer data.
+
+However, create required default system data:
+- default platform owner/admin setup flow
+- default plans: Starter, Growth, Advanced
+- default statuses
+- default roles
+- default permissions
+- default empty states
+- default help/glossary structure
+
+Demo data should only exist inside clearly marked demo workspaces.
+
+============================================================
+44. BUILD CHECKLIST REQUIREMENT
+============================================================
+
+Create and maintain a build checklist showing every:
+- page
+- route
+- database table
+- form
+- button
+- permission rule
+- AI workflow
+- record connection
+
+Mark each item as:
+- Not Started
+- Built
+- Connected to Database
+- Tested
+- Needs Fix
+- Complete
+
+============================================================
+45. FINAL QA / COMPLETION REQUIREMENTS
+============================================================
+
+Do not mark the app complete until:
+
+- every route loads
+- every navigation link works
+- every button works or is intentionally disabled with explanation
+- every form saves correctly
+- every table/field used by the code exists in the database
+- every page has empty states
+- every page has mobile layout
+- user permissions are enforced
+- workspace data separation is enforced
+- platform pages are protected
+- AI suggestions are stored
+- AI findings are stored
+- AI findings require approval before becoming live contract objects
+- approved AI findings create live contract objects
+- invoices and payments remain separate
+- files link to records correctly
+- contacts link to records correctly
+- messages link to records correctly
+- tasks/alerts link back to records
+- closeout blockers prevent casual closeout
+- platform-owner overrides are logged
+- archived records can be restored where appropriate
+- no placeholder-only pages remain
+- no fake buttons remain
+- no broken route references remain
+- no schema mismatch remains
+- no customer can see another customer’s data
+- read-only users cannot edit
+- platform-owner pages cannot be accessed by customer users
+- mobile layout is usable
+- error pages are user-friendly
+- AI does not make legal/compliance guarantees
+
+============================================================
+46. CURRENT BUILD CONTEXT TO ACCOUNT FOR
+============================================================
+
+The previous local build context included:
+- Python 3.12
+- Flask 3.0.3
+- Werkzeug
+- Jinja2
+- openpyxl
+- XlsxWriter
+- local app at http://127.0.0.1:5000
+
+Previously confirmed public routes:
+- /
+- /features
+- /pricing
+- /help
+- /support
+- /get-started
+
+Known issues to avoid/fix:
+- backend routes not synced with templates
+- schema not synced with code
+- signup failing because code expected missing database columns
+- internal workspace routes partially installed
+- contract route mismatch
+- platform-owner routes designed but not fully working
+- app.py, schema.py, and services.py need reconciliation if continuing the Flask build
+
+Build must ensure:
+- every route exists
+- every template/page exists
+- every button routes correctly
+- every form writes to existing fields
+- every schema field exists
+- every internal page respects workspace_id
+- every admin page respects platform-owner permissions
+- every AI output is stored and reviewable
+
+============================================================
+47. FINAL DELIVERY REQUIREMENTS
+============================================================
+
+When finished, provide:
+- list of created pages/routes
+- list of database tables/models
+- list of working forms
+- list of working buttons/actions
+- list of role/permission rules
+- list of AI workflows
+- list of support/billing/platform-owner workflows
+- run instructions
+- login/setup instructions
+- known limitations
+- unfinished items if any
+- build checklist status
+
+============================================================
+48. FINAL DIRECTIVE
+============================================================
+
+PrimeContractorOS must be built as a complete, professional, secure, workspace-based government-contracting operating system.
+
+Do not simplify this into a generic app.
+
+Build the full connected system.
+
+If any page, button, form, route, table, permission rule, AI workflow, or record connection is unclear, make a reasonable best-practice implementation that matches the PrimeContractorOS lifecycle and do not leave it as a placeholder.
+
+The app must guide users clearly through:
+
+Public Entry
+→ Signup
+→ Workspace Setup
+→ Dashboard
+→ Opportunities
+→ Proposals
+→ Awarded Contracts
+→ Contract Hub
+→ AI Confirmation
+→ Files / Contacts / Messages
+→ Invoices / Payments / Finance
+→ Reports / Templates / Capability Statements
+→ Closeout
+→ Lessons Learned
+
+The platform owner must separately manage:
+
+Workspaces
+→ Plans
+→ Discounts
+→ Billing
+→ Overrides
+→ Support
+→ Pricing History
+→ Ownership Recovery
+→ Demo Workspaces
+→ Platform Tasks
+
+Before calling anything complete, verify every route, form, schema field, button, permission, workspace separation rule, AI review rule, invoice/payment separation rule, and platform-owner protection rule.
