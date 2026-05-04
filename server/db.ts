@@ -417,9 +417,12 @@ export async function createAiRun(data: {
 export async function getAiRun(id: number, workspaceId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.query.aiRuns.findFirst({
-    where: and(eq(aiRuns.id, id), eq(aiRuns.workspaceId, workspaceId)),
-  });
+  const result = await db
+    .select()
+    .from(aiRuns)
+    .where(and(eq(aiRuns.id, id), eq(aiRuns.workspaceId, workspaceId)))
+    .limit(1);
+  return result[0] || null;
 }
 
 // AI Suggestions
@@ -445,15 +448,18 @@ export async function getAiSuggestionsForRecord(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.query.aiSuggestions.findMany({
-    where: and(
-      eq(aiSuggestions.workspaceId, workspaceId),
-      eq(aiSuggestions.relatedRecordType, recordType),
-      eq(aiSuggestions.relatedRecordId, recordId),
-      eq(aiSuggestions.status, "new")
-    ),
-    orderBy: (suggestions) => [desc(suggestions.priority), desc(suggestions.createdAt)],
-  });
+  return db
+    .select()
+    .from(aiSuggestions)
+    .where(
+      and(
+        eq(aiSuggestions.workspaceId, workspaceId),
+        eq(aiSuggestions.relatedRecordType, recordType),
+        eq(aiSuggestions.relatedRecordId, recordId),
+        eq(aiSuggestions.status, "new")
+      )
+    )
+    .orderBy(desc(aiSuggestions.createdAt));
 }
 
 export async function dismissAiSuggestion(id: number, workspaceId: number) {
@@ -496,14 +502,17 @@ export async function createAiFinding(data: {
 export async function getAiFindingsForContract(workspaceId: number, contractId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  return db.query.aiFindings.findMany({
-    where: and(
-      eq(aiFindings.workspaceId, workspaceId),
-      eq(aiFindings.contractId, contractId),
-      eq(aiFindings.staleStatus, "current")
-    ),
-    orderBy: (findings) => [desc(findings.confidence), desc(findings.createdAt)],
-  });
+  return db
+    .select()
+    .from(aiFindings)
+    .where(
+      and(
+        eq(aiFindings.workspaceId, workspaceId),
+        eq(aiFindings.contractId, contractId),
+        eq(aiFindings.staleStatus, "current")
+      )
+    )
+    .orderBy(desc(aiFindings.createdAt));
 }
 
 export async function updateAiFindingReviewState(
