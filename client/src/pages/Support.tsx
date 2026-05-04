@@ -43,7 +43,7 @@ export default function Support() {
             </div>
             <div>
               <h4 className="font-semibold mb-2">How do I invite team members?</h4>
-              <p className="text-blue-100">Go to Settings &gt; Users and click Add User.</p>
+              <p className="text-blue-100">Go to Settings {'>'} Users and click Add User.</p>
             </div>
             <div>
               <h4 className="font-semibold mb-2">How do I upgrade my plan?</h4>

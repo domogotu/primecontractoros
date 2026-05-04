@@ -24,7 +24,7 @@ import Invoices from "./pages/Invoices";
 import Payments from "./pages/Payments";
 import Finance from "./pages/Finance";
 import ContractHub from "./pages/ContractHub";
-import AIConfirmationWorkspace from "./pages/AIConfirmationWorkspace";
+// import AIConfirmationWorkspace from "./pages/AIConfirmationWorkspace";
 import Reports from "./pages/Reports";
 import CapabilityStatements from "./pages/CapabilityStatements";
 import Templates from "./pages/Templates";
@@ -116,7 +116,7 @@ function Router() {
       
       {/* Contract Hub, AI, and Learning pages */}
       <Route path={"/app/contracts/:id/hub"} component={ContractHub} />
-      <Route path={"/app/contracts/:id/ai-confirmation"} component={AIConfirmationWorkspace} />
+      {/* <Route path={"/app/contracts/:id/ai-confirmation"} component={AIConfirmationWorkspace} /> */}
       <Route path={"/app/reports"} component={Reports} />
       <Route path={"/app/capability-statements"} component={CapabilityStatements} />
       <Route path={"/app/templates"} component={Templates} />
