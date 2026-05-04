@@ -21,7 +21,13 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
+  // SPA fallback: serve index.html for all non-API routes
   app.use("*", async (req, res, next) => {
+    // Skip API routes and other server routes
+    if (req.originalUrl.startsWith("/api") || req.originalUrl.startsWith("/oauth") || req.originalUrl.startsWith("/manus-storage")) {
+      return next();
+    }
+    
     const url = req.originalUrl;
 
     try {
@@ -60,8 +66,19 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // SPA fallback: serve index.html for all non-API routes
+  app.use("*", (req, res) => {
+    // Skip API routes - let them 404 naturally
+    if (req.originalUrl.startsWith("/api") || req.originalUrl.startsWith("/oauth") || req.originalUrl.startsWith("/manus-storage")) {
+      return res.status(404).json({ error: "Not found" });
+    }
+    
+    // Serve index.html for all other routes (SPA fallback)
+    const indexPath = path.resolve(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ error: "index.html not found" });
+    }
   });
 }
