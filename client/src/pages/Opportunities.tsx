@@ -3,64 +3,50 @@ import { useLocation } from 'wouter';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, ExternalLink, Target } from 'lucide-react';
-
-// Mock data - will be replaced with tRPC calls
-const mockOpportunities = [
-  {
-    id: '1',
-    title: 'Defense IT Infrastructure Modernization',
-    agency: 'Department of Defense',
-    solicitationNumber: 'W912DQ-26-R-0001',
-    naics: '541511',
-    dueDate: '2026-06-15',
-    type: 'RFP',
-    status: 'in-review' as const,
-    value: '$2.5M - $5M',
-    linkedFiles: 3,
-    linkedContacts: 2,
-  },
-  {
-    id: '2',
-    title: 'Cloud Services for Federal Agencies',
-    agency: 'General Services Administration',
-    solicitationNumber: 'GS-07F-0123K',
-    naics: '518210',
-    dueDate: '2026-07-01',
-    type: 'RFQ',
-    status: 'new' as const,
-    value: '$1M - $3M',
-    linkedFiles: 1,
-    linkedContacts: 1,
-  },
-  {
-    id: '3',
-    title: 'Healthcare IT Solutions',
-    agency: 'Department of Veterans Affairs',
-    solicitationNumber: 'VA-2026-001',
-    naics: '541512',
-    dueDate: '2026-05-30',
-    type: 'RFP',
-    status: 'pursue' as const,
-    value: '$500K - $1.5M',
-    linkedFiles: 5,
-    linkedContacts: 3,
-  },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { trpc } from '@/lib/trpc';
+import { Plus, Search, Filter, ExternalLink, Target, Loader2 } from 'lucide-react';
+import OpportunityForm from '@/components/OpportunityForm';
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const filteredOpportunities = mockOpportunities.filter((opp) => {
+  const workspaceId = 1; // TODO: Get from context
+  const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery({
+    workspaceId,
+  });
+
+  const filteredOpportunities = opportunities.filter((opp) => {
     const matchesSearch =
       opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opp.agency.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opp.solicitationNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (opp.agency?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (opp.solicitation?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     const matchesFilter = !filterStatus || opp.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const statusOptions = [
+    'new',
+    'in_review',
+    'pursue',
+    'hold',
+    'no_pursue',
+    'moved_to_proposal',
+    'archived',
+  ];
+
+  const statusColors: Record<string, string> = {
+    new: 'bg-blue-100 text-blue-800',
+    in_review: 'bg-yellow-100 text-yellow-800',
+    pursue: 'bg-green-100 text-green-800',
+    hold: 'bg-gray-100 text-gray-800',
+    no_pursue: 'bg-red-100 text-red-800',
+    moved_to_proposal: 'bg-purple-100 text-purple-800',
+    archived: 'bg-slate-100 text-slate-800',
+  };
 
   return (
     <WorkspaceLayout>
@@ -73,7 +59,7 @@ export default function Opportunities() {
               <p>Track and review potential government contracting opportunities</p>
             </div>
             <Button
-              onClick={() => navigate('/app/opportunities/new')}
+              onClick={() => setIsCreateDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -100,8 +86,15 @@ export default function Opportunities() {
           </button>
         </div>
 
-        {/* Opportunities List */}
-        {filteredOpportunities.length > 0 ? (
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              <p className="text-slate-600">Loading opportunities...</p>
+            </div>
+          </div>
+        ) : filteredOpportunities.length > 0 ? (
           <div className="space-y-4">
             {filteredOpportunities.map((opp) => (
               <div
@@ -113,32 +106,36 @@ export default function Opportunities() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-slate-900">{opp.title}</h3>
-                      <StatusBadge status={opp.status} size="sm" />
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          opp.status ? statusColors[opp.status] : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {opp.status ? opp.status.replace(/_/g, ' ') : 'Unknown'}
+                      </span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-slate-500">Agency</p>
-                        <p className="font-medium text-slate-900">{opp.agency}</p>
+                        <p className="font-medium text-slate-900">{opp.agency || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-slate-500">Solicitation</p>
-                        <p className="font-medium text-slate-900">{opp.solicitationNumber}</p>
+                        <p className="font-medium text-slate-900">{opp.solicitation || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-slate-500">Due Date</p>
-                        <p className="font-medium text-slate-900">{new Date(opp.dueDate).toLocaleDateString()}</p>
+                        <p className="font-medium text-slate-900">
+                          {opp.dueDate ? new Date(opp.dueDate).toLocaleDateString() : 'N/A'}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Estimated Value</p>
-                        <p className="font-medium text-slate-900">{opp.value}</p>
+                        <p className="text-slate-500">Type</p>
+                        <p className="font-medium text-slate-900">{opp.type || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
                   <ExternalLink className="w-5 h-5 text-slate-400 flex-shrink-0 ml-4" />
-                </div>
-                <div className="flex gap-6 mt-4 text-xs text-slate-600">
-                  <span>{opp.linkedFiles} files</span>
-                  <span>{opp.linkedContacts} contacts</span>
                 </div>
               </div>
             ))}
@@ -155,7 +152,7 @@ export default function Opportunities() {
                 : 'Create your first opportunity to get started'}
             </div>
             <Button
-              onClick={() => navigate('/app/opportunities/new')}
+              onClick={() => setIsCreateDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -163,6 +160,22 @@ export default function Opportunities() {
             </Button>
           </div>
         )}
+
+        {/* Create Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Opportunity</DialogTitle>
+            </DialogHeader>
+            <OpportunityForm
+              workspaceId={workspaceId}
+              onSuccess={() => {
+                setIsCreateDialogOpen(false);
+              }}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </WorkspaceLayout>
   );

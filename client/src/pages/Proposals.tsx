@@ -1,45 +1,36 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
-import StatusBadge from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, Filter, ExternalLink, FileText } from 'lucide-react';
-
-const mockProposals = [
-  {
-    id: '1',
-    title: 'Defense IT Infrastructure Modernization - Proposal',
-    opportunity: 'Defense IT Infrastructure Modernization',
-    framework: 'Standard Structured',
-    status: 'in-progress' as const,
-    internalDueDate: '2026-05-30',
-    submissionDate: '2026-06-10',
-    files: 8,
-    contacts: 3,
-    readinessPercent: 75,
-  },
-  {
-    id: '2',
-    title: 'Cloud Services - Federal Agencies',
-    opportunity: 'Cloud Services for Federal Agencies',
-    framework: 'Technical/Compliance',
-    status: 'draft' as const,
-    internalDueDate: '2026-06-15',
-    submissionDate: '2026-06-25',
-    files: 2,
-    contacts: 1,
-    readinessPercent: 30,
-  },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { trpc } from '@/lib/trpc';
+import { Plus, Search, Filter, ExternalLink, FileText, Loader2 } from 'lucide-react';
+import ProposalForm from '@/components/ProposalForm';
 
 export default function Proposals() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const filteredProposals = mockProposals.filter((prop) =>
-    prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prop.opportunity.toLowerCase().includes(searchTerm.toLowerCase())
+  const workspaceId = 1; // TODO: Get from context
+  const { data: proposals = [], isLoading } = trpc.proposals.list.useQuery({
+    workspaceId,
+  });
+
+  const filteredProposals = proposals.filter((prop) =>
+    prop.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const statusColors: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-800',
+    in_progress: 'bg-blue-100 text-blue-800',
+    under_review: 'bg-yellow-100 text-yellow-800',
+    submitted: 'bg-purple-100 text-purple-800',
+    won: 'bg-green-100 text-green-800',
+    lost: 'bg-red-100 text-red-800',
+    withdrawn: 'bg-slate-100 text-slate-800',
+    archived: 'bg-slate-200 text-slate-800',
+  };
 
   return (
     <WorkspaceLayout>
@@ -52,7 +43,7 @@ export default function Proposals() {
               <p>Manage your proposal pipeline and track readiness</p>
             </div>
             <Button
-              onClick={() => navigate('/app/proposal-frameworks')}
+              onClick={() => setIsCreateDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -79,8 +70,15 @@ export default function Proposals() {
           </button>
         </div>
 
-        {/* Proposals List */}
-        {filteredProposals.length > 0 ? (
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+              <p className="text-slate-600">Loading proposals...</p>
+            </div>
+          </div>
+        ) : filteredProposals.length > 0 ? (
           <div className="space-y-4">
             {filteredProposals.map((proposal) => (
               <div
@@ -92,40 +90,35 @@ export default function Proposals() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-slate-900">{proposal.title}</h3>
-                      <StatusBadge status={proposal.status === 'in-progress' ? 'submitted' : 'draft'} size="sm" />
-                    </div>
-                    <p className="text-sm text-slate-600 mb-3">Linked to: {proposal.opportunity}</p>
-
-                    {/* Readiness Bar */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-slate-600">Readiness</span>
-                        <span className="text-xs font-semibold text-slate-900">{proposal.readinessPercent}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div
-                          className="bg-cyan-500 h-2 rounded-full transition-all"
-                          style={{ width: `${proposal.readinessPercent}%` }}
-                        ></div>
-                      </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          proposal.status ? statusColors[proposal.status] : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {proposal.status ? proposal.status.replace(/_/g, ' ') : 'Unknown'}
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-slate-500">Framework</p>
-                        <p className="font-medium text-slate-900">{proposal.framework}</p>
+                        <p className="font-medium text-slate-900">{proposal.framework || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Internal Due</p>
-                        <p className="font-medium text-slate-900">{new Date(proposal.internalDueDate).toLocaleDateString()}</p>
+                        <p className="text-slate-500">Due Date</p>
+                        <p className="font-medium text-slate-900">
+                          {proposal.dueDate ? new Date(proposal.dueDate).toLocaleDateString() : 'N/A'}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Submission</p>
-                        <p className="font-medium text-slate-900">{new Date(proposal.submissionDate).toLocaleDateString()}</p>
+                        <p className="text-slate-500">Opportunity</p>
+                        <p className="font-medium text-slate-900">{proposal.opportunityId ? `#${proposal.opportunityId}` : 'Standalone'}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Resources</p>
-                        <p className="font-medium text-slate-900">{proposal.files} files • {proposal.contacts} contacts</p>
+                        <p className="text-slate-500">Created</p>
+                        <p className="font-medium text-slate-900">
+                          {proposal.createdAt ? new Date(proposal.createdAt).toLocaleDateString() : 'N/A'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -144,7 +137,7 @@ export default function Proposals() {
               {searchTerm ? 'Try adjusting your search' : 'Create your first proposal to get started'}
             </div>
             <Button
-              onClick={() => navigate('/app/proposal-frameworks')}
+              onClick={() => setIsCreateDialogOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -152,6 +145,22 @@ export default function Proposals() {
             </Button>
           </div>
         )}
+
+        {/* Create Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Proposal</DialogTitle>
+            </DialogHeader>
+            <ProposalForm
+              workspaceId={workspaceId}
+              onSuccess={() => {
+                setIsCreateDialogOpen(false);
+              }}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </WorkspaceLayout>
   );

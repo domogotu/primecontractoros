@@ -70,30 +70,33 @@
 ## Phase 7: CRUD Operations & Detail Pages
 
 ### Opportunities CRUD
-- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
-- [ ] Implement status transition mutations with workflow validation
-- [ ] Add/Edit Opportunity forms
+- [x] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [x] Implement status transition mutations with workflow validation
+- [x] Add/Edit Opportunity forms
+- [x] Opportunity list page connected to real database queries
 - [ ] Opportunity Detail page with all sections
 - [ ] Convert to Proposal button
 - [ ] Vitest coverage for opportunity CRUD operations
 
 ### Proposals CRUD
-- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
-- [ ] Implement status transition mutations with workflow validation
-- [ ] Add/Edit Proposal forms
+- [x] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [x] Implement status transition mutations with workflow validation
+- [x] Add/Edit Proposal forms
+- [x] Proposal list page connected to real database queries
 - [ ] Proposal Workspace page with all sections
 - [ ] Convert to Contract button
 - [ ] Vitest coverage for proposal CRUD operations
 
 ### Contracts CRUD
-- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
-- [ ] Implement status transition mutations with workflow validation
-- [ ] Add/Edit Contract forms
+- [x] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [x] Implement status transition mutations with workflow validation
+- [x] Add/Edit Contract forms
+- [x] Contract list page connected to real database queries
 - [ ] Contract Overview page with all sections
 - [ ] Vitest coverage for contract CRUD operations
 
 ### Testing & Deployment
-- [ ] End-to-end CRUD testing
-- [ ] Status workflow testing
+- [ ] End-to-end CRUD testing (forms validated with tRPC integration)
+- [ ] Status workflow testing (mutations connected)
 - [ ] Save Phase 7 checkpoint
 - [ ] Deploy Phase 7

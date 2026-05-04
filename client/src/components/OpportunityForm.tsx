@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface OpportunityFormProps {
   workspaceId: number;
@@ -33,30 +33,40 @@ export default function OpportunityForm({
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch existing opportunity if editing
   const { data: opportunity } = trpc.opportunities.get.useQuery(
     { id: opportunityId || 0, workspaceId },
     { enabled: !!opportunityId }
   );
 
-  const createMutation = trpc.opportunities.create.useMutation();
-  const updateMutation = trpc.opportunities.update.useMutation();
+  const utils = trpc.useUtils();
+  const createMutation = trpc.opportunities.create.useMutation({
+    onSuccess: () => {
+      utils.opportunities.list.invalidate();
+    },
+  });
+  const updateMutation = trpc.opportunities.update.useMutation({
+    onSuccess: () => {
+      utils.opportunities.list.invalidate();
+      utils.opportunities.get.invalidate();
+    },
+  });
 
-  // Populate form when opportunity loads
-  if (opportunity && !formData.title) {
-    setFormData({
-      title: opportunity.title || "",
-      agency: opportunity.agency || "",
-      solicitation: opportunity.solicitation || "",
-      naics: opportunity.naics || "",
-      type: opportunity.type || "",
-      sourceLink: opportunity.sourceLink || "",
-      summary: opportunity.summary || "",
-      dueDate: opportunity.dueDate
-        ? new Date(opportunity.dueDate).toISOString().split("T")[0]
-        : "",
-    });
-  }
+  useEffect(() => {
+    if (opportunity && opportunityId) {
+      setFormData({
+        title: opportunity.title || "",
+        agency: opportunity.agency || "",
+        solicitation: opportunity.solicitation || "",
+        naics: opportunity.naics || "",
+        type: opportunity.type || "",
+        sourceLink: opportunity.sourceLink || "",
+        summary: opportunity.summary || "",
+        dueDate: opportunity.dueDate
+          ? new Date(opportunity.dueDate).toISOString().split("T")[0]
+          : "",
+      });
+    }
+  }, [opportunity, opportunityId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -131,7 +141,6 @@ export default function OpportunityForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Opportunity Title *
@@ -150,7 +159,6 @@ export default function OpportunityForm({
         )}
       </div>
 
-      {/* Agency */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Agency
@@ -163,7 +171,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Solicitation */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Solicitation Number
@@ -176,7 +183,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* NAICS */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           NAICS Code
@@ -189,7 +195,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Type */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Opportunity Type
@@ -202,7 +207,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Due Date */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Due Date
@@ -215,7 +219,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Source Link */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Source Link
@@ -229,7 +232,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Summary */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Summary
@@ -243,7 +245,6 @@ export default function OpportunityForm({
         />
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3 justify-end pt-4 border-t border-border">
         <Button
           type="button"
