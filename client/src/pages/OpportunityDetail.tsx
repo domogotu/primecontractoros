@@ -17,6 +17,7 @@ import {
   Target,
 } from 'lucide-react';
 import OpportunityForm from '@/components/OpportunityForm';
+import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 
 export default function OpportunityDetail() {
   const [, params] = useRoute('/app/opportunities/:id');
@@ -305,18 +306,13 @@ export default function OpportunityDetail() {
             </div>
 
             {/* AI Assistance Panel */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
-                AI Opportunity Assistance
-              </h2>
-              <p className="text-sm text-slate-700 mb-4">
-                AI can help you analyze this opportunity, identify risks, and prepare for proposal development.
-              </p>
-              <Button variant="outline" className="w-full">
-                Get AI Analysis
-              </Button>
-            </div>
+            <AIGuidancePanel
+              workspaceId={workspaceId}
+              recordType="opportunity"
+              recordId={opportunityId}
+              context={`Analyzing opportunity: ${opportunity.title} from ${opportunity.agency || 'Unknown Agency'}`}
+              title="AI Opportunity Assistance"
+            />
 
             {/* Edit Button */}
             <Button

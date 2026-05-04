@@ -16,6 +16,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import ContractForm from '@/components/ContractForm';
+import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 
 export default function ContractDetail() {
   const [, params] = useRoute('/app/contracts/:id');
@@ -294,18 +295,13 @@ export default function ContractDetail() {
             </div>
 
             {/* AI Assistance Panel */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
-                AI Contract Assistance
-              </h2>
-              <p className="text-sm text-slate-700 mb-4">
-                AI can help you track compliance, identify risks, and manage deliverables.
-              </p>
-              <Button variant="outline" className="w-full">
-                Get AI Insights
-              </Button>
-            </div>
+            <AIGuidancePanel
+              workspaceId={workspaceId}
+              recordType="contract"
+              recordId={contractId}
+              context={`Managing contract: ${contract.title} with ${contract.agency || 'Client'}`}
+              title="AI Contract Assistance"
+            />
 
             {/* Edit Button */}
             <Button
