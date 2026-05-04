@@ -2,11 +2,20 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { ArrowRight, CheckCircle2, Zap, BarChart3, Users, FileText, DollarSign, AlertCircle } from "lucide-react";
+import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 
 export default function Home() {
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
+  const { isAuthenticated: isPlatformAdmin } = usePlatformAuth();
 
+  // If platform admin is logged in, redirect to platform dashboard
+  if (isPlatformAdmin) {
+    navigate("/platform");
+    return null;
+  }
+
+  // If regular user is logged in, redirect to app dashboard
   if (isAuthenticated) {
     navigate("/app/dashboard");
     return null;
