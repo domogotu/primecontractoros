@@ -8,6 +8,13 @@
       "when": 1777887683966,
       "tag": "0000_sweet_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1777892866808,
+      "tag": "0001_demonic_enchantress",
+      "breakpoints": true
     }
   ]
 }

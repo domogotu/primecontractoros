@@ -65,3 +65,35 @@
 - [x] End-to-end workflow testing
 - [x] Save Phase 2 checkpoint
 - [x] Deploy Phase 2 to production
+
+
+## Phase 7: CRUD Operations & Detail Pages
+
+### Opportunities CRUD
+- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [ ] Implement status transition mutations with workflow validation
+- [ ] Add/Edit Opportunity forms
+- [ ] Opportunity Detail page with all sections
+- [ ] Convert to Proposal button
+- [ ] Vitest coverage for opportunity CRUD operations
+
+### Proposals CRUD
+- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [ ] Implement status transition mutations with workflow validation
+- [ ] Add/Edit Proposal forms
+- [ ] Proposal Workspace page with all sections
+- [ ] Convert to Contract button
+- [ ] Vitest coverage for proposal CRUD operations
+
+### Contracts CRUD
+- [ ] Implement Drizzle-backed create/update/delete mutations with database persistence
+- [ ] Implement status transition mutations with workflow validation
+- [ ] Add/Edit Contract forms
+- [ ] Contract Overview page with all sections
+- [ ] Vitest coverage for contract CRUD operations
+
+### Testing & Deployment
+- [ ] End-to-end CRUD testing
+- [ ] Status workflow testing
+- [ ] Save Phase 7 checkpoint
+- [ ] Deploy Phase 7

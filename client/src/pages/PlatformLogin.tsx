@@ -8,12 +8,12 @@ export default function PlatformLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       // Check against pre-seeded credentials
@@ -30,7 +30,7 @@ export default function PlatformLogin() {
     } catch (err) {
       setError("Login failed. Please try again.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -82,10 +82,10 @@ export default function PlatformLogin() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full bg-blue-900 hover:bg-blue-800 text-white py-2 rounded-lg font-medium transition-colors disabled:bg-gray-400"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
