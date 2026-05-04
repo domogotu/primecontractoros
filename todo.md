@@ -31,6 +31,37 @@
 - [x] Responsive design
 
 ## Deployment Ready
-- [ ] Save checkpoint
-- [ ] Deploy to production
-- [ ] Verify live URL access
+- [x] Save checkpoint
+- [x] Deploy to production
+- [x] Verify live URL access
+
+
+## Phase 2: Core Contracting Workflow
+
+### Opportunities Management
+- [x] Opportunities list page (/app/opportunities)
+- [x] Opportunity detail page (/app/opportunities/:id)
+- [x] Add/edit/delete opportunity operations
+- [x] Opportunity status workflow (New → In Review → Pursue/Hold/No Pursue)
+
+### Proposals Management
+- [x] Proposal Framework Selector (/app/proposal-frameworks)
+- [x] Proposals list page (/app/proposals)
+- [x] Proposal workspace (/app/proposals/:id)
+- [x] Proposal status workflow (Draft → In Progress → Submitted → Won/Lost)
+
+### Contracts Management
+- [x] Contracts list page (/app/contracts)
+- [x] Contract overview page (/app/contracts/:id)
+- [x] Contract Hub (/app/contracts/:id/hub)
+- [x] Contract status and health tracking
+
+### Workspace Navigation
+- [x] Sidebar navigation for authenticated workspace
+- [x] Navigation routing for all workflow pages
+- [x] Active page highlighting
+
+### Testing & Deployment
+- [x] End-to-end workflow testing
+- [x] Save Phase 2 checkpoint
+- [x] Deploy Phase 2 to production

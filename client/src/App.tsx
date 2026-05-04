@@ -12,8 +12,13 @@ import GetStarted from "./pages/GetStarted";
 import Login from "./pages/Login";
 import AppRouter from "./pages/AppRouter";
 import Dashboard from "./pages/Dashboard";
+import Opportunities from "./pages/Opportunities";
+import OpportunityDetail from "./pages/OpportunityDetail";
+import Proposals from "./pages/Proposals";
+import ProposalFrameworkSelector from "./pages/ProposalFrameworkSelector";
+import Contracts from "./pages/Contracts";
+
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       {/* Public pages */}
@@ -27,6 +32,13 @@ function Router() {
       {/* Post-login routes */}
       <Route path={"/app"} component={AppRouter} />
       <Route path={"/app/dashboard"} component={Dashboard} />
+      
+      {/* Workflow pages */}
+      <Route path={"/app/opportunities"} component={Opportunities} />
+      <Route path={"/app/opportunities/:id"} component={OpportunityDetail} />
+      <Route path={"/app/proposals"} component={Proposals} />
+      <Route path={"/app/proposal-frameworks"} component={ProposalFrameworkSelector} />
+      <Route path={"/app/contracts"} component={Contracts} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
