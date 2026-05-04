@@ -5,6 +5,7 @@ import { LogOut, AlertCircle, CheckCircle2, Clock, TrendingUp, Users, FileText, 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { AIGuidancePanel } from "@/components/AIGuidancePanel";
+import DashboardLayout from "@/components/DashboardLayout";
 
 /**
  * Dashboard Page
@@ -49,7 +50,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
@@ -252,6 +254,7 @@ export default function Dashboard() {
           </a>
         </div>
       </div>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

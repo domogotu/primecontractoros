@@ -115,10 +115,25 @@
 - [ ] AI panels on Opportunities, Proposals, Contracts pages
 - [ ] Source-linked findings implementation
 
+### Platform Admin Pages
+- [x] Platform owner authentication (/platform/login)
+- [x] Platform admin dashboard (/platform)
+- [x] Workspace Directory (/platform/workspaces)
+- [x] Plans Management (/platform/plans)
+- [x] Discounts & Promo Codes (/platform/discounts)
+- [x] Billing & Activation (/platform/billing)
+- [x] Support Inbox (/platform/support)
+- [x] Owner Overrides (/platform/overrides)
+- [x] Pricing History (/platform/pricing-history)
+- [x] Ownership Recovery (/platform/ownership-recovery)
+- [x] Demo Workspaces (/platform/demo-workspaces)
+- [x] Platform sidebar navigation
+
 ### Testing & Deployment
 - [ ] End-to-end CRUD testing (forms validated with tRPC integration)
 - [ ] Status workflow testing (mutations connected)
 - [ ] Vitest coverage for all CRUD operations
 - [ ] AI system end-to-end testing
+- [ ] Platform admin pages end-to-end testing
 - [ ] Save Phase 7 checkpoint
 - [ ] Deploy Phase 7

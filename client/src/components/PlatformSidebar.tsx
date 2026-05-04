@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { BarChart3, Users, CreditCard, Settings, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive } from "lucide-react";
 import { usePlatformAuth } from "@/hooks/usePlatformAuth";
 
@@ -41,10 +41,10 @@ export default function PlatformSidebar() {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
-            <button
+            <Link
               key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+              href={item.path}
+              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors block ${
                 active
                   ? "bg-blue-800 text-white"
                   : "text-blue-100 hover:bg-blue-800/50"
@@ -52,19 +52,19 @@ export default function PlatformSidebar() {
             >
               <Icon className="w-5 h-5" />
               <span className="text-sm font-medium">{item.label}</span>
-            </button>
+            </Link>
           );
         })}
       </nav>
 
       {/* Switch to App */}
       <div className="border-t border-blue-800 p-4">
-        <button
-          onClick={() => navigate("/app/dashboard")}
-          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium mb-3"
+        <Link
+          href="/app/dashboard"
+          className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium mb-3 block text-center"
         >
           Switch to App
-        </button>
+        </Link>
       </div>
 
       {/* User Info & Logout */}
