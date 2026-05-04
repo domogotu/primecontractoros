@@ -45,6 +45,16 @@ import Obligations from "./pages/Obligations";
 import Deliverables from "./pages/Deliverables";
 import Deadlines from "./pages/Deadlines";
 import Compliance from "./pages/Compliance";
+import Glossary from "./pages/Glossary";
+import Support from "./pages/Support";
+import Users from "./pages/Users";
+import Alerts from "./pages/Alerts";
+import Tasks from "./pages/Tasks";
+import FileDetail from "./pages/FileDetail";
+import ContactDetail from "./pages/ContactDetail";
+import MessageDetail from "./pages/MessageDetail";
+import InvoiceDetail from "./pages/InvoiceDetail";
+import PaymentDetail from "./pages/PaymentDetail";
 
 function Router() {
   return (
@@ -54,6 +64,8 @@ function Router() {
       <Route path={"/features"} component={Features} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/help"} component={Help} />
+      <Route path={"/glossary"} component={Glossary} />
+      <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
       <Route path={"/login"} component={Login} />
       
@@ -77,10 +89,15 @@ function Router() {
       {/* Active operations pages */}
       <Route path={"/app/clients"} component={Clients} />
       <Route path={"/app/files"} component={Files} />
+      <Route path={"/app/files/:id"} component={FileDetail} />
       <Route path={"/app/contacts"} component={Contacts} />
+      <Route path={"/app/contacts/:id"} component={ContactDetail} />
       <Route path={"/app/messages"} component={Messages} />
+      <Route path={"/app/messages/:id"} component={MessageDetail} />
       <Route path={"/app/invoices"} component={Invoices} />
+      <Route path={"/app/invoices/:id"} component={InvoiceDetail} />
       <Route path={"/app/payments"} component={Payments} />
+      <Route path={"/app/payments/:id"} component={PaymentDetail} />
       <Route path={"/app/finance"} component={Finance} />
       <Route path={"/app/obligations"} component={Obligations} />
       <Route path={"/app/deliverables"} component={Deliverables} />
@@ -93,6 +110,9 @@ function Router() {
       <Route path={"/app/profile"} component={UserProfile} />
       <Route path={"/app/settings"} component={Settings} />
       <Route path={"/app/subscription"} component={Subscription} />
+      <Route path={"/app/users"} component={Users} />
+      <Route path={"/app/alerts"} component={Alerts} />
+      <Route path={"/app/tasks"} component={Tasks} />
       
       {/* Contract Hub, AI, and Learning pages */}
       <Route path={"/app/contracts/:id/hub"} component={ContractHub} />
