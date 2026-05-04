@@ -23,6 +23,14 @@ import Messages from "./pages/Messages";
 import Invoices from "./pages/Invoices";
 import Payments from "./pages/Payments";
 import Finance from "./pages/Finance";
+import ContractHub from "./pages/ContractHub";
+import AIConfirmationWorkspace from "./pages/AIConfirmationWorkspace";
+import Reports from "./pages/Reports";
+import CapabilityStatements from "./pages/CapabilityStatements";
+import Templates from "./pages/Templates";
+import Closeout from "./pages/Closeout";
+import LossReview from "./pages/LossReview";
+import LessonsLearned from "./pages/LessonsLearned";
 
 function Router() {
   return (
@@ -53,6 +61,16 @@ function Router() {
       <Route path={"/app/invoices"} component={Invoices} />
       <Route path={"/app/payments"} component={Payments} />
       <Route path={"/app/finance"} component={Finance} />
+      
+      {/* Contract Hub, AI, and Learning pages */}
+      <Route path={"/app/contracts/:id/hub"} component={ContractHub} />
+      <Route path={"/app/contracts/:id/ai-confirmation"} component={AIConfirmationWorkspace} />
+      <Route path={"/app/reports"} component={Reports} />
+      <Route path={"/app/capability-statements"} component={CapabilityStatements} />
+      <Route path={"/app/templates"} component={Templates} />
+      <Route path={"/app/contracts/:id/closeout"} component={Closeout} />
+      <Route path={"/app/proposals/:id/loss-review"} component={LossReview} />
+      <Route path={"/app/lessons"} component={LessonsLearned} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
