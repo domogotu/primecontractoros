@@ -165,6 +165,33 @@ export const appRouter = router({
           throw error;
         }
       }),
+    convertToProposal: publicProcedure
+      .input(z.object({
+        opportunityId: z.number(),
+        workspaceId: z.number(),
+        proposalTitle: z.string().min(1),
+        framework: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const opportunity = await getOpportunity(input.opportunityId, input.workspaceId);
+          if (!opportunity) {
+            throw new Error("Opportunity not found");
+          }
+          const proposal = await createProposal({
+            workspaceId: input.workspaceId,
+            title: input.proposalTitle,
+            opportunityId: input.opportunityId,
+            framework: input.framework,
+            dueDate: opportunity.dueDate || undefined,
+          });
+          await updateOpportunityStatus(input.opportunityId, input.workspaceId, "moved_to_proposal");
+          return { success: true, proposalId: proposal };
+        } catch (error) {
+          console.error("Error converting opportunity to proposal:", error);
+          throw error;
+        }
+      }),
   }),
   proposals: router({
     list: publicProcedure
@@ -246,6 +273,32 @@ export const appRouter = router({
           return { success: true };
         } catch (error) {
           console.error("Error updating proposal status:", error);
+          throw error;
+        }
+      }),
+    convertToContract: publicProcedure
+      .input(z.object({
+        proposalId: z.number(),
+        workspaceId: z.number(),
+        contractTitle: z.string().min(1),
+        contractNumber: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const proposal = await getProposal(input.proposalId, input.workspaceId);
+          if (!proposal) {
+            throw new Error("Proposal not found");
+          }
+          const contract = await createContract({
+            workspaceId: input.workspaceId,
+            title: input.contractTitle,
+            proposalId: input.proposalId,
+            contractNumber: input.contractNumber || undefined,
+          });
+          await updateProposalStatus(input.proposalId, input.workspaceId, "won");
+          return { success: true, contractId: contract };
+        } catch (error) {
+          console.error("Error converting proposal to contract:", error);
           throw error;
         }
       }),
@@ -351,6 +404,26 @@ export const appRouter = router({
           return { success: true };
         } catch (error) {
           console.error("Error updating contract health:", error);
+          throw error;
+        }
+      }),
+    convertFromProposal: publicProcedure
+      .input(z.object({
+        proposalId: z.number(),
+        workspaceId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const proposal = await getProposal(input.proposalId, input.workspaceId);
+          if (!proposal) {
+            throw new Error("Proposal not found");
+          }
+          return {
+            proposalTitle: proposal.title,
+            opportunityId: proposal.opportunityId,
+          };
+        } catch (error) {
+          console.error("Error fetching proposal for conversion:", error);
           throw error;
         }
       }),
