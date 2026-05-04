@@ -231,6 +231,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <div className="mt-12 pt-8 border-t border-border text-center text-xs text-muted-foreground">
+          <p>PrimeContractorOS — A Reed Solutions LLC Product</p>
+          <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            Visit Reed Solutions LLC →
+          </a>
+        </div>
       </div>
     </div>
   );

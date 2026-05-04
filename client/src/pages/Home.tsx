@@ -50,7 +50,10 @@ export default function Home() {
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold text-blue-900">PrimeContractorOS</div>
+          <div>
+            <div className="text-2xl font-bold text-blue-900">PrimeContractorOS</div>
+            <div className="text-xs text-gray-600">A Reed Solutions LLC Product</div>
+          </div>
           <div className="flex gap-4">
             <Button variant="ghost" onClick={() => navigate("/features")} className="text-gray-600 hover:text-blue-900">
               Features
@@ -61,7 +64,7 @@ export default function Home() {
             <Button variant="ghost" onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">
               Help
             </Button>
-            <Button onClick={() => navigate("/login")} className="bg-blue-900 hover:bg-blue-800 text-white">
+            <Button variant="outline" onClick={() => navigate("/login")} className="text-blue-900 border-blue-900">
               Sign In
             </Button>
           </div>
@@ -74,8 +77,11 @@ export default function Home() {
           <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
             Your Guided Operating System for Government Contracting
           </h1>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-blue-100 mb-4">
             Move through the full contracting lifecycle—from opportunity to proposal to contract to closeout—with a system that guides you every step of the way.
+          </p>
+          <p className="text-sm text-blue-200 italic mb-8">
+            Built by <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-white hover:underline font-medium">Reed Solutions LLC</a>
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button onClick={() => navigate("/get-started")} className="bg-green-600 hover:bg-green-700 text-white text-base px-6 py-3">
@@ -84,26 +90,57 @@ export default function Home() {
             <Button onClick={() => navigate("/pricing")} className="bg-white text-blue-900 hover:bg-gray-100 text-base px-6 py-3">
               Review Plans
             </Button>
-            <Button onClick={() => navigate("/help")} className="bg-blue-800 hover:bg-blue-700 text-white text-base px-6 py-3 border border-white">
-              Learn More
-            </Button>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-16 md:py-24 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-blue-900 mb-4">What You Can Do</h2>
-          <p className="text-gray-600 mb-12">Manage every stage of government contracting with integrated tools and guidance</p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Who This Is For */}
+      <section className="py-16 md:py-24 border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-blue-900 mb-12">Who This Is For</h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-900">Prime Contractors</h3>
+              <p className="text-gray-600">
+                Manage your government contracting operations, track opportunities, build proposals, and oversee active contracts with built-in compliance guidance.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-900">Subcontractors</h3>
+              <p className="text-gray-600">
+                Coordinate with prime contractors, manage your own pipeline, and track subcontract performance and compliance.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-900">New to Government Contracting</h3>
+              <p className="text-gray-600">
+                Learn as you go with built-in guidance, glossary definitions, and step-by-step workflows that explain what each stage means.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-blue-900">Established Contractors</h3>
+              <p className="text-gray-600">
+                Scale your operations with team collaboration, advanced reporting, and AI-powered insights to improve your win rate.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features */}
+      <section className="py-16 md:py-24 border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-3xl font-bold text-blue-900 mb-12">What You Can Do</h2>
+          <div className="grid md:grid-cols-2 gap-8">
             {features.map((feature, idx) => {
               const Icon = feature.icon;
               return (
-                <div key={idx} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                  <Icon className="h-8 w-8 text-blue-900 mb-3" />
-                  <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                  <p className="text-sm text-gray-600">{feature.description}</p>
+                <div key={idx} className="flex gap-4 p-6 rounded-lg bg-gray-50 border border-gray-200 hover:border-blue-900/30 transition-colors">
+                  <Icon className="h-6 w-6 text-blue-900 flex-shrink-0 mt-1" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{feature.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{feature.description}</p>
+                  </div>
                 </div>
               );
             })}
@@ -111,42 +148,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-blue-900 mb-12">How It Works</h2>
-          <div className="space-y-8">
-            {[
-              { num: 1, title: "Create Your Workspace", desc: "Sign up with your company information and choose your access level." },
-              { num: 2, title: "Set Up Your Profile", desc: "Add your business details, certifications, and contracting model." },
-              { num: 3, title: "Start Your Workflow", desc: "Track opportunities, build proposals, manage contracts, and get AI guidance." },
-            ].map((step) => (
-              <div key={step.num} className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-lg">
-                  {step.num}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{step.title}</h3>
-                  <p className="text-gray-600">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Different */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      {/* Why It Feels Different */}
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-blue-900 mb-12">Why It Feels Different</h2>
           <div className="space-y-4">
             {[
-              "Not just storage—a guided workflow that knows where you are",
-              "Built for newer and experienced contractors alike",
-              "Workspace-first design—your company is the center",
-              "Connected data—files, contacts, tasks are linked to what matters",
-              "Compliance-aware—reminders based on government rules",
-              "AI-powered—intelligent recommendations and review assistance",
+              "Not just storage—a guided workflow that knows where you are in the contracting process",
+              "Built for newer contractors and experienced teams alike—guidance is optional, not intrusive",
+              "Workspace-first design—your company is the center, not your personal account",
+              "Connected data—files, contacts, tasks, and alerts are linked to the records that matter",
+              "Compliance-aware—reminders and guidance based on government contracting rules",
+              "AI-powered—get intelligent recommendations and proposal review assistance",
             ].map((item, idx) => (
               <div key={idx} className="flex gap-3 items-start">
                 <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -174,13 +187,24 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-12">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-sm text-gray-600">© 2026 PrimeContractorOS. All rights reserved.</div>
-          <div className="flex gap-6 text-sm">
-            <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Help</button>
-            <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Glossary</button>
-            <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Support</button>
+      <footer className="bg-gray-50 border-t border-gray-200 py-12">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
+            <div>
+              <div className="text-sm font-medium text-gray-900 mb-2">PrimeContractorOS</div>
+              <div className="text-xs text-gray-600">A Reed Solutions LLC Product</div>
+              <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-900 hover:underline mt-2 inline-block">
+                Visit Reed Solutions LLC →
+              </a>
+            </div>
+            <div className="flex gap-6 text-sm">
+              <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Help</button>
+              <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Glossary</button>
+              <button onClick={() => navigate("/help")} className="text-gray-600 hover:text-blue-900">Support</button>
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-6 text-xs text-gray-600 text-center">
+            © 2026 PrimeContractorOS by Reed Solutions LLC. All rights reserved.
           </div>
         </div>
       </footer>
