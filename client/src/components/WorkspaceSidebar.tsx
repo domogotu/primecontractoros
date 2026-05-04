@@ -1,5 +1,6 @@
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { usePlatformAuth } from '@/hooks/usePlatformAuth';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
@@ -13,11 +14,13 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 
 export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
+  const { isAuthenticated: isPlatformOwner } = usePlatformAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
@@ -64,6 +67,19 @@ export default function WorkspaceSidebar() {
           );
         })}
       </nav>
+
+      {/* Switch to Platform Admin (Platform Owner Only) */}
+      {isPlatformOwner && (
+        <div className="border-t border-slate-800 p-4">
+          <Button
+            onClick={() => navigate('/platform')}
+            className="w-full justify-start bg-blue-900 hover:bg-blue-800 text-white mb-2"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Platform Admin
+          </Button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-4">

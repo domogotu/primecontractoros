@@ -31,19 +31,8 @@ import Templates from "./pages/Templates";
 import Closeout from "./pages/Closeout";
 import LossReview from "./pages/LossReview";
 import LessonsLearned from "./pages/LessonsLearned";
-import PlatformAdmin from "./pages/PlatformAdmin";
-import {
-  PlatformWorkspaceSummary,
-  PlatformPlans,
-  PlatformDiscounts,
-  PlatformBilling,
-  PlatformOverrides,
-  PlatformSupport,
-  PlatformPricingHistory,
-  PlatformOwnershipRecovery,
-  PlatformDemoWorkspaces,
-  PlatformTasks,
-} from "./pages/PlatformPages";
+import PlatformLogin from "./pages/PlatformLogin";
+import PlatformRouter from "./pages/PlatformRouter";
 
 function Router() {
   return (
@@ -61,17 +50,8 @@ function Router() {
       <Route path={"/app/dashboard"} component={Dashboard} />
       
       {/* Platform Owner pages */}
-      <Route path={"/platform"} component={PlatformAdmin} />
-      <Route path={"/platform/workspaces/:id"} component={PlatformWorkspaceSummary} />
-      <Route path={"/platform/plans"} component={PlatformPlans} />
-      <Route path={"/platform/discounts"} component={PlatformDiscounts} />
-      <Route path={"/platform/billing"} component={PlatformBilling} />
-      <Route path={"/platform/overrides"} component={PlatformOverrides} />
-      <Route path={"/platform/support"} component={PlatformSupport} />
-      <Route path={"/platform/pricing-history"} component={PlatformPricingHistory} />
-      <Route path={"/platform/ownership-recovery"} component={PlatformOwnershipRecovery} />
-      <Route path={"/platform/demo-workspaces"} component={PlatformDemoWorkspaces} />
-      <Route path={"/platform/tasks"} component={PlatformTasks} />
+      <Route path={"/platform/login"} component={PlatformLogin} />
+      <Route path={"/platform*"} component={PlatformRouter} />
       
       {/* Workflow pages */}
       <Route path={"/app/opportunities"} component={Opportunities} />
