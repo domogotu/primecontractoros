@@ -8,6 +8,7 @@ import {
   Briefcase,
   Folder,
   Users,
+  Mail,
   DollarSign,
   Settings,
   LogOut,
@@ -25,6 +26,7 @@ export default function WorkspaceSidebar() {
     { icon: Briefcase, label: 'Contracts', path: '/app/contracts' },
     { icon: Folder, label: 'Files', path: '/app/files' },
     { icon: Users, label: 'Contacts', path: '/app/contacts' },
+    { icon: Mail, label: 'Messages', path: '/app/messages' },
     { icon: DollarSign, label: 'Finance', path: '/app/finance' },
     { icon: Settings, label: 'Settings', path: '/app/settings' },
   ];

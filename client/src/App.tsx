@@ -17,6 +17,12 @@ import OpportunityDetail from "./pages/OpportunityDetail";
 import Proposals from "./pages/Proposals";
 import ProposalFrameworkSelector from "./pages/ProposalFrameworkSelector";
 import Contracts from "./pages/Contracts";
+import Files from "./pages/Files";
+import Contacts from "./pages/Contacts";
+import Messages from "./pages/Messages";
+import Invoices from "./pages/Invoices";
+import Payments from "./pages/Payments";
+import Finance from "./pages/Finance";
 
 function Router() {
   return (
@@ -39,6 +45,14 @@ function Router() {
       <Route path={"/app/proposals"} component={Proposals} />
       <Route path={"/app/proposal-frameworks"} component={ProposalFrameworkSelector} />
       <Route path={"/app/contracts"} component={Contracts} />
+      
+      {/* Active operations pages */}
+      <Route path={"/app/files"} component={Files} />
+      <Route path={"/app/contacts"} component={Contacts} />
+      <Route path={"/app/messages"} component={Messages} />
+      <Route path={"/app/invoices"} component={Invoices} />
+      <Route path={"/app/payments"} component={Payments} />
+      <Route path={"/app/finance"} component={Finance} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
