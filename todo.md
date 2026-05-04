@@ -112,8 +112,15 @@
 - [x] AIGuidancePanel reusable component
 - [x] OpenAI API integration (gpt-4.1-mini model)
 - [x] AI panel integrated on Dashboard
-- [ ] AI panels on Opportunities, Proposals, Contracts pages
+- [x] AI panels on Opportunities, Proposals, Contracts pages
 - [ ] Source-linked findings implementation
+- [ ] AI Confirmation Workspace page (/app/ai-confirmation)
+- [ ] AI runs list with source files and finding counts
+- [ ] Findings table with category, summary, source, location, confidence, status
+- [ ] Finding detail view with extracted text and source reference
+- [ ] Approve/Hold/Reject/Needs Manual Review actions
+- [ ] Batch actions for multiple findings
+- [ ] Audit trail of AI runs and finding state changes
 
 ### Platform Admin Pages
 - [x] Platform owner authentication (/platform/login)

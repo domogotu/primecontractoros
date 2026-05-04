@@ -40,6 +40,11 @@ import BusinessProfile from "./pages/BusinessProfile";
 import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
 import Subscription from "./pages/Subscription";
+import Clients from "./pages/Clients";
+import Obligations from "./pages/Obligations";
+import Deliverables from "./pages/Deliverables";
+import Deadlines from "./pages/Deadlines";
+import Compliance from "./pages/Compliance";
 
 function Router() {
   return (
@@ -70,12 +75,17 @@ function Router() {
       <Route path={"/app/contracts/:id"} component={ContractDetail} />
       
       {/* Active operations pages */}
+      <Route path={"/app/clients"} component={Clients} />
       <Route path={"/app/files"} component={Files} />
       <Route path={"/app/contacts"} component={Contacts} />
       <Route path={"/app/messages"} component={Messages} />
       <Route path={"/app/invoices"} component={Invoices} />
       <Route path={"/app/payments"} component={Payments} />
       <Route path={"/app/finance"} component={Finance} />
+      <Route path={"/app/obligations"} component={Obligations} />
+      <Route path={"/app/deliverables"} component={Deliverables} />
+      <Route path={"/app/deadlines"} component={Deadlines} />
+      <Route path={"/app/compliance"} component={Compliance} />
       
       {/* User Setup & Profile pages */}
       <Route path={"/app/onboarding"} component={Onboarding} />
