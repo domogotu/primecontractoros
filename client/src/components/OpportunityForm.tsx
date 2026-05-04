@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { NAICS_CODES, OPPORTUNITY_SOURCES, CONTRACT_TYPES } from "@shared/govContracting";
 
 interface OpportunityFormProps {
   workspaceId: number;
@@ -187,24 +188,66 @@ export default function OpportunityForm({
         <label className="block text-sm font-medium text-foreground mb-2">
           NAICS Code
         </label>
-        <Input
+        <select
           name="naics"
           value={formData.naics}
-          onChange={handleChange}
-          placeholder="e.g., 541330"
-        />
+          onChange={(e) => {
+            setFormData((prev) => ({ ...prev, naics: e.target.value }));
+            if (errors.naics) {
+              setErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors.naics;
+                return newErrors;
+              });
+            }
+          }}
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Select NAICS Code...</option>
+          {NAICS_CODES.map((code) => (
+            <option key={code.code} value={code.code}>
+              {code.code} - {code.label} (SBA Size: {code.sbaSize})
+            </option>
+          ))}
+        </select>
+        {errors.naics && (
+          <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" /> {errors.naics}
+          </p>
+        )}
       </div>
 
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
-          Opportunity Type
+          Contract Type
         </label>
-        <Input
+        <select
           name="type"
           value={formData.type}
-          onChange={handleChange}
-          placeholder="e.g., GSA Schedule, Set-Aside, Open Competition"
-        />
+          onChange={(e) => {
+            setFormData((prev) => ({ ...prev, type: e.target.value }));
+            if (errors.type) {
+              setErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors.type;
+                return newErrors;
+              });
+            }
+          }}
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Select Contract Type...</option>
+          {CONTRACT_TYPES.map((type) => (
+            <option key={type.code} value={type.code}>
+              {type.label} ({type.farReference})
+            </option>
+          ))}
+        </select>
+        {errors.type && (
+          <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+            <AlertCircle className="w-4 h-4" /> {errors.type}
+          </p>
+        )}
       </div>
 
       <div>

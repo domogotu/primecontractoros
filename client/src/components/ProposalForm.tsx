@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
+import { EVALUATION_CRITERIA } from "@shared/govContracting";
 
 interface ProposalFormProps {
   workspaceId: number;
@@ -23,10 +24,19 @@ export default function ProposalForm({
     opportunityId: "",
     framework: "",
     dueDate: "",
+    evaluationCriteria: [] as string[],
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const proposalFrameworks = [
+    { code: 'STANDARD', label: 'Standard Proposal (Technical, Past Performance, Price)' },
+    { code: 'TECHNICAL_ONLY', label: 'Technical Only' },
+    { code: 'COST_PLUS_TECHNICAL', label: 'Cost Plus Technical' },
+    { code: 'PAST_PERFORMANCE', label: 'Past Performance Focused' },
+    { code: 'SMALL_BUSINESS', label: 'Small Business Emphasis' },
+  ];
 
   // Fetch existing proposal if editing
   const { data: proposal } = trpc.proposals.get.useQuery(
@@ -46,10 +56,11 @@ export default function ProposalForm({
       dueDate: proposal.dueDate
         ? new Date(proposal.dueDate).toISOString().split("T")[0]
         : "",
+      evaluationCriteria: proposal.evaluationCriteria?.split(',') || [],
     });
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -59,6 +70,17 @@ export default function ProposalForm({
         return newErrors;
       });
     }
+  };
+
+  const handleEvaluationCriteriaChange = (criteriaCode: string) => {
+    setFormData((prev) => {
+      const current = prev.evaluationCriteria || [];
+      if (current.includes(criteriaCode)) {
+        return { ...prev, evaluationCriteria: current.filter((c) => c !== criteriaCode) };
+      } else {
+        return { ...prev, evaluationCriteria: [...current, criteriaCode] };
+      }
+    });
   };
 
   const validateForm = (): boolean => {
@@ -90,6 +112,7 @@ export default function ProposalForm({
           : undefined,
         framework: formData.framework || undefined,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
+        evaluationCriteria: formData.evaluationCriteria?.join(',') || undefined,
       };
 
       if (proposalId) {
@@ -118,7 +141,6 @@ export default function ProposalForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Title */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Proposal Title *
@@ -127,7 +149,7 @@ export default function ProposalForm({
           name="title"
           value={formData.title}
           onChange={handleChange}
-          placeholder="e.g., GSA Schedule Proposal"
+          placeholder="e.g., Proposal for IT Services Contract"
           className={errors.title ? "border-red-500" : ""}
         />
         {errors.title && (
@@ -137,34 +159,63 @@ export default function ProposalForm({
         )}
       </div>
 
-      {/* Opportunity ID */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
-          Opportunity ID
+          Linked Opportunity
         </label>
         <Input
           name="opportunityId"
           type="number"
           value={formData.opportunityId}
           onChange={handleChange}
-          placeholder="Link to an opportunity (optional)"
+          placeholder="Opportunity ID (optional)"
         />
       </div>
 
-      {/* Framework */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Proposal Framework
         </label>
-        <Input
+        <select
           name="framework"
           value={formData.framework}
           onChange={handleChange}
-          placeholder="e.g., Standard Structured, Capability Statement"
-        />
+          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Select Framework...</option>
+          {proposalFrameworks.map((fw) => (
+            <option key={fw.code} value={fw.code}>
+              {fw.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground mt-1">
+          Per FAR Part 15 - Contracting by Negotiation
+        </p>
       </div>
 
-      {/* Due Date */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          Evaluation Criteria (Select all that apply)
+        </label>
+        <div className="space-y-2">
+          {EVALUATION_CRITERIA.map((criteria) => (
+            <label key={criteria.code} className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.evaluationCriteria?.includes(criteria.code) || false}
+                onChange={() => handleEvaluationCriteriaChange(criteria.code)}
+                className="mt-1 w-4 h-4 rounded border-border focus:ring-2 focus:ring-primary"
+              />
+              <div>
+                <p className="font-medium text-sm">{criteria.label}</p>
+                <p className="text-xs text-muted-foreground">{criteria.description} ({criteria.weight})</p>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Due Date
@@ -177,23 +228,19 @@ export default function ProposalForm({
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 justify-end pt-4 border-t border-border">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
+      <div className="flex gap-3 pt-4">
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-primary hover:bg-primary/90"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {isLoading ? "Saving..." : proposalId ? "Update" : "Create"}
+          {isLoading ? "Saving..." : proposalId ? "Update Proposal" : "Create Proposal"}
         </Button>
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );
