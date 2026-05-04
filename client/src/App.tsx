@@ -33,6 +33,13 @@ import LossReview from "./pages/LossReview";
 import LessonsLearned from "./pages/LessonsLearned";
 import PlatformLogin from "./pages/PlatformLogin";
 import PlatformRouter from "./pages/PlatformRouter";
+import ProposalDetail from "./pages/ProposalDetail";
+import ContractDetail from "./pages/ContractDetail";
+import Onboarding from "./pages/Onboarding";
+import BusinessProfile from "./pages/BusinessProfile";
+import UserProfile from "./pages/UserProfile";
+import Settings from "./pages/Settings";
+import Subscription from "./pages/Subscription";
 
 function Router() {
   return (
@@ -57,8 +64,10 @@ function Router() {
       <Route path={"/app/opportunities"} component={Opportunities} />
       <Route path={"/app/opportunities/:id"} component={OpportunityDetail} />
       <Route path={"/app/proposals"} component={Proposals} />
+      <Route path={"/app/proposals/:id"} component={ProposalDetail} />
       <Route path={"/app/proposal-frameworks"} component={ProposalFrameworkSelector} />
       <Route path={"/app/contracts"} component={Contracts} />
+      <Route path={"/app/contracts/:id"} component={ContractDetail} />
       
       {/* Active operations pages */}
       <Route path={"/app/files"} component={Files} />
@@ -67,6 +76,13 @@ function Router() {
       <Route path={"/app/invoices"} component={Invoices} />
       <Route path={"/app/payments"} component={Payments} />
       <Route path={"/app/finance"} component={Finance} />
+      
+      {/* User Setup & Profile pages */}
+      <Route path={"/app/onboarding"} component={Onboarding} />
+      <Route path={"/app/business-profile"} component={BusinessProfile} />
+      <Route path={"/app/profile"} component={UserProfile} />
+      <Route path={"/app/settings"} component={Settings} />
+      <Route path={"/app/subscription"} component={Subscription} />
       
       {/* Contract Hub, AI, and Learning pages */}
       <Route path={"/app/contracts/:id/hub"} component={ContractHub} />

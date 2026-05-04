@@ -74,8 +74,8 @@
 - [x] Implement status transition mutations with workflow validation
 - [x] Add/Edit Opportunity forms
 - [x] Opportunity list page connected to real database queries
-- [ ] Opportunity Detail page with all sections
-- [ ] Convert to Proposal button
+- [x] Opportunity Detail page with all sections
+- [x] Convert to Proposal button
 - [ ] Vitest coverage for opportunity CRUD operations
 
 ### Proposals CRUD
@@ -83,8 +83,8 @@
 - [x] Implement status transition mutations with workflow validation
 - [x] Add/Edit Proposal forms
 - [x] Proposal list page connected to real database queries
-- [ ] Proposal Workspace page with all sections
-- [ ] Convert to Contract button
+- [x] Proposal Workspace page with all sections
+- [x] Convert to Contract button
 - [ ] Vitest coverage for proposal CRUD operations
 
 ### Contracts CRUD
@@ -92,11 +92,23 @@
 - [x] Implement status transition mutations with workflow validation
 - [x] Add/Edit Contract forms
 - [x] Contract list page connected to real database queries
-- [ ] Contract Overview page with all sections
+- [x] Contract Overview page with all sections
 - [ ] Vitest coverage for contract CRUD operations
+
+### Conversion Workflows
+- [x] Opportunity → Proposal conversion with data carry-forward
+- [x] Proposal → Contract conversion with data carry-forward
+
+### Onboarding & User Setup
+- [x] Onboarding page with 4-step setup flow
+- [x] Business Profile page with company info and registration
+- [x] User Profile page with personal info and preferences
+- [x] Settings page with workspace and notification preferences
+- [x] Subscription Summary page with plan details
 
 ### Testing & Deployment
 - [ ] End-to-end CRUD testing (forms validated with tRPC integration)
 - [ ] Status workflow testing (mutations connected)
+- [ ] Vitest coverage for all CRUD operations
 - [ ] Save Phase 7 checkpoint
 - [ ] Deploy Phase 7
