@@ -16,12 +16,14 @@ export default function PlatformLogin() {
     setLoading(true);
 
     try {
-      // TODO: Replace with actual platform owner authentication
-      // For now, check against pre-seeded credentials
+      // Check against pre-seeded credentials
       if (email === "dominiquereed35@gmail.com" && password === "admin123") {
         // Store platform owner session
         localStorage.setItem("platformOwnerAuth", JSON.stringify({ email, timestamp: Date.now() }));
-        navigate("/platform");
+        // Force a small delay to ensure state updates
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Navigate to platform admin
+        navigate("/platform", { replace: true });
       } else {
         setError("Invalid credentials. Please try again.");
       }

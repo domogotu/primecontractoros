@@ -54,7 +54,10 @@ export default function Login() {
         }
 
         toast.success("Logged in successfully!");
-        navigate("/app/dashboard");
+        // Force a small delay to ensure state updates
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Navigate to dashboard
+        navigate("/app/dashboard", { replace: true });
       } else {
         toast.error("Login failed");
       }
