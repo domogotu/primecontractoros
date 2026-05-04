@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,7 +48,7 @@ export default function UserProfile() {
   };
 
   return (
-    <WorkspaceLayout>
+    <PageLayout title="User Profile" subtitle="Manage your personal account settings" label="Account">
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
@@ -274,6 +274,6 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import {
   CreditCard,
@@ -82,19 +82,17 @@ export default function Subscription() {
   );
 
   return (
-    <WorkspaceLayout>
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/app/dashboard')}
-            className="text-blue-600 hover:text-blue-700 mb-4 text-sm"
-          >
-            ← Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Subscription & Billing</h1>
-          <p className="text-slate-600">Manage your subscription plan and billing information.</p>
-        </div>
+    <PageLayout
+      title="Subscription & Billing"
+      subtitle="Manage your subscription plan and billing information"
+      label="Billing"
+      summaryCards={[
+        { label: "Current Plan", value: currentPlan.name },
+        { label: "Monthly Cost", value: `$${currentPlan.price}`, color: "text-blue-600" },
+        { label: "Renewal", value: `${daysUntilRenewal} days`, color: "text-gray-600" },
+        { label: "Status", value: "Active", color: "text-green-600" },
+      ]}
+    >
 
         {/* Current Plan Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -298,7 +296,6 @@ export default function Subscription() {
             </div>
           </div>
         </div>
-      </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

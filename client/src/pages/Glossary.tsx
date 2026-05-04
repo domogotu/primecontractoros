@@ -13,18 +13,18 @@ export default function Glossary() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Glossary</h1>
-          <p className="text-blue-100">Common terms and definitions used in government contracting</p>
+          <p className="text-gray-600">Common terms and definitions used in government contracting</p>
         </div>
 
         <div className="space-y-4">
           {terms.map((item, idx) => (
             <div key={idx} className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
               <h3 className="text-xl font-semibold mb-2">{item.term}</h3>
-              <p className="text-blue-100">{item.definition}</p>
+              <p className="text-gray-600">{item.definition}</p>
             </div>
           ))}
         </div>

@@ -13,7 +13,7 @@ export function PlatformWorkspaces() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Workspace Directory</h1>
         <p className="text-blue-100">Manage all customer workspaces</p>
@@ -58,7 +58,7 @@ export function PlatformWorkspaces() {
 // Platform Workspace Summary
 export function PlatformWorkspaceSummary() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Workspace Summary</h1>
         <p className="text-blue-100">TechFlow Solutions - Workspace ID: 1</p>
@@ -97,7 +97,7 @@ export function PlatformPlans() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Plans Management</h1>
         <p className="text-blue-100">Configure and manage subscription plans</p>
@@ -124,7 +124,7 @@ export function PlatformPlans() {
 // Discounts Management
 export function PlatformDiscounts() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Discounts Management</h1>
         <p className="text-blue-100">Create and manage promotional discounts</p>
@@ -145,7 +145,7 @@ export function PlatformDiscounts() {
 // Billing Management
 export function PlatformBilling() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Billing Management</h1>
         <p className="text-blue-100">View and manage billing settings</p>
@@ -170,7 +170,7 @@ export function PlatformBilling() {
 // Overrides Management
 export function PlatformOverrides() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Overrides Management</h1>
         <p className="text-blue-100">Configure system overrides and exceptions</p>
@@ -188,7 +188,7 @@ export function PlatformOverrides() {
 // Support Management
 export function PlatformSupport() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Support Management</h1>
         <p className="text-blue-100">Manage customer support tickets</p>
@@ -217,7 +217,7 @@ export function PlatformSupport() {
 // Pricing History
 export function PlatformPricingHistory() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Pricing History</h1>
         <p className="text-blue-100">View historical pricing changes</p>
@@ -235,7 +235,7 @@ export function PlatformPricingHistory() {
 // Ownership Recovery
 export function PlatformOwnershipRecovery() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Ownership Recovery</h1>
         <p className="text-blue-100">Manage workspace ownership transfers</p>
@@ -253,7 +253,7 @@ export function PlatformOwnershipRecovery() {
 // Demo Workspaces
 export function PlatformDemoWorkspaces() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Demo Workspaces</h1>
         <p className="text-blue-100">Create and manage demo workspaces for trials</p>
@@ -274,7 +274,7 @@ export function PlatformDemoWorkspaces() {
 // Platform Tasks
 export function PlatformTasks() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
       <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
         <h1 className="text-3xl font-bold mb-2">Platform Tasks</h1>
         <p className="text-blue-100">Manage background tasks and jobs</p>

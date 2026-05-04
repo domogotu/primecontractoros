@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ export default function OpportunityDetail() {
 
   if (!opportunityId) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Opportunity Detail" subtitle="View and manage this opportunity" label="Opportunities">
         <div className="p-8">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
@@ -49,26 +49,26 @@ export default function OpportunityDetail() {
             </Button>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
   if (isLoading) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Opportunity Detail" subtitle="View and manage this opportunity" label="Opportunities">
         <div className="p-8 flex items-center justify-center h-96">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
             <p className="text-slate-600">Loading opportunity...</p>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
   if (error || !opportunity) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Opportunity Detail" subtitle="View and manage this opportunity" label="Opportunities">
         <div className="p-8">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
@@ -79,7 +79,7 @@ export default function OpportunityDetail() {
             </Button>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
@@ -127,7 +127,7 @@ export default function OpportunityDetail() {
   };
 
   return (
-    <WorkspaceLayout>
+    <PageLayout title="Opportunity Detail" subtitle="View and manage this opportunity" label="Opportunities">
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
@@ -388,6 +388,6 @@ export default function OpportunityDetail() {
           </DialogContent>
         </Dialog>
       </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

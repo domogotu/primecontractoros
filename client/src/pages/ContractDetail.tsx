@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { trpc } from '@/lib/trpc';
@@ -35,7 +35,7 @@ export default function ContractDetail() {
 
   if (!contractId) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
         <div className="p-8">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
@@ -45,26 +45,26 @@ export default function ContractDetail() {
             </Button>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
   if (isLoading) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
         <div className="p-8 flex items-center justify-center h-96">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
             <p className="text-slate-600">Loading contract...</p>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
   if (error || !contract) {
     return (
-      <WorkspaceLayout>
+      <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
         <div className="p-8">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
@@ -75,7 +75,7 @@ export default function ContractDetail() {
             </Button>
           </div>
         </div>
-      </WorkspaceLayout>
+      </PageLayout>
     );
   }
 
@@ -95,7 +95,7 @@ export default function ContractDetail() {
   };
 
   return (
-    <WorkspaceLayout>
+    <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
@@ -331,6 +331,6 @@ export default function ContractDetail() {
           </DialogContent>
         </Dialog>
       </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

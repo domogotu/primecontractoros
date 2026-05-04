@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -103,7 +103,7 @@ export default function Onboarding() {
   const currentStepData = steps[currentStep];
 
   return (
-    <WorkspaceLayout>
+    <PageLayout title="Onboarding" subtitle="Set up your workspace" label="Setup">
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
@@ -299,6 +299,6 @@ export default function Onboarding() {
           </div>
         </div>
       </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

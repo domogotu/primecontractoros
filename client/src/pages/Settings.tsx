@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,19 +39,17 @@ export default function Settings() {
   ];
 
   return (
-    <WorkspaceLayout>
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/app/dashboard')}
-            className="text-blue-600 hover:text-blue-700 mb-4 text-sm"
-          >
-            ← Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
-          <p className="text-slate-600">Manage workspace settings, preferences, and integrations.</p>
-        </div>
+    <PageLayout
+      title="Settings"
+      subtitle="Manage workspace settings, preferences, and integrations"
+      label="Configuration"
+      summaryCards={[
+        { label: "Team Members", value: 2 },
+        { label: "Active Integrations", value: 0, color: "text-blue-600" },
+        { label: "Security Score", value: "Good", color: "text-green-600" },
+        { label: "Plan", value: "Growth", color: "text-purple-600" },
+      ]}
+    >
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Column: Tab Navigation */}
@@ -313,7 +311,6 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

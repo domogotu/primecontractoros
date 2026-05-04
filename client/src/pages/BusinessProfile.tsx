@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,19 +54,22 @@ export default function BusinessProfile() {
   };
 
   return (
-    <WorkspaceLayout>
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/app/dashboard')}
-            className="text-blue-600 hover:text-blue-700 mb-4 text-sm"
-          >
-            ← Back to Dashboard
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Business Profile</h1>
-          <p className="text-slate-600">Manage your company information and government registration details.</p>
-        </div>
+    <PageLayout
+      title="Business Profile"
+      subtitle="Manage your company information and government registration details"
+      label="Company"
+      summaryCards={[
+        { label: "NAICS Codes", value: formData.additionalNaics ? formData.additionalNaics.split(',').length + 1 : 1 },
+        { label: "Certifications", value: formData.certifications ? formData.certifications.split(',').length : 0, color: "text-green-600" },
+        { label: "Profile Complete", value: `${completeness}%`, color: "text-blue-600" },
+        { label: "SAM Status", value: "Active", color: "text-green-600" },
+      ]}
+      actions={
+        <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSave} disabled={isSaving}>
+          <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save Profile'}
+        </Button>
+      }
+    >
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Completeness */}
@@ -312,7 +315,6 @@ export default function BusinessProfile() {
             </div>
           </div>
         </div>
-      </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

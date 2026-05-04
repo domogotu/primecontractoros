@@ -1,5 +1,5 @@
 import { useLocation } from 'wouter';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
+import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Layout, Layers, Users, Zap, FileText } from 'lucide-react';
 
@@ -59,7 +59,7 @@ export default function ProposalFrameworkSelector() {
   };
 
   return (
-    <WorkspaceLayout>
+    <PageLayout title="Proposal Framework" subtitle="Select a framework for your proposal" label="Proposals">
       <div className="p-8">
         {/* Header */}
         <button
@@ -131,6 +131,6 @@ export default function ProposalFrameworkSelector() {
           </ul>
         </div>
       </div>
-    </WorkspaceLayout>
+    </PageLayout>
   );
 }

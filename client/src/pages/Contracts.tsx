@@ -1,203 +1,143 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import AppLayout from '@/components/AppLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { trpc } from '@/lib/trpc';
-import { Plus, Search, X, Briefcase, Loader2, Calendar, DollarSign } from 'lucide-react';
-import ContractForm from '@/components/ContractForm';
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { trpc } from "@/lib/trpc";
+import { Plus, Search, FileCheck, ExternalLink, Loader2 } from "lucide-react";
+import ContractForm from "@/components/ContractForm";
+import PageLayout from "@/components/PageLayout";
 
 export default function Contracts() {
   const [, navigate] = useLocation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const workspaceId = 1;
-  const { data: contracts = [], isLoading, refetch } = trpc.contracts.list.useQuery({
-    workspaceId,
-  });
+  const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery({ workspaceId });
 
-  const filteredContracts = contracts.filter((contract) =>
-    contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (contract.contractNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  const filteredContracts = contracts.filter((c) =>
+    c.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    refetch();
+  const statusColors: Record<string, string> = {
+    draft: "bg-gray-100 text-gray-800",
+    active: "bg-green-100 text-green-800",
+    in_performance: "bg-blue-100 text-blue-800",
+    closeout: "bg-amber-100 text-amber-800",
+    closed: "bg-slate-100 text-slate-800",
+    terminated: "bg-red-100 text-red-800",
   };
 
   return (
-    <AppLayout>
-      <div className="p-8 space-y-8">
-        {/* Page Header */}
-        <div className="space-y-2">
-          <div className="text-blue-300 text-sm font-semibold tracking-wider uppercase">Contracts</div>
-          <h1 className="text-4xl font-bold text-white">Contracts</h1>
-          <p className="text-slate-300">Manage your awarded contracts and active operations</p>
-        </div>
-
-        {/* Add Form Section */}
-        {showForm && (
-          <Card className="bg-blue-900/40 border-blue-700/50 backdrop-blur p-6 rounded-lg">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Add New Contract</h2>
-              <button
-                onClick={() => setShowForm(false)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <ContractForm
-              workspaceId={workspaceId}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setShowForm(false)}
+    <PageLayout
+      title="Contracts"
+      subtitle="Manage active contracts, track performance, and oversee compliance throughout the contract lifecycle"
+      label="Contracts"
+      summaryCards={[
+        { label: "Total", value: contracts.length },
+        { label: "Active", value: contracts.filter((c) => c.status === "active").length, color: "text-green-600" },
+        { label: "Modification", value: contracts.filter((c) => c.status === "modification").length, color: "text-blue-600" },
+        { label: "Closeout", value: contracts.filter((c) => c.status === "closeout").length, color: "text-amber-600" },
+      ]}
+      actions={
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
+          <Plus className="w-4 h-4 mr-2" /> New Contract
+        </Button>
+      }
+    >
+      {/* Search */}
+      <Card className="bg-white border border-gray-200 p-4">
+        <div className="flex gap-3">
+          <div className="flex-1 relative">
+            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search contracts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </Card>
-        )}
-
-        {/* Add Button */}
-        {!showForm && (
-          <Button
-            onClick={() => setShowForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Contract
-          </Button>
-        )}
-
-        {/* Search Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">Search Contracts</h2>
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-              <Input
-                type="text"
-                placeholder="Search by title or contract number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-blue-900/40 border-blue-700/50 text-white placeholder-slate-400"
-              />
-            </div>
-            <Button
-              onClick={() => setSearchTerm('')}
-              variant="outline"
-              className="border-blue-700/50 text-slate-300 hover:bg-blue-900/40"
-            >
-              Clear
-            </Button>
           </div>
         </div>
+      </Card>
 
-        {/* Contract Records Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-white">Contract Records</h2>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
-            </div>
-          ) : filteredContracts.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {filteredContracts.map((contract) => (
-                <Card
-                  key={contract.id}
-                  onClick={() => navigate(`/app/contracts/${contract.id}`)}
-                  className="bg-blue-900/40 border-blue-700/50 backdrop-blur p-6 rounded-lg cursor-pointer hover:bg-blue-900/60 transition-colors"
-                >
-                  <div className="space-y-4">
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-white">{contract.title}</h3>
-
-                    {/* Client */}
-                    {contract.agency && (
-                      <div>
-                        <p className="text-xs text-slate-400 uppercase tracking-wide">Client</p>
-                        <p className="text-slate-200">{contract.agency}</p>
-                      </div>
-                    )}
-
-                    {/* Value */}
-                    {contract.value && (
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-slate-200 font-semibold">
-                          ${contract.value.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Status */}
-                    {contract.status && (
-                      <div>
-                        <p className="text-xs text-slate-400 uppercase tracking-wide">Status</p>
-                        <p className="text-slate-200 capitalize">{contract.status.replace(/_/g, ' ')}</p>
-                      </div>
-                    )}
-
-                    {/* Dates */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {contract.startDate && (
-                        <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wide">Start Date</p>
-                          <div className="flex items-center gap-2 text-slate-200">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            {new Date(contract.startDate).toLocaleDateString()}
-                          </div>
-                        </div>
-                      )}
-                      {contract.endDate && (
-                        <div>
-                          <p className="text-xs text-slate-400 uppercase tracking-wide">End Date</p>
-                          <div className="flex items-center gap-2 text-slate-200">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            {new Date(contract.endDate).toLocaleDateString()}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Contract Number */}
-                    {contract.contractNumber && (
-                      <div>
-                        <p className="text-xs text-slate-400 uppercase tracking-wide">Contract Number</p>
-                        <p className="text-slate-300 text-sm">{contract.contractNumber}</p>
-                      </div>
-                    )}
-
-                    {/* Created Date */}
-                    {contract.createdAt && (
-                      <p className="text-xs text-slate-500 pt-2 border-t border-blue-700/30">
-                        Created {new Date(contract.createdAt).toLocaleDateString()}
-                      </p>
-                    )}
+      {/* List */}
+      {isLoading ? (
+        <Card className="bg-white border border-gray-200 p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
+          <p className="text-gray-600">Loading contracts...</p>
+        </Card>
+      ) : filteredContracts.length === 0 ? (
+        <Card className="bg-white border border-gray-200 p-12 text-center">
+          <FileCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No Contracts Found</h3>
+          <p className="text-gray-600 mb-6">
+            {searchTerm ? "Try adjusting your search" : "Create your first contract to start tracking performance."}
+          </p>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" /> Add Your First Contract
+          </Button>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filteredContracts.map((contract) => (
+            <Card
+              key={contract.id}
+              onClick={() => navigate(`/app/contracts/${contract.id}`)}
+              className="bg-white border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{contract.title}</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[contract.status || "draft"]}`}>
+                      {(contract.status || "draft").replace(/_/g, " ")}
+                    </span>
                   </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Briefcase className="w-12 h-12 text-slate-500 mx-auto mb-4 opacity-50" />
-              <p className="text-slate-400 mb-4">
-                {searchTerm ? 'No contracts match your search' : 'No contracts yet'}
-              </p>
-              {!searchTerm && (
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Contract
-                </Button>
-              )}
-            </div>
-          )}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Contract Number</p>
+                      <p className="font-medium text-gray-900">{contract.contractNumber || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Agency</p>
+                      <p className="font-medium text-gray-900">{contract.agency || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Value</p>
+                      <p className="font-medium text-gray-900">
+                        {contract.value ? `$${(Number(contract.value) / 1000).toFixed(0)}K` : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">End Date</p>
+                      <p className="font-medium text-gray-900">
+                        {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <ExternalLink className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4" />
+              </div>
+            </Card>
+          ))}
         </div>
-      </div>
-    </AppLayout>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Contract</DialogTitle>
+          </DialogHeader>
+          <ContractForm
+            workspaceId={workspaceId}
+            onSuccess={() => setIsCreateDialogOpen(false)}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </PageLayout>
   );
 }
