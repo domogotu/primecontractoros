@@ -18,7 +18,7 @@ export default function PlatformLogin() {
     try {
       // TODO: Replace with actual platform owner authentication
       // For now, check against pre-seeded credentials
-      if (email === "admin@primecontractoros.com" && password === "admin123") {
+      if (email === "dominiquereed35@gmail.com" && password === "admin123") {
         // Store platform owner session
         localStorage.setItem("platformOwnerAuth", JSON.stringify({ email, timestamp: Date.now() }));
         navigate("/platform");
@@ -60,7 +60,7 @@ export default function PlatformLogin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@primecontractoros.com"
+                placeholder="dominiquereed35@gmail.com"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900"
                 required
               />
@@ -93,7 +93,7 @@ export default function PlatformLogin() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Email:</span>
                 <code className="text-sm font-mono text-blue-900 bg-white px-2 py-1 rounded border border-gray-200">
-                  admin@primecontractoros.com
+                  dominiquereed35@gmail.com
                 </code>
               </div>
               <div className="flex items-center gap-2">
