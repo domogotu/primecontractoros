@@ -39,6 +39,7 @@ export default function PlatformLogin() {
         <div className="text-center mb-8">
           <div className="text-4xl font-bold text-white mb-2">PrimeContractorOS</div>
           <div className="text-blue-100">Platform Owner Admin</div>
+          <div className="text-xs text-blue-200 mt-3">Created by Dominique Reed • Reed Solutions LLC</div>
         </div>
 
         {/* Login Card */}
@@ -101,10 +102,14 @@ export default function PlatformLogin() {
                   admin123
                 </code>
               </div>
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                <span className="text-sm text-gray-600">Owner:</span>
+                <span className="text-sm font-medium text-blue-900">Dominique Reed</span>
+              </div>
             </div>
             <p className="text-xs text-gray-500 mt-3">
               <Lock className="w-3 h-3 inline mr-1" />
-              This is a temporary demo account. Change credentials in production.
+              Platform Owner Account • Reed Solutions LLC
             </p>
           </div>
         </div>

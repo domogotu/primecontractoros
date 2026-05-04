@@ -70,8 +70,10 @@ export default function PlatformSidebar() {
       {/* User Info & Logout */}
       <div className="border-t border-blue-800 p-4 space-y-3">
         <div className="px-4 py-2 bg-blue-800/50 rounded-lg">
-          <p className="text-xs text-blue-200 uppercase">Logged in as</p>
-          <p className="text-sm font-medium text-white truncate">{owner?.email}</p>
+          <p className="text-xs text-blue-200 uppercase">Platform Owner</p>
+          <p className="text-sm font-medium text-white">Dominique Reed</p>
+          <p className="text-xs text-blue-200 mt-1">Reed Solutions LLC</p>
+          <p className="text-xs text-blue-300 mt-2">{owner?.email}</p>
         </div>
         <button
           onClick={handleLogout}
