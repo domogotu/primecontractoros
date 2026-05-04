@@ -36,37 +36,40 @@ export default function PlatformRouter() {
 
   // Determine which page to show based on current location
   const renderPage = () => {
-    if (location === "/platform" || location === "/platform/") {
+    // Normalize location to handle trailing slashes
+    const normalizedLocation = location.replace(/\/$/, '') || '/platform';
+    
+    if (normalizedLocation === "/platform") {
       return <PlatformAdmin />;
     }
-    if (location === "/platform/workspaces/:id") {
+    if (normalizedLocation.startsWith("/platform/workspaces/")) {
       return <PlatformWorkspaceSummary />;
     }
-    if (location === "/platform/plans") {
+    if (normalizedLocation === "/platform/plans") {
       return <PlatformPlans />;
     }
-    if (location === "/platform/discounts") {
+    if (normalizedLocation === "/platform/discounts") {
       return <PlatformDiscounts />;
     }
-    if (location === "/platform/billing") {
+    if (normalizedLocation === "/platform/billing") {
       return <PlatformBilling />;
     }
-    if (location === "/platform/overrides") {
+    if (normalizedLocation === "/platform/overrides") {
       return <PlatformOverrides />;
     }
-    if (location === "/platform/support") {
+    if (normalizedLocation === "/platform/support") {
       return <PlatformSupport />;
     }
-    if (location === "/platform/pricing-history") {
+    if (normalizedLocation === "/platform/pricing-history") {
       return <PlatformPricingHistory />;
     }
-    if (location === "/platform/ownership-recovery") {
+    if (normalizedLocation === "/platform/ownership-recovery") {
       return <PlatformOwnershipRecovery />;
     }
-    if (location === "/platform/demo-workspaces") {
+    if (normalizedLocation === "/platform/demo-workspaces") {
       return <PlatformDemoWorkspaces />;
     }
-    if (location === "/platform/tasks") {
+    if (normalizedLocation === "/platform/tasks") {
       return <PlatformTasks />;
     }
     return <PlatformAdmin />;
