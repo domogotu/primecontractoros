@@ -21,15 +21,30 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
+  { icon: Zap, label: "Opportunities", path: "/app/opportunities" },
+  { icon: FileText, label: "Proposals", path: "/app/proposals" },
+  { icon: Briefcase, label: "Contracts", path: "/app/contracts" },
+  { icon: CheckCircle2, label: "Files", path: "/app/files" },
+  { icon: Users, label: "Contacts", path: "/app/contacts" },
+  { icon: MessageSquare, label: "Messages", path: "/app/messages" },
+  { icon: DollarSign, label: "Invoices", path: "/app/invoices" },
+  { icon: BarChart3, label: "Payments", path: "/app/payments" },
+  { icon: TrendingDown, label: "Finance", path: "/app/finance" },
+  { icon: BarChart3, label: "Reports", path: "/app/reports" },
+  { icon: Award, label: "Capability Statements", path: "/app/capability-statements" },
+  { icon: BookOpen, label: "Templates", path: "/app/templates" },
+  { icon: BookOpen, label: "Lessons Learned", path: "/app/lessons" },
+  { icon: User, label: "Profile", path: "/app/profile" },
+  { icon: Settings, label: "Settings", path: "/app/settings" },
+  { icon: DollarSign, label: "Subscription", path: "/app/subscription" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
