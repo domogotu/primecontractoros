@@ -1,4 +1,4 @@
-import AppLayout from "@/components/AppLayout";
+import PageLayout from "@/components/PageLayout";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -6,7 +6,7 @@ export default function InvoiceDetail() {
   const [, params] = useRoute("/app/invoices/:id");
   
   return (
-    <AppLayout>
+    <PageLayout title="Details" subtitle="Record details">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Invoice Details</h1>
@@ -17,6 +17,6 @@ export default function InvoiceDetail() {
           <Button variant="outline" className="border-white text-white">Download PDF</Button>
         </div>
       </div>
-    </AppLayout>
+    </PageLayout>
   );
 }

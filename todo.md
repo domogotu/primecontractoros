@@ -348,3 +348,33 @@
 - [x] Register all new routes in App.tsx
 - [x] Verify clean compilation
 - [ ] Redeploy to primecontractor-bk79t4ta.manus.space (in progress)
+
+
+## Phase 11: Auth Flow, Navigation, Platform Admin
+
+### Authentication & Onboarding
+- [x] Mandatory onboarding for new users before dashboard access
+- [x] Redirect new users to /app/onboarding after first login
+- [x] Track onboarding completion status in database (workspaces.onboardingCompleted)
+- [x] Persistent login state across all pages (Manus OAuth session cookie)
+
+### Navigation Separation
+- [x] Logged-in users see only app sidebar navigation (no public marketing nav)
+- [x] Public pages show marketing navigation for visitors
+- [x] AppRouter checks auth state and redirects appropriately
+- [x] AppShell wraps all /app/* routes with sidebar + auth check
+- [x] Home page redirects authenticated users to /app/dashboard
+
+### Platform Admin CRUD
+- [x] Workspace directory with real CRUD operations
+- [x] Plans management with real CRUD operations
+- [x] Discounts management with real CRUD operations
+- [x] Billing management with real CRUD operations
+- [x] Support inbox with real CRUD operations
+- [x] Overrides with real CRUD operations
+- [x] Platform admin uses Manus OAuth admin role (not localStorage)
+- [x] Platform router with adminProcedure protection
+
+### Deploy
+- [ ] Save checkpoint
+- [ ] Redeploy to primecontractor-bk79t4ta.manus.space

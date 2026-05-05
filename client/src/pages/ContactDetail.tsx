@@ -1,4 +1,4 @@
-import AppLayout from "@/components/AppLayout";
+import PageLayout from "@/components/PageLayout";
 import { useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -6,7 +6,7 @@ export default function ContactDetail() {
   const [, params] = useRoute("/app/contacts/:id");
   
   return (
-    <AppLayout>
+    <PageLayout title="Details" subtitle="Record details">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Contact Details</h1>
@@ -17,6 +17,6 @@ export default function ContactDetail() {
           <Button className="bg-green-500 hover:bg-green-600">Edit Contact</Button>
         </div>
       </div>
-    </AppLayout>
+    </PageLayout>
   );
 }

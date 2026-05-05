@@ -1,6 +1,5 @@
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
-import { usePlatformAuth } from '@/hooks/usePlatformAuth';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
@@ -20,7 +19,7 @@ import {
 export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
-  const { isAuthenticated: isPlatformOwner } = usePlatformAuth();
+  const isAdmin = user?.role === 'admin';
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/app/dashboard' },
@@ -68,8 +67,8 @@ export default function WorkspaceSidebar() {
         })}
       </nav>
 
-      {/* Switch to Platform Admin (Platform Owner Only) */}
-      {isPlatformOwner && (
+      {/* Switch to Platform Admin (Admin Only) */}
+      {isAdmin && (
         <div className="border-t border-slate-800 p-4">
           <Button
             onClick={() => navigate('/platform')}

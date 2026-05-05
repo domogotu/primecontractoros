@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { AlertCircle, CheckCircle2, Clock, DollarSign, FileText, Users, MessageSquare, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import Footer from '@/components/Footer';
 
 export default function ContractHub() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -258,7 +257,6 @@ export default function ContractHub() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }

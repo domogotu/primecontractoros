@@ -1,14 +1,14 @@
 import { useLocation, Link } from "wouter";
-import { BarChart3, Users, CreditCard, Settings, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive } from "lucide-react";
-import { usePlatformAuth } from "@/hooks/usePlatformAuth";
+import { BarChart3, Users, CreditCard, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function PlatformSidebar() {
   const [location, navigate] = useLocation();
-  const { owner, logout } = usePlatformAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();
-    navigate("/platform/login");
+    navigate("/");
   };
 
   const isActive = (path: string) => location === path;
@@ -70,10 +70,8 @@ export default function PlatformSidebar() {
       {/* User Info & Logout */}
       <div className="border-t border-blue-800 p-4 space-y-3">
         <div className="px-4 py-2 bg-blue-800/50 rounded-lg">
-          <p className="text-xs text-blue-200 uppercase">Platform Owner</p>
-          <p className="text-sm font-medium text-white">Dominique Reed</p>
-          <p className="text-xs text-blue-200 mt-1">Reed Solutions LLC</p>
-          <p className="text-xs text-blue-300 mt-2">{owner?.email}</p>
+          <p className="text-xs text-blue-200 uppercase">Platform Admin</p>
+          <p className="text-sm font-medium text-white">{user?.name || "Admin"}</p>
         </div>
         <button
           onClick={handleLogout}

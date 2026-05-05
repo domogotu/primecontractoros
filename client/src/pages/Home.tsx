@@ -1,24 +1,28 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { useLocation, Redirect } from "wouter";
 import { ArrowRight, CheckCircle2, Zap, BarChart3, Users, FileText, DollarSign, AlertCircle } from "lucide-react";
-import { usePlatformAuth } from "@/hooks/usePlatformAuth";
-
 export default function Home() {
   const [, navigate] = useLocation();
-  const { isAuthenticated } = useAuth();
-  const { isAuthenticated: isPlatformAdmin } = usePlatformAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
-  // If platform admin is logged in, redirect to platform dashboard
-  if (isPlatformAdmin) {
-    navigate("/platform");
-    return null;
+  // If admin user is logged in, redirect to platform dashboard
+  if (isAuthenticated && user?.role === "admin") {
+    return <Redirect to="/platform" />;
   }
 
   // If regular user is logged in, redirect to app dashboard
   if (isAuthenticated) {
-    navigate("/app/dashboard");
-    return null;
+    return <Redirect to="/app/dashboard" />;
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   const features = [

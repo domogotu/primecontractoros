@@ -1,290 +1,675 @@
-// Platform Admin Pages with Dark Navy Design
+// Platform Admin Pages - Wired to real tRPC data
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, AlertCircle } from "lucide-react";
-import Footer from "@/components/Footer";
-import { Link } from "wouter";
+import { Plus, Search, Trash2, Edit, Loader2, X } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { Link, useRoute } from "wouter";
 
-// Platform Workspaces List
+// ==================== WORKSPACES ====================
 export function PlatformWorkspaces() {
-  const workspaces = [
-    { id: 1, name: "TechFlow Solutions", plan: "Growth", status: "Active", users: 3, created: "2025-06-15" },
-    { id: 2, name: "BuildCorp Inc", plan: "Starter", status: "Active", users: 1, created: "2025-07-20" },
-    { id: 3, name: "Federal Contractors LLC", plan: "Advanced", status: "Active", users: 5, created: "2025-05-10" },
-  ];
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: workspaces = [], isLoading, refetch } = trpc.platform.workspaces.list.useQuery();
+  const updateMutation = trpc.platform.workspaces.update.useMutation({
+    onSuccess: () => { refetch(); toast.success("Workspace updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const filtered = workspaces.filter((ws: any) =>
+    ws.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ws.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) return <LoadingState />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Workspace Directory</h1>
-        <p className="text-blue-100">Manage all customer workspaces</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Workspace Directory</h1>
+        <p className="text-gray-600">Manage all customer workspaces</p>
       </div>
-      <div className="flex-1 p-8">
+      <div className="p-8">
         <div className="flex gap-4 mb-6">
-          <input type="text" placeholder="Search workspaces..." className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400" />
-          <Button className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> New Workspace
-          </Button>
+          <div className="flex items-center gap-2 flex-1">
+            <Search className="w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search workspaces..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-white/5 border-b border-white/20">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-blue-100 uppercase">Workspace</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-blue-100 uppercase">Plan</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-blue-100 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-blue-100 uppercase">Users</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-blue-100 uppercase">Created</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Workspace</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Company</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Onboarded</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Model</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Created</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {workspaces.map((ws) => (
-                <tr key={ws.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="px-6 py-4 font-medium"><Link href={`/platform/workspaces/${ws.id}`}><a className="text-blue-300 hover:text-blue-200">{ws.name}</a></Link></td>
-                  <td className="px-6 py-4">{ws.plan}</td>
-                  <td className="px-6 py-4"><span className="px-3 py-1 bg-green-500/30 text-green-200 rounded-full text-xs">{ws.status}</span></td>
-                  <td className="px-6 py-4">{ws.users}</td>
-                  <td className="px-6 py-4 text-gray-300">{ws.created}</td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-gray-200">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No workspaces found</td></tr>
+              ) : (
+                filtered.map((ws: any) => (
+                  <tr key={ws.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-gray-900">{ws.name}</p>
+                      <p className="text-sm text-gray-500">ID: {ws.id}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{ws.companyName || "—"}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${ws.onboardingCompleted ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
+                        {ws.onboardingCompleted ? "Yes" : "Pending"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{ws.contractingModel || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{ws.createdAt ? new Date(ws.createdAt).toLocaleDateString() : "—"}</td>
+                    <td className="px-6 py-4 text-right">
+                      <Link href={`/platform/workspaces/${ws.id}`}>
+                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">View</button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Platform Workspace Summary
+// ==================== WORKSPACE SUMMARY ====================
 export function PlatformWorkspaceSummary() {
+  const [, params] = useRoute("/platform/workspaces/:id");
+  const wsId = Number(params?.id) || 0;
+  const { data: workspace, isLoading } = trpc.platform.workspaces.get.useQuery({ id: wsId });
+  const updateMutation = trpc.platform.workspaces.update.useMutation({
+    onSuccess: () => toast.success("Workspace updated"),
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) return <LoadingState />;
+  if (!workspace) return <div className="p-8 text-center text-gray-500">Workspace not found</div>;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Workspace Summary</h1>
-        <p className="text-blue-100">TechFlow Solutions - Workspace ID: 1</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Workspace: {workspace.name}</h1>
+        <p className="text-gray-600">ID: {workspace.id} | Owner ID: {workspace.ownerId}</p>
       </div>
-      <div className="flex-1 p-8">
+      <div className="p-8">
         <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-            <p className="text-xs text-blue-200 font-medium uppercase">Status</p>
-            <p className="text-2xl font-bold text-green-400 mt-2">Active</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Onboarding</p>
+            <p className={`text-2xl font-bold mt-2 ${workspace.onboardingCompleted ? "text-green-600" : "text-amber-600"}`}>
+              {workspace.onboardingCompleted ? "Complete" : "Pending"}
+            </p>
           </div>
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-            <p className="text-xs text-blue-200 font-medium uppercase">Billing</p>
-            <p className="text-2xl font-bold text-white mt-2">Paid</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Company</p>
+            <p className="text-lg font-bold text-gray-900 mt-2">{workspace.companyName || "Not set"}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-            <p className="text-xs text-blue-200 font-medium uppercase">Users</p>
-            <p className="text-2xl font-bold text-white mt-2">3</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Model</p>
+            <p className="text-lg font-bold text-gray-900 mt-2">{workspace.contractingModel || "Not set"}</p>
           </div>
         </div>
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-          <h2 className="text-lg font-semibold mb-4">Access &amp; Billing</h2>
-          <p className="text-gray-300">Plan: Growth | Billing Contact: john@techflow.com | Next Renewal: 2026-06-15</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">Details</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div><span className="font-medium text-gray-600">NAICS Codes:</span> {workspace.naicsCodes || "Not set"}</div>
+            <div><span className="font-medium text-gray-600">Certifications:</span> {workspace.certifications || "Not set"}</div>
+            <div><span className="font-medium text-gray-600">Created:</span> {workspace.createdAt ? new Date(workspace.createdAt).toLocaleString() : "—"}</div>
+          </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Plans Management
+// ==================== PLANS ====================
 export function PlatformPlans() {
-  const plans = [
-    { name: "Starter", price: "$99/mo", features: 5, active: false },
-    { name: "Growth", price: "$299/mo", features: 12, active: true },
-    { name: "Advanced", price: "$699/mo", features: 20, active: false },
-  ];
+  const { data: plans = [], isLoading, refetch } = trpc.platform.plans.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [form, setForm] = useState({ name: "", description: "", monthlyPrice: "", annualPrice: "", features: "", maxUsers: 0, maxContracts: 0, sortOrder: 0 });
+
+  const createMutation = trpc.platform.plans.create.useMutation({
+    onSuccess: () => { refetch(); setShowForm(false); resetForm(); toast.success("Plan created"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMutation = trpc.platform.plans.update.useMutation({
+    onSuccess: () => { refetch(); setEditingPlan(null); resetForm(); toast.success("Plan updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.platform.plans.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Plan deleted"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const resetForm = () => setForm({ name: "", description: "", monthlyPrice: "", annualPrice: "", features: "", maxUsers: 0, maxContracts: 0, sortOrder: 0 });
+
+  const handleEdit = (plan: any) => {
+    setEditingPlan(plan);
+    setForm({ name: plan.name, description: plan.description || "", monthlyPrice: plan.monthlyPrice, annualPrice: plan.annualPrice || "", features: plan.features || "", maxUsers: plan.maxUsers || 0, maxContracts: plan.maxContracts || 0, sortOrder: plan.sortOrder || 0 });
+  };
+
+  const handleSubmit = () => {
+    if (!form.name || !form.monthlyPrice) { toast.error("Name and monthly price are required"); return; }
+    if (editingPlan) {
+      updateMutation.mutate({ id: editingPlan.id, ...form, maxUsers: form.maxUsers || undefined, maxContracts: form.maxContracts || undefined });
+    } else {
+      createMutation.mutate({ ...form, maxUsers: form.maxUsers || undefined, maxContracts: form.maxContracts || undefined });
+    }
+  };
+
+  if (isLoading) return <LoadingState />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Plans Management</h1>
-        <p className="text-blue-100">Configure and manage subscription plans</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Plans Management</h1>
+        <p className="text-gray-600">Configure and manage subscription plans</p>
       </div>
-      <div className="flex-1 p-8">
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan, idx) => (
-            <div key={idx} className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-              <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-              <p className="text-2xl font-bold text-green-400 mb-4">{plan.price}</p>
-              <p className="text-blue-100 mb-4">{plan.features} features included</p>
-              <Button className={plan.active ? "w-full bg-blue-500 hover:bg-blue-600" : "w-full bg-gray-600 hover:bg-gray-700"}>
-                {plan.active ? "Active" : "Edit"}
-              </Button>
+      <div className="p-8">
+        <Button onClick={() => { resetForm(); setShowForm(true); setEditingPlan(null); }} className="bg-blue-900 hover:bg-blue-800 text-white mb-6">
+          <Plus className="w-4 h-4 mr-2" /> Create Plan
+        </Button>
+
+        {(showForm || editingPlan) && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">{editingPlan ? "Edit Plan" : "New Plan"}</h3>
+              <button onClick={() => { setShowForm(false); setEditingPlan(null); }}><X className="w-5 h-5" /></button>
             </div>
-          ))}
+            <div className="grid grid-cols-2 gap-4">
+              <input placeholder="Plan Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Monthly Price *" value={form.monthlyPrice} onChange={(e) => setForm({ ...form, monthlyPrice: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Annual Price" value={form.annualPrice} onChange={(e) => setForm({ ...form, annualPrice: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Features (comma-separated)" value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg col-span-2" />
+              <input type="number" placeholder="Max Users" value={form.maxUsers || ""} onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) || 0 })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input type="number" placeholder="Sort Order" value={form.sortOrder || ""} onChange={(e) => setForm({ ...form, sortOrder: parseInt(e.target.value) || 0 })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+            </div>
+            <Button onClick={handleSubmit} className="mt-4 bg-blue-900 hover:bg-blue-800 text-white">
+              {editingPlan ? "Update Plan" : "Create Plan"}
+            </Button>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {plans.length === 0 ? (
+            <div className="col-span-3 bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+              No plans created yet. Create your first plan above.
+            </div>
+          ) : (
+            plans.map((plan: any) => (
+              <div key={plan.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEdit(plan)} className="text-blue-600 hover:text-blue-800"><Edit className="w-4 h-4" /></button>
+                    <button onClick={() => { if (confirm("Delete this plan?")) deleteMutation.mutate({ id: plan.id }); }} className="text-red-600 hover:text-red-800"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-green-600 mb-2">{plan.monthlyPrice}/mo</p>
+                {plan.annualPrice && <p className="text-sm text-gray-500 mb-2">{plan.annualPrice}/yr</p>}
+                {plan.description && <p className="text-sm text-gray-600 mb-2">{plan.description}</p>}
+                {plan.features && <p className="text-xs text-gray-500">Features: {plan.features}</p>}
+                <div className="mt-3 flex gap-2 text-xs text-gray-500">
+                  {plan.maxUsers && <span>Max {plan.maxUsers} users</span>}
+                  <span className={`px-2 py-0.5 rounded-full ${plan.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    {plan.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Discounts Management
+// ==================== DISCOUNTS ====================
 export function PlatformDiscounts() {
+  const { data: discounts = [], isLoading, refetch } = trpc.platform.discounts.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ code: "", description: "", percentOff: 0, amountOff: "", maxUses: 0 });
+
+  const createMutation = trpc.platform.discounts.create.useMutation({
+    onSuccess: () => { refetch(); setShowForm(false); setForm({ code: "", description: "", percentOff: 0, amountOff: "", maxUses: 0 }); toast.success("Discount created"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.platform.discounts.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Discount deleted"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) return <LoadingState />;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Discounts Management</h1>
-        <p className="text-blue-100">Create and manage promotional discounts</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Discounts Management</h1>
+        <p className="text-gray-600">Create and manage promotional discounts</p>
       </div>
-      <div className="flex-1 p-8">
-        <Button className="bg-green-500 hover:bg-green-600 mb-6">
+      <div className="p-8">
+        <Button onClick={() => setShowForm(true)} className="bg-blue-900 hover:bg-blue-800 text-white mb-6">
           <Plus className="w-4 h-4 mr-2" /> Create Discount
         </Button>
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">No active discounts. Create one to get started.</p>
+
+        {showForm && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">New Discount</h3>
+              <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <input placeholder="Discount Code *" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input type="number" placeholder="Percent Off (%)" value={form.percentOff || ""} onChange={(e) => setForm({ ...form, percentOff: parseInt(e.target.value) || 0 })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Amount Off ($)" value={form.amountOff} onChange={(e) => setForm({ ...form, amountOff: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input type="number" placeholder="Max Uses" value={form.maxUses || ""} onChange={(e) => setForm({ ...form, maxUses: parseInt(e.target.value) || 0 })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+            </div>
+            <Button onClick={() => {
+              if (!form.code) { toast.error("Code is required"); return; }
+              createMutation.mutate({ code: form.code, description: form.description || undefined, percentOff: form.percentOff || undefined, amountOff: form.amountOff || undefined, maxUses: form.maxUses || undefined });
+            }} className="mt-4 bg-blue-900 hover:bg-blue-800 text-white">
+              Create Discount
+            </Button>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Code</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Discount</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Uses</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {discounts.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No discounts created yet</td></tr>
+              ) : (
+                discounts.map((d: any) => (
+                  <tr key={d.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 font-mono font-medium text-gray-900">{d.code}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{d.description || "—"}</td>
+                    <td className="px-6 py-4 text-sm">{d.percentOff ? `${d.percentOff}%` : d.amountOff ? `$${d.amountOff}` : "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{d.currentUses || 0}/{d.maxUses || "∞"}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs ${d.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                        {d.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => { if (confirm("Delete?")) deleteMutation.mutate({ id: d.id }); }} className="text-red-600 hover:text-red-800"><Trash2 className="w-4 h-4" /></button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Billing Management
+// ==================== BILLING ====================
 export function PlatformBilling() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Billing Management</h1>
-        <p className="text-blue-100">View and manage billing settings</p>
-      </div>
-      <div className="flex-1 p-8">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Revenue This Month</h3>
-            <p className="text-3xl font-bold text-green-400">$12,450</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Active Subscriptions</h3>
-            <p className="text-3xl font-bold text-blue-300">127</p>
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </div>
-  );
-}
+  const { data: billingRecords = [], isLoading, refetch } = trpc.platform.billing.list.useQuery();
+  const updateMutation = trpc.platform.billing.update.useMutation({
+    onSuccess: () => { refetch(); toast.success("Billing record updated"); },
+    onError: (e) => toast.error(e.message),
+  });
 
-// Overrides Management
-export function PlatformOverrides() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Overrides Management</h1>
-        <p className="text-blue-100">Configure system overrides and exceptions</p>
-      </div>
-      <div className="flex-1 p-8">
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">No active overrides configured.</p>
-        </div>
-      </div>
-      <Footer />
-    </div>
-  );
-}
+  if (isLoading) return <LoadingState />;
 
-// Support Management
-export function PlatformSupport() {
+  const activeCount = billingRecords.filter((b: any) => b.status === "active").length;
+  const trialCount = billingRecords.filter((b: any) => b.status === "trial").length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Support Management</h1>
-        <p className="text-blue-100">Manage customer support tickets</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Billing Management</h1>
+        <p className="text-gray-600">View and manage workspace billing</p>
       </div>
-      <div className="flex-1 p-8">
+      <div className="p-8">
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6 text-center">
-            <p className="text-blue-200 mb-2">Open Tickets</p>
-            <p className="text-3xl font-bold">12</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Total Records</p>
+            <p className="text-3xl font-bold text-blue-900 mt-2">{billingRecords.length}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6 text-center">
-            <p className="text-blue-200 mb-2">Avg Response Time</p>
-            <p className="text-3xl font-bold">2.5h</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Active Subscriptions</p>
+            <p className="text-3xl font-bold text-green-600 mt-2">{activeCount}</p>
           </div>
-          <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6 text-center">
-            <p className="text-blue-200 mb-2">Satisfaction</p>
-            <p className="text-3xl font-bold text-green-400">4.8/5</p>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <p className="text-xs text-gray-600 font-medium uppercase">Trials</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">{trialCount}</p>
           </div>
         </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Workspace</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Cycle</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Created</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {billingRecords.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No billing records</td></tr>
+              ) : (
+                billingRecords.map((b: any) => (
+                  <tr key={b.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-600">{b.id}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">WS #{b.workspaceId}</td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={b.status}
+                        onChange={(e) => updateMutation.mutate({ id: b.id, status: e.target.value as any })}
+                        className="px-2 py-1 border border-gray-200 rounded text-sm"
+                      >
+                        <option value="trial">Trial</option>
+                        <option value="active">Active</option>
+                        <option value="past_due">Past Due</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="expired">Expired</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{b.billingCycle || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "—"}</td>
+                    <td className="px-6 py-4 text-right text-sm text-gray-500">{b.notes || "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Pricing History
+// ==================== SUPPORT ====================
+export function PlatformSupport() {
+  const { data: tickets = [], isLoading, refetch } = trpc.platform.support.list.useQuery();
+  const updateMutation = trpc.platform.support.update.useMutation({
+    onSuccess: () => { refetch(); toast.success("Ticket updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) return <LoadingState />;
+
+  const openCount = tickets.filter((t: any) => t.status === "open").length;
+  const inProgressCount = tickets.filter((t: any) => t.status === "in_progress").length;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Support Inbox</h1>
+        <p className="text-gray-600">Manage customer support tickets</p>
+      </div>
+      <div className="p-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
+            <p className="text-xs text-gray-600 font-medium uppercase">Open</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">{openCount}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
+            <p className="text-xs text-gray-600 font-medium uppercase">In Progress</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">{inProgressCount}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
+            <p className="text-xs text-gray-600 font-medium uppercase">Total</p>
+            <p className="text-3xl font-bold text-blue-900 mt-2">{tickets.length}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Subject</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Created</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {tickets.length === 0 ? (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No support tickets</td></tr>
+              ) : (
+                tickets.map((t: any) => (
+                  <tr key={t.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-gray-900">{t.subject}</p>
+                      <p className="text-sm text-gray-500 truncate max-w-xs">{t.body}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        t.priority === "critical" ? "bg-red-100 text-red-700" :
+                        t.priority === "high" ? "bg-orange-100 text-orange-700" :
+                        t.priority === "medium" ? "bg-amber-100 text-amber-700" :
+                        "bg-gray-100 text-gray-600"
+                      }`}>{t.priority}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={t.status}
+                        onChange={(e) => updateMutation.mutate({ id: t.id, status: e.target.value as any })}
+                        className="px-2 py-1 border border-gray-200 rounded text-sm"
+                      >
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="waiting_on_customer">Waiting</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "—"}</td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => updateMutation.mutate({ id: t.id, status: "resolved" })}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium"
+                      >
+                        Resolve
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== OVERRIDES ====================
+export function PlatformOverrides() {
+  const { data: overrides = [], isLoading, refetch } = trpc.platform.overrides.list.useQuery();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ workspaceId: 0, feature: "", value: "", reason: "" });
+
+  const createMutation = trpc.platform.overrides.create.useMutation({
+    onSuccess: () => { refetch(); setShowForm(false); setForm({ workspaceId: 0, feature: "", value: "", reason: "" }); toast.success("Override created"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.platform.overrides.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Override deleted"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) return <LoadingState />;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Overrides Management</h1>
+        <p className="text-gray-600">Configure per-workspace feature overrides</p>
+      </div>
+      <div className="p-8">
+        <Button onClick={() => setShowForm(true)} className="bg-blue-900 hover:bg-blue-800 text-white mb-6">
+          <Plus className="w-4 h-4 mr-2" /> Create Override
+        </Button>
+
+        {showForm && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">New Override</h3>
+              <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <input type="number" placeholder="Workspace ID *" value={form.workspaceId || ""} onChange={(e) => setForm({ ...form, workspaceId: parseInt(e.target.value) || 0 })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Feature *" value={form.feature} onChange={(e) => setForm({ ...form, feature: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Value *" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+              <input placeholder="Reason" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg" />
+            </div>
+            <Button onClick={() => {
+              if (!form.workspaceId || !form.feature || !form.value) { toast.error("Workspace ID, feature, and value are required"); return; }
+              createMutation.mutate({ workspaceId: form.workspaceId, feature: form.feature, value: form.value, reason: form.reason || undefined });
+            }} className="mt-4 bg-blue-900 hover:bg-blue-800 text-white">
+              Create Override
+            </Button>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Workspace</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Feature</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Value</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Reason</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-900 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {overrides.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No overrides configured</td></tr>
+              ) : (
+                overrides.map((o: any) => (
+                  <tr key={o.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-900">WS #{o.workspaceId}</td>
+                    <td className="px-6 py-4 text-sm font-mono text-gray-900">{o.feature}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{o.value}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{o.reason || "—"}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs ${o.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                        {o.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => { if (confirm("Delete?")) deleteMutation.mutate({ id: o.id }); }} className="text-red-600 hover:text-red-800"><Trash2 className="w-4 h-4" /></button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== PLACEHOLDER PAGES ====================
 export function PlatformPricingHistory() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Pricing History</h1>
-        <p className="text-blue-100">View historical pricing changes</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Pricing History</h1>
+        <p className="text-gray-600">View historical pricing changes</p>
       </div>
-      <div className="flex-1 p-8">
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">No pricing history available.</p>
+      <div className="p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+          Pricing history will be recorded as plan changes are made.
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Ownership Recovery
 export function PlatformOwnershipRecovery() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Ownership Recovery</h1>
-        <p className="text-blue-100">Manage workspace ownership transfers</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
+        <p className="text-gray-600">Manage workspace ownership transfers</p>
       </div>
-      <div className="flex-1 p-8">
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">No pending ownership recovery requests.</p>
+      <div className="p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+          No pending ownership recovery requests.
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Demo Workspaces
 export function PlatformDemoWorkspaces() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Demo Workspaces</h1>
-        <p className="text-blue-100">Create and manage demo workspaces for trials</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
+        <p className="text-gray-600">Create and manage demo workspaces for trials</p>
       </div>
-      <div className="flex-1 p-8">
-        <Button className="bg-green-500 hover:bg-green-600 mb-6">
-          <Plus className="w-4 h-4 mr-2" /> Create Demo
-        </Button>
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">No demo workspaces created yet.</p>
+      <div className="p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+          Demo workspace management coming soon.
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
 
-// Platform Tasks
 export function PlatformTasks() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 text-white flex flex-col">
-      <div className="bg-black/30 border-b border-blue-500/30 px-8 py-6">
-        <h1 className="text-3xl font-bold mb-2">Platform Tasks</h1>
-        <p className="text-blue-100">Manage background tasks and jobs</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-8 py-6">
+        <h1 className="text-3xl font-bold text-blue-900 mb-2">Platform Tasks</h1>
+        <p className="text-gray-600">Manage background tasks and jobs</p>
       </div>
-      <div className="flex-1 p-8">
-        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8 text-center">
-          <p className="text-blue-100">All tasks completed successfully.</p>
+      <div className="p-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+          All tasks completed successfully.
         </div>
       </div>
-      <Footer />
+    </div>
+  );
+}
+
+// ==================== SHARED COMPONENTS ====================
+function LoadingState() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-900" />
     </div>
   );
 }

@@ -30,6 +30,12 @@ export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   ownerId: int("ownerId").notNull(),
+  onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
+  companyName: varchar("companyName", { length: 255 }),
+  contractingModel: varchar("contractingModel", { length: 100 }), // "prime", "sub", "both"
+  naicsCodes: text("naicsCodes"),
+  certifications: text("certifications"),
+  planId: int("planId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -490,3 +496,98 @@ export const notes = mysqlTable("notes", {
 
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = typeof notes.$inferInsert;
+
+// ==================== PLATFORM ADMIN TABLES ====================
+
+// Plans - Subscription plans managed by platform admin
+export const plans = mysqlTable("plans", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  monthlyPrice: decimal("monthlyPrice", { precision: 10, scale: 2 }).notNull(),
+  annualPrice: decimal("annualPrice", { precision: 10, scale: 2 }),
+  features: text("features"), // JSON array of feature strings
+  maxUsers: int("maxUsers").default(5),
+  maxContracts: int("maxContracts").default(10),
+  isActive: boolean("isActive").default(true).notNull(),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Plan = typeof plans.$inferSelect;
+export type InsertPlan = typeof plans.$inferInsert;
+
+// Discounts - Promotional codes and discounts
+export const discounts = mysqlTable("discounts", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  description: text("description"),
+  percentOff: int("percentOff"), // 0-100
+  amountOff: decimal("amountOff", { precision: 10, scale: 2 }),
+  maxUses: int("maxUses"),
+  currentUses: int("currentUses").default(0),
+  applicablePlanId: int("applicablePlanId"), // null = all plans
+  isActive: boolean("isActive").default(true).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Discount = typeof discounts.$inferSelect;
+export type InsertDiscount = typeof discounts.$inferInsert;
+
+// Platform Billing - Workspace subscription records
+export const platformBilling = mysqlTable("platformBilling", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  planId: int("planId").notNull(),
+  status: mysqlEnum("status", ["trial", "active", "past_due", "cancelled", "expired"]).default("trial").notNull(),
+  billingCycle: mysqlEnum("billingCycle", ["monthly", "annual"]).default("monthly"),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  trialEndsAt: timestamp("trialEndsAt"),
+  discountId: int("discountId"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlatformBilling = typeof platformBilling.$inferSelect;
+export type InsertPlatformBilling = typeof platformBilling.$inferInsert;
+
+// Support Tickets - Customer support requests
+export const supportTickets = mysqlTable("supportTickets", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId"),
+  userId: int("userId"),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
+  status: mysqlEnum("status", ["open", "in_progress", "waiting_on_customer", "resolved", "closed"]).default("open"),
+  assignedTo: varchar("assignedTo", { length: 255 }),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = typeof supportTickets.$inferInsert;
+
+// Platform Overrides - Feature/config overrides per workspace
+export const platformOverrides = mysqlTable("platformOverrides", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  feature: varchar("feature", { length: 100 }).notNull(),
+  value: text("value").notNull(),
+  reason: text("reason"),
+  appliedBy: varchar("appliedBy", { length: 255 }),
+  expiresAt: timestamp("expiresAt"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlatformOverride = typeof platformOverrides.$inferSelect;
+export type InsertPlatformOverride = typeof platformOverrides.$inferInsert;

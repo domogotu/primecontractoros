@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import Footer from "@/components/Footer";
+
 
 interface PageLayoutProps {
   title: string;
@@ -12,7 +12,7 @@ interface PageLayoutProps {
 
 export default function PageLayout({ title, subtitle, label, actions, summaryCards, children }: PageLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-full bg-gray-100 flex flex-col">
       {/* Navy Header */}
       <div className="bg-blue-900 text-white px-8 py-8">
         <div className="max-w-7xl mx-auto">
@@ -46,7 +46,6 @@ export default function PageLayout({ title, subtitle, label, actions, summaryCar
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }

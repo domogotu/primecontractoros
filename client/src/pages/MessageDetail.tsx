@@ -1,11 +1,11 @@
-import AppLayout from "@/components/AppLayout";
+import PageLayout from "@/components/PageLayout";
 import { useRoute } from "wouter";
 
 export default function MessageDetail() {
   const [, params] = useRoute("/app/messages/:id");
   
   return (
-    <AppLayout>
+    <PageLayout title="Details" subtitle="Record details">
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Message</h1>
@@ -15,6 +15,6 @@ export default function MessageDetail() {
           <p className="text-blue-100">Message content will be displayed here</p>
         </div>
       </div>
-    </AppLayout>
+    </PageLayout>
   );
 }

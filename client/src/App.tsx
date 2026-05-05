@@ -62,11 +62,23 @@ import Terms from "./pages/Terms";
 import Documentation from "./pages/Documentation";
 import PlatformCompliance from "./pages/PlatformCompliance";
 import Security from "./pages/Security";
+import AppShell from "./components/AppShell";
+
+// Wrapper to render app pages inside AppShell
+function withAppShell(Component: React.ComponentType) {
+  return function WrappedWithAppShell() {
+    return (
+      <AppShell>
+        <Component />
+      </AppShell>
+    );
+  };
+}
 
 function Router() {
   return (
     <Switch>
-      {/* Public pages */}
+      {/* Public pages - no sidebar, no auth required */}
       <Route path={"/"} component={Home} />
       <Route path={"/features"} component={Features} />
       <Route path={"/pricing"} component={Pricing} />
@@ -75,7 +87,6 @@ function Router() {
       <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
       <Route path={"/login"} component={Login} />
-      {/* New content pages */}
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={ContactPage} />
       <Route path={"/privacy"} component={Privacy} />
@@ -84,59 +95,59 @@ function Router() {
       <Route path={"/platform-compliance"} component={PlatformCompliance} />
       <Route path={"/security"} component={Security} />
       
-      {/* Post-login routes */}
-      <Route path={"/app"} component={AppRouter} />
-      <Route path={"/app/dashboard"} component={Dashboard} />
-      
-      {/* Platform Owner pages */}
+      {/* Platform Owner pages - has its own sidebar via PlatformRouter */}
       <Route path={"/platform/login"} component={PlatformLogin} />
       <Route path={"/platform*"} component={PlatformRouter} />
       
+      {/* App routes - all wrapped with AppShell (sidebar + auth) */}
+      <Route path={"/app"} component={withAppShell(AppRouter)} />
+      <Route path={"/app/dashboard"} component={withAppShell(Dashboard)} />
+      <Route path={"/app/onboarding"} component={withAppShell(Onboarding)} />
+      
       {/* Workflow pages */}
-      <Route path={"/app/opportunities"} component={Opportunities} />
-      <Route path={"/app/opportunities/:id"} component={OpportunityDetail} />
-      <Route path={"/app/proposals"} component={Proposals} />
-      <Route path={"/app/proposals/:id"} component={ProposalDetail} />
-      <Route path={"/app/proposal-frameworks"} component={ProposalFrameworkSelector} />
-      <Route path={"/app/contracts"} component={Contracts} />
-      <Route path={"/app/contracts/:id"} component={ContractDetail} />
+      <Route path={"/app/opportunities"} component={withAppShell(Opportunities)} />
+      <Route path={"/app/opportunities/:id"} component={withAppShell(OpportunityDetail)} />
+      <Route path={"/app/proposals"} component={withAppShell(Proposals)} />
+      <Route path={"/app/proposals/:id"} component={withAppShell(ProposalDetail)} />
+      <Route path={"/app/proposal-frameworks"} component={withAppShell(ProposalFrameworkSelector)} />
+      <Route path={"/app/contracts"} component={withAppShell(Contracts)} />
+      <Route path={"/app/contracts/:id"} component={withAppShell(ContractDetail)} />
       
       {/* Active operations pages */}
-      <Route path={"/app/clients"} component={Clients} />
-      <Route path={"/app/files"} component={Files} />
-      <Route path={"/app/files/:id"} component={FileDetail} />
-      <Route path={"/app/contacts"} component={Contacts} />
-      <Route path={"/app/contacts/:id"} component={ContactDetail} />
-      <Route path={"/app/messages"} component={Messages} />
-      <Route path={"/app/messages/:id"} component={MessageDetail} />
-      <Route path={"/app/invoices"} component={Invoices} />
-      <Route path={"/app/invoices/:id"} component={InvoiceDetail} />
-      <Route path={"/app/payments"} component={Payments} />
-      <Route path={"/app/payments/:id"} component={PaymentDetail} />
-      <Route path={"/app/finance"} component={Finance} />
-      <Route path={"/app/obligations"} component={Obligations} />
-      <Route path={"/app/deliverables"} component={Deliverables} />
-      <Route path={"/app/deadlines"} component={Deadlines} />
-      <Route path={"/app/compliance"} component={Compliance} />
+      <Route path={"/app/clients"} component={withAppShell(Clients)} />
+      <Route path={"/app/files"} component={withAppShell(Files)} />
+      <Route path={"/app/files/:id"} component={withAppShell(FileDetail)} />
+      <Route path={"/app/contacts"} component={withAppShell(Contacts)} />
+      <Route path={"/app/contacts/:id"} component={withAppShell(ContactDetail)} />
+      <Route path={"/app/messages"} component={withAppShell(Messages)} />
+      <Route path={"/app/messages/:id"} component={withAppShell(MessageDetail)} />
+      <Route path={"/app/invoices"} component={withAppShell(Invoices)} />
+      <Route path={"/app/invoices/:id"} component={withAppShell(InvoiceDetail)} />
+      <Route path={"/app/payments"} component={withAppShell(Payments)} />
+      <Route path={"/app/payments/:id"} component={withAppShell(PaymentDetail)} />
+      <Route path={"/app/finance"} component={withAppShell(Finance)} />
+      <Route path={"/app/obligations"} component={withAppShell(Obligations)} />
+      <Route path={"/app/deliverables"} component={withAppShell(Deliverables)} />
+      <Route path={"/app/deadlines"} component={withAppShell(Deadlines)} />
+      <Route path={"/app/compliance"} component={withAppShell(Compliance)} />
       
       {/* User Setup & Profile pages */}
-      <Route path={"/app/onboarding"} component={Onboarding} />
-      <Route path={"/app/business-profile"} component={BusinessProfile} />
-      <Route path={"/app/profile"} component={UserProfile} />
-      <Route path={"/app/settings"} component={Settings} />
-      <Route path={"/app/subscription"} component={Subscription} />
-      <Route path={"/app/users"} component={Users} />
-      <Route path={"/app/alerts"} component={Alerts} />
-      <Route path={"/app/tasks"} component={Tasks} />
+      <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
+      <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
+      <Route path={"/app/settings"} component={withAppShell(Settings)} />
+      <Route path={"/app/subscription"} component={withAppShell(Subscription)} />
+      <Route path={"/app/users"} component={withAppShell(Users)} />
+      <Route path={"/app/alerts"} component={withAppShell(Alerts)} />
+      <Route path={"/app/tasks"} component={withAppShell(Tasks)} />
       
       {/* Contract Hub, AI, and Learning pages */}
-      <Route path={"/app/contracts/:id/hub"} component={ContractHub} />
-      <Route path={"/app/reports"} component={Reports} />
-      <Route path={"/app/capability-statements"} component={CapabilityStatements} />
-      <Route path={"/app/templates"} component={Templates} />
-      <Route path={"/app/contracts/:id/closeout"} component={Closeout} />
-      <Route path={"/app/proposals/:id/loss-review"} component={LossReview} />
-      <Route path={"/app/lessons"} component={LessonsLearned} />
+      <Route path={"/app/contracts/:id/hub"} component={withAppShell(ContractHub)} />
+      <Route path={"/app/reports"} component={withAppShell(Reports)} />
+      <Route path={"/app/capability-statements"} component={withAppShell(CapabilityStatements)} />
+      <Route path={"/app/templates"} component={withAppShell(Templates)} />
+      <Route path={"/app/contracts/:id/closeout"} component={withAppShell(Closeout)} />
+      <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
+      <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

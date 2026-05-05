@@ -36,9 +36,12 @@ import {
   complianceRouter, notesRouter, capabilityStatementsRouter, templatesRouter,
   closeoutRouter, lessonsRouter, lossReviewsRouter
 } from "./entityRouters";
+import { workspaceRouter, platformRouter } from "./platformRouter";
 
 export const appRouter = router({
   system: systemRouter,
+  workspace: workspaceRouter,
+  platform: platformRouter,
   files: filesRouter,
   contacts: contactsRouter,
   messages: messagesRouter,

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 import {
   CheckCircle2,
-  AlertCircle,
   ChevronRight,
   Zap,
   Building2,
@@ -18,287 +18,241 @@ import {
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    legalBusinessName: '',
-    dba: '',
-    email: '',
-    phone: '',
-    website: '',
-    address: '',
-    entityType: 'LLC',
+    companyName: '',
+    contractingModel: '',
     primaryNaics: '',
     additionalNaics: '',
-    govReadiness: '',
+    certifications: '',
     preferences: '',
   });
 
-  const setupItems = [
-    { label: 'Complete your profile', completed: true },
-    { label: 'Add team members', completed: false },
-    { label: 'Register with SAM.gov', completed: true },
-    { label: 'Add business certifications', completed: false },
-    { label: 'Set up payment method', completed: true },
-    { label: 'Review compliance settings', completed: false },
-  ];
-
-  const completedCount = setupItems.filter((item) => item.completed).length;
-  const progressPercent = (completedCount / setupItems.length) * 100;
+  const completeOnboarding = trpc.workspace.completeOnboarding.useMutation();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleContinue = () => {
-    if (currentStep < 3) {
+  const handleContinue = async () => {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
-    } else {
-      navigate('/app/dashboard');
+      return;
+    }
+
+    // Final step: complete onboarding
+    if (!formData.companyName.trim()) {
+      toast.error("Please enter your company name");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await completeOnboarding.mutateAsync({
+        companyName: formData.companyName,
+        contractingModel: formData.contractingModel || undefined,
+        naicsCodes: [formData.primaryNaics, formData.additionalNaics].filter(Boolean).join(', ') || undefined,
+        certifications: formData.certifications || undefined,
+      });
+      toast.success("Workspace setup complete!");
+      navigate('/app/dashboard', { replace: true });
+    } catch (error) {
+      toast.error("Failed to complete setup. Please try again.");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const steps = [
+  type FieldDef = {
+    label: string;
+    name: string;
+    type: string;
+    required?: boolean;
+    placeholder?: string;
+    options?: { value: string; label: string }[];
+  };
+
+  const steps: { title: string; description: string; icon: typeof Building2; fields: FieldDef[] }[] = [
     {
       title: 'Business Basics',
-      description: 'Tell us about your company',
+      description: 'Tell us about your company so we can customize your experience',
+      icon: Building2,
       fields: [
-        { label: 'Legal Business Name', name: 'legalBusinessName', type: 'text', required: true },
-        { label: 'DBA / Trade Name', name: 'dba', type: 'text' },
-        { label: 'Business Email', name: 'email', type: 'email', required: true },
-        { label: 'Phone', name: 'phone', type: 'tel' },
-        { label: 'Website', name: 'website', type: 'url' },
-        { label: 'Address', name: 'address', type: 'text' },
+        { label: 'Company Name', name: 'companyName', type: 'text', required: true, placeholder: 'Your company or business name' },
         {
-          label: 'Entity Type',
-          name: 'entityType',
+          label: 'Contracting Model',
+          name: 'contractingModel',
           type: 'select',
-          options: ['LLC', 'Corporation', 'Sole Proprietor', 'Partnership', 'Other'],
+          options: [
+            { value: '', label: 'Select your model' },
+            { value: 'prime', label: 'Prime Contractor' },
+            { value: 'sub', label: 'Subcontractor' },
+            { value: 'both', label: 'Both Prime and Sub' },
+          ],
         },
       ],
     },
     {
-      title: 'Business Context',
-      description: 'NAICS codes and capabilities',
+      title: 'NAICS and Capabilities',
+      description: 'Help us understand your contracting focus areas',
+      icon: Globe,
       fields: [
-        { label: 'Primary NAICS Code', name: 'primaryNaics', type: 'text' },
-        { label: 'Additional NAICS Codes', name: 'additionalNaics', type: 'textarea' },
-      ],
-    },
-    {
-      title: 'Government Readiness',
-      description: 'Compliance and registration',
-      fields: [
-        { label: 'Government Readiness Status', name: 'govReadiness', type: 'textarea' },
+        { label: 'Primary NAICS Code', name: 'primaryNaics', type: 'text', placeholder: 'e.g., 541512 - Computer Systems Design' },
+        { label: 'Additional NAICS Codes', name: 'additionalNaics', type: 'textarea', placeholder: 'Enter additional NAICS codes, one per line' },
+        { label: 'Certifications', name: 'certifications', type: 'textarea', placeholder: 'e.g., 8(a), HUBZone, WOSB, SDVOSB, ISO 9001' },
       ],
     },
     {
       title: 'Preferences',
-      description: 'How you want to use PrimeContractorOS',
+      description: 'How would you like to use PrimeContractorOS?',
+      icon: MapPin,
       fields: [
-        { label: 'Your Preferences', name: 'preferences', type: 'textarea' },
+        { label: 'What are you looking to accomplish first?', name: 'preferences', type: 'textarea', placeholder: 'e.g., Track my first opportunity, manage existing contracts, build proposals...' },
       ],
     },
   ];
 
   const currentStepData = steps[currentStep];
+  const StepIcon = currentStepData.icon;
 
   return (
-    <PageLayout title="Onboarding" subtitle="Set up your workspace" label="Setup">
-      <div className="p-8">
-        {/* Header */}
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div className="container flex items-center justify-between py-4">
+          <div className="text-2xl font-bold text-slate-900">PrimeContractorOS</div>
+          <div className="text-sm text-slate-500">Workspace Setup</div>
+        </div>
+      </nav>
+
+      <div className="container max-w-3xl py-12">
+        {/* Progress */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Set Up Your Workspace the Right Way</h1>
-          <p className="text-slate-600">
-            This setup flow helps organize your company workspace so the rest of the platform can work correctly.
+          <div className="flex items-center gap-2 mb-4">
+            {steps.map((_, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                    idx === currentStep
+                      ? 'bg-blue-600 text-white'
+                      : idx < currentStep
+                        ? 'bg-green-600 text-white'
+                        : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {idx < currentStep ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={`w-12 h-1 rounded ${idx < currentStep ? 'bg-green-600' : 'bg-slate-200'}`}></div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-slate-500">Step {currentStep + 1} of {steps.length}</p>
+        </div>
+
+        {/* Form Card */}
+        <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
+          {/* Step Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+              <StepIcon className="w-6 h-6 text-blue-600" />
+              {currentStepData.title}
+            </h1>
+            <p className="text-slate-600 mt-2">{currentStepData.description}</p>
+          </div>
+
+          {/* Form Fields */}
+          <div className="space-y-6 mb-8">
+            {currentStepData.fields.map((field, idx) => (
+              <div key={idx}>
+                <Label htmlFor={field.name} className="text-sm font-medium text-slate-700">
+                  {field.label}
+                  {field.required && <span className="text-red-500 ml-1">*</span>}
+                </Label>
+                {field.type === 'select' ? (
+                  <select
+                    id={field.name}
+                    name={field.name}
+                    value={formData[field.name as keyof typeof formData]}
+                    onChange={handleInputChange}
+                    className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    {(field.options || []).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.type === 'textarea' ? (
+                  <Textarea
+                    id={field.name}
+                    name={field.name}
+                    value={formData[field.name as keyof typeof formData]}
+                    onChange={handleInputChange}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                    className="mt-2"
+                    rows={3}
+                  />
+                ) : (
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type={field.type}
+                    value={formData[field.name as keyof typeof formData]}
+                    onChange={handleInputChange}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                    className="mt-2"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+              disabled={currentStep === 0}
+            >
+              Back
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={handleContinue}
+              disabled={loading}
+            >
+              {loading ? (
+                "Completing setup..."
+              ) : currentStep === steps.length - 1 ? (
+                <>
+                  Complete Setup
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* AI Tip */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+          <h3 className="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-600" />
+            Quick Tip
+          </h3>
+          <p className="text-slate-700 text-sm">
+            You can always update this information later from your workspace settings. The more detail you provide now, the better we can tailor your experience and AI recommendations.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Setup Status */}
-          <div className="lg:col-span-1">
-            <div className="bg-white border border-slate-200 rounded-lg p-6 sticky top-8">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Setup Status</h2>
-
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">Completion</span>
-                  <span className="text-sm font-semibold text-slate-900">{Math.round(progressPercent)}%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div className="bg-green-600 h-2 rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-6">
-                {setupItems.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    {item.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
-                    )}
-                    <span className={item.completed ? 'text-slate-600 line-through' : 'text-slate-700'}>{item.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-6 border-t border-slate-200">
-                <p className="text-xs font-medium text-slate-500 mb-2">Current Access</p>
-                <p className="text-sm font-semibold text-slate-900">7-Day Trial</p>
-                <p className="text-xs text-slate-600 mt-1">5 days remaining</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Form Steps */}
-          <div className="lg:col-span-2">
-            <div className="bg-white border border-slate-200 rounded-lg p-8">
-              {/* Step Indicator */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  {steps.map((_, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                          idx === currentStep
-                            ? 'bg-blue-600 text-white'
-                            : idx < currentStep
-                              ? 'bg-green-600 text-white'
-                              : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        {idx < currentStep ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
-                      </div>
-                      {idx < steps.length - 1 && (
-                        <div
-                          className={`w-8 h-1 ${
-                            idx < currentStep ? 'bg-green-600' : 'bg-slate-200'
-                          }`}
-                        ></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-600">
-                  Step {currentStep + 1} of {steps.length}
-                </p>
-              </div>
-
-              {/* Step Content */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
-                  {currentStep === 0 && <Building2 className="w-6 h-6 text-blue-600" />}
-                  {currentStep === 1 && <Globe className="w-6 h-6 text-blue-600" />}
-                  {currentStep === 2 && <MapPin className="w-6 h-6 text-blue-600" />}
-                  {currentStep === 3 && <Zap className="w-6 h-6 text-blue-600" />}
-                  {currentStepData.title}
-                </h2>
-                <p className="text-slate-600">{currentStepData.description}</p>
-              </div>
-
-              {/* Form Fields */}
-              <div className="space-y-6 mb-8">
-                {currentStepData.fields.map((field, idx) => (
-                  <div key={idx}>
-                    <Label htmlFor={field.name} className="text-sm font-medium text-slate-700">
-                      {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {field.type === 'select' ? (
-                      <select
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        className="mt-2 w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {(field.options || []).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    ) : field.type === 'textarea' ? (
-                      <Textarea
-                        id={field.name}
-                        name={field.name}
-                        value={formData[field.name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                        className="mt-2"
-                        rows={4}
-                      />
-                    ) : (
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type={field.type}
-                        value={formData[field.name as keyof typeof formData]}
-                        onChange={handleInputChange}
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                        className="mt-2"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex gap-3 justify-between">
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate('/app/dashboard')}
-                  >
-                    Save and Continue Later
-                  </Button>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                    disabled={currentStep === 0}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={handleContinue}
-                  >
-                    {currentStep === steps.length - 1 ? (
-                      <>
-                        Finish Setup
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </>
-                    ) : (
-                      <>
-                        Continue
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Guided Summary */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
-              <h3 className="text-lg font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
-                AI-Guided Summary
-              </h3>
-              <p className="text-slate-700 mb-4">
-                Based on your setup, here's what we recommend next:
-              </p>
-              <ul className="space-y-2 text-sm text-slate-700">
-                <li>✓ Add your team members to collaborate on opportunities</li>
-                <li>✓ Upload your capability statement for quick reference</li>
-                <li>✓ Set up your first opportunity to start tracking</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
-    </PageLayout>
+    </div>
   );
 }
