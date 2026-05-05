@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import {
   createOpportunity,
@@ -37,6 +37,8 @@ import {
   closeoutRouter, lessonsRouter, lossReviewsRouter
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
+import { requireWorkspaceId } from "./workspaceMiddleware";
+import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -59,47 +61,16 @@ export const appRouter = router({
   closeout: closeoutRouter,
   lessons: lessonsRouter,
   lossReviews: lossReviewsRouter,
+  clins: clinsRouter,
+  modifications: modificationsRouter,
+  personnel: personnelRouter,
+  complianceMatrix: complianceMatrixRouter,
+  settings: settingsRouter,
+  finance: financeRouter,
+  findings: findingsRouter,
+  audit: auditRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    signup: publicProcedure
-      .input(z.object({
-        legalBusinessName: z.string(),
-        dba: z.string().optional(),
-        businessEmail: z.string().email(),
-        phone: z.string().optional(),
-        website: z.string().optional(),
-        state: z.string().optional(),
-        entityType: z.string().optional(),
-        fullName: z.string(),
-        loginEmail: z.string().email(),
-        password: z.string().min(8),
-        jobTitle: z.string().optional(),
-        userPhone: z.string().optional(),
-        accessChoice: z.enum(["trial", "limited", "paid"]),
-      }))
-      .mutation(async ({ input }) => {
-        return {
-          success: true,
-          message: "Workspace created successfully",
-          workspaceId: "ws_" + Math.random().toString(36).substr(2, 9),
-        };
-      }),
-    login: publicProcedure
-      .input(z.object({
-        email: z.string().email(),
-        password: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        return {
-          success: true,
-          message: "Login successful",
-          user: {
-            id: "user_" + Math.random().toString(36).substr(2, 9),
-            email: input.email,
-            name: "User",
-          },
-        };
-      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -107,29 +78,29 @@ export const appRouter = router({
     }),
   }),
   opportunities: router({
-    list: publicProcedure
-      .input(z.object({ workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
         try {
-          return await listOpportunities(input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await listOpportunities(wsId);
         } catch (error) {
           console.error("Error listing opportunities:", error);
           return [];
         }
       }),
-    get: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
         try {
-          return await getOpportunity(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await getOpportunity(input.id, wsId);
         } catch (error) {
           console.error("Error getting opportunity:", error);
           return null;
         }
       }),
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
-        workspaceId: z.number(),
         title: z.string().min(1),
         agency: z.string().optional(),
         solicitation: z.string().optional(),
@@ -139,19 +110,19 @@ export const appRouter = router({
         sourceLink: z.string().optional(),
         summary: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await createOpportunity(input);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await createOpportunity({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {
           console.error("Error creating opportunity:", error);
           throw error;
         }
       }),
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         title: z.string().min(1).optional(),
         agency: z.string().optional(),
         solicitation: z.string().optional(),
@@ -161,63 +132,65 @@ export const appRouter = router({
         sourceLink: z.string().optional(),
         summary: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const { id, workspaceId, ...data } = input;
-          await updateOpportunity(id, workspaceId, data);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { id, ...data } = input;
+          await updateOpportunity(id, wsId, data);
           return { success: true };
         } catch (error) {
           console.error("Error updating opportunity:", error);
           throw error;
         }
       }),
-    delete: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .mutation(async ({ input }) => {
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          await deleteOpportunity(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await deleteOpportunity(input.id, wsId);
           return { success: true };
         } catch (error) {
           console.error("Error deleting opportunity:", error);
           throw error;
         }
       }),
-    updateStatus: publicProcedure
+    updateStatus: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         status: z.enum(["new", "in_review", "pursue", "hold", "no_pursue", "moved_to_proposal", "archived"]),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await updateOpportunityStatus(input.id, input.workspaceId, input.status);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await updateOpportunityStatus(input.id, wsId, input.status);
           return { success: true };
         } catch (error) {
           console.error("Error updating opportunity status:", error);
           throw error;
         }
       }),
-    convertToProposal: publicProcedure
+    convertToProposal: protectedProcedure
       .input(z.object({
         opportunityId: z.number(),
-        workspaceId: z.number(),
         proposalTitle: z.string().min(1),
         framework: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const opportunity = await getOpportunity(input.opportunityId, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const opportunity = await getOpportunity(input.opportunityId, wsId);
           if (!opportunity) {
             throw new Error("Opportunity not found");
           }
           const proposal = await createProposal({
-            workspaceId: input.workspaceId,
+            workspaceId: wsId,
             title: input.proposalTitle,
             opportunityId: input.opportunityId,
             framework: input.framework,
             dueDate: opportunity.dueDate || undefined,
           });
-          await updateOpportunityStatus(input.opportunityId, input.workspaceId, "moved_to_proposal");
+          await updateOpportunityStatus(input.opportunityId, wsId, "moved_to_proposal");
           return { success: true, proposalId: proposal };
         } catch (error) {
           console.error("Error converting opportunity to proposal:", error);
@@ -226,108 +199,110 @@ export const appRouter = router({
       }),
   }),
   proposals: router({
-    list: publicProcedure
-      .input(z.object({ workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
         try {
-          return await listProposals(input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await listProposals(wsId);
         } catch (error) {
           console.error("Error listing proposals:", error);
           return [];
         }
       }),
-    get: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
         try {
-          return await getProposal(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await getProposal(input.id, wsId);
         } catch (error) {
           console.error("Error getting proposal:", error);
           return null;
         }
       }),
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
-        workspaceId: z.number(),
         title: z.string().min(1),
         opportunityId: z.number().optional(),
         framework: z.string().optional(),
         dueDate: z.date().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await createProposal(input);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await createProposal({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {
           console.error("Error creating proposal:", error);
           throw error;
         }
       }),
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         title: z.string().min(1).optional(),
         opportunityId: z.number().optional(),
         framework: z.string().optional(),
         dueDate: z.date().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const { id, workspaceId, ...data } = input;
-          await updateProposal(id, workspaceId, data);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { id, ...data } = input;
+          await updateProposal(id, wsId, data);
           return { success: true };
         } catch (error) {
           console.error("Error updating proposal:", error);
           throw error;
         }
       }),
-    delete: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .mutation(async ({ input }) => {
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          await deleteProposal(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await deleteProposal(input.id, wsId);
           return { success: true };
         } catch (error) {
           console.error("Error deleting proposal:", error);
           throw error;
         }
       }),
-    updateStatus: publicProcedure
+    updateStatus: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         status: z.enum(["draft", "in_progress", "under_review", "submitted", "won", "lost", "withdrawn", "archived"]),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await updateProposalStatus(input.id, input.workspaceId, input.status);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await updateProposalStatus(input.id, wsId, input.status);
           return { success: true };
         } catch (error) {
           console.error("Error updating proposal status:", error);
           throw error;
         }
       }),
-    convertToContract: publicProcedure
+    convertToContract: protectedProcedure
       .input(z.object({
         proposalId: z.number(),
-        workspaceId: z.number(),
         contractTitle: z.string().min(1),
         contractNumber: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const proposal = await getProposal(input.proposalId, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const proposal = await getProposal(input.proposalId, wsId);
           if (!proposal) {
             throw new Error("Proposal not found");
           }
           const contract = await createContract({
-            workspaceId: input.workspaceId,
+            workspaceId: wsId,
             title: input.contractTitle,
             proposalId: input.proposalId,
             contractNumber: input.contractNumber || undefined,
           });
-          await updateProposalStatus(input.proposalId, input.workspaceId, "won");
+          await updateProposalStatus(input.proposalId, wsId, "won");
           return { success: true, contractId: contract };
         } catch (error) {
           console.error("Error converting proposal to contract:", error);
@@ -336,29 +311,29 @@ export const appRouter = router({
       }),
   }),
   contracts: router({
-    list: publicProcedure
-      .input(z.object({ workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
         try {
-          return await listContracts(input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await listContracts(wsId);
         } catch (error) {
           console.error("Error listing contracts:", error);
           return [];
         }
       }),
-    get: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .query(async ({ input }) => {
+    get: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
         try {
-          return await getContract(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await getContract(input.id, wsId);
         } catch (error) {
           console.error("Error getting contract:", error);
           return null;
         }
       }),
-    create: publicProcedure
+    create: protectedProcedure
       .input(z.object({
-        workspaceId: z.number(),
         title: z.string().min(1),
         proposalId: z.number().optional(),
         contractNumber: z.string().optional(),
@@ -367,19 +342,19 @@ export const appRouter = router({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await createContract(input);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await createContract({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {
           console.error("Error creating contract:", error);
           throw error;
         }
       }),
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         title: z.string().min(1).optional(),
         proposalId: z.number().optional(),
         contractNumber: z.string().optional(),
@@ -388,65 +363,67 @@ export const appRouter = router({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const { id, workspaceId, ...data } = input;
-          await updateContract(id, workspaceId, data);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { id, ...data } = input;
+          await updateContract(id, wsId, data);
           return { success: true };
         } catch (error) {
           console.error("Error updating contract:", error);
           throw error;
         }
       }),
-    delete: publicProcedure
-      .input(z.object({ id: z.number(), workspaceId: z.number() }))
-      .mutation(async ({ input }) => {
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          await deleteContract(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await deleteContract(input.id, wsId);
           return { success: true };
         } catch (error) {
           console.error("Error deleting contract:", error);
           throw error;
         }
       }),
-    updateStatus: publicProcedure
+    updateStatus: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         status: z.enum(["setup", "active", "modification", "closeout", "closed", "suspended"]),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await updateContractStatus(input.id, input.workspaceId, input.status);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await updateContractStatus(input.id, wsId, input.status);
           return { success: true };
         } catch (error) {
           console.error("Error updating contract status:", error);
           throw error;
         }
       }),
-    updateHealth: publicProcedure
+    updateHealth: protectedProcedure
       .input(z.object({
         id: z.number(),
-        workspaceId: z.number(),
         health: z.enum(["healthy", "at_risk", "warning"]),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          await updateContractHealth(input.id, input.workspaceId, input.health);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await updateContractHealth(input.id, wsId, input.health);
           return { success: true };
         } catch (error) {
           console.error("Error updating contract health:", error);
           throw error;
         }
       }),
-    convertFromProposal: publicProcedure
+    convertFromProposal: protectedProcedure
       .input(z.object({
         proposalId: z.number(),
-        workspaceId: z.number(),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         try {
-          const proposal = await getProposal(input.proposalId, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const proposal = await getProposal(input.proposalId, wsId);
           if (!proposal) {
             throw new Error("Proposal not found");
           }
@@ -461,20 +438,19 @@ export const appRouter = router({
       }),
   }),
   ai: router({
-    generateGuidance: publicProcedure
+    generateGuidance: protectedProcedure
       .input(z.object({
-        workspaceId: z.number(),
         recordType: z.string(),
         recordId: z.number(),
         context: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          if (!ctx.user?.id) throw new Error("User not authenticated");
+          const wsId = await requireWorkspaceId(ctx.user.id);
           
           // Create AI run
           await createAiRun({
-            workspaceId: input.workspaceId,
+            workspaceId: wsId,
             userId: ctx.user.id,
             relatedRecordType: input.recordType,
             relatedRecordId: input.recordId,
@@ -501,7 +477,7 @@ export const appRouter = router({
           if (!messageContent || typeof messageContent !== "string") throw new Error("No response from LLM");
           
           // Parse suggestions from response
-          const suggestions = [];
+          const suggestions: any[] = [];
           try {
             const parsed = JSON.parse(messageContent);
             if (Array.isArray(parsed)) {
@@ -510,7 +486,6 @@ export const appRouter = router({
               suggestions.push(...parsed.suggestions);
             }
           } catch {
-            // If JSON parsing fails, extract suggestions from text
             suggestions.push({
               title: "AI Guidance",
               text: messageContent.substring(0, 500),
@@ -521,8 +496,8 @@ export const appRouter = router({
           // Store suggestions
           for (const suggestion of suggestions) {
             await createAiSuggestion({
-              workspaceId: input.workspaceId,
-              aiRunId: 1, // Placeholder - would be actual run ID
+              workspaceId: wsId,
+              aiRunId: 1,
               relatedRecordType: input.recordType,
               relatedRecordId: input.recordId,
               suggestionTitle: suggestion.title || "AI Suggestion",
@@ -538,46 +513,38 @@ export const appRouter = router({
           throw error;
         }
       }),
-    getSuggestions: publicProcedure
+    getSuggestions: protectedProcedure
       .input(z.object({
-        workspaceId: z.number(),
         recordType: z.string(),
         recordId: z.number(),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         try {
-          return await getAiSuggestionsForRecord(
-            input.workspaceId,
-            input.recordType,
-            input.recordId
-          );
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          return await getAiSuggestionsForRecord(wsId, input.recordType, input.recordId);
         } catch (error) {
           console.error("Error fetching suggestions:", error);
-          throw error;
+          return [];
         }
       }),
-    dismissSuggestion: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        workspaceId: z.number(),
-      }))
-      .mutation(async ({ input }) => {
+    dismissSuggestion: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          await dismissAiSuggestion(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await dismissAiSuggestion(input.id, wsId);
           return { success: true };
         } catch (error) {
           console.error("Error dismissing suggestion:", error);
           throw error;
         }
       }),
-    acceptSuggestion: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        workspaceId: z.number(),
-      }))
-      .mutation(async ({ input }) => {
+    acceptSuggestion: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          await acceptAiSuggestion(input.id, input.workspaceId);
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          await acceptAiSuggestion(input.id, wsId);
           return { success: true };
         } catch (error) {
           console.error("Error accepting suggestion:", error);

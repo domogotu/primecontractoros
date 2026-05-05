@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 
 interface AIGuidancePanelProps {
-  workspaceId: number;
   recordType: string;
   recordId: number;
   context: string;
@@ -14,7 +13,7 @@ interface AIGuidancePanelProps {
 }
 
 export function AIGuidancePanel({
-  workspaceId,
+  
   recordType,
   recordId,
   context,
@@ -26,7 +25,7 @@ export function AIGuidancePanel({
   // Get suggestions
   const { data: suggestions = [], refetch: refetchSuggestions } = trpc.ai.getSuggestions.useQuery(
     {
-      workspaceId,
+      
       recordType,
       recordId,
     },
@@ -64,7 +63,7 @@ export function AIGuidancePanel({
     if (isOpen && suggestions.length === 0 && !isGenerating) {
       setIsGenerating(true);
       generateGuidance.mutate({
-        workspaceId,
+        
         recordType,
         recordId,
         context,
@@ -125,7 +124,7 @@ export function AIGuidancePanel({
                 onClick={() => {
                   setIsGenerating(true);
                   generateGuidance.mutate({
-                    workspaceId,
+                    
                     recordType,
                     recordId,
                     context,
@@ -162,7 +161,7 @@ export function AIGuidancePanel({
                       onClick={() =>
                         acceptSuggestion.mutate({
                           id: suggestion.id,
-                          workspaceId,
+                          
                         })
                       }
                     >
@@ -176,7 +175,7 @@ export function AIGuidancePanel({
                       onClick={() =>
                         dismissSuggestion.mutate({
                           id: suggestion.id,
-                          workspaceId,
+                          
                         })
                       }
                     >

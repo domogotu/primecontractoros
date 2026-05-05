@@ -1,6 +1,6 @@
 
 import { drizzle } from "drizzle-orm/mysql2";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, isNull } from "drizzle-orm";
 import { InsertUser, users, opportunities, proposals, contracts, aiRuns, aiSuggestions, aiFindings } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -143,7 +143,7 @@ export async function listOpportunities(workspaceId: number) {
   return await db
     .select()
     .from(opportunities)
-    .where(eq(opportunities.workspaceId, workspaceId));
+    .where(and(eq(opportunities.workspaceId, workspaceId), isNull(opportunities.deletedAt)));
 }
 
 export async function updateOpportunity(
@@ -174,7 +174,7 @@ export async function deleteOpportunity(id: number, workspaceId: number) {
   if (!db) throw new Error("Database not available");
 
   await db
-    .delete(opportunities)
+    .update(opportunities).set({ deletedAt: new Date() })
     .where(and(eq(opportunities.id, id), eq(opportunities.workspaceId, workspaceId)));
 }
 
@@ -235,7 +235,7 @@ export async function listProposals(workspaceId: number) {
   return await db
     .select()
     .from(proposals)
-    .where(eq(proposals.workspaceId, workspaceId));
+    .where(and(eq(proposals.workspaceId, workspaceId), isNull(proposals.deletedAt)));
 }
 
 export async function updateProposal(
@@ -262,7 +262,7 @@ export async function deleteProposal(id: number, workspaceId: number) {
   if (!db) throw new Error("Database not available");
 
   await db
-    .delete(proposals)
+    .update(proposals).set({ deletedAt: new Date() })
     .where(and(eq(proposals.id, id), eq(proposals.workspaceId, workspaceId)));
 }
 
@@ -330,7 +330,7 @@ export async function listContracts(workspaceId: number) {
   return await db
     .select()
     .from(contracts)
-    .where(eq(contracts.workspaceId, workspaceId));
+    .where(and(eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt)));
 }
 
 export async function updateContract(
@@ -365,7 +365,7 @@ export async function deleteContract(id: number, workspaceId: number) {
   if (!db) throw new Error("Database not available");
 
   await db
-    .delete(contracts)
+    .update(contracts).set({ deletedAt: new Date() })
     .where(and(eq(contracts.id, id), eq(contracts.workspaceId, workspaceId)));
 }
 

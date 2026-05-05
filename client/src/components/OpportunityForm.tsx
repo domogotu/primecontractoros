@@ -8,14 +8,13 @@ import { AlertCircle } from "lucide-react";
 import { NAICS_CODES, OPPORTUNITY_SOURCES, CONTRACT_TYPES } from "@shared/govContracting";
 
 interface OpportunityFormProps {
-  workspaceId: number;
   opportunityId?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export default function OpportunityForm({
-  workspaceId,
+  
   opportunityId,
   onSuccess,
   onCancel,
@@ -35,7 +34,7 @@ export default function OpportunityForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: opportunity } = trpc.opportunities.get.useQuery(
-    { id: opportunityId || 0, workspaceId },
+    { id: opportunityId! },
     { enabled: !!opportunityId }
   );
 
@@ -119,13 +118,13 @@ export default function OpportunityForm({
       if (opportunityId) {
         await updateMutation.mutateAsync({
           id: opportunityId,
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Opportunity updated successfully");
       } else {
         await createMutation.mutateAsync({
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Opportunity created successfully");

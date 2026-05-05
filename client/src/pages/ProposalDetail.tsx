@@ -19,6 +19,81 @@ import {
 } from 'lucide-react';
 import ProposalForm from '@/components/ProposalForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
+import { toast } from 'sonner';
+import { Plus, Trash2 } from 'lucide-react';
+
+function ComplianceMatrixSection({ proposalId }: { proposalId: number }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ requirement: '', section: '', responseLocation: '', assignedTo: '' });
+  const { data: items = [] } = trpc.complianceMatrix.list.useQuery({ proposalId });
+  const utils = trpc.useUtils();
+  const createMutation = trpc.complianceMatrix.create.useMutation({
+    onSuccess: () => { utils.complianceMatrix.list.invalidate(); setShowAdd(false); setForm({ requirement: '', section: '', responseLocation: '', assignedTo: '' }); toast.success('Requirement added'); },
+  });
+  const deleteMutation = trpc.complianceMatrix.delete.useMutation({ onSuccess: () => utils.complianceMatrix.list.invalidate() });
+
+  const statusColors: Record<string, string> = {
+    complete: 'bg-green-100 text-green-800',
+    in_progress: 'bg-yellow-100 text-yellow-800',
+    non_compliant: 'bg-red-100 text-red-800',
+    not_started: 'bg-slate-100 text-slate-800',
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+          <ClipboardList className="w-5 h-5 text-blue-600" /> Compliance Matrix
+        </h2>
+        <Button size="sm" variant="outline" onClick={() => setShowAdd(!showAdd)}>
+          <Plus className="w-4 h-4 mr-1" /> Add Requirement
+        </Button>
+      </div>
+      {showAdd && (
+        <div className="border border-slate-200 rounded-lg p-4 mb-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Section</Label><Input value={form.section} onChange={e => setForm(f => ({ ...f, section: e.target.value }))} placeholder="e.g. L-1" /></div>
+            <div><Label>Response Location</Label><Input value={form.responseLocation} onChange={e => setForm(f => ({ ...f, responseLocation: e.target.value }))} placeholder="e.g. Vol II, 3.2" /></div>
+          </div>
+          <div><Label>Requirement</Label><Input value={form.requirement} onChange={e => setForm(f => ({ ...f, requirement: e.target.value }))} /></div>
+          <div className="flex gap-3">
+            <Input value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Assigned to" />
+            <Button size="sm" disabled={!form.requirement || createMutation.isPending}
+              onClick={() => createMutation.mutate({ proposalId, requirement: form.requirement, section: form.section || undefined, responseLocation: form.responseLocation || undefined, assignedTo: form.assignedTo || undefined })}>
+              {createMutation.isPending ? 'Adding...' : 'Add'}
+            </Button>
+          </div>
+        </div>
+      )}
+      {items.length === 0 ? (
+        <p className="text-slate-500 italic">No compliance requirements tracked yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-slate-200">
+              <th className="text-left py-2 font-medium text-slate-600">Section</th>
+              <th className="text-left py-2 font-medium text-slate-600">Requirement</th>
+              <th className="text-left py-2 font-medium text-slate-600">Response</th>
+              <th className="text-left py-2 font-medium text-slate-600">Status</th>
+              <th className="py-2"></th>
+            </tr></thead>
+            <tbody>
+              {items.map(item => (
+                <tr key={item.id} className="border-b border-slate-100">
+                  <td className="py-2 font-medium">{item.section || '-'}</td>
+                  <td className="py-2 text-slate-600 max-w-[200px] truncate">{item.requirement}</td>
+                  <td className="py-2">{item.responseLocation || '-'}</td>
+                  <td className="py-2"><span className={`px-2 py-0.5 rounded text-xs ${statusColors[item.status || 'not_started']}`}>{(item.status || 'not_started').replace(/_/g, ' ')}</span></td>
+                  <td className="py-2 text-right"><button onClick={() => deleteMutation.mutate({ id: item.id })} className="text-red-500 hover:text-red-700"><Trash2 className="w-4 h-4" /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProposalDetail() {
   const [, params] = useRoute('/app/proposals/:id');
@@ -28,10 +103,9 @@ export default function ProposalDetail() {
   const [contractTitle, setContractTitle] = useState('');
 
   const proposalId = params?.id ? parseInt(params.id) : undefined;
-  const workspaceId = 1; // TODO: Get from context
 
   const { data: proposal, isLoading, error } = trpc.proposals.get.useQuery(
-    { id: proposalId || 0, workspaceId },
+    { id: proposalId! },
     { enabled: !!proposalId }
   );
 
@@ -99,7 +173,7 @@ export default function ProposalDetail() {
     try {
       await updateStatusMutation.mutateAsync({
         id: proposalId,
-        workspaceId,
+        
         status: newStatus as any,
       });
     } catch (error) {
@@ -190,14 +264,8 @@ export default function ProposalDetail() {
               </div>
             </div>
 
-            {/* Proposal Sections */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-blue-600" />
-                Proposal Sections
-              </h2>
-              <p className="text-slate-500 italic">Sections will be populated based on selected framework.</p>
-            </div>
+            {/* Compliance Matrix */}
+            <ComplianceMatrixSection proposalId={proposalId} />
 
             {/* Linked Files */}
             <div className="bg-white border border-slate-200 rounded-lg p-6">
@@ -344,7 +412,6 @@ export default function ProposalDetail() {
 
             {/* AI Assistance Panel */}
             <AIGuidancePanel
-              workspaceId={workspaceId}
               recordType="proposal"
               recordId={proposalId}
               context={`Reviewing proposal: ${proposal.title}`}
@@ -399,7 +466,7 @@ export default function ProposalDetail() {
                     try {
                       const result = await convertToContractMutation.mutateAsync({
                         proposalId,
-                        workspaceId,
+                        
                         contractTitle,
                       });
                       setIsConvertDialogOpen(false);
@@ -433,7 +500,6 @@ export default function ProposalDetail() {
               <DialogTitle>Edit Proposal</DialogTitle>
             </DialogHeader>
             <ProposalForm
-              workspaceId={workspaceId}
               proposalId={proposalId}
               onSuccess={() => {
                 setIsEditDialogOpen(false);

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 import { useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -16,23 +18,48 @@ import {
 
 export default function BusinessProfile() {
   const [, navigate] = useLocation();
+  const { data: settingsMap } = trpc.settings.getAll.useQuery();
+  const setSetting = trpc.settings.set.useMutation();
+  const utils = trpc.useUtils();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    legalName: 'Acme Government Solutions LLC',
-    dba: 'Acme Solutions',
-    email: 'contact@acmegov.com',
-    phone: '(202) 555-0100',
-    website: 'www.acmegov.com',
-    address: '123 Government Way, Washington, DC 20001',
-    uei: 'XXXXXXXXXX',
-    cage: 'ABC12',
-    sam: 'SAM-REG-123456',
-    primaryNaics: '541511',
-    additionalNaics: '541512, 541513',
-    certifications: 'Woman-Owned Small Business, Veteran-Owned Small Business',
+    legalName: '',
+    dba: '',
+    email: '',
+    phone: '',
+    website: '',
+    address: '',
+    uei: '',
+    cage: '',
+    sam: '',
+    primaryNaics: '',
+    additionalNaics: '',
+    certifications: '',
   });
+  const [completeness, setCompleteness] = useState(0);
 
-  const [completeness, setCompleteness] = useState(75);
+  useEffect(() => {
+    if (settingsMap) {
+      const fd = {
+        legalName: settingsMap['bp.legalName'] || '',
+        dba: settingsMap['bp.dba'] || '',
+        email: settingsMap['bp.email'] || '',
+        phone: settingsMap['bp.phone'] || '',
+        website: settingsMap['bp.website'] || '',
+        address: settingsMap['bp.address'] || '',
+        uei: settingsMap['bp.uei'] || '',
+        cage: settingsMap['bp.cage'] || '',
+        sam: settingsMap['bp.sam'] || '',
+        primaryNaics: settingsMap['bp.primaryNaics'] || '',
+        additionalNaics: settingsMap['bp.additionalNaics'] || '',
+        certifications: settingsMap['bp.certifications'] || '',
+      };
+      setFormData(fd);
+      const fields = Object.values(fd);
+      const filled = fields.filter(f => f.length > 0).length;
+      setCompleteness(Math.round((filled / fields.length) * 100));
+    }
+  }, [settingsMap]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -42,12 +69,14 @@ export default function BusinessProfile() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert('Business profile saved successfully!');
-      setCompleteness(Math.min(100, completeness + 5));
+      const entries: [string, string][] = Object.entries(formData).map(([k, v]) => [`bp.${k}`, v]);
+      for (const [key, value] of entries) {
+        await setSetting.mutateAsync({ key, value });
+      }
+      utils.settings.getAll.invalidate();
+      toast.success('Business profile saved successfully!');
     } catch (error) {
-      alert('Failed to save profile. Please try again.');
+      toast.error('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }

@@ -6,14 +6,13 @@ import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 
 interface ContractFormProps {
-  workspaceId: number;
   contractId?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export default function ContractForm({
-  workspaceId,
+  
   contractId,
   onSuccess,
   onCancel,
@@ -33,7 +32,7 @@ export default function ContractForm({
 
   // Fetch existing contract if editing
   const { data: contract } = trpc.contracts.get.useQuery(
-    { id: contractId || 0, workspaceId },
+    { id: contractId! },
     { enabled: !!contractId }
   );
 
@@ -106,13 +105,13 @@ export default function ContractForm({
       if (contractId) {
         await updateMutation.mutateAsync({
           id: contractId,
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Contract updated successfully");
       } else {
         await createMutation.mutateAsync({
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Contract created successfully");

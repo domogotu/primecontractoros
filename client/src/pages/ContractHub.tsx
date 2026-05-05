@@ -2,29 +2,49 @@ import { useState } from 'react';
 import { AlertCircle, CheckCircle2, Clock, DollarSign, FileText, Users, MessageSquare, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { trpc } from '@/lib/trpc';
+import { useLocation } from 'wouter';
 
 export default function ContractHub() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [, navigate] = useLocation();
+  const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
+  const { data: tasks = [] } = trpc.tasks.list.useQuery();
+  const { data: invoices = [] } = trpc.invoices.list.useQuery();
 
-  const contract = {
-    id: 1,
-    title: 'IT Infrastructure Support - Year 1',
-    contractNumber: 'N00123-26-C-0001',
-    agency: 'Department of Defense',
-    value: 250000,
-    startDate: '2026-04-01',
-    endDate: '2027-03-31',
-    status: 'Active',
+  // Use the first active contract or fall back to a placeholder
+  const activeContracts = (contracts as any[]).filter(c => c.status === 'active' || c.status === 'awarded');
+  const firstContract = activeContracts[0] || (contracts as any[])[0];
+  const contract = firstContract ? {
+    id: firstContract.id,
+    title: firstContract.title || 'Untitled Contract',
+    contractNumber: firstContract.contractNumber || 'N/A',
+    agency: firstContract.agency || 'N/A',
+    value: parseFloat(firstContract.value || '0'),
+    startDate: firstContract.startDate ? new Date(firstContract.startDate).toISOString().split('T')[0] : 'N/A',
+    endDate: firstContract.endDate ? new Date(firstContract.endDate).toISOString().split('T')[0] : 'N/A',
+    status: firstContract.status || 'draft',
     health: 'Healthy',
-    proposalTitle: 'Defense IT - Proposal',
-    modifications: 2,
-    openAlerts: 3,
-    openTasks: 5,
-    outstandingBalance: 125000,
-  };
+    proposalTitle: '',
+    modifications: 0,
+    openAlerts: 0,
+    openTasks: (tasks as any[]).filter(t => t.contractId === firstContract.id && t.status !== 'done').length,
+    outstandingBalance: (invoices as any[]).filter(i => i.contractId === firstContract.id && i.status !== 'paid').reduce((sum: number, i: any) => sum + parseFloat(i.amount || '0'), 0),
+  } : null;
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-gray-500">Loading contracts...</div>;
+
+  if (!contract) return (
+    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+      <FileText className="w-12 h-12 mb-4 text-gray-300" />
+      <h2 className="text-xl font-semibold text-gray-700 mb-2">No Active Contracts</h2>
+      <p className="text-gray-500 mb-4">Create a contract to see the Contract Hub in action.</p>
+      <Button onClick={() => navigate('/app/contracts')}>Go to Contracts</Button>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-full bg-gray-100 flex flex-col">
       {/* Navy Header */}
       <div className="bg-blue-900 text-white px-8 py-8">
         <div className="max-w-7xl mx-auto">

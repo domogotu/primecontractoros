@@ -9,6 +9,7 @@ export default function Finance() {
   const [, navigate] = useLocation();
   const { data: invoices = [], isLoading: loadingInv } = trpc.invoices.list.useQuery();
   const { data: payments = [], isLoading: loadingPay } = trpc.payments.list.useQuery();
+  const { data: financeSummary } = trpc.finance.summary.useQuery();
 
   const totalBilled = (invoices as any[]).reduce((sum, inv) => sum + parseFloat(inv.amount || "0"), 0);
   const totalPaid = (payments as any[]).reduce((sum, pay) => sum + parseFloat(pay.amount || "0"), 0);
@@ -132,6 +133,37 @@ export default function Finance() {
                     <p className="font-bold text-amber-700">{formatCurrency(parseFloat(pay.amount || "0"))}</p>
                   </div>
                 ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Contract-Level Breakdown */}
+          {financeSummary && financeSummary.byContract && financeSummary.byContract.length > 0 && (
+            <Card className="bg-white border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-500" /> By Contract
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 font-medium text-gray-600">Contract</th>
+                      <th className="text-right py-2 font-medium text-gray-600">Billed</th>
+                      <th className="text-right py-2 font-medium text-gray-600">Paid</th>
+                      <th className="text-right py-2 font-medium text-gray-600">Outstanding</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {financeSummary.byContract.map((c: any) => (
+                      <tr key={c.contractId} className="border-b border-gray-100">
+                        <td className="py-2">{c.contractTitle || `Contract #${c.contractId}`}</td>
+                        <td className="py-2 text-right">{formatCurrency(c.totalBilled)}</td>
+                        <td className="py-2 text-right text-green-700">{formatCurrency(c.totalPaid)}</td>
+                        <td className="py-2 text-right text-amber-700">{formatCurrency(c.outstanding)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </Card>
           )}

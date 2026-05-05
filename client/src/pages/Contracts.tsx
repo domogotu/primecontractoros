@@ -13,8 +13,7 @@ export default function Contracts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const workspaceId = 1;
-  const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery({ workspaceId });
+  const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
 
   const filteredContracts = contracts.filter((c) =>
     c.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -132,7 +131,6 @@ export default function Contracts() {
             <DialogTitle>Create New Contract</DialogTitle>
           </DialogHeader>
           <ContractForm
-            workspaceId={workspaceId}
             onSuccess={() => setIsCreateDialogOpen(false)}
             onCancel={() => setIsCreateDialogOpen(false)}
           />

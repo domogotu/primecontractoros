@@ -13,8 +13,7 @@ export default function Opportunities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const workspaceId = 1;
-  const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery({ workspaceId });
+  const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery();
 
   const filteredOpportunities = opportunities.filter((opp) =>
     opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,7 +131,6 @@ export default function Opportunities() {
             <DialogTitle>Create New Opportunity</DialogTitle>
           </DialogHeader>
           <OpportunityForm
-            workspaceId={workspaceId}
             onSuccess={() => setIsCreateDialogOpen(false)}
             onCancel={() => setIsCreateDialogOpen(false)}
           />

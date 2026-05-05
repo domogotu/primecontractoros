@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import WorkspaceSidebar from "./WorkspaceSidebar";
+import { WorkspaceContext, useWorkspaceQuery } from "@/hooks/useWorkspace";
 
 interface AppShellProps {
   children: ReactNode;
@@ -11,7 +12,8 @@ interface AppShellProps {
 /**
  * AppShell wraps all /app/* routes with:
  * 1. Authentication check (redirects to login if not authenticated)
- * 2. Persistent sidebar navigation
+ * 2. Workspace context provider (fetches user's workspace)
+ * 3. Persistent sidebar navigation
  * 
  * This ensures logged-in users always see the app sidebar
  * and never see public marketing navigation.
@@ -19,6 +21,7 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const { isAuthenticated, loading } = useAuth();
   const [location] = useLocation();
+  const { workspace, workspaceId, isLoading: wsLoading, refetch } = useWorkspaceQuery();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -26,12 +29,12 @@ export default function AppShell({ children }: AppShellProps) {
     }
   }, [loading, isAuthenticated]);
 
-  if (loading) {
+  if (loading || (isAuthenticated && wsLoading)) {
     return (
       <div className="flex h-screen bg-slate-50 items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto" />
-          <p className="text-gray-500 mt-4">Loading...</p>
+          <p className="text-gray-500 mt-4">Loading workspace...</p>
         </div>
       </div>
     );
@@ -43,15 +46,21 @@ export default function AppShell({ children }: AppShellProps) {
 
   // Don't show sidebar on onboarding page
   if (location === "/app/onboarding") {
-    return <>{children}</>;
+    return (
+      <WorkspaceContext.Provider value={{ workspace, workspaceId, isLoading: wsLoading, refetch }}>
+        {children}
+      </WorkspaceContext.Provider>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <WorkspaceSidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
+    <WorkspaceContext.Provider value={{ workspace, workspaceId, isLoading: wsLoading, refetch }}>
+      <div className="flex h-screen bg-slate-50">
+        <WorkspaceSidebar />
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </WorkspaceContext.Provider>
   );
 }

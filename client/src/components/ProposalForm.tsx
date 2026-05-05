@@ -7,14 +7,13 @@ import { AlertCircle } from "lucide-react";
 import { EVALUATION_CRITERIA } from "@shared/govContracting";
 
 interface ProposalFormProps {
-  workspaceId: number;
   proposalId?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
 export default function ProposalForm({
-  workspaceId,
+  
   proposalId,
   onSuccess,
   onCancel,
@@ -40,7 +39,7 @@ export default function ProposalForm({
 
   // Fetch existing proposal if editing
   const { data: proposal } = trpc.proposals.get.useQuery(
-    { id: proposalId || 0, workspaceId },
+    { id: proposalId! },
     { enabled: !!proposalId }
   );
 
@@ -119,13 +118,13 @@ export default function ProposalForm({
       if (proposalId) {
         await updateMutation.mutateAsync({
           id: proposalId,
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Proposal updated successfully");
       } else {
         await createMutation.mutateAsync({
-          workspaceId,
+          
           ...payload,
         });
         toast.success("Proposal created successfully");

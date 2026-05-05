@@ -36,6 +36,20 @@
       "when": 1777944503277,
       "tag": "0004_thankful_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1777947799899,
+      "tag": "0005_brave_lady_ursula",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777948498179,
+      "tag": "0006_aromatic_thunderbolts",
+      "breakpoints": true
     }
   ]
 }

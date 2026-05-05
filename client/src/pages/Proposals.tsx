@@ -13,8 +13,7 @@ export default function Proposals() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const workspaceId = 1;
-  const { data: proposals = [], isLoading } = trpc.proposals.list.useQuery({ workspaceId });
+  const { data: proposals = [], isLoading } = trpc.proposals.list.useQuery();
 
   const filteredProposals = proposals.filter((p) =>
     p.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -134,7 +133,6 @@ export default function Proposals() {
             <DialogTitle>Create New Proposal</DialogTitle>
           </DialogHeader>
           <ProposalForm
-            workspaceId={workspaceId}
             onSuccess={() => setIsCreateDialogOpen(false)}
             onCancel={() => setIsCreateDialogOpen(false)}
           />

@@ -9,10 +9,9 @@ export default function Dashboard() {
   const { user, loading } = useAuth();
   const [, navigate] = useLocation();
 
-  const workspaceId = 1;
-  const { data: opportunities = [] } = trpc.opportunities.list.useQuery({ workspaceId });
-  const { data: proposals = [] } = trpc.proposals.list.useQuery({ workspaceId });
-  const { data: contracts = [] } = trpc.contracts.list.useQuery({ workspaceId });
+  const { data: opportunities = [] } = trpc.opportunities.list.useQuery();
+  const { data: proposals = [] } = trpc.proposals.list.useQuery();
+  const { data: contracts = [] } = trpc.contracts.list.useQuery();
   const { data: invoices = [] } = trpc.invoices.list.useQuery({});
   const { data: tasks = [] } = trpc.tasks.list.useQuery({});
   const { data: alerts = [] } = trpc.alerts.list.useQuery();

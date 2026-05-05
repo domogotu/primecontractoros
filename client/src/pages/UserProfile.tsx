@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -17,17 +20,35 @@ import {
 
 export default function UserProfile() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
+  const { data: settingsMap } = trpc.settings.getAll.useQuery();
+  const setSetting = trpc.settings.set.useMutation();
+  const utils = trpc.useUtils();
   const [isSaving, setIsSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: 'John Smith',
-    loginEmail: 'john.smith@acmegov.com',
-    jobTitle: 'Business Development Manager',
-    phone: '(202) 555-0101',
-    role: 'admin',
+    fullName: '',
+    loginEmail: '',
+    jobTitle: '',
+    phone: '',
+    role: 'user',
     guidancePreference: 'detailed',
     reminderPreference: 'daily',
   });
+
+  useEffect(() => {
+    if (settingsMap || user) {
+      setFormData({
+        fullName: settingsMap?.['up.fullName'] || user?.name || '',
+        loginEmail: user?.email || '',
+        jobTitle: settingsMap?.['up.jobTitle'] || '',
+        phone: settingsMap?.['up.phone'] || '',
+        role: user?.role || 'user',
+        guidancePreference: settingsMap?.['up.guidancePreference'] || 'detailed',
+        reminderPreference: settingsMap?.['up.reminderPreference'] || 'daily',
+      });
+    }
+  }, [settingsMap, user]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -37,11 +58,20 @@ export default function UserProfile() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert('Profile saved successfully!');
+      const entries: [string, string][] = [
+        ['up.fullName', formData.fullName],
+        ['up.jobTitle', formData.jobTitle],
+        ['up.phone', formData.phone],
+        ['up.guidancePreference', formData.guidancePreference],
+        ['up.reminderPreference', formData.reminderPreference],
+      ];
+      for (const [key, value] of entries) {
+        await setSetting.mutateAsync({ key, value });
+      }
+      utils.settings.getAll.invalidate();
+      toast.success('Profile saved successfully!');
     } catch (error) {
-      alert('Failed to save profile. Please try again.');
+      toast.error('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }

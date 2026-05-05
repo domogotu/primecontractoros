@@ -58,6 +58,7 @@ export const opportunities = mysqlTable("opportunities", {
   status: mysqlEnum("status", ["new", "in_review", "pursue", "hold", "no_pursue", "moved_to_proposal", "archived"]).default("new"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
 });
 
 export type Opportunity = typeof opportunities.$inferSelect;
@@ -74,6 +75,7 @@ export const proposals = mysqlTable("proposals", {
   status: mysqlEnum("status", ["draft", "in_progress", "under_review", "submitted", "won", "lost", "withdrawn", "archived"]).default("draft"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
 });
 
 export type Proposal = typeof proposals.$inferSelect;
@@ -94,6 +96,7 @@ export const contracts = mysqlTable("contracts", {
   health: mysqlEnum("health", ["healthy", "at_risk", "warning"]).default("healthy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
 });
 
 export type Contract = typeof contracts.$inferSelect;
@@ -197,6 +200,7 @@ export const files = mysqlTable("files", {
   category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence"
   uploadedBy: int("uploadedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -218,6 +222,7 @@ export const contacts = mysqlTable("contacts", {
   linkedRecordId: int("linkedRecordId"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -255,6 +260,7 @@ export const invoices = mysqlTable("invoices", {
   paidDate: timestamp("paidDate"),
   description: text("description"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -295,6 +301,7 @@ export const tasks = mysqlTable("tasks", {
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  deletedAt: timestamp("deletedAt"),
 });
 
 export type Task = typeof tasks.$inferSelect;
@@ -591,3 +598,114 @@ export const platformOverrides = mysqlTable("platformOverrides", {
 
 export type PlatformOverride = typeof platformOverrides.$inferSelect;
 export type InsertPlatformOverride = typeof platformOverrides.$inferInsert;
+
+
+// Contract CLINs (Contract Line Item Numbers)
+export const contractClins = mysqlTable("contractClins", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  clinNumber: varchar("clinNumber", { length: 50 }).notNull(),
+  description: text("description"),
+  quantity: int("quantity"),
+  unitPrice: decimal("unitPrice", { precision: 12, scale: 2 }),
+  totalValue: decimal("totalValue", { precision: 12, scale: 2 }),
+  status: mysqlEnum("status", ["active", "completed", "cancelled"]).default("active"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContractClin = typeof contractClins.$inferSelect;
+export type InsertContractClin = typeof contractClins.$inferInsert;
+
+// Contract Modifications
+export const contractModifications = mysqlTable("contractModifications", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  modNumber: varchar("modNumber", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  modType: mysqlEnum("modType", ["administrative", "funding", "scope", "period_of_performance", "other"]).default("administrative"),
+  valueChange: decimal("valueChange", { precision: 12, scale: 2 }),
+  effectiveDate: timestamp("effectiveDate"),
+  status: mysqlEnum("status", ["draft", "submitted", "approved", "rejected"]).default("draft"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContractModification = typeof contractModifications.$inferSelect;
+export type InsertContractModification = typeof contractModifications.$inferInsert;
+
+// Key Personnel
+export const keyPersonnel = mysqlTable("keyPersonnel", {
+  id: int("id").autoincrement().primaryKey(),
+  contractId: int("contractId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 50 }),
+  clearanceLevel: varchar("clearanceLevel", { length: 100 }),
+  startDate: timestamp("startDate"),
+  endDate: timestamp("endDate"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type KeyPerson = typeof keyPersonnel.$inferSelect;
+export type InsertKeyPerson = typeof keyPersonnel.$inferInsert;
+
+// Proposal Compliance Matrix
+export const complianceMatrix = mysqlTable("complianceMatrix", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  requirement: text("requirement").notNull(),
+  section: varchar("section", { length: 100 }),
+  responseLocation: varchar("responseLocation", { length: 255 }),
+  assignedTo: varchar("assignedTo", { length: 255 }),
+  status: mysqlEnum("status", ["not_started", "in_progress", "complete", "non_compliant"]).default("not_started"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ComplianceMatrixItem = typeof complianceMatrix.$inferSelect;
+export type InsertComplianceMatrixItem = typeof complianceMatrix.$inferInsert;
+
+// Audit Log
+export const auditLog = mysqlTable("auditLog", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  action: mysqlEnum("action", ["create", "update", "delete", "archive", "restore"]).notNull(),
+  entity: varchar("entity", { length: 100 }).notNull(),
+  entityId: int("entityId").notNull(),
+  changes: text("changes"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+export type AuditLogEntry = typeof auditLog.$inferSelect;
+export type InsertAuditLogEntry = typeof auditLog.$inferInsert;
+
+// Workspace Settings (includes AI configuration)
+export const workspaceSettings = mysqlTable("workspaceSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  settingKey: varchar("settingKey", { length: 100 }).notNull(),
+  settingValue: text("settingValue"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WorkspaceSetting = typeof workspaceSettings.$inferSelect;
+export type InsertWorkspaceSetting = typeof workspaceSettings.$inferInsert;
+
+// Workspace Members (for role-based access)
+export const workspaceMembers = mysqlTable("workspaceMembers", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["owner", "admin", "member", "viewer"]).default("member").notNull(),
+  invitedBy: int("invitedBy"),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+export type InsertWorkspaceMember = typeof workspaceMembers.$inferInsert;

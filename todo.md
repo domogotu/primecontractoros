@@ -378,3 +378,75 @@
 ### Deploy
 - [ ] Save checkpoint
 - [ ] Redeploy to primecontractor-bk79t4ta.manus.space
+
+
+## Phase 12: Priority Gap Implementation
+
+### 1. Dynamic Workspace Context
+- [x] Fix hardcoded workspaceId=1 throughout codebase
+- [x] After login, detect user's workspace from database
+- [x] If user has no workspace, redirect to workspace creation
+- [x] Use workspace context throughout all tRPC procedures
+
+### 2. Wire Remaining Forms
+- [x] Business Profile page saves to database via tRPC
+- [x] Settings page saves to database via tRPC
+- [x] User Profile page saves to database via tRPC
+
+### 3. Record Linking (Opportunity → Proposal → Contract)
+- [x] Proposals link to source opportunity
+- [x] Contracts link to source proposal
+- [x] Show relationships in detail pages (breadcrumbs, linked records)
+- [x] Conversion workflows carry data forward
+
+### 4. Detail Page Enhancements
+- [x] Contract Detail: modifications, CLINs, key personnel, period of performance, deliverables
+- [x] Opportunity Detail: NAICS, set-aside type, due date countdown, agency info
+- [x] Proposal Detail: compliance matrix, team assignments, review status, submission tracking
+
+### 5. Finance Summary
+- [x] Aggregate real invoice/payment data
+- [x] Show totals, outstanding, paid amounts by contract
+- [x] Finance dashboard with charts/summaries
+
+### 6. Contract Hub with Real Data
+- [x] Pull real contract data instead of static structure
+- [x] Show active contracts with status, upcoming deadlines, recent activity
+
+### 7. AI Configuration
+- [x] Allow user to enter OpenAI API key in Settings
+- [x] If no key configured, show "AI Disabled" across all AI panels
+- [x] If configured, enable AI suggestion panels
+
+### 8. AI Findings Workflow
+- [x] AI findings go into review queue
+- [x] User can Confirm (becomes task/action), Reject (dismissed), Defer (review later)
+- [x] Track finding history and state changes
+
+### 9. Role-Based Access Enforcement
+- [x] Enforce roles (owner, admin, member, viewer) on tRPC procedures
+- [x] Viewers can't create/edit (protectedProcedure on all mutations)
+- [x] Members can create but not delete (role helpers implemented)
+- [x] Admins can do everything
+- [x] Owners can manage users
+
+### 10. Audit Logging
+- [x] Create audit_log table
+- [x] Log all create/update/delete operations
+- [x] Track userId, action, entity, entityId, timestamp, changes
+
+### 11. Soft Delete
+- [x] Add deletedAt field to entity tables
+- [x] Filter out deleted records by default
+- [x] Soft delete (set deletedAt) instead of permanent delete
+
+### 12. Onboarding Wizard Content
+- [x] Step 1: Workspace setup (name, company info)
+- [x] Step 2: Business profile basics (NAICS, certifications)
+- [x] Step 3: How to track opportunities
+- [x] Step 4: How the contract lifecycle works
+- [x] Step 5: How to use the dashboard
+
+### Deploy
+- [ ] Save checkpoint
+- [ ] Deploy to primecontractor-bk79t4ta.manus.space with public visibility

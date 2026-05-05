@@ -27,10 +27,9 @@ export default function OpportunityDetail() {
   const [proposalTitle, setProposalTitle] = useState('');
 
   const opportunityId = params?.id ? parseInt(params.id) : undefined;
-  const workspaceId = 1; // TODO: Get from context
 
   const { data: opportunity, isLoading, error } = trpc.opportunities.get.useQuery(
-    { id: opportunityId || 0, workspaceId },
+    { id: opportunityId! },
     { enabled: !!opportunityId }
   );
 
@@ -97,7 +96,7 @@ export default function OpportunityDetail() {
     try {
       await updateStatusMutation.mutateAsync({
         id: opportunityId,
-        workspaceId,
+        
         status: newStatus as any,
       });
     } catch (error) {
@@ -113,7 +112,7 @@ export default function OpportunityDetail() {
     try {
       const result = await convertToProposalMutation.mutateAsync({
         opportunityId,
-        workspaceId,
+        
         proposalTitle,
         framework: undefined,
       });
@@ -307,7 +306,6 @@ export default function OpportunityDetail() {
 
             {/* AI Assistance Panel */}
             <AIGuidancePanel
-              workspaceId={workspaceId}
               recordType="opportunity"
               recordId={opportunityId}
               context={`Analyzing opportunity: ${opportunity.title} from ${opportunity.agency || 'Unknown Agency'}`}
@@ -378,7 +376,6 @@ export default function OpportunityDetail() {
               <DialogTitle>Edit Opportunity</DialogTitle>
             </DialogHeader>
             <OpportunityForm
-              workspaceId={workspaceId}
               opportunityId={opportunityId}
               onSuccess={() => {
                 setIsEditDialogOpen(false);
