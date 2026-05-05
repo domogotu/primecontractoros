@@ -24,7 +24,6 @@ import Invoices from "./pages/Invoices";
 import Payments from "./pages/Payments";
 import Finance from "./pages/Finance";
 import ContractHub from "./pages/ContractHub";
-// import AIConfirmationWorkspace from "./pages/AIConfirmationWorkspace";
 import Reports from "./pages/Reports";
 import CapabilityStatements from "./pages/CapabilityStatements";
 import Templates from "./pages/Templates";
@@ -55,6 +54,14 @@ import ContactDetail from "./pages/ContactDetail";
 import MessageDetail from "./pages/MessageDetail";
 import InvoiceDetail from "./pages/InvoiceDetail";
 import PaymentDetail from "./pages/PaymentDetail";
+// New content pages
+import About from "./pages/About";
+import ContactPage from "./pages/ContactPage";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Documentation from "./pages/Documentation";
+import PlatformCompliance from "./pages/PlatformCompliance";
+import Security from "./pages/Security";
 
 function Router() {
   return (
@@ -68,6 +75,14 @@ function Router() {
       <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
       <Route path={"/login"} component={Login} />
+      {/* New content pages */}
+      <Route path={"/about"} component={About} />
+      <Route path={"/contact"} component={ContactPage} />
+      <Route path={"/privacy"} component={Privacy} />
+      <Route path={"/terms"} component={Terms} />
+      <Route path={"/documentation"} component={Documentation} />
+      <Route path={"/platform-compliance"} component={PlatformCompliance} />
+      <Route path={"/security"} component={Security} />
       
       {/* Post-login routes */}
       <Route path={"/app"} component={AppRouter} />
@@ -116,7 +131,6 @@ function Router() {
       
       {/* Contract Hub, AI, and Learning pages */}
       <Route path={"/app/contracts/:id/hub"} component={ContractHub} />
-      {/* <Route path={"/app/contracts/:id/ai-confirmation"} component={AIConfirmationWorkspace} /> */}
       <Route path={"/app/reports"} component={Reports} />
       <Route path={"/app/capability-statements"} component={CapabilityStatements} />
       <Route path={"/app/templates"} component={Templates} />

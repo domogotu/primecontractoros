@@ -1,16 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
-import { Search, HelpCircle, BookOpen, MessageSquare, Mail } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Search, HelpCircle, BookOpen, FileText, DollarSign, Users, Brain, Shield, Folder } from "lucide-react";
 import { useState } from "react";
+import Footer from "@/components/Footer";
 
-/**
- * Help Center Page
- * 
- * Design: Professional Minimalism
- * - Help categories
- * - Search functionality
- * - Support contact options
- */
 export default function Help() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,89 +12,89 @@ export default function Help() {
     {
       icon: HelpCircle,
       title: "Getting Started",
-      description: "Learn how to set up your workspace and get started",
+      description: "Learn how to set up your workspace and get started with government contracting",
       articles: [
-        "Creating your workspace",
-        "Inviting team members",
-        "Setting up your business profile",
-        "Choosing your access level",
+        { title: "Creating your workspace", link: "/documentation" },
+        { title: "Inviting team members", link: "/documentation" },
+        { title: "Setting up your business profile", link: "/documentation" },
+        { title: "Choosing your access level", link: "/pricing" },
       ],
     },
     {
       icon: BookOpen,
       title: "Platform Features",
-      description: "Learn how to use each feature",
+      description: "Learn how to use each feature in the contracting lifecycle",
       articles: [
-        "Opportunity tracking",
-        "Proposal management",
-        "Contract management",
-        "Financial reporting",
+        { title: "Opportunity tracking & pursuit decisions", link: "/documentation" },
+        { title: "Proposal development workflow", link: "/documentation" },
+        { title: "Contract Hub & live tracking", link: "/documentation" },
+        { title: "Closeout per FAR 4.804", link: "/documentation" },
       ],
     },
     {
-      icon: BookOpen,
+      icon: Shield,
       title: "Government Contracting",
-      description: "Learn about government contracting concepts",
+      description: "Learn about government contracting concepts and regulations",
       articles: [
-        "What is SAM registration?",
-        "Understanding NAICS codes",
-        "Government contract types",
-        "Compliance requirements",
+        { title: "What is SAM registration?", link: "/glossary" },
+        { title: "Understanding NAICS codes", link: "/glossary" },
+        { title: "Government contract types (FFP, T&M, CPFF)", link: "/glossary" },
+        { title: "FAR/DFARS compliance requirements", link: "/platform-compliance" },
       ],
     },
     {
-      icon: BookOpen,
-      title: "Finance",
-      description: "Manage invoices, payments, and reporting",
+      icon: DollarSign,
+      title: "Finance & Invoicing",
+      description: "Manage invoices, payments, and financial reporting",
       articles: [
-        "Creating invoices",
-        "Recording payments",
-        "Financial reports",
-        "Tax documentation",
+        { title: "Creating and tracking invoices", link: "/documentation" },
+        { title: "Recording and matching payments", link: "/documentation" },
+        { title: "Finance summary & outstanding balances", link: "/documentation" },
+        { title: "Contract financial health", link: "/documentation" },
       ],
     },
     {
-      icon: BookOpen,
+      icon: Folder,
       title: "Files & Documents",
-      description: "Manage files and documents",
+      description: "Manage files linked to contracts, proposals, and opportunities",
       articles: [
-        "Uploading files",
-        "Organizing files",
-        "Sharing files with team",
-        "File permissions",
+        { title: "Uploading and categorizing files", link: "/documentation" },
+        { title: "Linking files to records", link: "/documentation" },
+        { title: "Governing source files", link: "/documentation" },
+        { title: "File retention for closeout", link: "/documentation" },
       ],
     },
     {
-      icon: BookOpen,
+      icon: Users,
       title: "Users & Access",
-      description: "Manage team members and permissions",
+      description: "Manage team members, roles, and workspace permissions",
       articles: [
-        "User roles and permissions",
-        "Adding team members",
-        "Removing users",
-        "Workspace settings",
+        { title: "User roles: Owner Admin to Read Only", link: "/documentation" },
+        { title: "Adding and removing team members", link: "/documentation" },
+        { title: "Permission levels explained", link: "/documentation" },
+        { title: "Workspace settings", link: "/documentation" },
       ],
     },
     {
-      icon: BookOpen,
-      title: "Billing & Activation",
-      description: "Manage your subscription and billing",
+      icon: FileText,
+      title: "Billing & Plans",
+      description: "Manage your subscription, trials, and billing",
       articles: [
-        "Choosing a plan",
-        "Upgrading or downgrading",
-        "Using promo codes",
-        "Billing support",
+        { title: "Starter, Growth, and Advanced plans", link: "/pricing" },
+        { title: "7-day trial and trial discounts", link: "/pricing" },
+        { title: "Upgrading or downgrading", link: "/documentation" },
+        { title: "Billing support", link: "/contact" },
       ],
     },
     {
-      icon: BookOpen,
+      icon: Brain,
       title: "AI Features",
-      description: "Get help with AI-powered features",
+      description: "Get help with AI-powered guidance and contract analysis",
       articles: [
-        "AI proposal review",
-        "Compliance recommendations",
-        "AI-generated insights",
-        "Best practices",
+        { title: "AI suggestions and findings", link: "/documentation" },
+        { title: "Contract confirmation workflow", link: "/documentation" },
+        { title: "Review states (New, Reviewed, Approved, Held, Rejected)", link: "/documentation" },
+        { title: "AI graceful degradation", link: "/documentation" },
       ],
     },
   ];
@@ -111,12 +104,12 @@ export default function Help() {
       cat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cat.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cat.articles.some((article) =>
-        article.toLowerCase().includes(searchTerm.toLowerCase())
+        article.title.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Navigation */}
       <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
@@ -124,18 +117,10 @@ export default function Help() {
             PrimeContractorOS
           </button>
           <div className="flex gap-4">
-            <Button variant="ghost" onClick={() => navigate("/")}>
-              Home
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/features")}>
-              Features
-            </Button>
-            <Button variant="ghost" onClick={() => navigate("/pricing")}>
-              Pricing
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/login")}>
-              Sign In
-            </Button>
+            <Button variant="ghost" onClick={() => navigate("/")}>Home</Button>
+            <Button variant="ghost" onClick={() => navigate("/features")}>Features</Button>
+            <Button variant="ghost" onClick={() => navigate("/pricing")}>Pricing</Button>
+            <Button variant="outline" onClick={() => navigate("/login")}>Sign In</Button>
           </div>
         </div>
       </nav>
@@ -145,10 +130,8 @@ export default function Help() {
         <div className="container max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Help Center</h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Find answers to common questions and learn how to use PrimeContractorOS.
+            Find answers to common questions and learn how to use PrimeContractorOS for government contracting.
           </p>
-
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
@@ -163,7 +146,7 @@ export default function Help() {
       </section>
 
       {/* Categories */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 flex-1">
         <div className="container max-w-6xl">
           {filteredCategories.length === 0 ? (
             <div className="text-center py-12">
@@ -183,14 +166,18 @@ export default function Help() {
                     <p className="text-sm text-muted-foreground mb-6">{category.description}</p>
                     <ul className="space-y-2 mb-6">
                       {category.articles.map((article, aidx) => (
-                        <li key={aidx} className="text-sm text-foreground">
-                          • {article}
+                        <li key={aidx}>
+                          <Link href={article.link}>
+                            <span className="text-sm text-foreground hover:text-primary cursor-pointer">
+                              &bull; {article.title}
+                            </span>
+                          </Link>
                         </li>
                       ))}
                     </ul>
-                    <Button variant="outline" size="sm">
-                      Learn More
-                    </Button>
+                    <Link href="/documentation">
+                      <Button variant="outline" size="sm">Learn More</Button>
+                    </Link>
                   </div>
                 );
               })}
@@ -219,7 +206,7 @@ export default function Help() {
               },
               {
                 q: "How do I invite team members?",
-                a: "Go to Settings > User Management and click 'Invite User'. Enter their email and select their role. They'll receive an invitation to join your workspace.",
+                a: "Go to your workspace Users page and click Invite User. Enter their email and select their role. They will receive an invitation to join your workspace.",
               },
               {
                 q: "Can I export my data?",
@@ -227,7 +214,7 @@ export default function Help() {
               },
               {
                 q: "What happens when my trial ends?",
-                a: "You'll be prompted to choose a plan or continue with limited access. Your data is never deleted—you can always upgrade later.",
+                a: "You will be prompted to choose a plan or continue with limited access. Your data is never deleted. You can always upgrade later.",
               },
             ].map((faq, idx) => (
               <div key={idx} className="p-6 rounded-lg bg-background border border-border">
@@ -245,45 +232,28 @@ export default function Help() {
           <h2 className="text-3xl font-bold mb-12">Still need help?</h2>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="p-8 rounded-lg bg-card border border-border">
-              <MessageSquare className="h-8 w-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Chat Support</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Chat with our support team during business hours.
-              </p>
-              <Button variant="outline" size="sm">
-                Start Chat
-              </Button>
-            </div>
-            <div className="p-8 rounded-lg bg-card border border-border">
-              <Mail className="h-8 w-8 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">Email Support</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Email us anytime. We'll respond within 24 hours.
+                Email us anytime at support@reedssolutionsllc.org. We respond within 1-2 business days.
               </p>
-              <Button variant="outline" size="sm">
-                Send Email
-              </Button>
+              <a href="mailto:support@reedssolutionsllc.org">
+                <Button variant="outline" size="sm">Send Email</Button>
+              </a>
+            </div>
+            <div className="p-8 rounded-lg bg-card border border-border">
+              <h3 className="text-lg font-semibold mb-2">Documentation</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Browse our full documentation for detailed guides on every feature.
+              </p>
+              <Link href="/documentation">
+                <Button variant="outline" size="sm">View Documentation</Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-12 bg-card">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-sm text-muted-foreground">
-            © 2026 PrimeContractorOS. All rights reserved.
-          </div>
-          <div className="flex gap-6 text-sm">
-            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
-              Home
-            </button>
-            <button onClick={() => navigate("/features")} className="text-muted-foreground hover:text-foreground">
-              Features
-            </button>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
