@@ -448,5 +448,5 @@
 - [x] Step 5: How to use the dashboard
 
 ### Deploy
-- [ ] Save checkpoint
-- [ ] Deploy to primecontractor-bk79t4ta.manus.space with public visibility
+- [x] Save checkpoint
+- [x] Deploy to primecontractor-bk79t4ta.manus.space with public visibility
