@@ -1,114 +1,164 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, Layout, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FileText, Plus, Loader2, Copy, Trash2, Eye } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Templates() {
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [showCreate, setShowCreate] = useState(false);
+  const [previewId, setPreviewId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "", category: "proposal", content: "" });
 
-  const { data: templates = [], isLoading, refetch } = trpc.templates.list.useQuery();
-  const createMutation = trpc.templates.create.useMutation({
-    onSuccess: () => { refetch(); setShowForm(false); setForm({ name: "", category: "proposal", content: "" }); },
+  const { data: templates = [], isLoading, refetch } = trpc.intTemplates.list.useQuery();
+  const defaultsQuery = trpc.intTemplates.getDefaults.useQuery();
+  const addDefaultsMutation = trpc.intTemplates.createFromDefault.useMutation({
+    onSuccess: () => { refetch(); toast.success("Templates Added: Pre-built templates have been added to your library."); },
   });
-  const deleteMutation = trpc.templates.delete.useMutation({ onSuccess: () => refetch() });
+  const createMutation = trpc.intTemplates.create.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowCreate(false);
+      setForm({ name: "", category: "proposal", content: "" });
+      toast.success("Template Created");
+    },
+  });
+  const deleteMutation = trpc.intTemplates.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Template Deleted"); },
+  });
 
-  const filtered = (templates as any[]).filter((t) =>
-    t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const categories = ["proposal", "contract", "closeout", "capability", "past_performance"];
 
-  const handleCreate = () => {
-    if (!form.name) return;
-    createMutation.mutate({ name: form.name, category: form.category || undefined, content: form.content || undefined });
-  };
-
-  const categoryLabels: Record<string, string> = {
-    proposal: "Proposal", contract: "Contract", correspondence: "Correspondence",
-    compliance: "Compliance", report: "Report", invoice: "Invoice", other: "Other",
-  };
+  if (isLoading) {
+    return (
+      <PageLayout title="Template Library" subtitle="Pre-built templates for government contracting" label="Resources">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout
-      title="Document Templates"
-      subtitle="Reusable templates for proposals, contracts, correspondence, and compliance documents"
-      label="Templates"
+      title="Template Library"
+      subtitle="Pre-built templates for proposals, contracts, closeouts, and more"
+      label="Resources"
       summaryCards={[
         { label: "Total Templates", value: templates.length },
-        { label: "Proposal", value: (templates as any[]).filter((t) => t.category === "proposal").length },
-        { label: "Contract", value: (templates as any[]).filter((t) => t.category === "contract").length },
+        { label: "Categories", value: categories.length },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Create Template
-        </Button>
+        <div className="flex gap-2">
+          {templates.length === 0 && (
+            <Button variant="outline" onClick={() => addDefaultsMutation.mutate({})} disabled={addDefaultsMutation.isPending}>
+              {addDefaultsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+              Load Defaults
+            </Button>
+          )}
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Create Template
+          </Button>
+        </div>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Create New Template</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Template Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="proposal">Proposal</option>
-              <option value="contract">Contract</option>
-              <option value="correspondence">Correspondence</option>
-              <option value="compliance">Compliance</option>
-              <option value="report">Report</option>
-              <option value="invoice">Invoice</option>
-              <option value="other">Other</option>
-            </select>
-            <textarea placeholder="Template content (Markdown supported)" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono" />
+      {/* Create form */}
+      {showCreate && (
+        <Card className="p-6 border border-blue-200 bg-blue-50/30 mb-6">
+          <h3 className="text-lg font-semibold mb-4">Create Template</h3>
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="Template name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="flex gap-3 mt-4">
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
-              {createMutation.isPending ? "Creating..." : "Create Template"}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+            <textarea
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+              rows={10}
+              placeholder="Template content (supports markdown)..."
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => createMutation.mutate(form)} disabled={!form.name || !form.content || createMutation.isPending}>
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Save Template
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
           </div>
         </Card>
       )}
 
-      <Card className="bg-white border border-gray-200 p-4">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <input type="text" placeholder="Search templates..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-      </Card>
-
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading templates...</div>
-      ) : filtered.length === 0 ? (
-        <Card className="bg-white border border-gray-200 p-12 text-center">
-          <Layout className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Templates Created</h3>
-          <p className="text-gray-600 mb-6">Create reusable templates for proposals, contracts, correspondence, and compliance documents to streamline your government contracting workflows.</p>
-          <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> Create First Template
+      {/* Templates grid */}
+      {templates.length === 0 && !showCreate ? (
+        <Card className="p-8 text-center border border-gray-200">
+          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Templates Yet</h3>
+          <p className="text-gray-600 mb-4">Load pre-built templates or create your own to streamline your workflow.</p>
+          <Button onClick={() => addDefaultsMutation.mutate({})} disabled={addDefaultsMutation.isPending}>
+            {addDefaultsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+            Load Default Templates
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map((tpl: any) => (
-            <Card key={tpl.id} className="bg-white border border-gray-200 p-5 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{tpl.name}</h3>
-                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-800">
-                    {categoryLabels[tpl.category] || tpl.category || "Other"}
-                  </span>
-                  {tpl.content && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{tpl.content.substring(0, 100)}...</p>}
-                </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((tmpl: any) => (
+            <Card key={tmpl.id} className="p-5 border border-gray-200 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between mb-2">
+                <FileText className="w-6 h-6 text-blue-600" />
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate({ id: tpl.id })}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="sm" onClick={() => setPreviewId(previewId === tmpl.id ? null : tmpl.id)}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteMutation.mutate({ id: tmpl.id })}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+              </div>
+              <h3 className="font-semibold text-gray-900 mb-1">{tmpl.title}</h3>
+              <span className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded capitalize">
+                {tmpl.category?.replace("_", " ")}
+              </span>
+              {previewId === tmpl.id && (
+                <div className="mt-3 p-3 bg-gray-50 rounded text-xs text-gray-700 max-h-48 overflow-auto whitespace-pre-wrap border">
+                  {tmpl.content}
+                </div>
+              )}
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    navigator.clipboard.writeText(tmpl.content || "");
+                    toast.success("Copied: Template content copied to clipboard.");
+                  }}
+                >
+                  <Copy className="w-3 h-3 mr-1" /> Use Template
+                </Button>
               </div>
             </Card>
           ))}

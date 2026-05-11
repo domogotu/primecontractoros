@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import WorkspaceSidebar from "./WorkspaceSidebar";
+import MobileNav from "./MobileNav";
 import { WorkspaceContext, useWorkspaceQuery } from "@/hooks/useWorkspace";
 
 interface AppShellProps {
@@ -55,12 +56,9 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <WorkspaceContext.Provider value={{ workspace, workspaceId, isLoading: wsLoading, refetch }}>
-      <div className="flex h-screen bg-slate-50">
-        <WorkspaceSidebar />
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
-      </div>
+      <MobileNav sidebarContent={<WorkspaceSidebar />}>
+        {children}
+      </MobileNav>
     </WorkspaceContext.Provider>
   );
 }

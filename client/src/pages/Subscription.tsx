@@ -1,301 +1,114 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import PageLayout from '@/components/PageLayout';
-import { Button } from '@/components/ui/button';
-import {
-  CreditCard,
-  CheckCircle2,
-  AlertCircle,
-  Calendar,
-  Zap,
-  HelpCircle,
-} from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { CreditCard, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function Subscription() {
-  const [, navigate] = useLocation();
-
-  const currentPlan = {
-    name: 'Growth Plan',
-    price: 299,
-    status: 'active',
-    startDate: '2026-03-01',
-    renewalDate: '2026-06-01',
-    trialUsed: true,
-    discountApplied: false,
-    features: [
-      'Unlimited opportunities',
-      'Unlimited proposals',
-      'Unlimited contracts',
-      'Team collaboration (up to 10 users)',
-      'AI-powered insights',
-      'Advanced reporting',
-      'Priority support',
-    ],
-  };
-
-  const plans = [
-    {
-      name: 'Starter',
-      price: 99,
-      description: 'Perfect for small teams',
-      features: [
-        'Up to 50 opportunities',
-        'Up to 50 proposals',
-        'Up to 10 contracts',
-        'Team collaboration (up to 3 users)',
-        'Basic reporting',
-        'Email support',
-      ],
+  
+  const { data: billingStatus, isLoading } = trpc.billing.getStatus.useQuery();
+  const { data: plans = [] } = trpc.billing.getPlans.useQuery();
+  const upgrade = trpc.billing.createCheckout.useMutation({
+    onSuccess: () => {
+      toast.success("Plan Updated: Your subscription has been updated.");
     },
-    {
-      name: 'Growth',
-      price: 299,
-      description: 'For growing contractors',
-      features: [
-        'Unlimited opportunities',
-        'Unlimited proposals',
-        'Unlimited contracts',
-        'Team collaboration (up to 10 users)',
-        'AI-powered insights',
-        'Advanced reporting',
-        'Priority support',
-      ],
-      current: true,
-    },
-    {
-      name: 'Enterprise',
-      price: null,
-      description: 'Custom for large organizations',
-      features: [
-        'Everything in Growth',
-        'Custom integrations',
-        'Dedicated account manager',
-        'Custom workflows',
-        'On-premise deployment',
-        'SLA guarantee',
-      ],
-    },
-  ];
+  });
 
-  const daysUntilRenewal = Math.ceil(
-    (new Date(currentPlan.renewalDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-  );
+  if (isLoading) {
+    return (
+      <PageLayout title="Subscription" subtitle="Manage your plan and billing" label="Billing">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const currentPlan = billingStatus?.subscription?.plan;
+  const isDevMode = !billingStatus?.stripeConfigured;
 
   return (
     <PageLayout
-      title="Subscription & Billing"
-      subtitle="Manage your subscription plan and billing information"
+      title="Subscription"
+      subtitle="Manage your plan and billing"
       label="Billing"
       summaryCards={[
-        { label: "Current Plan", value: currentPlan.name },
-        { label: "Monthly Cost", value: `$${currentPlan.price}`, color: "text-blue-600" },
-        { label: "Renewal", value: `${daysUntilRenewal} days`, color: "text-gray-600" },
-        { label: "Status", value: "Active", color: "text-green-600" },
+        { label: "Current Plan", value: currentPlan?.name || "Free" },
+        { label: "Status", value: isDevMode ? "Dev Mode" : (billingStatus?.subscription?.status || "Inactive"), color: isDevMode ? "text-purple-600" : "text-green-600" },
+        { label: "Contracts Used", value: billingStatus?.limits?.maxContracts || 0 },
+        { label: "Contract Limit", value: currentPlan?.maxUsers === -1 ? "Unlimited" : (currentPlan?.maxUsers || "N/A") },
       ]}
     >
-
-        {/* Current Plan Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Plan Card */}
-          <div className="bg-white border border-slate-200 rounded-lg p-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">{currentPlan.name}</h2>
-                <p className="text-slate-600 mt-1">Your current subscription</p>
-              </div>
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                Active
-              </span>
-            </div>
-
-            <div className="mb-6">
-              <p className="text-4xl font-bold text-slate-900">
-                ${currentPlan.price}
-                <span className="text-lg text-slate-600 font-normal">/month</span>
-              </p>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-slate-400" />
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Next Renewal</p>
-                  <p className="text-slate-900">{currentPlan.renewalDate}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-slate-400" />
-                <div>
-                  <p className="text-xs font-medium text-slate-500">Payment Method</p>
-                  <p className="text-slate-900">Visa ending in 4242</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-6">
-              <Button variant="outline" className="w-full">
-                Update Payment Method
-              </Button>
-              <Button variant="outline" className="w-full">
-                Change Plan
-              </Button>
-            </div>
-
-            <div className="pt-6 border-t border-slate-200">
-              <p className="text-sm text-slate-700 mb-3">
-                <strong>Renews in {daysUntilRenewal} days</strong> on {currentPlan.renewalDate}
-              </p>
-              <Button variant="outline" className="w-full text-red-600">
-                Cancel Subscription
-              </Button>
-            </div>
+      {isDevMode && (
+        <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-purple-900">Development Mode</h3>
+            <p className="text-sm text-purple-700">Stripe is not configured. All features are unlocked with no limits. Configure Stripe in Settings to enable billing.</p>
           </div>
+        </div>
+      )}
 
-          {/* Status & Benefits */}
-          <div className="space-y-6">
-            {/* Status */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Subscription Status</h3>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-medium text-slate-900">Active Subscription</p>
-                    <p className="text-sm text-slate-600">Your subscription is active and in good standing</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  {currentPlan.trialUsed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <p className="font-medium text-slate-900">Trial Status</p>
-                    <p className="text-sm text-slate-600">
-                      {currentPlan.trialUsed ? 'Trial period used' : 'Trial period available'}
-                    </p>
-                  </div>
-                </div>
-
-                {currentPlan.discountApplied && (
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-slate-900">Discount Applied</p>
-                      <p className="text-sm text-slate-600">20% early adopter discount</p>
-                    </div>
-                  </div>
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((plan: any) => {
+          const isCurrent = currentPlan?.id === plan.id;
+          return (
+            <Card key={plan.id} className={`p-6 border-2 ${isCurrent ? "border-blue-500 bg-blue-50/50" : "border-gray-200"}`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                {isCurrent && (
+                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">Current</span>
                 )}
               </div>
-            </div>
-
-            {/* Included Features */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Included Features</h3>
-
-              <ul className="space-y-2">
-                {currentPlan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-slate-700">
-                    <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    {feature}
+              <p className="text-3xl font-bold text-gray-900 mb-1">
+                ${plan.monthlyPrice}<span className="text-sm font-normal text-gray-500">/mo</span>
+              </p>
+              <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  {plan.contractLimit === -1 ? "Unlimited" : plan.contractLimit} contracts
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  {plan.userLimit === -1 ? "Unlimited" : plan.userLimit} team members
+                </li>
+                {plan.features && (
+                  <li className="flex items-center gap-2 text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    {plan.features}
                   </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Plan Comparison */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Compare Plans</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan, idx) => (
-              <div
-                key={idx}
-                className={`rounded-lg border p-6 transition-all ${
-                  plan.current
-                    ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
-                  <p className="text-sm text-slate-600 mt-1">{plan.description}</p>
-                </div>
-
-                <div className="mb-6">
-                  {plan.price ? (
-                    <p className="text-3xl font-bold text-slate-900">
-                      ${plan.price}
-                      <span className="text-sm text-slate-600 font-normal">/month</span>
-                    </p>
-                  ) : (
-                    <p className="text-3xl font-bold text-slate-900">Custom</p>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, fidx) => (
-                    <li key={fidx} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {plan.current ? (
-                  <Button disabled className="w-full">
-                    Current Plan
-                  </Button>
-                ) : (
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    {plan.price ? 'Upgrade' : 'Contact Sales'}
-                  </Button>
                 )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Billing Help */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-blue-600" />
-            Billing Help
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-slate-900 mb-2">Frequently Asked Questions</h4>
-              <ul className="space-y-2 text-sm text-slate-700">
-                <li>
-                  <button className="text-blue-600 hover:underline">How do I change my plan?</button>
-                </li>
-                <li>
-                  <button className="text-blue-600 hover:underline">Can I cancel anytime?</button>
-                </li>
-                <li>
-                  <button className="text-blue-600 hover:underline">What payment methods do you accept?</button>
-                </li>
-                <li>
-                  <button className="text-blue-600 hover:underline">Do you offer refunds?</button>
-                </li>
               </ul>
-            </div>
+              {!isCurrent && !isDevMode && (
+                <Button
+                  className="w-full"
+                  variant={plan.monthlyPrice > (currentPlan?.monthlyPrice || 0) ? "default" : "outline"}
+                  onClick={() => upgrade.mutate({ planId: plan.id, successUrl: window.location.origin + '/app/subscription', cancelUrl: window.location.origin + '/app/subscription' })}
+                  disabled={upgrade.isPending}
+                >
+                  {plan.monthlyPrice > (currentPlan?.monthlyPrice || 0) ? "Upgrade" : "Downgrade"}
+                </Button>
+              )}
+              {isCurrent && (
+                <Button className="w-full" variant="outline" disabled>
+                  <CreditCard className="w-4 h-4 mr-2" /> Current Plan
+                </Button>
+              )}
+            </Card>
+          );
+        })}
+      </div>
 
-            <div>
-              <h4 className="font-medium text-slate-900 mb-2">Need Help?</h4>
-              <p className="text-sm text-slate-700 mb-4">
-                Our billing team is here to help. Contact us for any questions about your subscription.
-              </p>
-              <Button variant="outline">Contact Support</Button>
-            </div>
-          </div>
+      {!isDevMode && billingStatus?.subscription?.status === "active" && (
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Billing History</h3>
+          <Card className="p-4 border border-gray-200">
+            <p className="text-sm text-gray-500">Billing history will appear here once payments are processed through Stripe.</p>
+          </Card>
         </div>
+      )}
     </PageLayout>
   );
 }

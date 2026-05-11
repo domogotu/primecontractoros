@@ -709,3 +709,51 @@ export const workspaceMembers = mysqlTable("workspaceMembers", {
 });
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 export type InsertWorkspaceMember = typeof workspaceMembers.$inferInsert;
+
+// Email Notifications Log
+export const emailNotifications = mysqlTable("emailNotifications", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  templateName: varchar("templateName", { length: 100 }),
+  status: mysqlEnum("status", ["queued", "sent", "failed", "skipped"]).default("queued").notNull(),
+  errorMessage: text("errorMessage"),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EmailNotification = typeof emailNotifications.$inferSelect;
+export type InsertEmailNotification = typeof emailNotifications.$inferInsert;
+
+// Closeout Checklist Items (individual items for a closeout record)
+export const closeoutChecklistItems = mysqlTable("closeoutChecklistItems", {
+  id: int("id").autoincrement().primaryKey(),
+  closeoutId: int("closeoutId").notNull(),
+  label: varchar("label", { length: 255 }).notNull(),
+  description: text("description"),
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+  completedBy: int("completedBy"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CloseoutChecklistItem = typeof closeoutChecklistItems.$inferSelect;
+export type InsertCloseoutChecklistItem = typeof closeoutChecklistItems.$inferInsert;
+
+// Subscriptions (Stripe billing)
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  planId: int("planId").notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  status: mysqlEnum("status", ["active", "past_due", "canceled", "trialing", "incomplete"]).default("active").notNull(),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;

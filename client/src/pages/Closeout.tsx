@@ -1,122 +1,140 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { Plus, Search, FileCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CheckCircle2, Circle, Clock, Loader2, Plus } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import { trpc } from "@/lib/trpc";
+import { useParams } from "wouter";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function Closeout() {
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ contractId: "", notes: "" });
+  const params = useParams<{ id: string }>();
+  const contractId = parseInt(params.id || "0");
+  
+  const [newItem, setNewItem] = useState("");
 
-  const { data: records = [], isLoading, refetch } = trpc.closeout.list.useQuery();
-  const createMutation = trpc.closeout.create.useMutation({
-    onSuccess: () => { refetch(); setShowForm(false); setForm({ contractId: "", notes: "" }); },
+  const { data: closeoutData = null, isLoading, refetch } = trpc.intCloseout.getByContract.useQuery(
+    { contractId },
+    { enabled: contractId > 0 }
+  );
+
+  const initChecklist = trpc.intCloseout.initiate.useMutation({
+    onSuccess: () => { refetch(); toast.success("Checklist Created: Standard closeout checklist initialized."); },
   });
-  const updateMutation = trpc.closeout.update.useMutation({ onSuccess: () => refetch() });
 
-  const handleCreate = () => {
-    if (!form.contractId) return;
-    createMutation.mutate({ contractId: parseInt(form.contractId), notes: form.notes || undefined });
-  };
+  const toggleItem = trpc.intCloseout.toggleItem.useMutation({
+    onSuccess: () => refetch(),
+  });
 
-  const statusColors: Record<string, string> = {
-    initiated: "bg-blue-100 text-blue-800",
-    in_progress: "bg-amber-100 text-amber-800",
-    complete: "bg-green-100 text-green-800",
-  };
+  const addItem = trpc.intCloseout.addItem.useMutation({
+    onSuccess: () => { refetch(); setNewItem(""); toast.success("Item Added"); },
+  });
+
+  if (isLoading) {
+    return (
+      <PageLayout title="Contract Closeout" subtitle="Checklist-driven closeout workflow" label="Closeout">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const items = closeoutData?.items || [];
+  const completedCount = items.filter((i: any) => i.completed).length;
+  const totalCount = items.length;
+  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
     <PageLayout
       title="Contract Closeout"
-      subtitle="Manage contract closeout per FAR 4.804 — final invoices, deliverables, government property, and final reports"
-      label="Closeout (FAR 4.804)"
+      subtitle={`Contract #${contractId} — Checklist-driven closeout workflow`}
+      label="Closeout"
       summaryCards={[
-        { label: "Total Closeouts", value: records.length },
-        { label: "In Progress", value: (records as any[]).filter((r) => r.status === "in_progress" || r.status === "initiated").length, color: "text-amber-600" },
-        { label: "Complete", value: (records as any[]).filter((r) => r.status === "complete").length, color: "text-green-600" },
+        { label: "Total Items", value: totalCount },
+        { label: "Completed", value: completedCount, color: "text-green-600" },
+        { label: "Remaining", value: totalCount - completedCount, color: "text-orange-600" },
+        { label: "Progress", value: `${progress}%`, color: progress === 100 ? "text-green-600" : "text-blue-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> Initiate Closeout
-        </Button>
+        totalCount === 0 ? (
+          <Button onClick={() => initChecklist.mutate({ contractId })} disabled={initChecklist.isPending}>
+            {initChecklist.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+            Initialize Checklist
+          </Button>
+        ) : undefined
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Initiate Contract Closeout</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Contract ID *" type="number" value={form.contractId} onChange={(e) => setForm({ ...form, contractId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <textarea placeholder="Closeout Notes (reason for closeout, special instructions)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
-              {createMutation.isPending ? "Initiating..." : "Initiate Closeout"}
-            </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
-
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading closeout records...</div>
-      ) : (records as any[]).length === 0 ? (
-        <Card className="bg-white border border-gray-200 p-12 text-center">
-          <FileCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Closeout Records</h3>
-          <p className="text-gray-600 mb-6">When a contract reaches completion, initiate closeout to track the FAR 4.804 checklist: final invoice submission, deliverable acceptance, government property return, and final report filing.</p>
-          <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> Initiate First Closeout
-          </Button>
+      {totalCount === 0 ? (
+        <Card className="p-8 text-center border border-gray-200">
+          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Closeout Checklist</h3>
+          <p className="text-gray-600 mb-4">Initialize a standard closeout checklist to begin the closeout process.</p>
         </Card>
       ) : (
         <div className="space-y-4">
-          {(records as any[]).map((record: any) => (
-            <Card key={record.id} className="bg-white border border-gray-200 p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-gray-900">Contract #{record.contractId} Closeout</h3>
-                    <span className={`px-2 py-0.5 text-xs rounded ${statusColors[record.status] || statusColors.initiated}`}>
-                      {(record.status || "initiated").replace("_", " ")}
-                    </span>
+          {/* Progress bar */}
+          <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+            <div
+              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Checklist items */}
+          <div className="space-y-2">
+            {items.map((item: any) => (
+              <Card
+                key={item.id}
+                className={`p-4 border cursor-pointer transition-colors ${item.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200 hover:border-blue-200"}`}
+                onClick={() => toggleItem.mutate({ itemId: item.id, completed: !item.completed })}
+              >
+                <div className="flex items-center gap-3">
+                  {item.completed ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className={`font-medium ${item.completed ? "text-green-800 line-through" : "text-gray-900"}`}>
+                      {item.title}
+                    </p>
+                    {item.description && (
+                      <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
+                    )}
                   </div>
-                  {record.notes && <p className="text-sm text-gray-600 mt-1">{record.notes}</p>}
+                  {item.completedAt && (
+                    <span className="text-xs text-gray-400">
+                      {new Date(item.completedAt).toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
-              </div>
+              </Card>
+            ))}
+          </div>
 
-              {/* FAR 4.804 Checklist */}
-              <div className="border-t border-gray-100 pt-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">FAR 4.804 Closeout Checklist</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={record.finalInvoiceSubmitted || false} onChange={() => updateMutation.mutate({ id: record.id, finalInvoiceSubmitted: !record.finalInvoiceSubmitted })} className="rounded" />
-                    <span className="text-sm text-gray-700">Final Invoice Submitted</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={record.deliverablesComplete || false} onChange={() => updateMutation.mutate({ id: record.id, deliverablesComplete: !record.deliverablesComplete })} className="rounded" />
-                    <span className="text-sm text-gray-700">All Deliverables Accepted</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={record.governmentPropertyReturned || false} onChange={() => updateMutation.mutate({ id: record.id, governmentPropertyReturned: !record.governmentPropertyReturned })} className="rounded" />
-                    <span className="text-sm text-gray-700">Government Property Returned</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={record.finalReportSubmitted || false} onChange={() => updateMutation.mutate({ id: record.id, finalReportSubmitted: !record.finalReportSubmitted })} className="rounded" />
-                    <span className="text-sm text-gray-700">Final Report Submitted</span>
-                  </label>
-                </div>
-              </div>
-
-              {record.status !== "complete" && record.finalInvoiceSubmitted && record.deliverablesComplete && record.governmentPropertyReturned && record.finalReportSubmitted && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <Button onClick={() => updateMutation.mutate({ id: record.id, status: "complete" })} className="bg-green-500 hover:bg-green-600 text-white">
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Closeout Complete
-                  </Button>
-                </div>
-              )}
-            </Card>
-          ))}
+          {/* Add custom item */}
+          <div className="flex gap-2 mt-4">
+            <input
+              type="text"
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              placeholder="Add custom checklist item..."
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newItem.trim()) {
+                  addItem.mutate({ closeoutId: contractId, label: newItem.trim() });
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={() => { if (newItem.trim()) addItem.mutate({ closeoutId: contractId, label: newItem.trim() }); }}
+              disabled={!newItem.trim() || addItem.isPending}
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       )}
     </PageLayout>

@@ -50,6 +50,13 @@
       "when": 1777948498179,
       "tag": "0006_aromatic_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1777950545171,
+      "tag": "0007_true_lorna_dane",
+      "breakpoints": true
     }
   ]
 }

@@ -450,3 +450,60 @@
 ### Deploy
 - [x] Save checkpoint
 - [x] Deploy to primecontractor-bk79t4ta.manus.space with public visibility
+
+
+## Phase 13: External Integrations & Advanced Features
+
+### 1. File Storage (S3 Integration)
+- [ ] Settings page for AWS credentials (access key, secret, bucket, region)
+- [ ] S3 upload/download/preview with presigned URLs
+- [ ] "File Storage Not Configured" fallback when credentials missing
+- [ ] Wire Files page to use S3 storage
+
+### 2. Email Notifications
+- [ ] Resend integration with configurable API key
+- [ ] Welcome email on signup
+- [ ] Deadline reminder emails (3 days before)
+- [ ] Invoice alert emails
+- [ ] Database-only fallback when email not configured
+- [ ] Email templates system
+
+### 3. Stripe Payment Processing
+- [ ] Stripe integration for subscription billing
+- [ ] Billing page (view plan, upgrade/downgrade, invoices)
+- [ ] Platform owner manages plans and pricing
+- [ ] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
+- [ ] Development mode (all unlocked) when Stripe not configured
+
+### 4. Reports Generation
+- [ ] Contract Summary Report (PDF)
+- [ ] Financial Report by period (PDF)
+- [ ] Proposal Win/Loss Analysis (PDF)
+- [ ] Compliance Status Report (PDF)
+- [ ] Reports page with generation UI
+
+### 5. Capability Statement Builder
+- [ ] Wizard/form pulling from business profile
+- [ ] Sections: overview, competencies, past performance, NAICS, certs, contact
+- [ ] Export as PDF
+
+### 6. Template Library
+- [ ] Pre-built templates: Proposal outline, Contract checklist, Closeout checklist, Capability Statement, Past Performance
+- [ ] Browse, preview, and use templates
+- [ ] Template management UI
+
+### 7. Closeout Workflow
+- [ ] Checklist-driven closeout process
+- [ ] Standard items: final invoice, deliverables accepted, property returned, sub payments, final report
+- [ ] Track completion percentage
+- [ ] Trigger on contract status change to closeout
+
+### 8. Lessons Learned
+- [ ] Structured post-contract review form
+- [ ] Fields: what went well, what didn't, recommendations, tags
+- [ ] Searchable/filterable list
+- [ ] Link to specific contracts
+
+### Deploy
+- [ ] Save checkpoint
+- [ ] Deploy to primecontractor-bk79t4ta.manus.space with public visibility

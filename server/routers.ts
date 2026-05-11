@@ -39,6 +39,7 @@ import {
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
+import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -69,6 +70,14 @@ export const appRouter = router({
   finance: financeRouter,
   findings: findingsRouter,
   audit: auditRouter,
+  fileStorage: fileStorageRouter,
+  email: emailRouter,
+  billing: billingRouter,
+  reports: reportsRouter,
+  intTemplates: intTemplatesRouter,
+  intCloseout: intCloseoutRouter,
+  lessonsLearnedV2: lessonsLearnedRouter,
+  capability: capabilityRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

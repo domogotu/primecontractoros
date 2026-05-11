@@ -1,113 +1,193 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, FileText, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FileText, Plus, Loader2, Download, Trash2, Eye } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function CapabilityStatements() {
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [previewId, setPreviewId] = useState<number | null>(null);
   const [form, setForm] = useState({
-    title: "", version: "", content: "", naicsCodes: "", pastPerformance: "", differentiators: "",
+    title: "",
+    companyOverview: "",
+    coreCompetencies: "",
+    pastPerformance: "",
+    naicsCodes: "",
+    certifications: "",
+    contactInfo: "",
   });
 
-  const { data: statements = [], isLoading, refetch } = trpc.capabilityStatements.list.useQuery();
-  const createMutation = trpc.capabilityStatements.create.useMutation({
-    onSuccess: () => { refetch(); setShowForm(false); setForm({ title: "", version: "", content: "", naicsCodes: "", pastPerformance: "", differentiators: "" }); },
+  const { data: statements = [], isLoading, refetch } = trpc.capability.list.useQuery();
+  const generateMutation = trpc.capability.create.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowBuilder(false);
+      setForm({ title: "", companyOverview: "", coreCompetencies: "", pastPerformance: "", naicsCodes: "", certifications: "", contactInfo: "" });
+      toast.success("Capability Statement Created: Your capability statement has been generated.");
+    },
   });
-  const deleteMutation = trpc.capabilityStatements.delete.useMutation({ onSuccess: () => refetch() });
+  const deleteMutation = trpc.capability.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Deleted"); },
+  });
 
-  const filtered = (statements as any[]).filter((s) =>
-    s.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.naicsCodes?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleCreate = () => {
-    if (!form.title) return;
-    createMutation.mutate({
-      title: form.title,
-      version: form.version || undefined,
-      content: form.content || undefined,
-      naicsCodes: form.naicsCodes || undefined,
-      pastPerformance: form.pastPerformance || undefined,
-      differentiators: form.differentiators || undefined,
-    });
-  };
+  if (isLoading) {
+    return (
+      <PageLayout title="Capability Statements" subtitle="Build and manage your capability statements" label="Marketing">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout
       title="Capability Statements"
-      subtitle="Manage your company capability statements for government contracting opportunities and teaming arrangements"
-      label="Capability Statements"
+      subtitle="Build formatted capability statements for government contracting"
+      label="Marketing"
       summaryCards={[
         { label: "Total Statements", value: statements.length },
-        { label: "Active", value: (statements as any[]).filter((s) => s.status === "active" || !s.status).length },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> New Statement
+        <Button onClick={() => setShowBuilder(true)}>
+          <Plus className="w-4 h-4 mr-2" /> Build New
         </Button>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Create Capability Statement</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Statement Title * (e.g., IT Services Capability Statement v2.0)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Version (e.g., 2.1)" value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="NAICS Codes (comma-separated, e.g., 541512, 541519)" value={form.naicsCodes} onChange={(e) => setForm({ ...form, naicsCodes: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <textarea placeholder="Core Capabilities / Content" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={3} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <textarea placeholder="Past Performance (contract references, agencies served)" value={form.pastPerformance} onChange={(e) => setForm({ ...form, pastPerformance: e.target.value })} rows={3} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <textarea placeholder="Differentiators (certifications, set-asides: 8(a), HUBZone, SDVOSB, WOSB)" value={form.differentiators} onChange={(e) => setForm({ ...form, differentiators: e.target.value })} rows={3} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      {/* Builder wizard */}
+      {showBuilder && (
+        <Card className="p-6 border border-blue-200 bg-blue-50/30 mb-6">
+          <h3 className="text-lg font-semibold mb-4">Capability Statement Builder</h3>
+          <p className="text-sm text-gray-600 mb-4">Fill in the sections below. The system will format these into a professional capability statement.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Statement Title</label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="e.g., IT Services Capability Statement 2024"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Overview</label>
+              <textarea
+                value={form.companyOverview}
+                onChange={(e) => setForm({ ...form, companyOverview: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                rows={3}
+                placeholder="Brief description of your company, mission, and capabilities..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Core Competencies</label>
+              <textarea
+                value={form.coreCompetencies}
+                onChange={(e) => setForm({ ...form, coreCompetencies: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                rows={3}
+                placeholder="List your core competencies, one per line..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Past Performance</label>
+              <textarea
+                value={form.pastPerformance}
+                onChange={(e) => setForm({ ...form, pastPerformance: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                rows={3}
+                placeholder="Key contracts, clients, and results..."
+              />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">NAICS Codes</label>
+                <input
+                  type="text"
+                  value={form.naicsCodes}
+                  onChange={(e) => setForm({ ...form, naicsCodes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="e.g., 541512, 541519, 541611"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Certifications</label>
+                <input
+                  type="text"
+                  value={form.certifications}
+                  onChange={(e) => setForm({ ...form, certifications: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  placeholder="e.g., 8(a), HUBZone, SDVOSB"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Information</label>
+              <textarea
+                value={form.contactInfo}
+                onChange={(e) => setForm({ ...form, contactInfo: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                rows={2}
+                placeholder="Company name, address, phone, email, website..."
+              />
+            </div>
           </div>
-          <div className="flex gap-3 mt-4">
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
-              {createMutation.isPending ? "Creating..." : "Create Statement"}
+          <div className="flex gap-2 mt-4">
+            <Button
+              onClick={() => generateMutation.mutate(form)}
+              disabled={!form.title || generateMutation.isPending}
+            >
+              {generateMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+              Generate Statement
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowBuilder(false)}>Cancel</Button>
           </div>
         </Card>
       )}
 
-      <Card className="bg-white border border-gray-200 p-4">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <input type="text" placeholder="Search by title or NAICS code..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-      </Card>
-
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading capability statements...</div>
-      ) : filtered.length === 0 ? (
-        <Card className="bg-white border border-gray-200 p-12 text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Capability Statements</h3>
-          <p className="text-gray-600 mb-6">Create capability statements to share with agencies, primes, and teaming partners. Include your NAICS codes, past performance, certifications, and differentiators.</p>
-          <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> Create First Statement
-          </Button>
+      {/* Statements list */}
+      {statements.length === 0 && !showBuilder ? (
+        <Card className="p-8 text-center border border-gray-200">
+          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Capability Statements</h3>
+          <p className="text-gray-600 mb-4">Build your first capability statement to share with government agencies.</p>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((stmt: any) => (
-            <Card key={stmt.id} className="bg-white border border-gray-200 p-5 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-gray-900">{stmt.title}</h3>
-                    {stmt.version && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">v{stmt.version}</span>}
-                  </div>
-                  {stmt.naicsCodes && <p className="text-sm text-gray-600 mt-1 font-mono">NAICS: {stmt.naicsCodes}</p>}
-                  {stmt.differentiators && <p className="text-sm text-gray-500 mt-1">{stmt.differentiators}</p>}
-                  {stmt.content && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{stmt.content.substring(0, 150)}...</p>}
+        <div className="grid md:grid-cols-2 gap-4">
+          {statements.map((stmt: any) => (
+            <Card key={stmt.id} className="p-5 border border-gray-200 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold text-gray-900">{stmt.title}</h3>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => setPreviewId(previewId === stmt.id ? null : stmt.id)}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteMutation.mutate({ id: stmt.id })}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate({ id: stmt.id })}>
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                </Button>
               </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Created {stmt.createdAt ? new Date(stmt.createdAt).toLocaleDateString() : "recently"}
+              </p>
+              {stmt.naicsCodes && (
+                <p className="text-xs text-gray-600"><span className="font-medium">NAICS:</span> {stmt.naicsCodes}</p>
+              )}
+              {stmt.certifications && (
+                <p className="text-xs text-gray-600"><span className="font-medium">Certs:</span> {stmt.certifications}</p>
+              )}
+              {previewId === stmt.id && (
+                <div className="mt-3 p-3 bg-gray-50 rounded text-sm space-y-2 border">
+                  {stmt.companyOverview && <div><strong>Overview:</strong> {stmt.companyOverview}</div>}
+                  {stmt.coreCompetencies && <div><strong>Core Competencies:</strong> {stmt.coreCompetencies}</div>}
+                  {stmt.pastPerformance && <div><strong>Past Performance:</strong> {stmt.pastPerformance}</div>}
+                  {stmt.contactInfo && <div><strong>Contact:</strong> {stmt.contactInfo}</div>}
+                </div>
+              )}
             </Card>
           ))}
         </div>
