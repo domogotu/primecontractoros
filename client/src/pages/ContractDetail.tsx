@@ -72,6 +72,20 @@ export default function ContractDetail() {
   const exportContract = trpc.pdf.exportContractSummary.useMutation({
     onSuccess: (data) => { window.open(data.url, '_blank'); },
   });
+  // Closeout workflow (FAR 4.804)
+  const { data: closeoutData } = trpc.intCloseout.getByContract.useQuery(
+    { contractId: contractId! },
+    { enabled: !!contractId }
+  );
+  const initiateCloseout = trpc.intCloseout.initiate.useMutation({
+    onSuccess: () => { utils.intCloseout.getByContract.invalidate(); toast.success('Closeout checklist initiated'); },
+  });
+  const toggleCloseoutItem = trpc.intCloseout.toggleItem.useMutation({
+    onSuccess: () => { utils.intCloseout.getByContract.invalidate(); },
+  });
+  const updateCloseoutStatus = trpc.intCloseout.updateStatus.useMutation({
+    onSuccess: () => { utils.intCloseout.getByContract.invalidate(); toast.success('Closeout status updated'); },
+  });
 
   if (!contractId) {
     return (
@@ -329,6 +343,54 @@ export default function ContractDetail() {
               )}
             </div>
           </div>
+
+            {/* Closeout Workflow Section (FAR 4.804) */}
+            <div className="bg-white border border-slate-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" /> Contract Closeout (FAR 4.804)
+                </h2>
+                {!closeoutData && (
+                  <Button size="sm" onClick={() => initiateCloseout.mutate({ contractId: contractId! })} disabled={initiateCloseout.isPending}>
+                    {initiateCloseout.isPending ? 'Starting...' : 'Initiate Closeout'}
+                  </Button>
+                )}
+              </div>
+              {closeoutData ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-full bg-slate-200 rounded-full h-3 min-w-[120px]">
+                        <div className="bg-green-600 h-3 rounded-full transition-all" style={{ width: `${closeoutData.completionPercentage}%` }}></div>
+                      </div>
+                      <span className="text-sm font-medium text-slate-700">{closeoutData.completionPercentage}%</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${closeoutData.status === 'completed' ? 'bg-green-100 text-green-800' : closeoutData.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
+                      {(closeoutData.status || 'not_started').replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {closeoutData.items.map((item: any) => (
+                      <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50">
+                        <input type="checkbox" checked={item.completed} onChange={() => toggleCloseoutItem.mutate({ itemId: item.id, completed: !item.completed })} className="mt-1 h-4 w-4 rounded border-slate-300" />
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${item.completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>{item.label}</p>
+                          {item.description && <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>}
+                          {item.completedAt && <p className="text-xs text-green-600 mt-1">Completed {new Date(item.completedAt).toLocaleDateString()}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {closeoutData.completionPercentage === 100 && closeoutData.status !== 'completed' && (
+                    <Button className="w-full" onClick={() => updateCloseoutStatus.mutate({ closeoutId: closeoutData.id, status: 'completed' })}>
+                      Mark Closeout Complete
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-slate-500 italic text-sm">Closeout has not been initiated for this contract. Click "Initiate Closeout" to start the FAR 4.804 compliant checklist.</p>
+              )}
+            </div>
 
           {/* Right Column */}
           <div className="space-y-6">

@@ -674,3 +674,62 @@
 
 ### Deploy
 - [ ] Deploy to primecontractor-bk79t4ta.manus.space (public)
+
+## Phase 18: Closeout, Lessons Learned, Demo Workspace, Detail Pages, GitHub
+
+### Closeout Workflow (FAR 4.804)
+- [x] DB: closeout_checklists table (contractId, checklistType, items JSON, status, startedAt, completedAt)
+- [x] DB: closeout_checklist_items table (checklistId, itemKey, title, description, required, completed, completedBy, completedAt, notes)
+- [x] tRPC: closeout.getChecklist (returns checklist for a contract)
+- [x] tRPC: closeout.initChecklist (creates FAR 4.804 checklist for a contract)
+- [x] tRPC: closeout.toggleItem (mark item complete/incomplete)
+- [x] tRPC: closeout.addNote (add note to checklist item)
+- [x] UI: Closeout tab/section on ContractDetail page with checklist progress
+- [x] FAR 4.804 default checklist items (final payment, property disposition, patent/royalty, etc.)
+
+### Lessons Learned Enhancements
+- [ ] DB: Add tags column to lessons_learned table
+- [ ] DB: Add contractId, proposalId, opportunityId linking columns
+- [ ] tRPC: Update lessons.create/update to support tags and record linking
+- [ ] UI: Tag input on create/edit form
+- [ ] UI: Filter by tag on list page
+- [ ] UI: Link lessons to specific contracts/proposals/opportunities
+
+### Demo Workspace
+- [ ] Create seed-demo.mjs script
+- [ ] Seed demo workspace with sample opportunities (3-5)
+- [ ] Seed demo proposals (2-3)
+- [ ] Seed demo contracts (2)
+- [ ] Seed demo invoices, tasks, contacts
+- [ ] Mark demo workspace clearly as "Demo" in platform admin
+
+### Detail Page Fixes
+- [ ] Verify all detail pages have complete sections
+- [ ] Fix any missing form fields in create/edit dialogs
+
+### GitHub Push
+- [ ] Push code to domogotu/primecontractoros
+
+### Deploy
+- [ ] Deploy to primecontractor-bk79t4ta.manus.space (public)
+
+## Phase 18 Phase 2 - Enhanced Lessons Learned
+- [x] DB: Add severity, rootCause, tags columns to lessonsLearned table
+- [x] tRPC: Update create/update procedures with new fields
+- [x] UI: Structured review form with category, impact, severity, root cause, recommendation, tags
+- [x] UI: Category/severity/impact/tag filtering on list view
+- [x] UI: Tag suggestions from existing tags
+- [x] UI: Summary stats (total, positive, negative, high/critical, categories)
+
+## Phase 18 Phase 3 - Demo Workspace Seed Script
+- [x] Created seed-demo.mjs with clearly-marked [DEMO] prefix on all data
+- [x] Demo workspace: Apex Federal Solutions LLC
+- [x] Sample data: 6 opportunities, 5 proposals, 4 contracts, 6 invoices, 8 tasks, 7 contacts, 6 deliverables, 4 lessons learned, 5 alerts
+- [x] All demo data uses realistic government contracting scenarios (USAF, VA, DHS, DOE, EPA, Census, DISA, GSA)
+
+## Phase 18 Phase 4 - Fix Remaining Issues
+- [x] Investigated package.json parse error - was a one-time tsx crash during schema reload, not recurring
+- [x] Verified all detail pages have working forms (placeholder attributes are normal input hints, not broken features)
+- [x] Removed unused imports from LessonsLearned.tsx
+- [x] Confirmed 0 TypeScript errors
+- [x] Fixed intCloseout router references in ContractDetail (was using trpc.closeout instead of trpc.intCloseout)

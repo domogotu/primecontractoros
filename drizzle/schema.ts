@@ -389,10 +389,13 @@ export const lessonsLearned = mysqlTable("lessonsLearned", {
   contractId: int("contractId"),
   proposalId: int("proposalId"),
   title: varchar("title", { length: 255 }).notNull(),
-  category: varchar("category", { length: 100 }), // "process", "technical", "management", "communication"
+  category: varchar("category", { length: 100 }), // "technical", "management", "cost", "schedule", "compliance", "general"
   description: text("description"),
   impact: mysqlEnum("impact", ["positive", "negative", "neutral"]).default("neutral"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
+  rootCause: text("rootCause"),
   recommendation: text("recommendation"),
+  tags: varchar("tags", { length: 500 }), // comma-separated tags
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

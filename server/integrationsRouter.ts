@@ -600,7 +600,10 @@ export const lessonsLearnedRouter = router({
       category: z.string().optional(),
       description: z.string().optional(),
       impact: z.enum(["positive", "negative", "neutral"]).optional(),
+      severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+      rootCause: z.string().optional(),
       recommendation: z.string().optional(),
+      tags: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await requireWorkspaceId(ctx.user.id);
@@ -614,7 +617,10 @@ export const lessonsLearnedRouter = router({
         category: input.category || null,
         description: input.description || null,
         impact: input.impact || "neutral",
+        severity: input.severity || "medium",
+        rootCause: input.rootCause || null,
         recommendation: input.recommendation || null,
+        tags: input.tags || null,
       });
       return { id: result.insertId };
     }),
@@ -626,7 +632,10 @@ export const lessonsLearnedRouter = router({
       category: z.string().optional(),
       description: z.string().optional(),
       impact: z.enum(["positive", "negative", "neutral"]).optional(),
+      severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+      rootCause: z.string().optional(),
       recommendation: z.string().optional(),
+      tags: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await requireWorkspaceId(ctx.user.id);
