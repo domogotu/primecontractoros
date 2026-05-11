@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
-import { ArrowRight, CheckCircle2, LogIn } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, LogIn } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -10,10 +10,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
  * 
  * Redirects to Manus OAuth for account creation.
  * After OAuth, new users are directed to the onboarding flow.
+ * Includes Terms of Service acceptance checkbox (required before signup).
  */
 export default function GetStarted() {
   const [, navigate] = useLocation();
   const { isAuthenticated, loading } = useAuth();
+  const [tosAccepted, setTosAccepted] = useState(false);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -22,6 +24,13 @@ export default function GetStarted() {
   }, [isAuthenticated, loading, navigate]);
 
   const handleSignUp = () => {
+    if (!tosAccepted) return;
+    // Store acceptance in localStorage so it can be recorded after OAuth callback
+    localStorage.setItem("tos_accepted", JSON.stringify({
+      documentType: "terms_of_service",
+      version: "1.0",
+      acceptedAt: new Date().toISOString(),
+    }));
     window.location.href = getLoginUrl();
   };
 
@@ -84,9 +93,30 @@ export default function GetStarted() {
               </p>
             </div>
 
+            {/* Terms of Service Acceptance */}
+            <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <input
+                type="checkbox"
+                checked={tosAccepted}
+                onChange={(e) => setTosAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <span className="text-sm text-gray-600">
+                I have read and agree to the{" "}
+                <a href="/terms" target="_blank" className="text-primary hover:underline font-medium">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="/privacy" target="_blank" className="text-primary hover:underline font-medium">
+                  Privacy Policy
+                </a>.
+              </span>
+            </label>
+
             <Button
               onClick={handleSignUp}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg"
+              disabled={!tosAccepted}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <LogIn className="mr-2 h-5 w-5" />
               Sign Up with Manus Account

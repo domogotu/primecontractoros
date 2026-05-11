@@ -56,6 +56,7 @@ export const opportunities = mysqlTable("opportunities", {
   agency: varchar("agency", { length: 255 }),
   solicitation: varchar("solicitation", { length: 255 }),
   naics: varchar("naics", { length: 50 }),
+  setAside: varchar("setAside", { length: 100 }),
   dueDate: timestamp("dueDate"),
   type: varchar("type", { length: 100 }),
   sourceLink: text("sourceLink"),
@@ -856,3 +857,33 @@ export const platformAuditLog = mysqlTable("platformAuditLog", {
 });
 export type PlatformAuditLogEntry = typeof platformAuditLog.$inferSelect;
 export type InsertPlatformAuditLogEntry = typeof platformAuditLog.$inferInsert;
+
+// Legal Acceptances
+export const legalAcceptances = mysqlTable("legal_acceptances", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"),
+  documentType: varchar("documentType", { length: 50 }).notNull().default("terms_of_service"),
+  documentVersion: varchar("documentVersion", { length: 20 }).notNull().default("1.0"),
+  acceptedAt: timestamp("acceptedAt").defaultNow().notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LegalAcceptance = typeof legalAcceptances.$inferSelect;
+export type InsertLegalAcceptance = typeof legalAcceptances.$inferInsert;
+
+// Proposal Team Assignments
+export const proposalTeamAssignments = mysqlTable("proposal_team_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  proposalId: int("proposalId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  memberName: varchar("memberName", { length: 255 }).notNull(),
+  role: varchar("role", { length: 100 }).notNull(),
+  sectionResponsibility: varchar("sectionResponsibility", { length: 255 }),
+  status: mysqlEnum("status", ["assigned", "in_progress", "review", "complete"]).default("assigned"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProposalTeamAssignment = typeof proposalTeamAssignments.$inferSelect;

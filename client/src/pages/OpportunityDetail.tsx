@@ -155,7 +155,7 @@ export default function OpportunityDetail() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <div className="p-4 bg-white border border-slate-200 rounded-lg">
             <p className="text-xs font-medium text-slate-500 mb-1">Solicitation</p>
             <p className="text-lg font-semibold text-slate-900">{opportunity.solicitation || 'N/A'}</p>
@@ -165,14 +165,33 @@ export default function OpportunityDetail() {
             <p className="text-lg font-semibold text-slate-900">
               {opportunity.dueDate ? new Date(opportunity.dueDate).toLocaleDateString() : 'N/A'}
             </p>
+            {opportunity.dueDate && (() => {
+              const now = new Date();
+              const due = new Date(opportunity.dueDate);
+              const diffMs = due.getTime() - now.getTime();
+              const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+              if (diffDays < 0) return <p className="text-xs text-red-600 font-medium mt-1">Overdue by {Math.abs(diffDays)} days</p>;
+              if (diffDays === 0) return <p className="text-xs text-red-600 font-medium mt-1">Due today!</p>;
+              if (diffDays <= 7) return <p className="text-xs text-orange-600 font-medium mt-1">{diffDays} days remaining</p>;
+              if (diffDays <= 30) return <p className="text-xs text-yellow-600 font-medium mt-1">{diffDays} days remaining</p>;
+              return <p className="text-xs text-green-600 font-medium mt-1">{diffDays} days remaining</p>;
+            })()}
           </div>
           <div className="p-4 bg-white border border-slate-200 rounded-lg">
             <p className="text-xs font-medium text-slate-500 mb-1">NAICS Code</p>
             <p className="text-lg font-semibold text-slate-900">{opportunity.naics || 'N/A'}</p>
           </div>
           <div className="p-4 bg-white border border-slate-200 rounded-lg">
+            <p className="text-xs font-medium text-slate-500 mb-1">Set-Aside</p>
+            <p className="text-lg font-semibold text-slate-900">{(opportunity as any).setAside || 'Full & Open'}</p>
+          </div>
+          <div className="p-4 bg-white border border-slate-200 rounded-lg">
             <p className="text-xs font-medium text-slate-500 mb-1">Type</p>
             <p className="text-lg font-semibold text-slate-900">{opportunity.type || 'N/A'}</p>
+          </div>
+          <div className="p-4 bg-white border border-slate-200 rounded-lg">
+            <p className="text-xs font-medium text-slate-500 mb-1">Agency</p>
+            <p className="text-lg font-semibold text-slate-900">{opportunity.agency || 'N/A'}</p>
           </div>
         </div>
 

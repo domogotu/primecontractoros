@@ -28,6 +28,7 @@ import {
   getAiSuggestionsForRecord,
   dismissAiSuggestion,
   acceptAiSuggestion,
+  getDb,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import {
@@ -38,7 +39,7 @@ import {
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
-import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
+import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, teamAssignmentsRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 import { guidanceRouter } from "./guidanceRouter";
 import { platformAdminRouter } from "./platformAdminRouter";
@@ -69,6 +70,7 @@ export const appRouter = router({
   modifications: modificationsRouter,
   personnel: personnelRouter,
   complianceMatrix: complianceMatrixRouter,
+  teamAssignments: teamAssignmentsRouter,
   settings: settingsRouter,
   finance: financeRouter,
   findings: findingsRouter,
@@ -118,6 +120,7 @@ export const appRouter = router({
         agency: z.string().optional(),
         solicitation: z.string().optional(),
         naics: z.string().optional(),
+        setAside: z.string().optional(),
         dueDate: z.date().optional(),
         type: z.string().optional(),
         sourceLink: z.string().optional(),
@@ -140,6 +143,7 @@ export const appRouter = router({
         agency: z.string().optional(),
         solicitation: z.string().optional(),
         naics: z.string().optional(),
+        setAside: z.string().optional(),
         dueDate: z.date().optional(),
         type: z.string().optional(),
         sourceLink: z.string().optional(),
@@ -563,6 +567,37 @@ export const appRouter = router({
           console.error("Error accepting suggestion:", error);
           throw error;
         }
+      }),
+  }),
+  legal: router({
+    recordAcceptance: publicProcedure
+      .input(z.object({
+        documentType: z.string().default("terms_of_service"),
+        version: z.string().default("1.0"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { legalAcceptances } = await import("../drizzle/schema");
+        const database = await getDb();
+        if (!database) return { success: false };
+        const userId = ctx.user?.id || 0;
+        await database.insert(legalAcceptances).values({
+          userId,
+          documentType: input.documentType,
+          documentVersion: input.version,
+        });
+        return { success: true };
+      }),
+    getAcceptance: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { legalAcceptances } = await import("../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+        const database = await getDb();
+        if (!database) return null;
+        const results = await database.select().from(legalAcceptances)
+          .where(eq(legalAcceptances.userId, ctx.user.id))
+          .orderBy(desc(legalAcceptances.acceptedAt))
+          .limit(1);
+        return results[0] || null;
       }),
   }),
 });

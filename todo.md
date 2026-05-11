@@ -595,3 +595,49 @@
 - [x] Can see failed login events for security review
 - [x] Can suspend/reactivate workspace with audit log
 - [x] Deploy to primecontractor-bk79t4ta.manus.space (public)
+
+## Phase 16: Seed Data, Legal Acceptance, Detail Enhancements, Capability Builder, Templates
+
+### Seed Data Script
+- [x] Create seed-db.mjs script with default plans (Starter $49/mo, Growth $99/mo, Advanced $199/mo)
+- [x] Add default roles to seed script
+- [x] Add default statuses to seed script
+- [x] Auto-run on first deployment or manual trigger
+
+### Legal Acceptance Flow
+- [x] Add TOS acceptance checkbox on signup form
+- [x] Store acceptance in database with timestamp and user ID
+- [x] DB: legal_acceptances table (userId, workspaceId, documentType, version, acceptedAt, ipAddress)
+
+### Contract Detail Enhancements
+- [x] CLINs section (Contract Line Item Numbers with description, quantity, unit price, total)
+- [x] Modifications section (mod number, type, description, effective date, amount change)
+- [x] Key Personnel section (name, role, clearance level, start/end date)
+- [x] Period of Performance section (base period, option periods, current period status)
+
+### Opportunity Detail Enhancements
+- [x] NAICS code display and selection
+- [x] Set-aside type display (8(a), HUBZone, WOSB, SDVOSB, etc.)
+- [x] Due date countdown timer
+- [x] Solicitation number field
+
+### Proposal Detail Enhancements
+- [x] Compliance matrix (requirement, section reference, compliant Y/N, notes)
+- [x] Team assignments (team member, role, section responsibility, status)
+
+### Capability Statement Builder
+- [x] Capability statement formatted builder page (/app/capability-statements)
+- [x] Core competencies section
+- [x] Past performance section
+- [x] Differentiators section
+- [x] Company data section (CAGE, DUNS, NAICS, certifications)
+- [x] Export/preview formatted output
+
+### Template Library
+- [x] Template library page (/app/templates)
+- [x] Pre-built government contracting templates (proposal outline, past performance, price volume, etc.)
+- [x] Template categories (proposals, contracts, compliance, admin)
+- [x] Use/copy template action
+
+### Deploy
+- [x] Deploy to primecontractor-bk79t4ta.manus.space (public)

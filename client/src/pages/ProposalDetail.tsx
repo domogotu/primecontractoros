@@ -21,7 +21,87 @@ import ProposalForm from '@/components/ProposalForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, UserPlus } from 'lucide-react';
+
+// ===== Team Assignments Section =====
+function TeamAssignmentsSection({ proposalId }: { proposalId: number }) {
+  const utils = trpc.useUtils();
+  const { data: assignments = [] } = trpc.teamAssignments.list.useQuery({ proposalId });
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ memberName: '', role: '', sectionResponsibility: '', notes: '' });
+  const createMutation = trpc.teamAssignments.create.useMutation({
+    onSuccess: () => { utils.teamAssignments.list.invalidate(); setShowAdd(false); setForm({ memberName: '', role: '', sectionResponsibility: '', notes: '' }); toast.success('Team member assigned'); },
+  });
+  const updateMutation = trpc.teamAssignments.update.useMutation({ onSuccess: () => utils.teamAssignments.list.invalidate() });
+  const deleteMutation = trpc.teamAssignments.delete.useMutation({ onSuccess: () => utils.teamAssignments.list.invalidate() });
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+          <UserPlus className="w-5 h-5 text-blue-600" /> Team Assignments
+        </h2>
+        <Button size="sm" variant="outline" onClick={() => setShowAdd(!showAdd)}>
+          <Plus className="w-4 h-4 mr-1" /> Assign Member
+        </Button>
+      </div>
+      {showAdd && (
+        <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Input value={form.memberName} onChange={e => setForm(f => ({ ...f, memberName: e.target.value }))} placeholder="Member name" />
+            <Input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="Role (e.g. Technical Lead)" />
+            <Input value={form.sectionResponsibility} onChange={e => setForm(f => ({ ...f, sectionResponsibility: e.target.value }))} placeholder="Section responsibility" />
+            <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes" />
+          </div>
+          <Button size="sm"
+            onClick={() => createMutation.mutate({ proposalId, memberName: form.memberName, role: form.role, sectionResponsibility: form.sectionResponsibility || undefined, notes: form.notes || undefined })}>
+            {createMutation.isPending ? 'Adding...' : 'Add Assignment'}
+          </Button>
+        </div>
+      )}
+      {assignments.length === 0 ? (
+        <p className="text-slate-500 italic">No team assignments yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200">
+                <th className="text-left py-2 font-medium text-slate-600">Member</th>
+                <th className="text-left py-2 font-medium text-slate-600">Role</th>
+                <th className="text-left py-2 font-medium text-slate-600">Section</th>
+                <th className="text-left py-2 font-medium text-slate-600">Status</th>
+                <th className="text-right py-2 font-medium text-slate-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assignments.map((a: any) => (
+                <tr key={a.id} className="border-b border-slate-100">
+                  <td className="py-2 font-medium">{a.memberName}</td>
+                  <td className="py-2">{a.role}</td>
+                  <td className="py-2">{a.sectionResponsibility || '-'}</td>
+                  <td className="py-2">
+                    <select value={a.status} onChange={e => updateMutation.mutate({ id: a.id, status: e.target.value as any })}
+                      className="text-xs border border-slate-200 rounded px-2 py-1">
+                      <option value="assigned">Assigned</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="review">Review</option>
+                      <option value="complete">Complete</option>
+                    </select>
+                  </td>
+                  <td className="py-2 text-right">
+                    <button onClick={() => deleteMutation.mutate({ id: a.id })} className="text-red-500 hover:text-red-700">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ComplianceMatrixSection({ proposalId }: { proposalId: number }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -267,7 +347,8 @@ export default function ProposalDetail() {
 
             {/* Compliance Matrix */}
             <ComplianceMatrixSection proposalId={proposalId} />
-
+            {/* Team Assignments */}
+            <TeamAssignmentsSection proposalId={proposalId} />
             {/* Linked Files */}
             <div className="bg-white border border-slate-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">

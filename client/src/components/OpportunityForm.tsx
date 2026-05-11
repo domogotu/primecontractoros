@@ -24,6 +24,7 @@ export default function OpportunityForm({
     agency: "",
     solicitation: "",
     naics: "",
+    setAside: "",
     type: "",
     sourceLink: "",
     summary: "",
@@ -58,6 +59,7 @@ export default function OpportunityForm({
         agency: opportunity.agency || "",
         solicitation: opportunity.solicitation || "",
         naics: opportunity.naics || "",
+        setAside: (opportunity as any).setAside || "",
         type: opportunity.type || "",
         sourceLink: opportunity.sourceLink || "",
         summary: opportunity.summary || "",
@@ -109,6 +111,7 @@ export default function OpportunityForm({
         agency: formData.agency || undefined,
         solicitation: formData.solicitation || undefined,
         naics: formData.naics || undefined,
+        setAside: formData.setAside || undefined,
         type: formData.type || undefined,
         sourceLink: formData.sourceLink || undefined,
         summary: formData.summary || undefined,
@@ -215,7 +218,27 @@ export default function OpportunityForm({
           </p>
         )}
       </div>
-
+      <div>
+        <label className="block text-sm font-medium text-gray-900 mb-2">
+          Set-Aside Type
+        </label>
+        <select
+          name="setAside"
+          value={formData.setAside}
+          onChange={(e) => setFormData((prev) => ({ ...prev, setAside: e.target.value }))}
+          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Full & Open Competition</option>
+          <option value="8(a)">8(a) Small Business</option>
+          <option value="HUBZone">HUBZone</option>
+          <option value="SDVOSB">Service-Disabled Veteran-Owned SB (SDVOSB)</option>
+          <option value="WOSB">Women-Owned Small Business (WOSB)</option>
+          <option value="EDWOSB">Economically Disadvantaged WOSB (EDWOSB)</option>
+          <option value="Small Business">Small Business Set-Aside</option>
+          <option value="Sole Source">Sole Source</option>
+          <option value="Partial SB">Partial Small Business Set-Aside</option>
+        </select>
+      </div>
       <div>
         <label className="block text-sm font-medium text-gray-900 mb-2">
           Contract Type

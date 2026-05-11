@@ -5,7 +5,7 @@ import { requireWorkspaceId } from "./workspaceMiddleware";
 import {
   contractClins, contractModifications, keyPersonnel, complianceMatrix,
   auditLog, workspaceSettings, workspaceMembers, invoices, payments, contracts,
-  aiFindings, tasks
+  aiFindings, tasks, proposalTeamAssignments
 } from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -178,6 +178,58 @@ export const complianceMatrixRouter = router({
       const db = await getDb();
       await db!.delete(complianceMatrix).where(and(eq(complianceMatrix.id, input.id), eq(complianceMatrix.workspaceId, wsId)));
       await logAudit(wsId, ctx.user.id, "delete", "complianceMatrix", input.id, null);
+      return { success: true };
+    }),
+});
+
+// ===== Proposal Team Assignments =====
+export const teamAssignmentsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ proposalId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      return db!.select().from(proposalTeamAssignments)
+        .where(and(eq(proposalTeamAssignments.proposalId, input.proposalId), eq(proposalTeamAssignments.workspaceId, wsId)));
+    }),
+  create: protectedProcedure
+    .input(z.object({
+      proposalId: z.number(),
+      memberName: z.string(),
+      role: z.string(),
+      sectionResponsibility: z.string().optional(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      await db!.insert(proposalTeamAssignments).values({ ...input, workspaceId: wsId });
+      await logAudit(wsId, ctx.user.id, "create", "teamAssignment", 0, input);
+      return { success: true };
+    }),
+  update: protectedProcedure
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["assigned", "in_progress", "review", "complete"]).optional(),
+      sectionResponsibility: z.string().optional(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      const { id, ...data } = input;
+      await db!.update(proposalTeamAssignments).set(data)
+        .where(and(eq(proposalTeamAssignments.id, id), eq(proposalTeamAssignments.workspaceId, wsId)));
+      await logAudit(wsId, ctx.user.id, "update", "teamAssignment", id, data);
+      return { success: true };
+    }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      await db!.delete(proposalTeamAssignments).where(and(eq(proposalTeamAssignments.id, input.id), eq(proposalTeamAssignments.workspaceId, wsId)));
+      await logAudit(wsId, ctx.user.id, "delete", "teamAssignment", input.id, null);
       return { success: true };
     }),
 });
