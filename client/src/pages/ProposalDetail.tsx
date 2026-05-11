@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import ProposalForm from '@/components/ProposalForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
+import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
 
@@ -409,6 +410,9 @@ export default function ProposalDetail() {
                 </Button>
               </div>
             )}
+
+            {/* Rule-based Guidance Panel */}
+            <GuidancePanel compact={true} showPreferences={false} />
 
             {/* AI Assistance Panel */}
             <AIGuidancePanel

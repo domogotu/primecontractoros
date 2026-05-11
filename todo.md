@@ -507,3 +507,26 @@
 ### Deploy
 - [ ] Save checkpoint
 - [ ] Deploy to primecontractor-bk79t4ta.manus.space with public visibility
+
+## Phase 14: Rule-Based Guidance System
+
+### Backend
+- [x] GuidanceEngine service created (server/services/guidanceEngine.ts)
+- [x] guidanceRouter.ts created with all tRPC procedures
+- [x] guidanceRouter registered in appRouter (server/routers.ts)
+- [x] TypeScript errors resolved (0 errors)
+- [x] guidancePreferences and guidanceEvents tables in schema
+
+### Frontend
+- [x] GuidancePanel React component created (client/src/components/GuidancePanel.tsx)
+- [x] GuidancePanel integrated into Dashboard page
+- [x] GuidancePanel integrated into OpportunityDetail page (compact mode)
+- [x] GuidancePanel integrated into ProposalDetail page (compact mode)
+- [x] GuidancePanel integrated into ContractDetail page (compact mode)
+
+### Tests
+- [x] Vitest tests created for GuidanceEngine (server/guidance.test.ts)
+
+### Deployment
+- [x] Checkpoint saved
+- [ ] Deploy to primecontractor-bk79t4ta.manus.space (public visibility)

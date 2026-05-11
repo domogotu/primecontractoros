@@ -757,3 +757,53 @@ export const subscriptions = mysqlTable("subscriptions", {
 });
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+
+// Guidance System - Rule-based next-step recommendations
+export const guidancePreferences = mysqlTable("guidancePreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  mode: mysqlEnum("mode", ["detailed", "balanced", "light"]).default("balanced").notNull(),
+  enabledCategories: text("enabledCategories"), // JSON array of enabled guidance categories
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GuidancePreference = typeof guidancePreferences.$inferSelect;
+export type InsertGuidancePreference = typeof guidancePreferences.$inferInsert;
+
+// Suggested next actions based on workspace state
+export const suggestedNextActions = mysqlTable("suggestedNextActions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  category: varchar("category", { length: 100 }).notNull(), // "opportunity", "proposal", "contract", "finance", "team", "compliance"
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  actionType: varchar("actionType", { length: 100 }).notNull(), // "create", "review", "update", "complete", "submit"
+  targetEntity: varchar("targetEntity", { length: 100 }), // "opportunity", "proposal", "contract", etc.
+  targetEntityId: int("targetEntityId"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  reason: text("reason"), // Why this action is suggested
+  estimatedMinutes: int("estimatedMinutes"), // How long it might take
+  dismissedAt: timestamp("dismissedAt"),
+  completedAt: timestamp("completedAt"),
+  convertedToTaskId: int("convertedToTaskId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"),
+});
+export type SuggestedNextAction = typeof suggestedNextActions.$inferSelect;
+export type InsertSuggestedNextAction = typeof suggestedNextActions.$inferInsert;
+
+// Guidance events for analytics and history
+export const guidanceEvents = mysqlTable("guidanceEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(), // "viewed", "dismissed", "acted_on", "converted_to_task", "completed"
+  guidanceCategory: varchar("guidanceCategory", { length: 100 }),
+  actionId: int("actionId"),
+  metadata: text("metadata"), // JSON object with additional context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GuidanceEvent = typeof guidanceEvents.$inferSelect;
+export type InsertGuidanceEvent = typeof guidanceEvents.$inferInsert;

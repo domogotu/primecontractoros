@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact, AlertCircle, CheckCircle2, Clock, Bell, ListTodo } from "lucide-react";
+import { GuidancePanel } from "@/components/GuidancePanel";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -85,6 +86,9 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500 mt-1">active</p>
             </Card>
           </div>
+
+          {/* Guidance Panel */}
+          <GuidancePanel compact={false} showPreferences={true} />
 
           {/* Quick Access Grid */}
           <div>

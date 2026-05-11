@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import ContractForm from '@/components/ContractForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
+import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
 
 export default function ContractDetail() {
@@ -335,6 +336,9 @@ export default function ContractDetail() {
                 ))}
               </div>
             </div>
+
+            {/* Rule-based Guidance Panel */}
+            <GuidancePanel compact={true} showPreferences={false} />
 
             {/* AI Panel */}
             <AIGuidancePanel recordType="contract" recordId={contractId} context={`Managing contract: ${contract.title}`} title="AI Contract Assistance" />

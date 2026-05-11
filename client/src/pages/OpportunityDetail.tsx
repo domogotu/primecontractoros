@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import OpportunityForm from '@/components/OpportunityForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
+import { GuidancePanel } from '@/components/GuidancePanel';
 
 export default function OpportunityDetail() {
   const [, params] = useRoute('/app/opportunities/:id');
@@ -303,6 +304,9 @@ export default function OpportunityDetail() {
                 Start Proposal From This Opportunity
               </Button>
             </div>
+
+            {/* Rule-based Guidance Panel */}
+            <GuidancePanel compact={true} showPreferences={false} />
 
             {/* AI Assistance Panel */}
             <AIGuidancePanel
