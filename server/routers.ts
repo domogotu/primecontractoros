@@ -41,11 +41,13 @@ import { requireWorkspaceId } from "./workspaceMiddleware";
 import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 import { guidanceRouter } from "./guidanceRouter";
+import { platformAdminRouter } from "./platformAdminRouter";
 
 export const appRouter = router({
   system: systemRouter,
   workspace: workspaceRouter,
   platform: platformRouter,
+  platformAdmin: platformAdminRouter,
   files: filesRouter,
   contacts: contactsRouter,
   messages: messagesRouter,

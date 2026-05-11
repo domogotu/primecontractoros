@@ -1,8 +1,8 @@
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users } from "../drizzle/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers } from "../drizzle/schema";
+import { eq, desc, and, sql, count } from "drizzle-orm";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({

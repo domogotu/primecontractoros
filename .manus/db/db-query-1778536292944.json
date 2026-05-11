@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `workspaces` ADD COLUMN `status` enum('active','suspended','deactivated') NOT NULL DEFAULT 'active';\nALTER TABLE `workspaces` ADD COLUMN `trialUsed` boolean NOT NULL DEFAULT false;\nALTER TABLE `workspaces` ADD COLUMN `lastActivityAt` timestamp NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute ALTER TABLE `workspaces` ADD COLUMN `status` enum('active','suspended','deactivated') NOT NULL DEFAULT 'active';\nALTER TABLE `workspaces` ADD COLUMN `trialUsed` boolean NOT NULL DEFAULT false;\nALTER TABLE `workspaces` ADD COLUMN `lastActivityAt` timestamp NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 866
+}

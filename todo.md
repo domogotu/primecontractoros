@@ -551,3 +551,47 @@
 - [x] Visible scrollbar indicator
 - [x] Convert all 13 inline card forms to Dialog modals
 - [ ] Deploy scrollable modal fix to primecontractor-bk79t4ta.manus.space (public)
+
+## Phase 15: Platform-Owner Visibility for Signups, Users, and Login Activity
+
+### Database Schema
+- [x] Add login_events table (user_id, workspace_id, event_type, success, timestamp, ip, device, failed_count, suspicious_flag)
+- [x] Add platform_notes table (workspace_id, user_id, note, created_by, created_at)
+- [x] Add audit_log table (action, target_type, target_id, performed_by, reason, timestamp, metadata)
+- [x] Run database migrations
+
+### tRPC Procedures (Platform Admin Only)
+- [x] platform.workspaces.list - all workspaces with owner/admin, plan, status, onboarding, billing
+- [x] platform.workspaces.get - single workspace summary with users, billing, notes, audit
+- [x] platform.workspaces.suspend - suspend workspace with reason (audit logged)
+- [x] platform.workspaces.reactivate - reactivate workspace with reason (audit logged)
+- [x] platform.users.list - all users with workspace, role, status, last login
+- [x] platform.users.get - single user detail
+- [x] platform.users.disable - disable user with reason (audit logged)
+- [x] platform.activity.list - login events with filters
+- [x] platform.notes.create - add platform note to workspace
+- [x] platform.audit.list - audit log entries
+
+### Frontend Pages
+- [x] /platform/workspaces - Workspace Directory with all required columns and action buttons
+- [x] /platform/workspaces/:id - Workspace Summary with users, billing, notes, audit timeline
+- [x] /platform/users - Platform Users list with all required columns and action buttons
+- [x] /platform/activity - Login Events / Activity page with all required columns
+
+### Security
+- [x] Platform admin role check on all platform procedures
+- [x] Customer users cannot access platform routes
+- [x] No passwords or secrets exposed
+- [x] Login activity audit logged
+- [x] Failed login attempts visible only to platform admins
+- [x] Suspend/reactivate/disable require confirmation dialog and audit log reason
+
+### Acceptance Criteria
+- [x] Can log into /platform
+- [x] Can open /platform/workspaces and see all signed-up workspaces
+- [x] Can open /platform/users and see all registered users by workspace
+- [x] Can open workspace summary with owner/admin, users, plan, onboarding, billing, activity
+- [x] Can see last login and signup date
+- [x] Can see failed login events for security review
+- [x] Can suspend/reactivate workspace with audit log
+- [x] Deploy to primecontractor-bk79t4ta.manus.space (public)

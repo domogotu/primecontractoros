@@ -17,6 +17,8 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  accountStatus: mysqlEnum("accountStatus", ["active", "disabled", "suspended"]).default("active").notNull(),
+  lastActivityAt: timestamp("lastActivityAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -36,6 +38,9 @@ export const workspaces = mysqlTable("workspaces", {
   naicsCodes: text("naicsCodes"),
   certifications: text("certifications"),
   planId: int("planId"),
+  status: mysqlEnum("status", ["active", "suspended", "deactivated"]).default("active").notNull(),
+  trialUsed: boolean("trialUsed").default(false).notNull(),
+  lastActivityAt: timestamp("lastActivityAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -807,3 +812,47 @@ export const guidanceEvents = mysqlTable("guidanceEvents", {
 });
 export type GuidanceEvent = typeof guidanceEvents.$inferSelect;
 export type InsertGuidanceEvent = typeof guidanceEvents.$inferInsert;
+
+// Login Events - Track all login attempts for security visibility
+export const loginEvents = mysqlTable("loginEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  workspaceId: int("workspaceId"),
+  email: varchar("email", { length: 320 }),
+  eventType: mysqlEnum("eventType", ["login_success", "login_failure", "logout", "token_refresh", "password_reset"]).notNull(),
+  success: boolean("success").default(true).notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  deviceInfo: varchar("deviceInfo", { length: 255 }),
+  failureReason: varchar("failureReason", { length: 255 }),
+  suspiciousFlag: boolean("suspiciousFlag").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LoginEvent = typeof loginEvents.$inferSelect;
+export type InsertLoginEvent = typeof loginEvents.$inferInsert;
+
+// Platform Notes - Admin notes attached to workspaces or users
+export const platformNotes = mysqlTable("platformNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId"),
+  userId: int("userId"),
+  note: text("note").notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlatformNote = typeof platformNotes.$inferSelect;
+export type InsertPlatformNote = typeof platformNotes.$inferInsert;
+
+// Platform Audit Log - Track all admin actions (suspend, reactivate, disable, etc.)
+export const platformAuditLog = mysqlTable("platformAuditLog", {
+  id: int("id").autoincrement().primaryKey(),
+  action: varchar("action", { length: 100 }).notNull(), // "suspend_workspace", "reactivate_workspace", "disable_user", "add_note", etc.
+  targetType: mysqlEnum("targetType", ["workspace", "user", "plan", "billing"]).notNull(),
+  targetId: int("targetId").notNull(),
+  performedBy: int("performedBy").notNull(),
+  reason: text("reason"),
+  metadata: text("metadata"), // JSON with additional context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlatformAuditLogEntry = typeof platformAuditLog.$inferSelect;
+export type InsertPlatformAuditLogEntry = typeof platformAuditLog.$inferInsert;

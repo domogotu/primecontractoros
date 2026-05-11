@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { BarChart3, Users, CreditCard, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive } from "lucide-react";
+import { BarChart3, Users, CreditCard, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive, Activity, Shield } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function PlatformSidebar() {
@@ -16,6 +16,9 @@ export default function PlatformSidebar() {
   const navItems = [
     { label: "Dashboard", path: "/platform", icon: Home },
     { label: "Workspaces", path: "/platform/workspaces", icon: Users },
+    { label: "Users", path: "/platform/users", icon: Users },
+    { label: "Activity", path: "/platform/activity", icon: Activity },
+    { label: "Login Events", path: "/platform/login-events", icon: Shield },
     { label: "Plans", path: "/platform/plans", icon: Package },
     { label: "Discounts", path: "/platform/discounts", icon: CreditCard },
     { label: "Billing", path: "/platform/billing", icon: CreditCard },

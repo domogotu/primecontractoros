@@ -102,13 +102,12 @@ describe('GuidanceEngine', () => {
     it('should return actions with valid action types', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
       const validActionTypes = [
-        'create_first_opportunity',
-        'add_contacts',
-        'upload_documents',
-        'invite_team',
-        'create_proposal',
-        'review_compliance',
-        'track_contract',
+        'create',
+        'update',
+        'review',
+        'upload',
+        'invite',
+        'track',
       ];
 
       actions.forEach(action => {

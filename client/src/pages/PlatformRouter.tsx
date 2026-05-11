@@ -15,6 +15,10 @@ import {
   PlatformDemoWorkspaces,
   PlatformTasks,
 } from "./PlatformPages";
+import PlatformUsersPage from "./PlatformUsers";
+import PlatformActivityPage from "./PlatformActivity";
+import PlatformLoginEventsPage from "./PlatformLoginEvents";
+import PlatformWorkspaceDetailPage from "./PlatformWorkspaceDetail";
 import { getLoginUrl } from "@/const";
 
 export default function PlatformRouter() {
@@ -57,7 +61,10 @@ export default function PlatformRouter() {
     
     if (normalizedLocation === "/platform") return <PlatformAdmin />;
     if (normalizedLocation === "/platform/workspaces") return <PlatformWorkspaces />;
-    if (normalizedLocation.startsWith("/platform/workspaces/")) return <PlatformWorkspaceSummary />;
+    if (normalizedLocation.startsWith("/platform/workspaces/")) return <PlatformWorkspaceDetailPage />;
+    if (normalizedLocation === "/platform/users") return <PlatformUsersPage />;
+    if (normalizedLocation === "/platform/activity") return <PlatformActivityPage />;
+    if (normalizedLocation === "/platform/login-events") return <PlatformLoginEventsPage />;
     if (normalizedLocation === "/platform/plans") return <PlatformPlans />;
     if (normalizedLocation === "/platform/discounts") return <PlatformDiscounts />;
     if (normalizedLocation === "/platform/billing") return <PlatformBilling />;

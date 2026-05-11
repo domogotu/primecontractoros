@@ -64,6 +64,20 @@
       "when": 1778533782795,
       "tag": "0008_true_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1778536274178,
+      "tag": "0009_left_swarm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1778537088800,
+      "tag": "0010_wide_lyja",
+      "breakpoints": true
     }
   ]
 }
