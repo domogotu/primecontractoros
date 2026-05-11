@@ -53,7 +53,7 @@ export default function Templates() {
       actions={
         <div className="flex gap-2">
           {templates.length === 0 && (
-            <Button variant="outline" onClick={() => addDefaultsMutation.mutate({})} disabled={addDefaultsMutation.isPending}>
+            <Button variant="outline" onClick={() => addDefaultsMutation.mutate({ templateKey: "default" })} disabled={addDefaultsMutation.isPending}>
               {addDefaultsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
               Load Defaults
             </Button>
@@ -118,7 +118,7 @@ export default function Templates() {
           <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No Templates Yet</h3>
           <p className="text-gray-600 mb-4">Load pre-built templates or create your own to streamline your workflow.</p>
-          <Button onClick={() => addDefaultsMutation.mutate({})} disabled={addDefaultsMutation.isPending}>
+          <Button onClick={() => addDefaultsMutation.mutate({ templateKey: "default" })} disabled={addDefaultsMutation.isPending}>
             {addDefaultsMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
             Load Default Templates
           </Button>
