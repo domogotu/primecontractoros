@@ -65,7 +65,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <div className="text-2xl font-bold text-blue-900">PrimeContractorOS</div>
-            <div className="text-xs text-gray-600">A Reed Solutions LLC Product</div>
+            <div className="text-xs text-gray-600">A Reed's Solutions LLC Product</div>
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" onClick={() => navigate("/features")} className="text-gray-600 hover:text-blue-900">
@@ -94,7 +94,7 @@ export default function Home() {
             Move through the full contracting lifecycle—from opportunity to proposal to contract to closeout—with a system that guides you every step of the way.
           </p>
           <p className="text-sm text-blue-200 italic mb-8">
-            Built by <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-white hover:underline font-medium">Reed Solutions LLC</a>
+            Built by <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-white hover:underline font-medium">Reed's Solutions LLC</a>
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button onClick={() => navigate("/get-started")} className="bg-green-600 hover:bg-green-700 text-white text-base px-6 py-3">
@@ -205,9 +205,9 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-8">
             <div>
               <div className="text-sm font-medium text-gray-900 mb-2">PrimeContractorOS</div>
-              <div className="text-xs text-gray-600">A Reed Solutions LLC Product</div>
+              <div className="text-xs text-gray-600">A Reed's Solutions LLC Product</div>
               <a href="https://reedssolutionsllc.org/" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-900 hover:underline mt-2 inline-block">
-                Visit Reed Solutions LLC →
+                Visit Reed's Solutions LLC →
               </a>
             </div>
             <div className="flex gap-6 text-sm">
@@ -217,7 +217,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-200 pt-6 text-xs text-gray-600 text-center">
-            © 2026 PrimeContractorOS by Reed Solutions LLC. All rights reserved.
+            © 2026 PrimeContractorOS by Reed's Solutions LLC. All rights reserved.
           </div>
         </div>
       </footer>

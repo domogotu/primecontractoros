@@ -36,7 +36,7 @@ export default function ContactPage() {
               <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
                 <Globe className="w-8 h-8 text-blue-600 mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-900 mb-2">Website</h3>
-                <p className="text-sm text-gray-600 mb-3">Learn more about Reed Solutions LLC</p>
+                <p className="text-sm text-gray-600 mb-3">Learn more about Reed's Solutions LLC</p>
                 <a href="https://reedssolutionsllc.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
                   reedssolutionsllc.org
                 </a>

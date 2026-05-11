@@ -17,7 +17,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Company</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li><a href="https://reedssolutionsllc.org" target="_blank" rel="noopener noreferrer" className="hover:text-white">Reed Solutions LLC</a></li>
+              <li><a href="https://reedssolutionsllc.org" target="_blank" rel="noopener noreferrer" className="hover:text-white">Reed's Solutions LLC</a></li>
               <li><Link href="/about"><span className="hover:text-white cursor-pointer">About</span></Link></li>
               <li><Link href="/contact"><span className="hover:text-white cursor-pointer">Contact</span></Link></li>
             </ul>
@@ -40,7 +40,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-400">&copy; 2026 Reed Solutions LLC. All rights reserved.</p>
+          <p className="text-sm text-gray-400">&copy; 2026 Reed's Solutions LLC. All rights reserved.</p>
           <a href="https://reedssolutionsllc.org" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300">
             reedssolutionsllc.org
           </a>

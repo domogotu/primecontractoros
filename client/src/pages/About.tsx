@@ -14,7 +14,7 @@ export default function About() {
             </Link>
           </nav>
           <h1 className="text-4xl font-bold mb-4">About PrimeContractorOS</h1>
-          <p className="text-blue-100 text-lg">A product of Reed Solutions LLC — built by government contractors, for government contractors.</p>
+          <p className="text-blue-100 text-lg">A product of Reed's Solutions LLC — built by government contractors, for government contractors.</p>
         </div>
       </div>
 
@@ -31,11 +31,11 @@ export default function About() {
             </p>
           </section>
 
-          {/* About Reed Solutions */}
+          {/* About Reed's Solutions */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">About Reed Solutions LLC</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">About Reed's Solutions LLC</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Reed Solutions LLC is a California-based small business specializing in federal IT and facilities contracting. We help government agencies and partners deliver mission-critical services through technology, operations support, and strategic consulting.
+              Reed's Solutions LLC is a California-based small business specializing in federal IT and facilities contracting. We help government agencies and partners deliver mission-critical services through technology, operations support, and strategic consulting.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
               With direct experience navigating FAR/DFARS regulations, SAM.gov registrations, proposal development, and contract performance, we built PrimeContractorOS from the ground up to address the real challenges contractors face every day.

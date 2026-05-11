@@ -22,7 +22,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-3">1. Acceptance of Terms</h2>
               <p className="text-gray-700 leading-relaxed">
-                By accessing or using PrimeContractorOS ("the Service"), operated by Reed Solutions LLC, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including workspace owners, team members, and visitors.
+                By accessing or using PrimeContractorOS ("the Service"), operated by Reed's Solutions LLC, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users, including workspace owners, team members, and visitors.
               </p>
             </section>
 
@@ -43,7 +43,7 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-3">4. Workspace and Data Ownership</h2>
               <p className="text-gray-700 leading-relaxed">
-                You retain ownership of all data you enter into your workspace. Reed Solutions LLC does not claim ownership of your business data, proposals, contracts, or other content. We provide the platform as a service and maintain the infrastructure necessary to store and process your data securely.
+                You retain ownership of all data you enter into your workspace. Reed's Solutions LLC does not claim ownership of your business data, proposals, contracts, or other content. We provide the platform as a service and maintain the infrastructure necessary to store and process your data securely.
               </p>
             </section>
 
@@ -70,14 +70,14 @@ export default function Terms() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-3">7. AI Features Disclaimer</h2>
               <p className="text-gray-700 leading-relaxed">
-                PrimeContractorOS includes AI-powered features that provide suggestions, analysis, and guidance. These features are provided as decision-support tools only. AI-generated content should be reviewed by qualified professionals before being used in official government contracting activities. Reed Solutions LLC is not responsible for decisions made based on AI-generated suggestions.
+                PrimeContractorOS includes AI-powered features that provide suggestions, analysis, and guidance. These features are provided as decision-support tools only. AI-generated content should be reviewed by qualified professionals before being used in official government contracting activities. Reed's Solutions LLC is not responsible for decisions made based on AI-generated suggestions.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-3">8. Limitation of Liability</h2>
               <p className="text-gray-700 leading-relaxed">
-                The Service is provided "as is" without warranties of any kind. Reed Solutions LLC shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.
+                The Service is provided "as is" without warranties of any kind. Reed's Solutions LLC shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.
               </p>
             </section>
 

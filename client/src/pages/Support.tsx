@@ -49,7 +49,7 @@ export default function Support() {
             </div>
             <div className="p-6 rounded-lg bg-white border border-gray-200">
               <Globe className="h-8 w-8 text-primary mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Reed Solutions LLC</h3>
+              <h3 className="text-lg font-semibold mb-2">Reed's Solutions LLC</h3>
               <p className="text-sm text-gray-500 mb-4">
                 Visit our company website for more information about our services and capabilities.
               </p>
