@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, CheckSquare } from "lucide-react";
+import { Plus, Search, Trash2, CheckSquare, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
@@ -9,10 +10,13 @@ import PageLayout from "@/components/PageLayout";
 export default function Tasks() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [form, setForm] = useState({ title: "", description: "", dueDate: "", priority: "medium" as string, status: "open" as string, assignedTo: "", contractId: "" });
+  const [form, setForm] = useState({ title: "", description: "", dueDate: "", priority: "medium" as string, status: "open" as string, assignedTo: "", linkedRecordType: "none", linkedRecordId: "" });
 
   const { data: tasks = [], isLoading, refetch } = trpc.tasks.list.useQuery();
-  const createMutation = trpc.tasks.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ title: "", description: "", dueDate: "", priority: "medium", status: "open", assignedTo: "", contractId: "" }); } });
+  const { data: opportunities = [] } = trpc.opportunities.list.useQuery();
+  const { data: proposals = [] } = trpc.proposals.list.useQuery();
+  const { data: contracts = [] } = trpc.contracts.list.useQuery();
+  const createMutation = trpc.tasks.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ title: "", description: "", dueDate: "", priority: "medium", status: "open", assignedTo: "", linkedRecordType: "none", linkedRecordId: "" }); } });
   const deleteMutation = trpc.tasks.delete.useMutation({ onSuccess: () => refetch() });
 
   const filtered = (tasks as any[]).filter((t) =>
@@ -30,6 +34,20 @@ export default function Tasks() {
   }).length;
   const completed = (tasks as any[]).filter((t) => t.status === "completed").length;
 
+  const getRecordOptions = () => {
+    if (form.linkedRecordType === "opportunity") return (opportunities as any[]).map((o) => ({ id: o.id, title: o.title }));
+    if (form.linkedRecordType === "proposal") return (proposals as any[]).map((p) => ({ id: p.id, title: p.title }));
+    if (form.linkedRecordType === "contract") return (contracts as any[]).map((c) => ({ id: c.id, title: c.title }));
+    return [];
+  };
+
+  const getLinkedRecordName = (type: string, id: number) => {
+    if (type === "opportunity") return (opportunities as any[]).find((o) => o.id === id)?.title || `Opportunity #${id}`;
+    if (type === "proposal") return (proposals as any[]).find((p) => p.id === id)?.title || `Proposal #${id}`;
+    if (type === "contract") return (contracts as any[]).find((c) => c.id === id)?.title || `Contract #${id}`;
+    return null;
+  };
+
   const handleCreate = () => {
     if (!form.title) return;
     createMutation.mutate({
@@ -39,7 +57,8 @@ export default function Tasks() {
       priority: form.priority,
       status: form.status,
       assignedTo: form.assignedTo || undefined,
-      contractId: form.contractId ? parseInt(form.contractId) : undefined,
+      linkedRecordType: form.linkedRecordType !== "none" ? form.linkedRecordType : undefined,
+      linkedRecordId: form.linkedRecordId ? parseInt(form.linkedRecordId) : undefined,
     } as any);
   };
 
@@ -83,7 +102,30 @@ export default function Tasks() {
               <option value="completed">Completed</option>
             </select>
             <input placeholder="Assigned To" value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Contract ID (optional)" value={form.contractId} onChange={(e) => setForm({ ...form, contractId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="md:col-span-2 border-t pt-3 mt-1">
+              <label className="block text-xs font-medium text-gray-600 mb-2">Link to Record</label>
+              <div className="grid grid-cols-2 gap-3">
+                <Select value={form.linkedRecordType} onValueChange={(v) => setForm({ ...form, linkedRecordType: v, linkedRecordId: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Record type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Link</SelectItem>
+                    <SelectItem value="opportunity">Opportunity</SelectItem>
+                    <SelectItem value="proposal">Proposal</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.linkedRecordType !== "none" && (
+                  <Select value={form.linkedRecordId} onValueChange={(v) => setForm({ ...form, linkedRecordId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select record" /></SelectTrigger>
+                    <SelectContent>
+                      {getRecordOptions().map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>{r.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
           </div>
                     </DialogBody>
           <DialogFooter>
@@ -143,6 +185,12 @@ export default function Tasks() {
               )}
               {task.assignedTo && (
                 <p className="text-xs text-gray-500 mt-1">Assigned to: {task.assignedTo}</p>
+              )}
+              {task.linkedRecordType && task.linkedRecordId && (
+                <p className="text-xs text-blue-600 flex items-center gap-1 mt-1">
+                  <Link2 className="w-3 h-3" />
+                  {getLinkedRecordName(task.linkedRecordType, task.linkedRecordId)}
+                </p>
               )}
             </Card>
           ))}

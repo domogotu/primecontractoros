@@ -1,25 +1,64 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, Users } from "lucide-react";
+import { Plus, Search, Trash2, Users, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
 
 export default function Contacts() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", title: "", company: "", linkedRecordId: "" });
+  const [filterRecordType, setFilterRecordType] = useState("all");
+  const [form, setForm] = useState({
+    name: "", email: "", phone: "", title: "", company: "",
+    linkedRecordType: "none", linkedRecordId: "",
+  });
 
   const { data: contacts = [], isLoading, refetch } = trpc.contacts.list.useQuery();
-  const createMutation = trpc.contacts.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ name: "", email: "", phone: "", title: "", company: "", linkedRecordId: "" }); } });
+  const { data: opportunities = [] } = trpc.opportunities.list.useQuery();
+  const { data: proposals = [] } = trpc.proposals.list.useQuery();
+  const { data: contracts = [] } = trpc.contracts.list.useQuery();
+
+  const createMutation = trpc.contacts.create.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowForm(false);
+      setForm({ name: "", email: "", phone: "", title: "", company: "", linkedRecordType: "none", linkedRecordId: "" });
+    },
+  });
   const deleteMutation = trpc.contacts.delete.useMutation({ onSuccess: () => refetch() });
 
-  const filtered = (contacts as any[]).filter((c) =>
-    c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.company?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    let list = contacts as any[];
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      list = list.filter((c) =>
+        c.name?.toLowerCase().includes(term) ||
+        c.email?.toLowerCase().includes(term) ||
+        c.company?.toLowerCase().includes(term)
+      );
+    }
+    if (filterRecordType !== "all") {
+      list = list.filter((c) => c.linkedRecordType === filterRecordType);
+    }
+    return list;
+  }, [contacts, searchTerm, filterRecordType]);
+
+  const getLinkedRecordName = (type: string, id: number) => {
+    if (type === "opportunity") return (opportunities as any[]).find((o) => o.id === id)?.title || `Opportunity #${id}`;
+    if (type === "proposal") return (proposals as any[]).find((p) => p.id === id)?.title || `Proposal #${id}`;
+    if (type === "contract") return (contracts as any[]).find((c) => c.id === id)?.title || `Contract #${id}`;
+    return null;
+  };
+
+  const getRecordOptions = () => {
+    if (form.linkedRecordType === "opportunity") return (opportunities as any[]).map((o) => ({ id: o.id, title: o.title }));
+    if (form.linkedRecordType === "proposal") return (proposals as any[]).map((p) => ({ id: p.id, title: p.title }));
+    if (form.linkedRecordType === "contract") return (contracts as any[]).map((c) => ({ id: c.id, title: c.title }));
+    return [];
+  };
 
   const handleCreate = () => {
     if (!form.name) return;
@@ -29,6 +68,7 @@ export default function Contacts() {
       phone: form.phone || undefined,
       title: form.title || undefined,
       company: form.company || undefined,
+      linkedRecordType: form.linkedRecordType !== "none" ? form.linkedRecordType : undefined,
       linkedRecordId: form.linkedRecordId ? parseInt(form.linkedRecordId) : undefined,
     } as any);
   };
@@ -42,8 +82,8 @@ export default function Contacts() {
       label="People"
       summaryCards={[
         { label: "Total Contacts", value: contacts.length },
+        { label: "Linked", value: (contacts as any[]).filter((c) => c.linkedRecordType).length },
         { label: "With Email", value: (contacts as any[]).filter((c) => c.email).length },
-        { label: "With Phone", value: (contacts as any[]).filter((c) => c.phone).length },
       ]}
       actions={
         <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
@@ -59,26 +99,54 @@ export default function Contacts() {
           </DialogHeader>
           <DialogBody>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
-              <input placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input placeholder="email@example.com" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input placeholder="(555) 000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title / Role</label>
-              <input placeholder="Contracting Officer" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company / Agency</label>
-              <input placeholder="Agency or company name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={inputCls} />
-            </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+                <input placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input placeholder="email@example.com" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input placeholder="(555) 000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title / Role</label>
+                <input placeholder="Contracting Officer" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company / Agency</label>
+                <input placeholder="Agency or company name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={inputCls} />
+              </div>
+              <div className="md:col-span-2 border-t pt-4 mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Link to Record</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Select value={form.linkedRecordType} onValueChange={(v) => setForm({ ...form, linkedRecordType: v, linkedRecordId: "" })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Record type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Link</SelectItem>
+                      <SelectItem value="opportunity">Opportunity</SelectItem>
+                      <SelectItem value="proposal">Proposal</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.linkedRecordType !== "none" && (
+                    <Select value={form.linkedRecordId} onValueChange={(v) => setForm({ ...form, linkedRecordId: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select record" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getRecordOptions().map((r) => (
+                          <SelectItem key={r.id} value={String(r.id)}>{r.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
             </div>
           </DialogBody>
           <DialogFooter>
@@ -90,13 +158,24 @@ export default function Contacts() {
         </DialogContent>
       </Dialog>
 
-      {/* Search */}
+      {/* Search & Filter */}
       <Card className="bg-white border border-gray-200 p-4">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
+        <div className="flex gap-3 flex-wrap">
+          <div className="flex-1 relative min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
             <input type="text" placeholder="Search contacts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
+          <Select value={filterRecordType} onValueChange={setFilterRecordType}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Filter by link" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Contacts</SelectItem>
+              <SelectItem value="opportunity">Linked to Opportunity</SelectItem>
+              <SelectItem value="proposal">Linked to Proposal</SelectItem>
+              <SelectItem value="contract">Linked to Contract</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </Card>
 
@@ -128,6 +207,12 @@ export default function Contacts() {
               <div className="mt-3 space-y-1">
                 {contact.email && <p className="text-xs text-gray-500">📧 {contact.email}</p>}
                 {contact.phone && <p className="text-xs text-gray-500">📞 {contact.phone}</p>}
+                {contact.linkedRecordType && contact.linkedRecordId && (
+                  <p className="text-xs text-blue-600 flex items-center gap-1 mt-2">
+                    <Link2 className="w-3 h-3" />
+                    {getLinkedRecordName(contact.linkedRecordType, contact.linkedRecordId)}
+                  </p>
+                )}
               </div>
             </Card>
           ))}

@@ -29,7 +29,8 @@ export const fileStorageRouter = router({
   getConfig: protectedProcedure.query(async ({ ctx }) => {
     const workspaceId = await requireWorkspaceId(ctx.user.id);
     const config = await getS3Config(workspaceId);
-    return { configured: !!config, region: config?.region, bucket: config?.bucket };
+    // Always report as configured since built-in storage is always available
+    return { configured: true, region: config?.region || "built-in", bucket: config?.bucket || "manus-storage" };
   }),
 
   upload: protectedProcedure

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, MessageSquare, Mail } from "lucide-react";
+import { Plus, Search, Trash2, MessageSquare, Mail, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
@@ -10,15 +11,18 @@ export default function Messages() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [form, setForm] = useState({
-    subject: "", body: "", linkedRecordType: "", linkedRecordId: "",
+    subject: "", body: "", linkedRecordType: "none", linkedRecordId: "",
   });
 
   const { data: messages = [], isLoading, refetch } = trpc.messages.list.useQuery();
+  const { data: opportunities = [] } = trpc.opportunities.list.useQuery();
+  const { data: proposals = [] } = trpc.proposals.list.useQuery();
+  const { data: contractsList = [] } = trpc.contracts.list.useQuery();
   const createMutation = trpc.messages.create.useMutation({
     onSuccess: () => {
       refetch();
       setShowForm(false);
-      setForm({ subject: "", body: "", linkedRecordType: "", linkedRecordId: "" });
+      setForm({ subject: "", body: "", linkedRecordType: "none", linkedRecordId: "" });
     },
   });
   const deleteMutation = trpc.messages.delete.useMutation({ onSuccess: () => refetch() });
@@ -28,12 +32,26 @@ export default function Messages() {
     m.body?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getRecordOptions = () => {
+    if (form.linkedRecordType === "opportunity") return (opportunities as any[]).map((o) => ({ id: o.id, title: o.title }));
+    if (form.linkedRecordType === "proposal") return (proposals as any[]).map((p) => ({ id: p.id, title: p.title }));
+    if (form.linkedRecordType === "contract") return (contractsList as any[]).map((c) => ({ id: c.id, title: c.title }));
+    return [];
+  };
+
+  const getLinkedRecordName = (type: string, id: number) => {
+    if (type === "opportunity") return (opportunities as any[]).find((o) => o.id === id)?.title || `Opportunity #${id}`;
+    if (type === "proposal") return (proposals as any[]).find((p) => p.id === id)?.title || `Proposal #${id}`;
+    if (type === "contract") return (contractsList as any[]).find((c) => c.id === id)?.title || `Contract #${id}`;
+    return `${type} #${id}`;
+  };
+
   const handleCreate = () => {
     if (!form.subject || !form.body) return;
     createMutation.mutate({
       subject: form.subject,
       body: form.body,
-      linkedRecordType: form.linkedRecordType || undefined,
+      linkedRecordType: form.linkedRecordType !== "none" ? form.linkedRecordType : undefined,
       linkedRecordId: form.linkedRecordId ? parseInt(form.linkedRecordId) : undefined,
     });
   };
@@ -67,13 +85,30 @@ export default function Messages() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Subject *" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <textarea placeholder="Message body * (e.g., correspondence with CO, agency communication, internal note)" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <select value={form.linkedRecordType} onChange={(e) => setForm({ ...form, linkedRecordType: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Link to Record Type (optional)</option>
-              <option value="opportunity">Opportunity</option>
-              <option value="proposal">Proposal</option>
-              <option value="contract">Contract</option>
-            </select>
-            <input placeholder="Linked Record ID" value={form.linkedRecordId} onChange={(e) => setForm({ ...form, linkedRecordId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="md:col-span-2 border-t pt-3 mt-1">
+              <label className="block text-xs font-medium text-gray-600 mb-2">Link to Record</label>
+              <div className="grid grid-cols-2 gap-3">
+                <Select value={form.linkedRecordType} onValueChange={(v) => setForm({ ...form, linkedRecordType: v, linkedRecordId: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Record type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Link</SelectItem>
+                    <SelectItem value="opportunity">Opportunity</SelectItem>
+                    <SelectItem value="proposal">Proposal</SelectItem>
+                    <SelectItem value="contract">Contract</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.linkedRecordType !== "none" && (
+                  <Select value={form.linkedRecordId} onValueChange={(v) => setForm({ ...form, linkedRecordId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select record" /></SelectTrigger>
+                    <SelectContent>
+                      {getRecordOptions().map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>{r.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
           </div>
                     </DialogBody>
           <DialogFooter>
@@ -116,9 +151,10 @@ export default function Messages() {
                     <h3 className="font-semibold text-gray-900">{msg.subject}</h3>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">{msg.body}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      {msg.linkedRecordType && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                          {msg.linkedRecordType} #{msg.linkedRecordId}
+                      {msg.linkedRecordType && msg.linkedRecordId && (
+                        <span className="text-xs text-blue-600 flex items-center gap-1">
+                          <Link2 className="w-3 h-3" />
+                          {getLinkedRecordName(msg.linkedRecordType, msg.linkedRecordId)}
                         </span>
                       )}
                       <span className="text-xs text-gray-400">
