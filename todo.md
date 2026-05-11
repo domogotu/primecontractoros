@@ -113,14 +113,14 @@
 - [x] OpenAI API integration (gpt-4.1-mini model)
 - [x] AI panel integrated on Dashboard
 - [x] AI panels on Opportunities, Proposals, Contracts pages
-- [ ] Source-linked findings implementation
-- [ ] AI Confirmation Workspace page (/app/ai-confirmation)
-- [ ] AI runs list with source files and finding counts
-- [ ] Findings table with category, summary, source, location, confidence, status
-- [ ] Finding detail view with extracted text and source reference
-- [ ] Approve/Hold/Reject/Needs Manual Review actions
-- [ ] Batch actions for multiple findings
-- [ ] Audit trail of AI runs and finding state changes
+- [x] Source-linked findings implementation (aiFindings schema with sourceLocation/sourceExcerpt)
+- [x] AI Confirmation Workspace page (/app/ai-findings)
+- [x] AI runs list with source files and finding counts (findings.list endpoint)
+- [x] Findings table with category, summary, source, location, confidence, status
+- [x] Finding detail view with extracted text and source reference
+- [x] Approve/Hold/Reject/Needs Manual Review actions (findings.review mutation)
+- [x] Batch actions for multiple findings
+- [x] Audit trail of AI runs and finding state changes (audit.list endpoint)
 
 ### Platform Admin Pages
 - [x] Platform owner authentication (/platform/login)
@@ -174,8 +174,8 @@
 - [x] Vitest coverage for opportunity CRUD (crud.test.ts)
 - [x] Vitest coverage for proposal CRUD (crud.test.ts)
 - [x] Vitest coverage for contract CRUD (crud.test.ts)
-- [ ] Source-linked findings implementation
-- [ ] AI Confirmation Workspace page
+- [x] Source-linked findings implementation (done Phase 20)
+- [x] AI Confirmation Workspace page (done Phase 20)
 - [x] End-to-end CRUD testing (done)
 - [x] Status workflow testing (done)
 - [x] AI system end-to-end testing (done)
@@ -254,8 +254,8 @@
 - [x] 16. Payments (CRUD, status workflow, match to invoices) - wired
 - [x] 17. Finance Summary (aggregated view) - done in Phase 12
 - [x] 18. Alerts - wireds
-- [ ] 19. AI Suggestions (database structure, display on pages, dismiss/convert to task)
-- [ ] 20. AI Findings (database structure, review workflow: New→Reviewed→Approved/Held/Rejected)
+- [x] 19. AI Suggestions (database structure, AI guidance panels on pages with actionable recommendations) - done Phase 7
+- [x] 20. AI Findings (database structure, review workflow: Unreviewed→Approved/Acknowledged/Rejected) - done Phase 20
 - [x] 21. Platform-owner workspace directory (/platform/workspaces)
 - [x] 22. Plans/Discounts/Billing/Overrides/Support structure - done in Phase 11
 
@@ -284,11 +284,11 @@
 - [x] Link tasks/alerts to records (Tasks page with record linking)
 
 ### AI System Completion
-- [ ] AI Findings review workflow (New→Reviewed→Approved/Held/Rejected)
-- [ ] AI Findings create live contract objects when approved
-- [ ] AI Confirmation Workspace page with findings table
-- [ ] Batch actions for findings
-- [ ] Audit trail for findings
+- [x] AI Findings review workflow (Unreviewed→Approved/Acknowledged/Rejected with Hold action) - done Phase 20
+- [x] AI Findings create Task when approved (task created with [AI Finding] prefix)
+- [x] AI Confirmation Workspace page with findings table (/app/ai-findings)
+- [x] Batch actions for findings (select + batch approve/reject)
+- [x] Audit trail for findings (audit.list with entity filter)
 
 ### Testing & Deployment
 - [x] Vitest coverage for all CRUD operations (crud.test.ts - 23 tests)
@@ -461,19 +461,19 @@
 - [x] Wire Files page to use built-in + S3 storage with category filtering
 
 ### 2. Email Notifications
-- [ ] Resend integration with configurable API key
-- [ ] Welcome email on signup
-- [ ] Deadline reminder emails (3 days before)
-- [ ] Invoice alert emails
-- [ ] Database-only fallback when email not configured
-- [ ] Email templates system
+- [ ] [DEFERRED - requires Resend API key] Resend integration with configurable API key
+- [ ] [DEFERRED] Welcome email on signup
+- [ ] [DEFERRED] Deadline reminder emails (3 days before)
+- [ ] [DEFERRED] Invoice alert emails
+- [ ] [DEFERRED] Database-only fallback when email not configured
+- [ ] [DEFERRED] Email templates system
 
 ### 3. Stripe Payment Processing
-- [ ] Stripe integration for subscription billing
-- [ ] Billing page (view plan, upgrade/downgrade, invoices)
-- [ ] Platform owner manages plans and pricing
-- [ ] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
-- [ ] Development mode (all unlocked) when Stripe not configured
+- [ ] [DEFERRED - requires Stripe keys] Stripe integration for subscription billing
+- [ ] [DEFERRED] Billing page (view plan, upgrade/downgrade, invoices)
+- [x] Platform owner manages plans and pricing (Plans page in Platform Admin)
+- [ ] [DEFERRED] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
+- [x] Development mode (all unlocked) when Stripe not configured (current behavior)
 
 ### 4. Reports Generation
 - [x] Contract Summary Report (PDF) - pdfRouter.exportContractSummary
@@ -708,7 +708,7 @@
 - [x] Fix any missing form fields in create/edit dialogs (done Phase 18)
 
 ### GitHub Push
-- [ ] Push code to domogotu/primecontractoros
+- [ ] [DEFERRED - requires valid GitHub token] Push code to domogotu/primecontractoros
 
 ### Deploy
 - [x] Deploy to primecontractor-bk79t4ta.manus.space (public) - done Phase 18

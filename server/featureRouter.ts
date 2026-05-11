@@ -5,7 +5,7 @@ import { requireWorkspaceId } from "./workspaceMiddleware";
 import {
   contractClins, contractModifications, keyPersonnel, complianceMatrix,
   auditLog, workspaceSettings, workspaceMembers, invoices, payments, contracts,
-  aiFindings, tasks, proposalTeamAssignments
+  aiFindings, aiRuns, tasks, proposalTeamAssignments
 } from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -322,17 +322,27 @@ export const findingsRouter = router({
     .query(async ({ input, ctx }) => {
       const wsId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
-      let query = db!.select().from(aiFindings).where(eq(aiFindings.workspaceId, wsId));
+      const conditions = [eq(aiFindings.workspaceId, wsId)];
       if (input?.reviewState) {
-        query = db!.select().from(aiFindings)
-          .where(and(eq(aiFindings.workspaceId, wsId), eq(aiFindings.reviewState, input.reviewState as any)));
+        conditions.push(eq(aiFindings.reviewState, input.reviewState as any));
       }
-      return query;
+      return db!.select().from(aiFindings).where(and(...conditions)).orderBy(desc(aiFindings.createdAt));
     }),
+  runs: protectedProcedure.query(async ({ ctx }) => {
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    const db = await getDb();
+    const runs = await db!.select().from(aiRuns).where(eq(aiRuns.workspaceId, wsId)).orderBy(desc(aiRuns.createdAt));
+    // Get finding counts per run
+    const allFindings = await db!.select().from(aiFindings).where(eq(aiFindings.workspaceId, wsId));
+    return runs.map((run) => ({
+      ...run,
+      findingCount: allFindings.filter((f) => f.aiRunId === run.id).length,
+    }));
+  }),
   review: protectedProcedure
     .input(z.object({
       findingId: z.number(),
-      action: z.enum(["confirm", "reject", "defer"]),
+      action: z.enum(["confirm", "reject", "defer", "hold", "needs_review"]),
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -358,6 +368,10 @@ export const findingsRouter = router({
         }
       } else if (input.action === "reject") {
         newState = "rejected";
+      } else if (input.action === "hold") {
+        newState = "acknowledged"; // hold = acknowledged but not acted on
+      } else if (input.action === "needs_review") {
+        newState = "unreviewed"; // reset to unreviewed for another pass
       } else {
         newState = "unreviewed"; // defer keeps it in queue
       }
@@ -380,11 +394,14 @@ export const auditRouter = router({
     .query(async ({ input, ctx }) => {
       const wsId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
-      let query = db!.select().from(auditLog)
-        .where(eq(auditLog.workspaceId, wsId))
+      const conditions = [eq(auditLog.workspaceId, wsId)];
+      if (input?.entity) {
+        conditions.push(eq(auditLog.entity, input.entity));
+      }
+      return db!.select().from(auditLog)
+        .where(and(...conditions))
         .orderBy(desc(auditLog.timestamp))
         .limit(input?.limit ?? 50);
-      return query;
     }),
 });
 

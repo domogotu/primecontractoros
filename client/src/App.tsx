@@ -30,6 +30,7 @@ import Templates from "./pages/Templates";
 import Closeout from "./pages/Closeout";
 import LossReview from "./pages/LossReview";
 import LessonsLearned from "./pages/LessonsLearned";
+import AIFindings from "./pages/AIFindings";
 import PlatformLogin from "./pages/PlatformLogin";
 import PlatformRouter from "./pages/PlatformRouter";
 import ProposalDetail from "./pages/ProposalDetail";
@@ -148,6 +149,7 @@ function Router() {
       <Route path={"/app/contracts/:id/closeout"} component={withAppShell(Closeout)} />
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

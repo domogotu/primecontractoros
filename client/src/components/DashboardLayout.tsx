@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -42,6 +42,7 @@ const menuItems = [
   { icon: Award, label: "Capability Statements", path: "/app/capability-statements" },
   { icon: BookOpen, label: "Templates", path: "/app/templates" },
   { icon: BookOpen, label: "Lessons Learned", path: "/app/lessons" },
+  { icon: Brain, label: "AI Findings", path: "/app/ai-findings" },
   { icon: User, label: "Profile", path: "/app/profile" },
   { icon: Settings, label: "Settings", path: "/app/settings" },
   { icon: DollarSign, label: "Subscription", path: "/app/subscription" },
