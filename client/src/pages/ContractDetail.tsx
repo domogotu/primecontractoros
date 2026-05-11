@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
@@ -406,7 +406,9 @@ export default function ContractDetail() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Edit Contract</DialogTitle></DialogHeader>
-            <ContractForm contractId={contractId} onSuccess={() => setIsEditDialogOpen(false)} onCancel={() => setIsEditDialogOpen(false)} />
+            <DialogBody>
+              <ContractForm contractId={contractId} onSuccess={() => setIsEditDialogOpen(false)} onCancel={() => setIsEditDialogOpen(false)} />
+            </DialogBody>
           </DialogContent>
         </Dialog>
       </div>

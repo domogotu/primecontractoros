@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
 
 export default function Contacts() {
@@ -32,6 +33,8 @@ export default function Contacts() {
     } as any);
   };
 
+  const inputCls = "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+
   return (
     <PageLayout
       title="Contacts"
@@ -43,31 +46,51 @@ export default function Contacts() {
         { label: "With Phone", value: (contacts as any[]).filter((c) => c.phone).length },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" /> Add Contact
         </Button>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Add New Contact</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input placeholder="Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Title/Role" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Company" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input placeholder="Linked Record ID (optional)" value={form.linkedRecordId} onChange={(e) => setForm({ ...form, linkedRecordId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
+      {/* Add Contact Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Contact</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+              <input placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input placeholder="email@example.com" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input placeholder="(555) 000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title / Role</label>
+              <input placeholder="Contracting Officer" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company / Agency</label>
+              <input placeholder="Agency or company name" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={inputCls} />
+            </div>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending || !form.name} className="bg-green-500 hover:bg-green-600 text-white">
               {createMutation.isPending ? "Adding..." : "Add Contact"}
             </Button>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
+      {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">
           <div className="flex-1 relative">

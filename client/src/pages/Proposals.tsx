@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, FileText, ExternalLink, Loader2 } from "lucide-react";
 import ProposalForm from "@/components/ProposalForm";
@@ -132,10 +132,12 @@ export default function Proposals() {
           <DialogHeader>
             <DialogTitle>Create New Proposal</DialogTitle>
           </DialogHeader>
-          <ProposalForm
-            onSuccess={() => setIsCreateDialogOpen(false)}
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
+          <DialogBody>
+            <ProposalForm
+              onSuccess={() => setIsCreateDialogOpen(false)}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </PageLayout>

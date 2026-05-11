@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Target, ExternalLink, Loader2 } from "lucide-react";
 import OpportunityForm from "@/components/OpportunityForm";
@@ -130,10 +130,12 @@ export default function Opportunities() {
           <DialogHeader>
             <DialogTitle>Create New Opportunity</DialogTitle>
           </DialogHeader>
-          <OpportunityForm
-            onSuccess={() => setIsCreateDialogOpen(false)}
-            onCancel={() => setIsCreateDialogOpen(false)}
-          />
+          <DialogBody>
+            <OpportunityForm
+              onSuccess={() => setIsCreateDialogOpen(false)}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogBody>
         </DialogContent>
       </Dialog>
     </PageLayout>

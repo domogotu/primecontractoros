@@ -2,6 +2,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 
@@ -46,15 +47,19 @@ export default function Invoices() {
         { label: "Overdue", value: overdueCount, color: "text-red-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" /> New Invoice
         </Button>
       }
     >
       {/* Add Form */}
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Create New Invoice</h3>
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create New Invoice</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Invoice Number *" value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input placeholder="Amount *" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -62,14 +67,15 @@ export default function Invoices() {
             <input placeholder="Due Date" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <div className="flex gap-3 mt-4">
+                    </DialogBody>
+          <DialogFooter>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
               {createMutation.isPending ? "Creating..." : "Create Invoice"}
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+                    </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">

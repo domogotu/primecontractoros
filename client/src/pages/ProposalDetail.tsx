@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
@@ -503,13 +503,15 @@ export default function ProposalDetail() {
             <DialogHeader>
               <DialogTitle>Edit Proposal</DialogTitle>
             </DialogHeader>
-            <ProposalForm
+            <DialogBody>
+              <ProposalForm
               proposalId={proposalId}
               onSuccess={() => {
                 setIsEditDialogOpen(false);
               }}
               onCancel={() => setIsEditDialogOpen(false)}
             />
+            </DialogBody>
           </DialogContent>
         </Dialog>
       </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 
@@ -46,14 +47,18 @@ export default function Alerts() {
         { label: "Warnings", value: (alerts as any[]).filter((a) => a.type === "warning").length, color: "text-amber-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" /> Add Alert
         </Button>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Add New Alert</h3>
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Alert</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Title *" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <textarea placeholder="Message" value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -64,14 +69,15 @@ export default function Alerts() {
             </select>
             <input placeholder="Linked Record ID (optional)" value={form.linkedRecordId} onChange={(e) => setForm({ ...form, linkedRecordId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <div className="flex gap-3 mt-4">
+                    </DialogBody>
+          <DialogFooter>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
               {createMutation.isPending ? "Adding..." : "Add Alert"}
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+                    </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

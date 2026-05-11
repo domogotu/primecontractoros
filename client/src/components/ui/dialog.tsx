@@ -102,17 +102,11 @@ function DialogContent({
 
   const handleEscapeKeyDown = React.useCallback(
     (e: KeyboardEvent) => {
-      // Check both the native isComposing property and our context state
-      // This handles Safari's timing issues with composition events
       const isCurrentlyComposing = (e as any).isComposing || isComposing();
-
-      // If IME is composing, prevent dialog from closing
       if (isCurrentlyComposing) {
         e.preventDefault();
         return;
       }
-
-      // Call user's onEscapeKeyDown if provided
       onEscapeKeyDown?.(e);
     },
     [isComposing, onEscapeKeyDown]
@@ -124,7 +118,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-white text-gray-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-gray-200 p-6 shadow-xl duration-200 sm:max-w-lg",
+          "bg-white text-gray-900 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 flex flex-col w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] rounded-lg border border-gray-200 shadow-xl duration-200 sm:max-w-lg max-h-[85vh]",
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}
@@ -134,7 +128,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:pointer-events-none text-gray-500 hover:text-gray-900"
+            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:pointer-events-none text-gray-500 hover:text-gray-900 z-10"
           >
             <XIcon className="h-4 w-4" />
             <span className="sr-only">Close</span>
@@ -149,7 +143,18 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+      className={cn("flex flex-col gap-2 text-center sm:text-left px-6 pt-6 pb-4 border-b border-gray-100 shrink-0", className)}
+      {...props}
+    />
+  );
+}
+
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("flex-1 overflow-y-auto px-6 py-4 overscroll-contain", className)}
+      style={{ scrollbarWidth: "thin", scrollbarColor: "#d1d5db transparent" }}
       {...props}
     />
   );
@@ -160,7 +165,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end px-6 pb-6 pt-4 border-t border-gray-100 shrink-0",
         className
       )}
       {...props}
@@ -196,6 +201,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

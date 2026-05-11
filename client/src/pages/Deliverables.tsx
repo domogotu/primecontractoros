@@ -2,6 +2,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 
@@ -59,14 +60,18 @@ export default function Deliverables() {
         { label: "Accepted", value: (deliverables as any[]).filter((d) => d.status === "accepted").length, color: "text-green-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" /> Add Deliverable
         </Button>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Add Contract Deliverable</h3>
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Contract Deliverable</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Contract ID *" type="number" value={form.contractId} onChange={(e) => setForm({ ...form, contractId: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input placeholder="Deliverable Title * (e.g., Monthly Status Report, CDRL A001)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -80,14 +85,15 @@ export default function Deliverables() {
               <option value="rejected">Rejected / Revision Required</option>
             </select>
           </div>
-          <div className="flex gap-3 mt-4">
+                    </DialogBody>
+          <DialogFooter>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
               {createMutation.isPending ? "Adding..." : "Add Deliverable"}
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+                    </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

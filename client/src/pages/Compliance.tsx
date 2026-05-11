@@ -2,6 +2,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Shield, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 
@@ -66,14 +67,18 @@ export default function Compliance() {
         { label: "In Review", value: (items as any[]).filter((i) => i.status === "in_review").length, color: "text-amber-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(!showForm)} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" /> Add Compliance Item
         </Button>
       }
     >
-      {showForm && (
-        <Card className="bg-white border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Add Compliance Item</h3>
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Compliance Item</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input placeholder="Title * (e.g., CMMC Level 2 Assessment)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input placeholder="Regulation Reference (e.g., FAR 52.204-21, DFARS 252.204-7012)" value={form.regulation} onChange={(e) => setForm({ ...form, regulation: e.target.value })} className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -95,14 +100,15 @@ export default function Compliance() {
             </div>
             <textarea placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="md:col-span-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <div className="flex gap-3 mt-4">
+                    </DialogBody>
+          <DialogFooter>
             <Button onClick={handleCreate} disabled={createMutation.isPending} className="bg-green-500 hover:bg-green-600 text-white">
               {createMutation.isPending ? "Adding..." : "Add Compliance Item"}
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+                    </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

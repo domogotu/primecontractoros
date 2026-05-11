@@ -1,3 +1,4 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Plus, Loader2, Search, Tag, Trash2 } from "lucide-react";
@@ -93,10 +94,14 @@ export default function LessonsLearned() {
       </div>
 
       {/* Create form */}
-      {showForm && (
-        <Card className="p-6 border border-blue-200 bg-blue-50/30 mb-6">
-          <h3 className="text-lg font-semibold mb-4">New Post-Contract Review</h3>
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+      {/* Create Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Post-Contract Review</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
               <input
@@ -167,7 +172,8 @@ export default function LessonsLearned() {
               </select>
             </div>
           </div>
-          <div className="flex gap-2">
+          </DialogBody>
+          <DialogFooter>
             <Button
               onClick={() => createMutation.mutate({
                 title: form.title,
@@ -182,9 +188,9 @@ export default function LessonsLearned() {
               Save Review
             </Button>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-          </div>
-        </Card>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lessons list */}
       {filteredLessons.length === 0 ? (

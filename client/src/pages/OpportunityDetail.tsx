@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
@@ -333,43 +333,45 @@ export default function OpportunityDetail() {
             <DialogHeader>
               <DialogTitle>Start Proposal From This Opportunity</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="proposal-title">Proposal Title</Label>
-                <Input
-                  id="proposal-title"
-                  value={proposalTitle}
-                  onChange={(e) => setProposalTitle(e.target.value)}
-                  placeholder="e.g., Proposal for Defense IT Modernization"
-                  className="mt-2"
-                />
+            <DialogBody>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="proposal-title">Proposal Title</Label>
+                  <Input
+                    id="proposal-title"
+                    value={proposalTitle}
+                    onChange={(e) => setProposalTitle(e.target.value)}
+                    placeholder="e.g., Proposal for Defense IT Modernization"
+                    className="mt-2"
+                  />
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsConvertDialogOpen(false);
+                      setProposalTitle('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={handleConvertToProposal}
+                    disabled={convertToProposalMutation.isPending || !proposalTitle.trim()}
+                  >
+                    {convertToProposalMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Proposal'
+                    )}
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-3 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsConvertDialogOpen(false);
-                    setProposalTitle('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={handleConvertToProposal}
-                  disabled={convertToProposalMutation.isPending || !proposalTitle.trim()}
-                >
-                  {convertToProposalMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Proposal'
-                  )}
-                </Button>
-              </div>
-            </div>
+            </DialogBody>
           </DialogContent>
         </Dialog>
 
@@ -379,13 +381,15 @@ export default function OpportunityDetail() {
             <DialogHeader>
               <DialogTitle>Edit Opportunity</DialogTitle>
             </DialogHeader>
-            <OpportunityForm
+            <DialogBody>
+              <OpportunityForm
               opportunityId={opportunityId}
               onSuccess={() => {
                 setIsEditDialogOpen(false);
               }}
               onCancel={() => setIsEditDialogOpen(false)}
             />
+            </DialogBody>
           </DialogContent>
         </Dialog>
       </div>

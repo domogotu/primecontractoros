@@ -540,4 +540,14 @@
 - [x] Fix close/cancel button visibility
 - [x] Fix submit button styling
 - [x] Verify fix applies to ALL create/edit forms across all pages
-- [ ] Deploy fix to primecontractor-bk79t4ta.manus.space (public)
+- [x] Deploy fix to primecontractor-bk79t4ta.manus.space (public)
+
+## URGENT: Scrollable Form Modals
+
+- [x] Fix DialogContent to have max-height (85vh) with scrollable body
+- [x] Fixed header (title) at top of modal
+- [x] Fixed footer (buttons) at bottom of modal
+- [x] Scrollable form fields in between
+- [x] Visible scrollbar indicator
+- [x] Convert all 13 inline card forms to Dialog modals
+- [ ] Deploy scrollable modal fix to primecontractor-bk79t4ta.manus.space (public)
