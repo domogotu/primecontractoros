@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, Receipt } from "lucide-react";
+import { Plus, Search, Trash2, Receipt, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
@@ -14,6 +14,9 @@ export default function Invoices() {
   const { data: invoices = [], isLoading, refetch } = trpc.invoices.list.useQuery();
   const createMutation = trpc.invoices.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ invoiceNumber: "", amount: "", contractId: "", description: "", dueDate: "" }); } });
   const deleteMutation = trpc.invoices.delete.useMutation({ onSuccess: () => refetch() });
+  const exportFinance = trpc.pdf.exportFinanceSummary.useMutation({
+    onSuccess: (data) => { window.open(data.url, "_blank"); },
+  });
 
   const filtered = (invoices as any[]).filter((inv) =>
     inv.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,9 +50,14 @@ export default function Invoices() {
         { label: "Overdue", value: overdueCount, color: "text-red-600" },
       ]}
       actions={
-        <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> New Invoice
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => exportFinance.mutate()} disabled={exportFinance.isPending}>
+            <Download className="w-4 h-4 mr-2" /> {exportFinance.isPending ? "Exporting..." : "Export PDF"}
+          </Button>
+          <Button onClick={() => setShowForm(true)} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" /> New Invoice
+          </Button>
+        </div>
       }
     >
       {/* Add Form */}

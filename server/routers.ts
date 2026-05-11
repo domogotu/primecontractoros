@@ -43,8 +43,10 @@ import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRout
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 import { guidanceRouter } from "./guidanceRouter";
 import { platformAdminRouter } from "./platformAdminRouter";
+import { pdfRouter } from "./pdfRouter";
 
 export const appRouter = router({
+  pdf: pdfRouter,
   system: systemRouter,
   workspace: workspaceRouter,
   platform: platformRouter,

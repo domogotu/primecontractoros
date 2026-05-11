@@ -68,6 +68,11 @@ export default function ContractDetail() {
   });
   const deletePersonnelMutation = trpc.personnel.delete.useMutation({ onSuccess: () => utils.personnel.list.invalidate() });
 
+  // PDF export
+  const exportContract = trpc.pdf.exportContractSummary.useMutation({
+    onSuccess: (data) => { window.open(data.url, '_blank'); },
+  });
+
   if (!contractId) {
     return (
       <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
@@ -137,7 +142,10 @@ export default function ContractDetail() {
               <h1 className="text-3xl font-bold text-slate-900 mb-2">{contract.title}</h1>
               <p className="text-slate-600">{contract.agency || 'No agency specified'}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <Button variant="outline" size="sm" onClick={() => exportContract.mutate({ contractId: contract.id })} disabled={exportContract.isPending}>
+                {exportContract.isPending ? 'Exporting...' : 'Export PDF'}
+              </Button>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[contract.status || 'setup']}`}>
                 {(contract.status || 'setup').replace(/_/g, ' ')}
               </span>
