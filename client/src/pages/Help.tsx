@@ -109,9 +109,9 @@ export default function Help() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -126,20 +126,20 @@ export default function Help() {
       </nav>
 
       {/* Hero */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Help Center</h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-gray-500 mb-8">
             Find answers to common questions and learn how to use PrimeContractorOS for government contracting.
           </p>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search help articles..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full pl-12 pr-4 py-3 rounded-lg bg-input border border-gray-200 text-gray-900 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function Help() {
         <div className="container max-w-6xl">
           {filteredCategories.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No results found. Try a different search term.</p>
+              <p className="text-gray-500">No results found. Try a different search term.</p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-8">
@@ -159,16 +159,16 @@ export default function Help() {
                 return (
                   <div
                     key={idx}
-                    className="p-8 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors"
+                    className="p-8 rounded-lg bg-white border border-gray-200 hover:border-primary/30 transition-colors"
                   >
                     <Icon className="h-8 w-8 text-primary mb-4" />
                     <h3 className="text-lg font-semibold mb-2">{category.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-6">{category.description}</p>
+                    <p className="text-sm text-gray-500 mb-6">{category.description}</p>
                     <ul className="space-y-2 mb-6">
                       {category.articles.map((article, aidx) => (
                         <li key={aidx}>
                           <Link href={article.link}>
-                            <span className="text-sm text-foreground hover:text-primary cursor-pointer">
+                            <span className="text-sm text-gray-900 hover:text-primary cursor-pointer">
                               &bull; {article.title}
                             </span>
                           </Link>
@@ -187,7 +187,7 @@ export default function Help() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 md:py-24 border-t border-border bg-card">
+      <section className="py-16 md:py-24 border-t border-gray-200 bg-white">
         <div className="container max-w-4xl">
           <h2 className="text-3xl font-bold mb-12">Frequently Asked Questions</h2>
           <div className="space-y-6">
@@ -217,9 +217,9 @@ export default function Help() {
                 a: "You will be prompted to choose a plan or continue with limited access. Your data is never deleted. You can always upgrade later.",
               },
             ].map((faq, idx) => (
-              <div key={idx} className="p-6 rounded-lg bg-background border border-border">
-                <h3 className="font-semibold text-foreground mb-2">{faq.q}</h3>
-                <p className="text-muted-foreground text-sm">{faq.a}</p>
+              <div key={idx} className="p-6 rounded-lg bg-white border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
+                <p className="text-gray-500 text-sm">{faq.a}</p>
               </div>
             ))}
           </div>
@@ -227,22 +227,22 @@ export default function Help() {
       </section>
 
       {/* Support */}
-      <section className="py-16 md:py-24 border-t border-border">
+      <section className="py-16 md:py-24 border-t border-gray-200">
         <div className="container max-w-4xl">
           <h2 className="text-3xl font-bold mb-12">Still need help?</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="p-8 rounded-lg bg-card border border-border">
+            <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-lg font-semibold mb-2">Email Support</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 Email us anytime at support@reedssolutionsllc.org. We respond within 1-2 business days.
               </p>
               <a href="mailto:support@reedssolutionsllc.org">
                 <Button variant="outline" size="sm">Send Email</Button>
               </a>
             </div>
-            <div className="p-8 rounded-lg bg-card border border-border">
+            <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-lg font-semibold mb-2">Documentation</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-gray-500 mb-4">
                 Browse our full documentation for detailed guides on every feature.
               </p>
               <Link href="/documentation">

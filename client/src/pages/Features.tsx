@@ -122,9 +122,9 @@ export default function Features() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -147,12 +147,12 @@ export default function Features() {
       </nav>
 
       {/* Hero */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Everything You Need to Manage Government Contracting
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-gray-500">
             From opportunity identification through contract closeout, PrimeContractorOS provides guided workflows, AI assistance, and compliance tracking.
           </p>
         </div>
@@ -160,20 +160,20 @@ export default function Features() {
 
       {/* Feature Groups */}
       {featureGroups.map((group, groupIdx) => (
-        <section key={groupIdx} className="py-16 md:py-24 border-b border-border">
+        <section key={groupIdx} className="py-16 md:py-24 border-b border-gray-200">
           <div className="container max-w-4xl">
             <div className="mb-12">
               <h2 className="text-3xl font-bold mb-2">{group.title}</h2>
-              <p className="text-lg text-muted-foreground">{group.description}</p>
+              <p className="text-lg text-gray-500">{group.description}</p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               {group.features.map((feature, idx) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={idx} className="p-6 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors">
+                  <div key={idx} className="p-6 rounded-lg bg-white border border-gray-200 hover:border-primary/30 transition-colors">
                     <Icon className="h-8 w-8 text-primary mb-4" />
                     <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
+                    <p className="text-sm text-gray-500">{feature.description}</p>
                   </div>
                 );
               })}
@@ -197,16 +197,16 @@ export default function Features() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 bg-card">
+      <footer className="border-t border-gray-200 py-12 bg-white">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-500">
             © 2026 PrimeContractorOS. All rights reserved.
           </div>
           <div className="flex gap-6 text-sm">
-            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => navigate("/")} className="text-gray-500 hover:text-gray-900">
               Home
             </button>
-            <button onClick={() => navigate("/help")} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => navigate("/help")} className="text-gray-500 hover:text-gray-900">
               Help
             </button>
           </div>

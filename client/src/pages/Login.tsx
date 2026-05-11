@@ -26,9 +26,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -54,7 +54,7 @@ export default function Login() {
             {/* Header */}
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-bold">Welcome Back</h1>
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Sign in to your PrimeContractorOS workspace
               </p>
             </div>
@@ -69,7 +69,7 @@ export default function Login() {
                 Sign In with Manus Account
               </Button>
 
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-sm text-gray-500">
                 Secure authentication powered by Manus OAuth. Your credentials are never stored on our servers.
               </p>
             </div>
@@ -77,10 +77,10 @@ export default function Login() {
             {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+                <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-muted-foreground">
+                <span className="px-2 bg-white text-gray-500">
                   New to PrimeContractorOS?
                 </span>
               </div>
@@ -97,7 +97,7 @@ export default function Login() {
 
             {/* Help Links */}
             <div className="text-center space-y-2 text-sm">
-              <p className="text-muted-foreground">
+              <p className="text-gray-500">
                 Need help signing in?{" "}
                 <button onClick={() => navigate("/support")} className="text-primary hover:underline">
                   Contact support

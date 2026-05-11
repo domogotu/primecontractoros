@@ -35,9 +35,9 @@ export default function GetStarted() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -60,7 +60,7 @@ export default function GetStarted() {
           <div className="space-y-8">
             <div>
               <h1 className="text-4xl font-bold mb-4">Get Started with PrimeContractorOS</h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-gray-500">
                 Create your workspace and start managing your government contracting operations with confidence.
               </p>
             </div>
@@ -69,17 +69,17 @@ export default function GetStarted() {
               {benefits.map((benefit, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <p className="text-foreground">{benefit}</p>
+                  <p className="text-gray-900">{benefit}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Right: Sign Up CTA */}
-          <div className="p-8 rounded-xl bg-card border border-border space-y-6">
+          <div className="p-8 rounded-xl bg-white border border-gray-200 space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Create Your Account</h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Sign up securely with your Manus account. After creating your account, you will complete a brief onboarding to set up your workspace.
               </p>
             </div>
@@ -92,13 +92,13 @@ export default function GetStarted() {
               Sign Up with Manus Account
             </Button>
 
-            <div className="space-y-4 text-sm text-muted-foreground">
+            <div className="space-y-4 text-sm text-gray-500">
               <p className="text-center">
                 Secure authentication powered by Manus OAuth.
               </p>
 
-              <div className="border-t border-border pt-4 space-y-2">
-                <p className="font-medium text-foreground">What happens next:</p>
+              <div className="border-t border-gray-200 pt-4 space-y-2">
+                <p className="font-medium text-gray-900">What happens next:</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Create your secure account via Manus</li>
                   <li>Complete a brief onboarding wizard</li>
@@ -108,8 +108,8 @@ export default function GetStarted() {
             </div>
 
             {/* Already have account */}
-            <div className="text-center pt-4 border-t border-border">
-              <p className="text-sm text-muted-foreground">
+            <div className="text-center pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500">
                 Already have an account?{" "}
                 <button onClick={() => navigate("/login")} className="text-primary hover:underline font-medium">
                   Sign In

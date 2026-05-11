@@ -142,7 +142,7 @@ export default function ProposalForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Proposal Title *
         </label>
         <Input
@@ -160,7 +160,7 @@ export default function ProposalForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Linked Opportunity
         </label>
         <Input
@@ -173,14 +173,14 @@ export default function ProposalForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Proposal Framework
         </label>
         <select
           name="framework"
           value={formData.framework}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">Select Framework...</option>
           {proposalFrameworks.map((fw) => (
@@ -189,13 +189,13 @@ export default function ProposalForm({
             </option>
           ))}
         </select>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Per FAR Part 15 - Contracting by Negotiation
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-3">
+        <label className="block text-sm font-medium text-gray-900 mb-3">
           Evaluation Criteria (Select all that apply)
         </label>
         <div className="space-y-2">
@@ -205,11 +205,11 @@ export default function ProposalForm({
                 type="checkbox"
                 checked={formData.evaluationCriteria?.includes(criteria.code) || false}
                 onChange={() => handleEvaluationCriteriaChange(criteria.code)}
-                className="mt-1 w-4 h-4 rounded border-border focus:ring-2 focus:ring-primary"
+                className="mt-1 w-4 h-4 rounded border-gray-200 focus:ring-2 focus:ring-primary"
               />
               <div>
                 <p className="font-medium text-sm">{criteria.label}</p>
-                <p className="text-xs text-muted-foreground">{criteria.description} ({criteria.weight})</p>
+                <p className="text-xs text-gray-500">{criteria.description} ({criteria.weight})</p>
               </div>
             </label>
           ))}
@@ -217,7 +217,7 @@ export default function ProposalForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Due Date
         </label>
         <Input

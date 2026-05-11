@@ -42,65 +42,65 @@ export default function Dashboard() {
   return (
     <div className="min-h-full bg-gray-100 flex flex-col">
       {/* Navy Header */}
-      <div className="bg-blue-900 text-white px-8 py-8">
+      <div className="bg-blue-900 text-white px-4 sm:px-6 md:px-8 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">
-          <p className="text-blue-200 text-sm font-semibold uppercase mb-2">Dashboard</p>
-          <h1 className="text-4xl font-bold mb-2">Welcome, {user?.name?.split(" ")[0] || "Contractor"}</h1>
-          <p className="text-blue-100">Your government contracting operations at a glance. Track your pipeline from opportunity through closeout.</p>
+          <p className="text-blue-200 text-xs sm:text-sm font-semibold uppercase mb-2">Dashboard</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">Welcome, {user?.name?.split(" ")[0] || "Contractor"}</h1>
+          <p className="text-blue-100 text-sm sm:text-base">Your government contracting operations at a glance. Track your pipeline from opportunity through closeout.</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 px-8 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+      <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Summary Cards - Real Data */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/opportunities")}>
-              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Opportunities</p>
-              <p className="text-3xl font-bold text-purple-700">{activeOpps.length}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/opportunities")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Opps</p>
+              <p className="text-2xl md:text-3xl font-bold text-purple-700">{activeOpps.length}</p>
               <p className="text-xs text-gray-500 mt-1">active</p>
             </Card>
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/proposals")}>
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/proposals")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Proposals</p>
-              <p className="text-3xl font-bold text-pink-700">{(proposals as any[]).length}</p>
+              <p className="text-2xl md:text-3xl font-bold text-pink-700">{(proposals as any[]).length}</p>
               <p className="text-xs text-gray-500 mt-1">total</p>
             </Card>
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/contracts")}>
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/contracts")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Contracts</p>
-              <p className="text-3xl font-bold text-green-700">{activeContracts.length}</p>
+              <p className="text-2xl md:text-3xl font-bold text-green-700">{activeContracts.length}</p>
               <p className="text-xs text-gray-500 mt-1">active</p>
             </Card>
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/finance")}>
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/finance")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Outstanding</p>
-              <p className="text-3xl font-bold text-amber-700">${Math.round(totalOutstanding / 1000)}K</p>
-              <p className="text-xs text-gray-500 mt-1">{pendingInvoices.length} invoices</p>
+              <p className="text-2xl md:text-3xl font-bold text-amber-700">${Math.round(totalOutstanding / 1000)}K</p>
+              <p className="text-xs text-gray-500 mt-1">{pendingInvoices.length} inv.</p>
             </Card>
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/tasks")}>
-              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Open Tasks</p>
-              <p className="text-3xl font-bold text-blue-700">{openTasks.length}</p>
-              <p className="text-xs text-gray-500 mt-1">pending</p>
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/tasks")}>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Tasks</p>
+              <p className="text-2xl md:text-3xl font-bold text-blue-700">{openTasks.length}</p>
+              <p className="text-xs text-gray-500 mt-1">open</p>
             </Card>
-            <Card className="bg-white border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/alerts")}>
+            <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/alerts")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Alerts</p>
-              <p className="text-3xl font-bold text-red-700">{activeAlerts.length}</p>
+              <p className="text-2xl md:text-3xl font-bold text-red-700">{activeAlerts.length}</p>
               <p className="text-xs text-gray-500 mt-1">active</p>
             </Card>
           </div>
 
-          {/* Guidance Panel */}
+          {/* Guidance Panel - Command Center */}
           <GuidancePanel compact={false} showPreferences={true} />
 
           {/* Quick Access Grid */}
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Access</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-3 md:mb-4">Quick Access</h2>
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2 md:gap-3">
               {quickAccessButtons.map((btn) => {
                 const Icon = btn.icon;
                 return (
                   <Link key={btn.label} href={btn.href}>
-                    <div className={`${btn.color} text-white rounded-lg p-4 flex flex-col items-center justify-center gap-2 hover:opacity-90 transition-opacity cursor-pointer`}>
-                      <Icon className="w-6 h-6" />
-                      <span className="text-xs font-semibold text-center">{btn.label}</span>
+                    <div className={`${btn.color} text-white rounded-lg p-3 md:p-4 flex flex-col items-center justify-center gap-1 md:gap-2 hover:opacity-90 transition-opacity cursor-pointer`}>
+                      <Icon className="w-5 h-5 md:w-6 md:h-6" />
+                      <span className="text-xs font-semibold text-center leading-tight">{btn.label}</span>
                     </div>
                   </Link>
                 );
@@ -109,32 +109,28 @@ export default function Dashboard() {
           </div>
 
           {/* Two Column: Tasks + Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Open Tasks */}
-            <Card className="bg-white border border-gray-200 p-6">
+            <Card className="bg-white border border-gray-200 p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <ListTodo className="h-5 w-5 text-blue-500" /> Open Tasks
                 </h3>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/app/tasks")}>View All</Button>
               </div>
               {openTasks.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-6">No open tasks. Create tasks from contracts, proposals, or the Tasks page.</p>
+                <p className="text-sm text-gray-500">No open tasks. Create tasks from contracts, proposals, or the Tasks page.</p>
               ) : (
                 <div className="space-y-2">
                   {openTasks.slice(0, 5).map((task: any) => (
-                    <div key={task.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="min-w-0 flex-1">
+                    <div key={task.id} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <Clock className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
                         {task.dueDate && (
-                          <p className="text-xs text-gray-500 mt-0.5">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-500">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
                         )}
                       </div>
-                      <span className={`ml-2 px-2 py-0.5 text-xs rounded ${
-                        task.priority === "critical" ? "bg-red-100 text-red-800" :
-                        task.priority === "high" ? "bg-amber-100 text-amber-800" :
-                        "bg-blue-100 text-blue-800"
-                      }`}>{task.priority || "normal"}</span>
                     </div>
                   ))}
                 </div>
@@ -142,28 +138,24 @@ export default function Dashboard() {
             </Card>
 
             {/* Active Alerts */}
-            <Card className="bg-white border border-gray-200 p-6">
+            <Card className="bg-white border border-gray-200 p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <Bell className="h-5 w-5 text-red-500" /> Active Alerts
                 </h3>
                 <Button variant="ghost" size="sm" onClick={() => navigate("/app/alerts")}>View All</Button>
               </div>
               {activeAlerts.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-6">No active alerts. Alerts are generated from compliance deadlines, overdue items, and system events.</p>
+                <p className="text-sm text-gray-500">No active alerts. Alerts are generated from compliance deadlines, overdue items, and system events.</p>
               ) : (
                 <div className="space-y-2">
                   {activeAlerts.slice(0, 5).map((alert: any) => (
-                    <div key={alert.id} className="flex items-start justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                      <div className="min-w-0 flex-1">
+                    <div key={alert.id} className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{alert.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{alert.alertType || "system"}</p>
+                        <p className="text-xs text-gray-500 truncate">{alert.message}</p>
                       </div>
-                      <span className={`ml-2 px-2 py-0.5 text-xs rounded ${
-                        alert.severity === "critical" ? "bg-red-100 text-red-800" :
-                        alert.severity === "high" ? "bg-amber-100 text-amber-800" :
-                        "bg-blue-100 text-blue-800"
-                      }`}>{alert.severity || "info"}</span>
                     </div>
                   ))}
                 </div>
@@ -171,29 +163,34 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Pipeline Overview */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contracting Pipeline</h3>
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {[
-                { label: "Opportunities", count: (opportunities as any[]).length, color: "bg-purple-100 text-purple-800 border-purple-200" },
-                { label: "Proposals", count: (proposals as any[]).length, color: "bg-pink-100 text-pink-800 border-pink-200" },
-                { label: "Contracts", count: (contracts as any[]).length, color: "bg-green-100 text-green-800 border-green-200" },
-                { label: "Invoices", count: (invoices as any[]).length, color: "bg-amber-100 text-amber-800 border-amber-200" },
-              ].map((stage, idx) => (
-                <div key={stage.label} className="flex items-center gap-2">
-                  <div className={`${stage.color} border rounded-lg px-4 py-3 text-center min-w-[120px]`}>
-                    <p className="text-2xl font-bold">{stage.count}</p>
-                    <p className="text-xs font-semibold">{stage.label}</p>
-                  </div>
-                  {idx < 3 && <span className="text-gray-300 text-xl">→</span>}
-                </div>
-              ))}
+          {/* Pipeline Summary */}
+          <Card className="bg-white border border-gray-200 p-4 md:p-6">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Contracting Pipeline</h3>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4">
+              <div className="text-center px-3 md:px-6 py-3 bg-purple-50 rounded-lg border border-purple-200 flex-1 min-w-[80px]">
+                <p className="text-xl md:text-2xl font-bold text-purple-700">{(opportunities as any[]).length}</p>
+                <p className="text-xs text-gray-500 mt-1">Opportunities</p>
+              </div>
+              <div className="text-gray-400 text-lg font-bold hidden sm:block">→</div>
+              <div className="text-center px-3 md:px-6 py-3 bg-pink-50 rounded-lg border border-pink-200 flex-1 min-w-[80px]">
+                <p className="text-xl md:text-2xl font-bold text-pink-700">{(proposals as any[]).length}</p>
+                <p className="text-xs text-gray-500 mt-1">Proposals</p>
+              </div>
+              <div className="text-gray-400 text-lg font-bold hidden sm:block">→</div>
+              <div className="text-center px-3 md:px-6 py-3 bg-green-50 rounded-lg border border-green-200 flex-1 min-w-[80px]">
+                <p className="text-xl md:text-2xl font-bold text-green-700">{(contracts as any[]).length}</p>
+                <p className="text-xs text-gray-500 mt-1">Contracts</p>
+              </div>
+              <div className="text-gray-400 text-lg font-bold hidden sm:block">→</div>
+              <div className="text-center px-3 md:px-6 py-3 bg-amber-50 rounded-lg border border-amber-200 flex-1 min-w-[80px]">
+                <p className="text-xl md:text-2xl font-bold text-amber-700">{(invoices as any[]).length}</p>
+                <p className="text-xs text-gray-500 mt-1">Invoices</p>
+              </div>
             </div>
           </Card>
+
         </div>
       </div>
-
     </div>
   );
 }

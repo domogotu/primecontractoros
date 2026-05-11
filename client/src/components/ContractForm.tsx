@@ -130,7 +130,7 @@ export default function ContractForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Contract Title *
         </label>
         <Input
@@ -149,7 +149,7 @@ export default function ContractForm({
 
       {/* Contract Number */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Contract Number
         </label>
         <Input
@@ -162,7 +162,7 @@ export default function ContractForm({
 
       {/* Agency */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Agency
         </label>
         <Input
@@ -175,7 +175,7 @@ export default function ContractForm({
 
       {/* Value */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Contract Value
         </label>
         <Input
@@ -190,7 +190,7 @@ export default function ContractForm({
 
       {/* Start Date */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Start Date
         </label>
         <Input
@@ -203,7 +203,7 @@ export default function ContractForm({
 
       {/* End Date */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           End Date
         </label>
         <Input
@@ -216,7 +216,7 @@ export default function ContractForm({
 
       {/* Proposal ID */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Proposal ID
         </label>
         <Input
@@ -229,7 +229,7 @@ export default function ContractForm({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 justify-end pt-4 border-t border-border">
+      <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"

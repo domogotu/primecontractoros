@@ -61,10 +61,10 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
         <div className="flex items-start gap-3">
           <Lightbulb className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm text-foreground truncate">
+            <h3 className="font-semibold text-sm text-gray-900 truncate">
               {nextAction.title}
             </h3>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
               {nextAction.description}
             </p>
             {nextAction.category && (
@@ -108,7 +108,7 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
 
       {/* Settings Panel */}
       {showSettings && showPreferences && (
-        <Card className="p-4 bg-secondary/50">
+        <Card className="p-4 bg-gray-100/50">
           <h3 className="font-semibold text-sm mb-3">Guidance Preferences</h3>
           <div className="space-y-2">
             {(["detailed", "balanced", "light"] as const).map((mode) => (
@@ -133,7 +133,7 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
       {/* Next Best Action */}
       {loadingAction ? (
         <Card className="p-6 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
         </Card>
       ) : nextAction ? (
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
@@ -141,10 +141,10 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg text-foreground">
+                  <h3 className="font-bold text-lg text-gray-900">
                     {nextAction.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-sm text-gray-500 mt-2">
                     {nextAction.description}
                   </p>
                 </div>
@@ -165,17 +165,17 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
 
               {nextAction.category && (
                 <div className="mt-3 flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Category:</span>
+                  <span className="text-xs text-gray-500">Category:</span>
                   <Badge variant="outline">{nextAction.category}</Badge>
                 </div>
               )}
 
               {nextAction.rationale && (
                 <div className="mt-4 p-3 bg-white rounded border border-blue-100">
-                  <p className="text-xs font-semibold text-muted-foreground mb-1">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">
                     Why this action?
                   </p>
-                  <p className="text-sm text-foreground">{nextAction.rationale}</p>
+                  <p className="text-sm text-gray-900">{nextAction.rationale}</p>
                 </div>
               )}
             </div>
@@ -203,7 +203,7 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
         </Card>
       ) : (
         <Card className="p-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             No actions needed right now. Keep up the great work!
           </p>
         </Card>
@@ -215,13 +215,13 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
           <h3 className="font-semibold text-sm">Other Suggested Actions</h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {allActions.map((action) => (
-              <Card key={action.id} className="p-3 hover:bg-secondary/50 transition-colors">
+              <Card key={action.id} className="p-3 hover:bg-gray-100/50 transition-colors">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <p className="text-sm font-medium text-gray-900 truncate">
                       {action.title}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">
                       {action.description}
                     </p>
                   </div>
@@ -240,7 +240,7 @@ export const GuidancePanel: React.FC<GuidancePanelProps> = ({
       {/* Loading State for All Actions */}
       {loadingActions && !nextAction && (
         <Card className="p-6 flex items-center justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
         </Card>
       )}
     </div>

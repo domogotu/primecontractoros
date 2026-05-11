@@ -142,7 +142,7 @@ export default function OpportunityForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Opportunity Title *
         </label>
         <Input
@@ -160,7 +160,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Agency
         </label>
         <Input
@@ -172,7 +172,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Solicitation Number
         </label>
         <Input
@@ -184,7 +184,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           NAICS Code
         </label>
         <select
@@ -200,7 +200,7 @@ export default function OpportunityForm({
               });
             }
           }}
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">Select NAICS Code...</option>
           {NAICS_CODES.map((code) => (
@@ -217,7 +217,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Contract Type
         </label>
         <select
@@ -233,7 +233,7 @@ export default function OpportunityForm({
               });
             }
           }}
-          className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">Select Contract Type...</option>
           {CONTRACT_TYPES.map((type) => (
@@ -250,7 +250,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Due Date
         </label>
         <Input
@@ -262,7 +262,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Source Link
         </label>
         <Input
@@ -275,7 +275,7 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="block text-sm font-medium text-gray-900 mb-2">
           Summary
         </label>
         <Textarea
@@ -287,7 +287,7 @@ export default function OpportunityForm({
         />
       </div>
 
-      <div className="flex gap-3 justify-end pt-4 border-t border-border">
+      <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
         <Button
           type="button"
           variant="outline"

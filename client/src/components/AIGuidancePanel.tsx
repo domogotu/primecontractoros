@@ -85,15 +85,15 @@ export function AIGuidancePanel({
   };
 
   return (
-    <div className="border border-border rounded-lg bg-card overflow-hidden">
+    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
       {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-100/50 transition-colors"
       >
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-amber-600" />
-          <h3 className="font-semibold text-foreground">{title}</h3>
+          <h3 className="font-semibold text-gray-900">{title}</h3>
           {suggestions.length > 0 && (
             <Badge variant="secondary" className="ml-2">
               {suggestions.length}
@@ -101,7 +101,7 @@ export function AIGuidancePanel({
           )}
         </div>
         <ChevronDown
-          className={`h-5 w-5 text-muted-foreground transition-transform ${
+          className={`h-5 w-5 text-gray-500 transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
         />
@@ -109,15 +109,15 @@ export function AIGuidancePanel({
 
       {/* Content */}
       {isOpen && (
-        <div className="border-t border-border p-4 space-y-3">
+        <div className="border-t border-gray-200 p-4 space-y-3">
           {isGenerating && suggestions.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
-              <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
+              <span className="ml-2 text-sm text-gray-500">Analyzing...</span>
             </div>
           ) : suggestions.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground mb-3">No suggestions at this time.</p>
+              <p className="text-sm text-gray-500 mb-3">No suggestions at this time.</p>
               <Button
                 size="sm"
                 variant="outline"
@@ -137,10 +137,10 @@ export function AIGuidancePanel({
           ) : (
             <div className="space-y-3">
               {suggestions.map((suggestion: any) => (
-                <Card key={suggestion.id} className="p-3 bg-muted/30 border-muted">
+                <Card key={suggestion.id} className="p-3 bg-gray-100/30 border-muted">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm text-foreground">
+                      <h4 className="font-medium text-sm text-gray-900">
                         {suggestion.suggestionTitle}
                       </h4>
                       {suggestion.priority && (
@@ -150,7 +150,7 @@ export function AIGuidancePanel({
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">
+                  <p className="text-sm text-gray-500 mb-3">
                     {suggestion.suggestionText}
                   </p>
                   <div className="flex gap-2">

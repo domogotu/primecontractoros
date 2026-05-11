@@ -54,9 +54,9 @@ export default function Glossary() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -71,20 +71,20 @@ export default function Glossary() {
       </nav>
 
       {/* Header */}
-      <section className="py-12 md:py-16 border-b border-border">
+      <section className="py-12 md:py-16 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h1 className="text-4xl font-bold mb-4">Government Contracting Glossary</h1>
-          <p className="text-lg text-muted-foreground mb-6">
+          <p className="text-lg text-gray-500 mb-6">
             {glossaryTerms.length} essential terms and definitions for government contractors. From FAR regulations to contract types and business certifications.
           </p>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
             <input
               type="text"
               placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full pl-12 pr-4 py-3 rounded-lg bg-input border border-gray-200 text-gray-900 placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -95,19 +95,19 @@ export default function Glossary() {
         <div className="container max-w-4xl">
           {filteredTerms.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No terms found matching your search.</p>
+              <p className="text-gray-500">No terms found matching your search.</p>
             </div>
           ) : (
             <div className="space-y-4">
               {filteredTerms.map((item, idx) => (
-                <div key={idx} className="p-5 rounded-lg bg-card border border-border">
-                  <h3 className="font-semibold text-foreground text-lg mb-2">{item.term}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.definition}</p>
+                <div key={idx} className="p-5 rounded-lg bg-white border border-gray-200">
+                  <h3 className="font-semibold text-gray-900 text-lg mb-2">{item.term}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{item.definition}</p>
                 </div>
               ))}
             </div>
           )}
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          <div className="mt-8 text-center text-sm text-gray-500">
             Showing {filteredTerms.length} of {glossaryTerms.length} terms
           </div>
         </div>

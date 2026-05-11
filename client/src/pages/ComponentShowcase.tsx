@@ -227,7 +227,7 @@ export default function ComponentsShowcase() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-white text-gray-900">
       <main className="container max-w-6xl mx-auto">
         <div className="space-y-2 justify-between flex">
           <h2 className="text-3xl font-bold tracking-tight mb-6">
@@ -251,23 +251,23 @@ export default function ComponentsShowcase() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Foreground (Default)
                       </p>
-                      <p className="text-foreground text-lg">
+                      <p className="text-gray-900 text-lg">
                         Default text color for main content
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Muted Foreground
                       </p>
-                      <p className="text-muted-foreground text-lg">
+                      <p className="text-gray-500 text-lg">
                         Muted text for secondary information
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Primary
                       </p>
                       <p className="text-primary text-lg font-medium">
@@ -275,25 +275,25 @@ export default function ComponentsShowcase() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Secondary Foreground
                       </p>
-                      <p className="text-secondary-foreground text-lg">
+                      <p className="text-gray-900 text-lg">
                         Secondary action text color
                       </p>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Accent Foreground
                       </p>
-                      <p className="text-accent-foreground text-lg">
+                      <p className="text-gray-900 text-lg">
                         Accent text for emphasis
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Destructive
                       </p>
                       <p className="text-destructive text-lg font-medium">
@@ -301,15 +301,15 @@ export default function ComponentsShowcase() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Card Foreground
                       </p>
-                      <p className="text-card-foreground text-lg">
+                      <p className="text-gray-900 text-lg">
                         Text color on card backgrounds
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">
+                      <p className="text-sm text-gray-500 mb-1">
                         Popover Foreground
                       </p>
                       <p className="text-popover-foreground text-lg">
@@ -334,19 +334,19 @@ export default function ComponentsShowcase() {
                       Primary background with foreground text
                     </p>
                   </div>
-                  <div className="bg-secondary text-secondary-foreground rounded-lg p-4">
+                  <div className="bg-gray-100 text-gray-900 rounded-lg p-4">
                     <p className="font-medium mb-1">Secondary</p>
                     <p className="text-sm opacity-90">
                       Secondary background with foreground text
                     </p>
                   </div>
-                  <div className="bg-muted text-muted-foreground rounded-lg p-4">
+                  <div className="bg-gray-100 text-gray-500 rounded-lg p-4">
                     <p className="font-medium mb-1">Muted</p>
                     <p className="text-sm opacity-90">
                       Muted background with foreground text
                     </p>
                   </div>
-                  <div className="bg-accent text-accent-foreground rounded-lg p-4">
+                  <div className="bg-gray-100 text-gray-900 rounded-lg p-4">
                     <p className="font-medium mb-1">Accent</p>
                     <p className="text-sm opacity-90">
                       Accent background with foreground text
@@ -358,19 +358,19 @@ export default function ComponentsShowcase() {
                       Destructive background with foreground text
                     </p>
                   </div>
-                  <div className="bg-card text-card-foreground rounded-lg p-4 border">
+                  <div className="bg-white text-gray-900 rounded-lg p-4 border">
                     <p className="font-medium mb-1">Card</p>
                     <p className="text-sm opacity-90">
                       Card background with foreground text
                     </p>
                   </div>
-                  <div className="bg-popover text-popover-foreground rounded-lg p-4 border">
+                  <div className="bg-white text-popover-foreground rounded-lg p-4 border">
                     <p className="font-medium mb-1">Popover</p>
                     <p className="text-sm opacity-90">
                       Popover background with foreground text
                     </p>
                   </div>
-                  <div className="bg-background text-foreground rounded-lg p-4 border">
+                  <div className="bg-white text-gray-900 rounded-lg p-4 border">
                     <p className="font-medium mb-1">Background</p>
                     <p className="text-sm opacity-90">
                       Default background with foreground text
@@ -477,7 +477,7 @@ export default function ComponentsShowcase() {
                       <Button
                         variant="outline"
                         className={`w-full justify-start text-left font-normal ${
-                          !datePickerDate && "text-muted-foreground"
+                          !datePickerDate && "text-gray-500"
                         }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -525,7 +525,7 @@ export default function ComponentsShowcase() {
                     </PopoverContent>
                   </Popover>
                   {datePickerDate && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Selected:{" "}
                       {format(datePickerDate, "yyyy/MM/dd  HH:mm", {
                         locale: zhCN,
@@ -600,7 +600,7 @@ export default function ComponentsShowcase() {
                     </PopoverContent>
                   </Popover>
                   {selectedFramework && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Selected:{" "}
                       {
                         [
@@ -668,7 +668,7 @@ export default function ComponentsShowcase() {
                     </div>
                   </div>
                   {selectedMonth && selectedYear && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Selected: {selectedYear}/{selectedMonth}/
                     </p>
                   )}
@@ -771,7 +771,7 @@ export default function ComponentsShowcase() {
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-sm text-gray-500 text-center">
                     Current page: {currentPage}
                   </p>
                 </div>
@@ -947,7 +947,7 @@ export default function ComponentsShowcase() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-500">
                       Settings content goes here.
                     </p>
                   </CardContent>
@@ -1098,7 +1098,7 @@ export default function ComponentsShowcase() {
                     <PopoverContent>
                       <div className="space-y-2">
                         <h4 className="font-medium leading-none">Dimensions</h4>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-gray-500">
                           Set the dimensions for the layer.
                         </p>
                       </div>
@@ -1260,9 +1260,9 @@ export default function ComponentsShowcase() {
               <CardContent className="pt-6 space-y-6">
                 <div className="space-y-2">
                   <Label>Aspect Ratio (16/9)</Label>
-                  <AspectRatio ratio={16 / 9} className="bg-muted">
+                  <AspectRatio ratio={16 / 9} className="bg-gray-100">
                     <div className="flex h-full items-center justify-center">
-                      <p className="text-muted-foreground">16:9 Aspect Ratio</p>
+                      <p className="text-gray-500">16:9 Aspect Ratio</p>
                     </div>
                   </AspectRatio>
                 </div>
@@ -1397,7 +1397,7 @@ export default function ComponentsShowcase() {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-gray-500">
                     <p>
                       A ready-to-use chat interface component that integrates with the LLM system.
                       Features markdown rendering, auto-scrolling, and loading states.
@@ -1428,7 +1428,7 @@ export default function ComponentsShowcase() {
       </main>
 
       <footer className="border-t py-6 mt-12">
-        <div className="container text-center text-sm text-muted-foreground">
+        <div className="container text-center text-sm text-gray-500">
           <p>Shadcn/ui Component Showcase</p>
         </div>
       </footer>

@@ -70,9 +70,9 @@ export default function Pricing() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-50">
+      <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">
           <button onClick={() => navigate("/")} className="text-2xl font-bold text-primary">
             PrimeContractorOS
@@ -95,19 +95,19 @@ export default function Pricing() {
       </nav>
 
       {/* Hero */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-gray-500">
             Choose the plan that fits your business. All plans include a 7-day free trial.
           </p>
         </div>
       </section>
 
       {/* Plans */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-6xl">
           <div className="grid md:grid-cols-3 gap-8">
             {plans.map((plan, idx) => (
@@ -116,7 +116,7 @@ export default function Pricing() {
                 className={`rounded-lg border transition-all ${
                   plan.highlight
                     ? "border-primary bg-primary/5 ring-2 ring-primary/20 relative md:scale-105"
-                    : "border-border bg-card"
+                    : "border-gray-200 bg-white"
                 }`}
               >
                 {plan.highlight && (
@@ -127,12 +127,12 @@ export default function Pricing() {
                 <div className="p-8 space-y-6">
                   <div>
                     <h3 className="text-2xl font-bold">{plan.name}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                    <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
                   </div>
 
                   <div>
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
+                    <span className="text-gray-500">{plan.period}</span>
                   </div>
 
                   <Button
@@ -144,11 +144,11 @@ export default function Pricing() {
                     {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
 
-                  <div className="space-y-3 pt-6 border-t border-border">
+                  <div className="space-y-3 pt-6 border-t border-gray-200">
                     {plan.features.map((feature, fidx) => (
                       <div key={fidx} className="flex gap-3 items-start">
                         <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-foreground">{feature}</span>
+                        <span className="text-sm text-gray-900">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -160,13 +160,13 @@ export default function Pricing() {
       </section>
 
       {/* Access Model */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h2 className="text-3xl font-bold mb-12">Understanding Access Levels</h2>
           <div className="space-y-8">
-            <div className="p-8 rounded-lg bg-card border border-border">
+            <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-xl font-semibold mb-3">7-Day Trial</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-500 mb-4">
                 Get full access to any plan for 7 days at no cost. One trial per workspace. After the trial ends, you can activate a paid plan or switch to limited access.
               </p>
               <ul className="space-y-2 text-sm">
@@ -185,9 +185,9 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <div className="p-8 rounded-lg bg-card border border-border">
+            <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-xl font-semibold mb-3">Limited Access</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-500 mb-4">
                 Decline the trial and continue with core features at no cost. Limited access is permanent—no time limit, but fewer features than paid plans.
               </p>
               <ul className="space-y-2 text-sm">
@@ -206,9 +206,9 @@ export default function Pricing() {
               </ul>
             </div>
 
-            <div className="p-8 rounded-lg bg-card border border-border">
+            <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-xl font-semibold mb-3">Paid Plans</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-500 mb-4">
                 Activate a paid plan immediately for full access. Includes a 7-day trial period, after which you're billed monthly.
               </p>
               <ul className="space-y-2 text-sm">
@@ -231,7 +231,7 @@ export default function Pricing() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 md:py-24 border-b border-border">
+      <section className="py-16 md:py-24 border-b border-gray-200">
         <div className="container max-w-4xl">
           <h2 className="text-3xl font-bold mb-12">Frequently Asked Questions</h2>
           <div className="space-y-6">
@@ -257,9 +257,9 @@ export default function Pricing() {
                 a: "Yes. Promo codes can be applied during signup or at any time in your account settings.",
               },
             ].map((faq, idx) => (
-              <div key={idx} className="p-6 rounded-lg bg-card border border-border">
-                <h3 className="font-semibold text-foreground mb-2">{faq.q}</h3>
-                <p className="text-muted-foreground text-sm">{faq.a}</p>
+              <div key={idx} className="p-6 rounded-lg bg-white border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
+                <p className="text-gray-500 text-sm">{faq.a}</p>
               </div>
             ))}
           </div>
@@ -284,16 +284,16 @@ export default function Pricing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 bg-card">
+      <footer className="border-t border-gray-200 py-12 bg-white">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-gray-500">
             © 2026 PrimeContractorOS. All rights reserved.
           </div>
           <div className="flex gap-6 text-sm">
-            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => navigate("/")} className="text-gray-500 hover:text-gray-900">
               Home
             </button>
-            <button onClick={() => navigate("/help")} className="text-muted-foreground hover:text-foreground">
+            <button onClick={() => navigate("/help")} className="text-gray-500 hover:text-gray-900">
               Help
             </button>
           </div>
