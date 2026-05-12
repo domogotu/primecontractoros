@@ -1,454 +1,247 @@
-// @ts-nocheck
-import React, { useState } from "react";
-import { useLocation, useRoute, Link } from "wouter";
+import { useState } from "react";
+import { useRoute, Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import PageLayout from "@/components/PageLayout";
+import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  User, Mail, Phone, Building, ArrowLeft, Clock, Plus,
+  AlertCircle, Calendar, CheckCircle2, Circle, Trash2, Edit
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  ArrowLeft, 
-  Mail, 
-  Phone, 
-  Building, 
-  Briefcase, 
-  Edit, 
-  MessageSquare, 
-  CheckSquare, 
-  FileText, 
-  Plus,
-  Clock,
-  User
-} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function ContactDetail() {
   const [, params] = useRoute("/app/contacts/:id");
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
-  const [noteText, setNoteText] = useState("");
+  const contactId = parseInt(params?.id || "0");
+  const utils = trpc.useUtils();
 
-  // Demo data for contact
-  const contact = {
-    id: params?.id || "1",
-    name: "Jane Doe",
-    title: "Contracting Officer",
-    organization: "Department of Defense",
-    email: "jane.doe@dod.gov",
-    phone: "(555) 123-4567",
-    role: "Government",
-    tags: ["Government", "Prime"],
-    status: "Active",
-    lastContact: "2023-10-15",
-  };
+  const { data: contact, isLoading } = trpc.contacts.getById.useQuery({ id: contactId }, { enabled: contactId > 0 });
+  const { data: followups = [] } = trpc.followups.list.useQuery({ contactId }, { enabled: contactId > 0 });
 
-  // Demo data for linked records
-  const linkedRecords = {
-    contracts: [
-      { id: "C-1001", title: "Cloud Infrastructure Modernization", status: "Active", value: "$1.2M" },
-      { id: "C-1005", title: "Cybersecurity Assessment", status: "Completed", value: "$450K" }
-    ],
-    proposals: [
-      { id: "P-2023-05", title: "AI Research Initiative", status: "Submitted", date: "2023-09-20" }
-    ],
-    opportunities: [
-      { id: "O-9921", title: "Data Center Migration", status: "Evaluating", value: "$2.5M" }
-    ]
-  };
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<any>({});
+  const [showFollowupForm, setShowFollowupForm] = useState(false);
+  const [followupType, setFollowupType] = useState("call");
+  const [followupNotes, setFollowupNotes] = useState("");
+  const [followupDue, setFollowupDue] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // Demo data for communication history
-  const communications = [
-    { id: 1, type: "Email", direction: "Sent", subject: "Follow up on proposal P-2023-05", date: "2023-10-15", summary: "Sent requested additional documentation." },
-    { id: 2, type: "Meeting", direction: "Received", subject: "Quarterly Review", date: "2023-09-10", summary: "Discussed progress on Cloud Infrastructure contract." },
-    { id: 3, type: "Phone", direction: "Sent", subject: "Quick question regarding requirements", date: "2023-08-22", summary: "Clarified section 4.2 of the RFP." }
-  ];
+  const updateMutation = trpc.contacts.update.useMutation({
+    onSuccess: () => { utils.contacts.getById.invalidate({ id: contactId }); setIsEditing(false); toast.success("Contact updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.contacts.delete.useMutation({
+    onSuccess: () => { toast.success("Contact deleted"); setLocation("/app/contacts"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const createFollowup = trpc.followups.create.useMutation({
+    onSuccess: () => { utils.followups.list.invalidate({ contactId }); setShowFollowupForm(false); setFollowupNotes(""); toast.success("Follow-up created"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const updateFollowup = trpc.followups.update.useMutation({
+    onSuccess: () => { utils.followups.list.invalidate({ contactId }); toast.success("Follow-up updated"); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
-  // Demo data for follow-up tasks
-  const tasks = [
-    { id: 1, title: "Send updated pricing matrix", dueDate: "2023-10-25", status: "Pending" },
-    { id: 2, title: "Schedule technical review meeting", dueDate: "2023-11-05", status: "Pending" }
-  ];
-
-  // Demo data for notes
-  const [notes, setNotes] = useState([
-    { id: 1, author: "John Smith", date: "2023-10-01", content: "Jane prefers email communication over phone calls. Very detail-oriented." },
-    { id: 2, author: "Sarah Johnson", date: "2023-08-15", content: "Met at the GovCon conference. Expressed interest in our new cybersecurity offerings." }
-  ]);
-
-  const handleAction = (action: string) => {
-    toast({
-      title: "Action triggered",
-      description: `Feature coming soon: ${action}`,
-    });
-  };
-
-  const handleAddNote = () => {
-    if (!noteText.trim()) return;
-    
-    const newNote = {
-      id: Date.now(),
-      author: user?.name || "Current User",
-      date: new Date().toISOString().split('T')[0],
-      content: noteText
-    };
-    
-    setNotes([newNote, ...notes]);
-    setNoteText("");
-    setIsAddNoteDialogOpen(false);
-    toast({
-      title: "Success",
-      description: "Note added successfully",
-    });
-  };
-
-  const getTagColor = (tag: string) => {
-    switch (tag) {
-      case "Government": return "blue";
-      case "Prime": return "purple";
-      case "Sub": return "orange";
-      case "Vendor": return "green";
-      case "Internal": return "gray";
-      default: return "gray";
-    }
-  };
+  if (isLoading) return <div className="p-6 text-center text-slate-500">Loading contact...</div>;
+  if (!contact) return (
+    <div className="p-6 max-w-4xl mx-auto text-center">
+      <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+      <h2 className="text-lg font-semibold text-slate-700">Contact Not Found</h2>
+      <Button variant="outline" className="mt-4" onClick={() => setLocation("/app/contacts")}>
+        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Contacts
+      </Button>
+    </div>
+  );
 
   return (
-    <PageLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => setLocation("/app/contacts")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <PageGuide
-            title="Contact Detail"
-            description="View and manage complete contact information, communication history, and linked records."
-            whenToUse="Use this page to review a contact's history before a meeting or to update their information."
-            whatToDoNext="Log a recent communication, add a follow-up task, or update contact details."
-            relatedRecords={[
-              { label: "Contracts", href: "/app/contracts" },
-              { label: "Opportunities", href: "/app/opportunities" }
-            ]}
-          />
-        </div>
+    <div className="p-6 max-w-5xl mx-auto">
+      <PageGuide
+        title="Contact Detail"
+        description="View and manage contact information, follow-ups, and linked records."
+        whenToUse="Use to review contact details, schedule follow-ups, or update information."
+        whatToDoNext={["Update contact info", "Schedule a follow-up", "View linked records"]}
+        relatedRecords={[{ label: "All Contacts", path: "/app/contacts" }]}
+      />
 
-        {/* Contact Header Card */}
-        <Card className="bg-card text-foreground border-border">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="flex items-start gap-4">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold">
-                  {contact.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold">{contact.name}</h1>
-                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
-                    <Briefcase className="h-4 w-4" /> {contact.title}
-                  </p>
-                  <p className="text-muted-foreground flex items-center gap-2 mt-1">
-                    <Building className="h-4 w-4" /> {contact.organization}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-2 items-end">
-                <Button onClick={() => setIsEditDialogOpen(true)}>
-                  <Edit className="h-4 w-4 mr-2" /> Edit Contact
-                </Button>
-                <div className="flex gap-2 mt-2">
-                  {contact.tags.map(tag => (
-                    <span key={tag} className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${getTagColor(tag)}-100 text-${getTagColor(tag)}-800 dark:bg-${getTagColor(tag)}-900/30 dark:text-${getTagColor(tag)}-400`}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+      <Button variant="ghost" size="sm" className="mb-4" onClick={() => setLocation("/app/contacts")}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Contacts
+      </Button>
+
+      {/* Contact Header */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <User className="w-7 h-7 text-blue-600" />
             </div>
+            <div className="flex-1">
+              {isEditing ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>First Name</Label><Input value={editData.firstName || ""} onChange={(e) => setEditData({ ...editData, firstName: e.target.value })} /></div>
+                  <div><Label>Last Name</Label><Input value={editData.lastName || ""} onChange={(e) => setEditData({ ...editData, lastName: e.target.value })} /></div>
+                  <div><Label>Email</Label><Input value={editData.email || ""} onChange={(e) => setEditData({ ...editData, email: e.target.value })} /></div>
+                  <div><Label>Phone</Label><Input value={editData.phone || ""} onChange={(e) => setEditData({ ...editData, phone: e.target.value })} /></div>
+                  <div><Label>Organization</Label><Input value={editData.organization || ""} onChange={(e) => setEditData({ ...editData, organization: e.target.value })} /></div>
+                  <div><Label>Title</Label><Input value={editData.title || ""} onChange={(e) => setEditData({ ...editData, title: e.target.value })} /></div>
+                  <div className="col-span-2 flex gap-2 mt-2">
+                    <Button size="sm" onClick={() => updateMutation.mutate({ id: contactId, ...editData })} className="bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+                    <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-xl font-bold text-slate-900">{contact.firstName} {contact.lastName}</h1>
+                  {contact.title && <p className="text-sm text-slate-600">{contact.title}</p>}
+                  <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-slate-500">
+                    {contact.email && <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {contact.email}</span>}
+                    {contact.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {contact.phone}</span>}
+                    {contact.organization && <span className="flex items-center gap-1"><Building className="w-3.5 h-3.5" /> {contact.organization}</span>}
+                  </div>
+                  {contact.role && <Badge variant="outline" className="mt-2 capitalize">{contact.role.replace(/_/g, " ")}</Badge>}
+                </>
+              )}
+            </div>
+            {!isEditing && (
+              <div className="flex gap-2 flex-shrink-0">
+                <Button size="sm" variant="outline" onClick={() => { setEditData({ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, phone: contact.phone, organization: contact.organization, title: contact.title }); setIsEditing(true); }}>
+                  <Edit className="w-4 h-4 mr-1" /> Edit
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setIsDeleteDialogOpen(true)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+          {contact.notes && (
+            <div className="mt-4 p-3 bg-slate-50 rounded-lg">
+              <p className="text-xs font-medium text-slate-500 mb-1">Notes</p>
+              <p className="text-sm text-slate-700">{contact.notes}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 pt-6 border-t border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-secondary">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <a href={`mailto:${contact.email}`} className="font-medium hover:underline">{contact.email}</a>
-                </div>
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Linked Record */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Linked Record</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {contact.linkedRecordType && contact.linkedRecordId ? (
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <p className="text-sm font-medium text-slate-900 capitalize">{contact.linkedRecordType} #{contact.linkedRecordId}</p>
+                <Link href={`/app/${contact.linkedRecordType}s/${contact.linkedRecordId}`}>
+                  <Button size="sm" variant="link" className="p-0 h-auto text-blue-600">View Record →</Button>
+                </Link>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-secondary">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <a href={`tel:${contact.phone}`} className="font-medium hover:underline">{contact.phone}</a>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-secondary">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Role</p>
-                  <p className="font-medium">{contact.role}</p>
-                </div>
-              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Not linked to a specific record</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Contact Info */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-slate-500">Created</span><span className="text-slate-700">{new Date(contact.createdAt).toLocaleDateString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Updated</span><span className="text-slate-700">{new Date(contact.updatedAt).toLocaleDateString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Role</span><span className="text-slate-700 capitalize">{contact.role?.replace(/_/g, " ") || "—"}</span></div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Linked Records & Tasks */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Linked Records */}
-            <Card className="bg-card text-foreground border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" /> Linked Records
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Contracts */}
+        {/* Follow-ups */}
+        <Card className="md:col-span-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="w-4 h-4" /> Follow-ups
+              </CardTitle>
+              <Button size="sm" variant="outline" onClick={() => setShowFollowupForm(true)}>
+                <Plus className="w-3 h-3 mr-1" /> Add
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {showFollowupForm && (
+              <div className="p-3 bg-blue-50 rounded-lg mb-4 border border-blue-200">
+                <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Contracts</h3>
-                    <div className="space-y-2">
-                      {linkedRecords.contracts.map(contract => (
-                        <div key={contract.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => handleAction(`View Contract ${contract.id}`)}>
-                          <div>
-                            <p className="font-medium">{contract.title}</p>
-                            <p className="text-sm text-muted-foreground">{contract.id} • {contract.value}</p>
-                          </div>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${contract.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {contract.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <Label>Type</Label>
+                    <Select value={followupType} onValueChange={setFollowupType}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="call">Call</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="meeting">Meeting</SelectItem>
+                        <SelectItem value="task">Task</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-
-                  {/* Proposals */}
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Proposals</h3>
-                    <div className="space-y-2">
-                      {linkedRecords.proposals.map(proposal => (
-                        <div key={proposal.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => handleAction(`View Proposal ${proposal.id}`)}>
-                          <div>
-                            <p className="font-medium">{proposal.title}</p>
-                            <p className="text-sm text-muted-foreground">{proposal.id} • {proposal.date}</p>
-                          </div>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {proposal.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <Label>Due Date</Label>
+                    <Input type="date" value={followupDue} onChange={(e) => setFollowupDue(e.target.value)} />
                   </div>
-
-                  {/* Opportunities */}
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Opportunities</h3>
-                    <div className="space-y-2">
-                      {linkedRecords.opportunities.map(opp => (
-                        <div key={opp.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-secondary/50 transition-colors cursor-pointer" onClick={() => handleAction(`View Opportunity ${opp.id}`)}>
-                          <div>
-                            <p className="font-medium">{opp.title}</p>
-                            <p className="text-sm text-muted-foreground">{opp.id} • {opp.value}</p>
-                          </div>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            {opp.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    <Label>Notes</Label>
+                    <Input value={followupNotes} onChange={(e) => setFollowupNotes(e.target.value)} placeholder="Follow-up notes..." />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Communication History */}
-            <Card className="bg-card text-foreground border-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" /> Communication History
-                </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => handleAction("Log Communication")}>
-                  <Plus className="h-4 w-4 mr-1" /> Log Activity
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {communications.map(comm => (
-                    <div key={comm.id} className="flex gap-4 p-4 rounded-lg border border-border">
-                      <div className="mt-1">
-                        {comm.type === 'Email' ? <Mail className="h-5 w-5 text-blue-500" /> : 
-                         comm.type === 'Phone' ? <Phone className="h-5 w-5 text-green-500" /> : 
-                         <User className="h-5 w-5 text-purple-500" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium">{comm.subject}</h4>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {comm.date}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1 mb-2">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${comm.direction === 'Sent' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-                            {comm.direction}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{comm.type}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{comm.summary}</p>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" onClick={() => createFollowup.mutate({ contactId, type: followupType, notes: followupNotes || undefined, dueDate: followupDue || undefined })} className="bg-blue-600 hover:bg-blue-700 text-white">Create</Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowFollowupForm(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+            {(followups as any[]).length === 0 ? (
+              <p className="text-sm text-slate-500">No follow-ups scheduled</p>
+            ) : (
+              <div className="space-y-2">
+                {(followups as any[]).map((f: any) => (
+                  <div key={f.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                    <button onClick={() => updateFollowup.mutate({ id: f.id, status: f.status === "completed" ? "pending" : "completed" })}>
+                      {f.status === "completed" ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <Circle className="w-5 h-5 text-slate-300 hover:text-blue-500" />}
+                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs capitalize">{f.type}</Badge>
+                        {f.notes && <span className="text-sm text-slate-700">{f.notes}</span>}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Tasks & Notes */}
-          <div className="space-y-6">
-            
-            {/* Follow-up Tasks */}
-            <Card className="bg-card text-foreground border-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <CheckSquare className="h-5 w-5" /> Follow-ups
-                </CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => handleAction("Add Task")}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {tasks.map(task => (
-                    <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-border bg-secondary/20">
-                      <input type="checkbox" className="mt-1" onChange={() => handleAction("Complete Task")} />
-                      <div>
-                        <p className="text-sm font-medium">{task.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> Due: {task.dueDate}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Notes */}
-            <Card className="bg-card text-foreground border-border">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" /> Notes
-                </CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setIsAddNoteDialogOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {notes.map(note => (
-                    <div key={note.id} className="p-3 rounded-lg bg-secondary/30 border border-border">
-                      <p className="text-sm">{note.content}</p>
-                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/50">
-                        <span className="text-xs font-medium">{note.author}</span>
-                        <span className="text-xs text-muted-foreground">{note.date}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                    {f.dueDate && <span className="text-xs text-slate-400">{new Date(f.dueDate).toLocaleDateString()}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Edit Contact Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* Delete Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogTitle>Delete Contact</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">Name</Label>
-              <Input id="name" defaultValue={contact.name} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">Title</Label>
-              <Input id="title" defaultValue={contact.title} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="org" className="text-right">Organization</Label>
-              <Input id="org" defaultValue={contact.organization} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">Email</Label>
-              <Input id="email" defaultValue={contact.email} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">Phone</Label>
-              <Input id="phone" defaultValue={contact.phone} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="role" className="text-right">Role</Label>
-              <Select defaultValue={contact.role}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Government">Government</SelectItem>
-                  <SelectItem value="Prime">Prime</SelectItem>
-                  <SelectItem value="Sub">Sub</SelectItem>
-                  <SelectItem value="Vendor">Vendor</SelectItem>
-                  <SelectItem value="Internal">Internal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <p className="text-sm text-slate-600">Are you sure you want to delete {contact.firstName} {contact.lastName}?</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              handleAction("Save Contact");
-              setIsEditDialogOpen(false);
-            }}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: contactId })}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Add Note Dialog */}
-      <Dialog open={isAddNoteDialogOpen} onOpenChange={setIsAddNoteDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add Note</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Textarea 
-              placeholder="Type your note here..." 
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              className="min-h-[100px]"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddNoteDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddNote}>Add Note</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </PageLayout>
+    </div>
   );
 }

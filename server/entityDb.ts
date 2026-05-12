@@ -43,6 +43,13 @@ export async function deleteFile(id: number, workspaceId: number) {
   await db.delete(files).where(and(eq(files.id, id), eq(files.workspaceId, workspaceId)));
 }
 
+export async function getFileById(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(files).where(and(eq(files.id, id), eq(files.workspaceId, workspaceId))).limit(1);
+  return row || null;
+}
+
 // ==================== CONTACTS ====================
 export async function listContacts(workspaceId: number, linkedRecordType?: string, linkedRecordId?: number) {
   const db = await getDb();
@@ -70,6 +77,13 @@ export async function deleteContact(id: number, workspaceId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(contacts).where(and(eq(contacts.id, id), eq(contacts.workspaceId, workspaceId)));
+}
+
+export async function getContactById(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(contacts).where(and(eq(contacts.id, id), eq(contacts.workspaceId, workspaceId))).limit(1);
+  return row || null;
 }
 
 // ==================== MESSAGES ====================
@@ -120,6 +134,13 @@ export async function deleteInvoice(id: number, workspaceId: number) {
   await db.delete(invoices).where(and(eq(invoices.id, id), eq(invoices.workspaceId, workspaceId)));
 }
 
+export async function getInvoiceById(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(invoices).where(and(eq(invoices.id, id), eq(invoices.workspaceId, workspaceId))).limit(1);
+  return row || null;
+}
+
 // ==================== PAYMENTS ====================
 export async function listPayments(workspaceId: number, contractId?: number) {
   const db = await getDb();
@@ -140,6 +161,13 @@ export async function deletePayment(id: number, workspaceId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(payments).where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId)));
+}
+
+export async function getPaymentById(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(payments).where(and(eq(payments.id, id), eq(payments.workspaceId, workspaceId))).limit(1);
+  return row || null;
 }
 
 // ==================== TASKS ====================

@@ -3,11 +3,11 @@ import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
 import {
-  listFiles, createFile, deleteFile,
-  listContacts, createContact, updateContact, deleteContact,
+  listFiles, createFile, deleteFile, getFileById,
+  listContacts, createContact, updateContact, deleteContact, getContactById,
   listMessages, createMessage, deleteMessage,
-  listInvoices, createInvoice, updateInvoice, deleteInvoice,
-  listPayments, createPayment, deletePayment,
+  listInvoices, createInvoice, updateInvoice, deleteInvoice, getInvoiceById,
+  listPayments, createPayment, deletePayment, getPaymentById,
   listTasks, createTask, updateTask, deleteTask,
   listAlerts, createAlert, dismissAlert,
   listDeliverables, createDeliverable, updateDeliverable, deleteDeliverable,
@@ -43,6 +43,12 @@ export const filesRouter = router({
       const wsId = await getWorkspaceId(ctx);
       return listFiles(wsId, input?.linkedRecordType, input?.linkedRecordId);
     }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return getFileById(input.id, wsId);
+    }),
   create: protectedProcedure
     .input(z.object({ name: z.string(), fileKey: z.string(), url: z.string(), mimeType: z.string().optional(), size: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), category: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
@@ -63,6 +69,12 @@ export const contactsRouter = router({
     .query(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       return listContacts(wsId, input?.linkedRecordType, input?.linkedRecordId);
+    }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return getContactById(input.id, wsId);
     }),
   create: protectedProcedure
     .input(z.object({ firstName: z.string(), lastName: z.string(), email: z.string().optional(), phone: z.string().optional(), organization: z.string().optional(), title: z.string().optional(), role: z.string().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), notes: z.string().optional() }))
@@ -110,6 +122,12 @@ export const invoicesRouter = router({
     .query(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       return listInvoices(wsId, input?.contractId);
+    }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return getInvoiceById(input.id, wsId);
     }),
   create: protectedProcedure
     .input(z.object({ contractId: z.number().optional(), invoiceNumber: z.string(), amount: z.string(), status: z.string().optional(), issuedDate: z.string().optional(), dueDate: z.string().optional(), description: z.string().optional() }))
@@ -175,6 +193,12 @@ export const paymentsRouter = router({
     .query(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       return listPayments(wsId, input?.contractId);
+    }),
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return getPaymentById(input.id, wsId);
     }),
   create: protectedProcedure
     .input(z.object({ invoiceId: z.number().optional(), contractId: z.number().optional(), amount: z.string(), paymentDate: z.string().optional(), method: z.string().optional(), reference: z.string().optional(), notes: z.string().optional() }))

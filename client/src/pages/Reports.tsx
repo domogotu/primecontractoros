@@ -1,135 +1,344 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
+import {
+  BarChart3, FileText, DollarSign, Shield, Calendar, Download,
+  TrendingUp, AlertCircle, CheckCircle2, Loader2
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, FileText, DollarSign, Shield, Users, Calendar, Download, ArrowRight } from "lucide-react";
 
-const reportCategories = [
-  {
-    title: "Contract Performance",
-    description: "Track contract execution metrics, milestone completion, and overall health",
-    icon: BarChart3,
-    reports: [
-      { name: "Contract Status Summary", description: "Overview of all active contracts with status and key dates" },
-      { name: "Milestone Completion Report", description: "Track milestone achievement rates across contracts" },
-      { name: "Period of Performance Timeline", description: "Visual timeline of contract periods and option years" },
-    ],
-  },
-  {
-    title: "Financial",
-    description: "Revenue, invoicing, payments, and budget tracking",
-    icon: DollarSign,
-    reports: [
-      { name: "Invoice Aging Report", description: "Track outstanding invoices and payment timelines" },
-      { name: "Revenue by Contract", description: "Revenue breakdown across active contracts" },
-      { name: "Budget vs. Actual", description: "Compare planned budget against actual spending" },
-    ],
-  },
-  {
-    title: "Compliance",
-    description: "Compliance status, audit readiness, and regulatory tracking",
-    icon: Shield,
-    reports: [
-      { name: "Compliance Matrix Summary", description: "Aggregate compliance status across all contracts" },
-      { name: "Audit Readiness Score", description: "Assessment of documentation and process readiness" },
-      { name: "FAR/DFARS Coverage Report", description: "Which clauses apply and their compliance status" },
-    ],
-  },
-  {
-    title: "Team & Resources",
-    description: "Team utilization, key personnel, and subcontractor performance",
-    icon: Users,
-    reports: [
-      { name: "Key Personnel Status", description: "Track key personnel assignments and availability" },
-      { name: "Subcontractor Performance", description: "Evaluate subcontractor delivery and compliance" },
-      { name: "Team Utilization", description: "Resource allocation across contracts" },
-    ],
-  },
-  {
-    title: "Deliverables",
-    description: "Deliverable submission tracking and acceptance rates",
-    icon: FileText,
-    reports: [
-      { name: "Deliverable Status Report", description: "Track all CDRLs and their acceptance status" },
-      { name: "On-Time Delivery Rate", description: "Percentage of deliverables submitted on time" },
-      { name: "Upcoming Deliverables", description: "Deliverables due in the next 30/60/90 days" },
-    ],
-  },
-  {
-    title: "Pipeline",
-    description: "Opportunity pipeline, win rates, and proposal metrics",
-    icon: Calendar,
-    reports: [
-      { name: "Pipeline Summary", description: "Active opportunities by stage and estimated value" },
-      { name: "Win/Loss Analysis", description: "Historical win rates and contributing factors" },
-      { name: "Proposal Activity", description: "Proposals in progress, submitted, and decided" },
-    ],
-  },
-];
+type ReportResult = {
+  type: string;
+  generatedAt: string;
+  data: any;
+};
+
+function downloadCSV(filename: string, headers: string[], rows: string[][]) {
+  const csv = [headers.join(","), ...rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function Reports() {
-  const [, navigate] = useLocation();
+  const [activeReport, setActiveReport] = useState<ReportResult | null>(null);
+  const [generating, setGenerating] = useState<string | null>(null);
+
+  const contractSummary = trpc.reports.generateContractSummary.useMutation({
+    onSuccess: (data) => { setActiveReport(data as any); setGenerating(null); },
+    onError: (e: any) => { toast.error(e.message); setGenerating(null); },
+  });
+  const financialReport = trpc.reports.generateFinancialReport.useMutation({
+    onSuccess: (data) => { setActiveReport(data as any); setGenerating(null); },
+    onError: (e: any) => { toast.error(e.message); setGenerating(null); },
+  });
+  const winLossAnalysis = trpc.reports.generateWinLossAnalysis.useMutation({
+    onSuccess: (data) => { setActiveReport(data as any); setGenerating(null); },
+    onError: (e: any) => { toast.error(e.message); setGenerating(null); },
+  });
+  const complianceReport = trpc.reports.generateComplianceReport.useMutation({
+    onSuccess: (data) => { setActiveReport(data as any); setGenerating(null); },
+    onError: (e: any) => { toast.error(e.message); setGenerating(null); },
+  });
+
+  const reportTypes = [
+    {
+      key: "contract_summary",
+      title: "Contract Summary",
+      description: "Overview of all contracts with status, value, dates, and financial totals",
+      icon: BarChart3,
+      color: "text-blue-600 bg-blue-50",
+      generate: () => { setGenerating("contract_summary"); contractSummary.mutate({}); },
+    },
+    {
+      key: "financial_report",
+      title: "Financial Report",
+      description: "Revenue breakdown by contract, invoiced vs paid vs outstanding amounts",
+      icon: DollarSign,
+      color: "text-green-600 bg-green-50",
+      generate: () => { setGenerating("financial_report"); financialReport.mutate({}); },
+    },
+    {
+      key: "win_loss_analysis",
+      title: "Win/Loss Analysis",
+      description: "Proposal outcomes, win rate, and pipeline metrics",
+      icon: TrendingUp,
+      color: "text-purple-600 bg-purple-50",
+      generate: () => { setGenerating("win_loss_analysis"); winLossAnalysis.mutate(); },
+    },
+    {
+      key: "compliance_status",
+      title: "Compliance Status",
+      description: "Contract compliance overview and audit readiness",
+      icon: Shield,
+      color: "text-amber-600 bg-amber-50",
+      generate: () => { setGenerating("compliance_status"); complianceReport.mutate(); },
+    },
+  ];
+
+  const exportReport = () => {
+    if (!activeReport) return;
+    const d = activeReport.data;
+    if (activeReport.type === "contract_summary") {
+      downloadCSV("contract_summary.csv",
+        ["ID", "Title", "Status", "Value", "Start Date", "End Date", "Agency"],
+        (d.contracts || []).map((c: any) => [c.id, c.title, c.status, c.value, c.startDate, c.endDate, c.agency])
+      );
+    } else if (activeReport.type === "financial_report") {
+      downloadCSV("financial_report.csv",
+        ["Contract ID", "Contract Title", "Total Invoiced", "Total Paid", "Outstanding", "Invoice Count"],
+        (d.byContract || []).map((c: any) => [c.contractId, c.contractTitle, c.totalInvoiced, c.totalPaid, c.outstanding, c.invoiceCount])
+      );
+    } else if (activeReport.type === "win_loss_analysis") {
+      const rows = [
+        ["Total Proposals", d.totalProposals],
+        ["Won", d.won],
+        ["Lost", d.lost],
+        ["Pending", d.pending],
+        ["Win Rate", `${d.winRate}%`],
+      ];
+      downloadCSV("win_loss_analysis.csv", ["Metric", "Value"], rows as any);
+    } else if (activeReport.type === "compliance_status") {
+      downloadCSV("compliance_status.csv",
+        ["ID", "Title", "Status", "End Date"],
+        (d.contracts || []).map((c: any) => [c.id, c.title, c.status, c.endDate])
+      );
+    }
+    toast.success("Report exported as CSV");
+  };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <PageGuide
         title="Reports"
-        description="Generate and view reports across all aspects of your contracting operations."
-        whenToUse="Use for management reviews, client reporting, audit preparation, or tracking KPIs."
-        whatToDoNext={[
-          "Select a report category to view available reports",
-          "Generate reports for upcoming management reviews",
-          "Export reports for external stakeholders",
-          "Set up recurring report schedules",
-        ]}
+        description="Generate reports from your real workspace data and export as CSV."
+        whenToUse="Use for management reviews, client reporting, or audit preparation."
+        whatToDoNext={["Select a report type to generate", "Export the generated report as CSV"]}
         relatedRecords={[
           { label: "Dashboard", path: "/app" },
           { label: "Finance", path: "/app/finance" },
-          { label: "Compliance", path: "/app/compliance" },
           { label: "Contracts", path: "/app/contracts" },
         ]}
       />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Reports</h1>
-        <p className="text-sm text-slate-500 mt-1">Generate reports across your contracting operations</p>
+        <p className="text-sm text-slate-500 mt-1">Generate reports from your workspace data</p>
       </div>
 
-      <div className="space-y-8">
-        {reportCategories.map((category) => {
-          const Icon = category.icon;
+      {/* Report Type Cards */}
+      <div className="grid md:grid-cols-2 gap-4 mb-8">
+        {reportTypes.map((rt) => {
+          const Icon = rt.icon;
+          const isGenerating = generating === rt.key;
           return (
-            <div key={category.title}>
-              <div className="flex items-center gap-3 mb-4">
-                <Icon className="w-5 h-5 text-blue-600" />
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">{category.title}</h2>
-                  <p className="text-xs text-slate-500">{category.description}</p>
+            <Card key={rt.key} className="hover:border-blue-300 hover:shadow-sm transition-all">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${rt.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 text-sm">{rt.title}</h3>
+                    <p className="text-xs text-slate-500 mt-1">{rt.description}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-3 text-xs"
+                      onClick={rt.generate}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <BarChart3 className="w-3 h-3 mr-1" />}
+                      {isGenerating ? "Generating..." : "Generate"}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                {category.reports.map((report) => (
-                  <Card key={report.name} className="hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer group">
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-slate-900 text-sm mb-1">{report.name}</h3>
-                      <p className="text-xs text-slate-500 mb-3">{report.description}</p>
-                      <div className="flex items-center justify-between">
-                        <Button size="sm" variant="outline" className="text-xs">
-                          <Download className="w-3 h-3 mr-1" />
-                          Generate
-                        </Button>
-                        <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
+
+      {/* Report Results */}
+      {activeReport && (
+        <Card className="border-blue-200">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base capitalize">{activeReport.type.replace(/_/g, " ")}</CardTitle>
+                <p className="text-xs text-slate-500">Generated: {new Date(activeReport.generatedAt).toLocaleString()}</p>
+              </div>
+              <Button size="sm" onClick={exportReport}>
+                <Download className="w-3 h-3 mr-1" /> Export CSV
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {activeReport.type === "contract_summary" && (
+              <div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="p-3 bg-blue-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-blue-700">{activeReport.data.totalContracts}</p>
+                    <p className="text-xs text-blue-600">Total Contracts</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-green-700">${activeReport.data.financials?.totalPaid?.toLocaleString() || "0"}</p>
+                    <p className="text-xs text-green-600">Total Paid</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-amber-700">${activeReport.data.financials?.totalOutstanding?.toLocaleString() || "0"}</p>
+                    <p className="text-xs text-amber-600">Outstanding</p>
+                  </div>
+                </div>
+                {activeReport.data.contracts?.length > 0 ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 font-medium text-slate-600">Title</th>
+                          <th className="text-left p-2 font-medium text-slate-600">Status</th>
+                          <th className="text-left p-2 font-medium text-slate-600">Agency</th>
+                          <th className="text-right p-2 font-medium text-slate-600">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {activeReport.data.contracts.map((c: any) => (
+                          <tr key={c.id} className="hover:bg-slate-50">
+                            <td className="p-2 text-slate-900">{c.title}</td>
+                            <td className="p-2"><Badge variant="outline" className="text-xs capitalize">{c.status}</Badge></td>
+                            <td className="p-2 text-slate-500">{c.agency || "—"}</td>
+                            <td className="p-2 text-right text-slate-700">{c.value ? `$${parseFloat(c.value).toLocaleString()}` : "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-sm text-slate-500">No contracts found</p>}
+              </div>
+            )}
+
+            {activeReport.type === "financial_report" && (
+              <div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="p-3 bg-blue-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-blue-700">${activeReport.data.summary?.totalInvoiced?.toLocaleString() || "0"}</p>
+                    <p className="text-xs text-blue-600">Total Invoiced</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-green-700">${activeReport.data.summary?.totalRevenue?.toLocaleString() || "0"}</p>
+                    <p className="text-xs text-green-600">Revenue (Paid)</p>
+                  </div>
+                  <div className="p-3 bg-amber-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-amber-700">${activeReport.data.summary?.totalOutstanding?.toLocaleString() || "0"}</p>
+                    <p className="text-xs text-amber-600">Outstanding</p>
+                  </div>
+                </div>
+                {activeReport.data.byContract?.length > 0 ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 font-medium text-slate-600">Contract</th>
+                          <th className="text-right p-2 font-medium text-slate-600">Invoiced</th>
+                          <th className="text-right p-2 font-medium text-slate-600">Paid</th>
+                          <th className="text-right p-2 font-medium text-slate-600">Outstanding</th>
+                          <th className="text-right p-2 font-medium text-slate-600">Invoices</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {activeReport.data.byContract.map((c: any) => (
+                          <tr key={c.contractId} className="hover:bg-slate-50">
+                            <td className="p-2 text-slate-900">{c.contractTitle}</td>
+                            <td className="p-2 text-right">${c.totalInvoiced.toLocaleString()}</td>
+                            <td className="p-2 text-right text-green-700">${c.totalPaid.toLocaleString()}</td>
+                            <td className="p-2 text-right text-amber-700">${c.outstanding.toLocaleString()}</td>
+                            <td className="p-2 text-right">{c.invoiceCount}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-sm text-slate-500">No financial data found</p>}
+              </div>
+            )}
+
+            {activeReport.type === "win_loss_analysis" && (
+              <div>
+                <div className="grid grid-cols-4 gap-4 mb-4">
+                  <div className="p-3 bg-blue-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-blue-700">{activeReport.data.totalProposals}</p>
+                    <p className="text-xs text-blue-600">Total Proposals</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-green-700">{activeReport.data.won}</p>
+                    <p className="text-xs text-green-600">Won</p>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-red-700">{activeReport.data.lost}</p>
+                    <p className="text-xs text-red-600">Lost</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-purple-700">{activeReport.data.winRate}%</p>
+                    <p className="text-xs text-purple-600">Win Rate</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-green-700 mb-2 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> Won ({activeReport.data.won})</h4>
+                    {activeReport.data.wonProposals?.length > 0 ? activeReport.data.wonProposals.map((p: any) => (
+                      <div key={p.id} className="p-2 bg-green-50 rounded text-sm mb-1">{p.title}</div>
+                    )) : <p className="text-xs text-slate-500">None</p>}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-red-700 mb-2 flex items-center gap-1"><AlertCircle className="w-4 h-4" /> Lost ({activeReport.data.lost})</h4>
+                    {activeReport.data.lostProposals?.length > 0 ? activeReport.data.lostProposals.map((p: any) => (
+                      <div key={p.id} className="p-2 bg-red-50 rounded text-sm mb-1">{p.title}</div>
+                    )) : <p className="text-xs text-slate-500">None</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeReport.type === "compliance_status" && (
+              <div>
+                <div className="p-3 bg-blue-50 rounded-lg text-center mb-4">
+                  <p className="text-2xl font-bold text-blue-700">{activeReport.data.totalContracts}</p>
+                  <p className="text-xs text-blue-600">Contracts Tracked</p>
+                </div>
+                {activeReport.data.contracts?.length > 0 ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-2 font-medium text-slate-600">Title</th>
+                          <th className="text-left p-2 font-medium text-slate-600">Status</th>
+                          <th className="text-left p-2 font-medium text-slate-600">End Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {activeReport.data.contracts.map((c: any) => (
+                          <tr key={c.id} className="hover:bg-slate-50">
+                            <td className="p-2 text-slate-900">{c.title}</td>
+                            <td className="p-2"><Badge variant="outline" className="text-xs capitalize">{c.status}</Badge></td>
+                            <td className="p-2 text-slate-500">{c.endDate || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-sm text-slate-500">No contracts found</p>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
