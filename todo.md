@@ -1061,3 +1061,6 @@
 
 ## Phase 30: Settings Page - No Changes Needed
 
+
+## Phase 31: Text Visibility Fix
+- [x] Audit and fix text visibility across all pages (ensure lettering readable against backgrounds)

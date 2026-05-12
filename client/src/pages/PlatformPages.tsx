@@ -40,7 +40,7 @@ export function PlatformWorkspaces() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Workspace Directory</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Workspace Directory</h1>
         <p className="text-slate-300">Manage all customer workspaces</p>
       </div>
       <div className="p-8">
@@ -124,7 +124,7 @@ export function PlatformWorkspaceSummary() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Workspace: {workspace.name}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Workspace: {workspace.name}</h1>
         <p className="text-slate-300">ID: {workspace.id} | Owner ID: {workspace.ownerId}</p>
       </div>
       <div className="p-8">
@@ -198,7 +198,7 @@ export function PlatformPlans() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Plans Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Plans Management</h1>
         <p className="text-slate-300">Configure and manage subscription plans</p>
       </div>
       <div className="p-8">
@@ -281,7 +281,7 @@ export function PlatformDiscounts() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Discounts Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Discounts Management</h1>
         <p className="text-slate-300">Create and manage promotional discounts</p>
       </div>
       <div className="p-8">
@@ -368,14 +368,14 @@ export function PlatformBilling() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Billing Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Billing Management</h1>
         <p className="text-slate-300">View and manage workspace billing</p>
       </div>
       <div className="p-8">
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
             <p className="text-xs text-slate-300 font-medium uppercase">Total Records</p>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{billingRecords.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-blue-300 mt-2">{billingRecords.length}</p>
           </div>
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
             <p className="text-xs text-slate-300 font-medium uppercase">Active Subscriptions</p>
@@ -450,7 +450,7 @@ export function PlatformSupport() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Support Inbox</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Support Inbox</h1>
         <p className="text-slate-300">Manage customer support tickets</p>
       </div>
       <div className="p-8">
@@ -465,7 +465,7 @@ export function PlatformSupport() {
           </div>
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 text-center">
             <p className="text-xs text-slate-300 font-medium uppercase">Total</p>
-            <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{tickets.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-blue-300 mt-2">{tickets.length}</p>
           </div>
         </div>
 
@@ -551,7 +551,7 @@ export function PlatformOverrides() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Overrides Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Overrides Management</h1>
         <p className="text-slate-300">Configure per-workspace feature overrides</p>
       </div>
       <div className="p-8">
@@ -635,7 +635,7 @@ export function PlatformPricingHistory() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-3 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Pricing History</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Pricing History</h1>
         <p className="text-slate-300">View historical pricing changes and plan modifications</p>
       </div>
       <div className="p-4 sm:p-8">
@@ -653,7 +653,7 @@ export function PlatformPricingHistory() {
           {filtered.map(h => (
             <div key={h.id} className="grid grid-cols-7 gap-4 px-4 py-3 border-b border-slate-700 text-sm hover:bg-slate-900">
               <div className="text-white">{h.date}</div>
-              <div className="font-medium text-blue-900">{h.plan}</div>
+              <div className="font-medium text-blue-300">{h.plan}</div>
               <div><span className={`px-2 py-0.5 rounded-full text-xs font-medium \${h.action === "Created" ? "bg-green-100 text-green-800" : h.action === "Price Change" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}`}>{h.action}</span></div>
               <div className="text-slate-400">{h.oldPrice || "—"}</div>
               <div className="font-medium text-white">{h.newPrice}</div>
@@ -684,7 +684,7 @@ export function PlatformOwnershipRecovery() {
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-3 sm:py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Ownership Recovery</h1>
             <p className="text-slate-300">Manage workspace ownership transfer requests</p>
           </div>
           <div className="flex gap-2">
@@ -699,7 +699,7 @@ export function PlatformOwnershipRecovery() {
           </div>
           {requests.map(r => (
             <div key={r.id} className="grid grid-cols-6 gap-4 px-4 py-3 border-b border-slate-700 text-sm hover:bg-slate-900 items-center">
-              <div className="font-medium text-blue-900">{r.workspace}</div>
+              <div className="font-medium text-blue-300">{r.workspace}</div>
               <div className="text-slate-200">{r.requester}</div>
               <div className="text-slate-400">{r.currentOwner}</div>
               <div>{getStatusBadge(r.status)}</div>
@@ -717,7 +717,7 @@ export function PlatformOwnershipRecovery() {
           ))}
         </div>
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">Recovery Process</h3>
+          <h3 className="font-semibold text-blue-300 mb-2">Recovery Process</h3>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
             <li>Requester submits ownership recovery request with verification documents</li>
             <li>Platform admin reviews request and verifies identity</li>
@@ -741,7 +741,7 @@ export function PlatformDemoWorkspaces() {
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-3 sm:py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Demo Workspaces</h1>
             <p className="text-slate-300">Create and manage demo workspaces for trials and sales</p>
           </div>
           <button onClick={() => toast.success("Demo workspace creation dialog coming soon")} className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 text-sm font-medium">Create Demo</button>
@@ -750,7 +750,7 @@ export function PlatformDemoWorkspaces() {
       <div className="p-4 sm:p-8">
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
-            <div className="text-2xl font-bold text-blue-900">{demos.filter(d => d.status === "active").length}</div>
+            <div className="text-2xl font-bold text-blue-300">{demos.filter(d => d.status === "active").length}</div>
             <div className="text-sm text-slate-400">Active Demos</div>
           </div>
           <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
@@ -768,7 +768,7 @@ export function PlatformDemoWorkspaces() {
           </div>
           {demos.map(d => (
             <div key={d.id} className="grid grid-cols-7 gap-4 px-4 py-3 border-b border-slate-700 text-sm hover:bg-slate-900 items-center">
-              <div className="font-medium text-blue-900">{d.name}</div>
+              <div className="font-medium text-blue-300">{d.name}</div>
               <div className="text-slate-200">{d.plan}</div>
               <div className="text-slate-400">{d.created}</div>
               <div className="text-slate-400">{d.expires}</div>
@@ -805,7 +805,7 @@ export function PlatformTasks() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-3 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Platform Tasks</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Platform Tasks</h1>
         <p className="text-slate-300">Monitor and manage background tasks and scheduled jobs</p>
       </div>
       <div className="p-4 sm:p-8">
@@ -863,7 +863,7 @@ export function PlatformTasks() {
 function LoadingState() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-900" />
+      <Loader2 className="w-8 h-8 animate-spin text-blue-300" />
     </div>
   );
 }

@@ -70,7 +70,7 @@ export default function PlatformOnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-900">
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Onboarding Management</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-2">Onboarding Management</h1>
         <p className="text-slate-300">Send onboarding links and monitor user progress</p>
       </div>
 
@@ -100,7 +100,7 @@ export default function PlatformOnboardingPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3">
               <ExternalLink className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-blue-900">Onboarding Guide URL</p>
+                <p className="text-sm font-semibold text-blue-300">Onboarding Guide URL</p>
                 <a href="https://reedssolutionsllc.org/onboarding" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">https://reedssolutionsllc.org/onboarding</a>
                 <p className="text-xs text-blue-700 mt-1">This page is not linked from the main navigation — only accessible via direct URL or this email.</p>
               </div>

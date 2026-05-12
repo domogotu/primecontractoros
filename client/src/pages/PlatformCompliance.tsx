@@ -12,7 +12,7 @@ export default function PlatformCompliance() {
               <span className="text-blue-200 hover:text-white text-sm cursor-pointer">&larr; Back to Home</span>
             </Link>
           </nav>
-          <h1 className="text-4xl font-bold mb-4">Platform Compliance</h1>
+          <h1 className="text-4xl font-bold mb-4 text-white">Platform Compliance</h1>
           <p className="text-blue-100 text-lg">How PrimeContractorOS supports your government contracting compliance requirements.</p>
         </div>
       </div>

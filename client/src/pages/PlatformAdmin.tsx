@@ -27,7 +27,7 @@ export default function PlatformAdmin() {
   if (statsLoading || wsLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-900" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-300" />
       </div>
     );
   }
@@ -36,25 +36,25 @@ export default function PlatformAdmin() {
     {
       label: "Total Workspaces",
       value: stats?.totalWorkspaces || 0,
-      color: "text-blue-900",
+      color: "text-blue-300",
       href: "/platform/workspaces",
     },
     {
       label: "Total Users",
       value: stats?.totalUsers || 0,
-      color: "text-green-600",
+      color: "text-green-400",
       href: "/platform/users",
     },
     {
       label: "Plans",
       value: stats?.totalPlans || 0,
-      color: "text-purple-600",
+      color: "text-purple-400",
       href: "/platform/plans",
     },
     {
       label: "Open Tickets",
       value: stats?.openTickets || 0,
-      color: "text-amber-600",
+      color: "text-amber-400",
       href: "/platform/support",
     },
   ];
@@ -63,7 +63,7 @@ export default function PlatformAdmin() {
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
       <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-1">Platform Admin</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-300 mb-1">Platform Admin</h1>
         <p className="text-slate-300 text-sm">Manage all customer workspaces, billing, and support</p>
       </div>
 
