@@ -42,6 +42,7 @@ import {
   proposalFrameworksRouter, proposalSectionsRouter
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
+import { planVersionsRouter, discountUsageRouter, billingEventsRouter, consentRecordsRouter, backupExportsRouter, platformTasksRouter, policyVersionsRouter } from "./platformBusinessRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { checkPlanLimit } from "./services/billing";
 import { TRPCError } from "@trpc/server";
@@ -62,6 +63,15 @@ export const appRouter = router({
   system: systemRouter,
   workspace: workspaceRouter,
   platform: platformRouter,
+  platformBusiness: router({
+    planVersions: planVersionsRouter,
+    discountUsage: discountUsageRouter,
+    billingEvents: billingEventsRouter,
+    consentRecords: consentRecordsRouter,
+    backupExports: backupExportsRouter,
+    platformTasks: platformTasksRouter,
+    policyVersions: policyVersionsRouter,
+  }),
   platformAdmin: platformAdminRouter,
   files: filesRouter,
   contacts: contactsRouter,

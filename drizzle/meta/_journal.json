@@ -134,6 +134,20 @@
       "when": 1778611731339,
       "tag": "0018_keen_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1778614917842,
+      "tag": "0019_flawless_joshua_kane",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1778617152316,
+      "tag": "0020_neat_grim_reaper",
+      "breakpoints": true
     }
   ]
 }

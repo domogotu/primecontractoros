@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import {
   workspaces,
   plans,
+  discounts,
   platformBilling,
   supportTickets,
   users,
@@ -21,6 +22,8 @@ import {
   proposals,
   opportunities,
   invoices,
+  backupExports,
+  adminTasks,
 } from "../drizzle/schema";
 import { eq, desc, and, count, sql, gte } from "drizzle-orm";
 
@@ -757,7 +760,7 @@ export const platformAdminRouter = router({
           description: input.description || null,
           metadata: input.metadata || null,
         });
-        return { id: result.insertId };
+        return { id: Number(result.insertId) };
       }),
 
     resolve: adminProcedure
@@ -817,7 +820,7 @@ export const platformAdminRouter = router({
           description: input.description || null,
           metadata: input.metadata || null,
         });
-        return { id: result.insertId };
+        return { id: Number(result.insertId) };
       }),
   }),
 
@@ -953,6 +956,252 @@ export const platformAdminRouter = router({
           performedBy: ctx.user.id,
           reason: input.reason,
         });
+        return { success: true };
+      }),
+  }),
+
+  // --- Plans Management ---
+  plans: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.query.plans.findMany();
+    }),
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        internalCode: z.string(),
+        description: z.string().optional(),
+        monthlyPrice: z.number(),
+        annualPrice: z.number(),
+        setupFee: z.number().optional(),
+        trialAllowed: z.boolean().optional(),
+        discountAllowed: z.boolean().optional(),
+        isActive: z.boolean().optional(),
+        maxUsers: z.number().optional(),
+        maxOpportunities: z.number().optional(),
+        maxProposals: z.number().optional(),
+        maxContracts: z.number().optional(),
+        storageGb: z.number().optional(),
+        aiScanLimit: z.number().optional(),
+        supportLevel: z.string().optional(),
+        exportAccess: z.boolean().optional(),
+        reportingLevel: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const result = await db.insert(plans).values({
+          ...input,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await db.insert(platformAuditLog).values({
+          action: "create_plan",
+          targetType: "plan",
+          targetId: Number(result.insertId),
+          performedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(plans).set({ isActive: false }).where(eq(plans.id, input.id));
+        await db.insert(platformAuditLog).values({
+          action: "archive_plan",
+          targetType: "plan",
+          targetId: input.id,
+          performedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // --- Discounts Management ---
+  discounts: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.query.discounts.findMany();
+    }),
+    create: adminProcedure
+      .input(z.object({
+        code: z.string(),
+        name: z.string().optional(),
+        description: z.string().optional(),
+        discountType: z.enum(["percent", "flat", "free_month", "trial_extension"]),
+        value: z.number(),
+        appliesToAllPlans: z.boolean().optional(),
+        newCustomersOnly: z.boolean().optional(),
+        usageLimit: z.number().optional(),
+        startDate: z.string().optional(),
+        expirationDate: z.string().optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const result = await db.insert(discounts).values({
+          ...input,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        await db.insert(platformAuditLog).values({
+          action: "create_discount",
+          targetType: "discount",
+          targetId: Number(result.insertId),
+          performedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(discounts).set({ isActive: false }).where(eq(discounts.id, input.id));
+        await db.insert(platformAuditLog).values({
+          action: "disable_discount",
+          targetType: "discount",
+          targetId: input.id,
+          performedBy: ctx.user.id,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // --- Billing Management ---
+  billing: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(platformBilling);
+    }),
+    stats: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { total: 0, active: 0, pending: 0, failed: 0 };
+      const records = await db.select().from(platformBilling);
+      return {
+        totalRecords: records.length,
+        activeSubscriptions: records.filter((r: any) => r.billingStatus === "active paid").length,
+        activeTrials: records.filter((r: any) => r.billingStatus === "trial").length,
+        pendingPayments: records.filter((r: any) => r.billingStatus === "pending payment").length,
+        pastDue: records.filter((r: any) => r.billingStatus === "past due").length,
+        failedPayments: records.filter((r: any) => r.billingStatus === "failed").length,
+      };
+    }),
+  }),
+
+  // --- Backups & Export ---
+  backups: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(backupExports);
+    }),
+    create: adminProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const result = await db.insert(backupExports).values({
+          exportType: "full_zip",
+          workspaceId: input.workspaceId,
+          status: "completed",
+          createdBy: ctx.user.id,
+          createdAt: new Date(),
+        });
+        await db.insert(platformAuditLog).values({
+          action: "create_backup",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+        });
+        return { success: true, backupId: Number(result.insertId) };
+      }),
+  }),
+
+  // --- Consent Records ---
+  consent: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(consentRecords);
+    }),
+    stats: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { total: 0, accepted: 0, declined: 0, acceptRate: 0, byVersion: [] };
+      const records = await db.select().from(consentRecords);
+      const accepted = records.filter((r: any) => r.action === "accepted").length;
+      const declined = records.filter((r: any) => r.action === "declined").length;
+      const total = records.length;
+      return {
+        total,
+        accepted,
+        declined,
+        acceptRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
+        byVersion: [],
+      };
+    }),
+  }),
+
+  // --- Admin Tasks ---
+  tasks: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(adminTasks);
+    }),
+    stats: adminProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { total: 0, open: 0, completed: 0, overdue: 0 };
+      const records = await db.select().from(adminTasks);
+      const now = new Date();
+      return {
+        total: records.length,
+        open: records.filter((r: any) => r.status === "open").length,
+        completed: records.filter((r: any) => r.status === "completed").length,
+        overdue: records.filter((r: any) => r.status === "open" && new Date(r.dueDate) < now).length,
+      };
+    }),
+    create: adminProcedure
+      .input(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        priority: z.enum(["low", "medium", "high", "urgent"]),
+        dueDate: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const result = await db.insert(adminTasks).values({
+          title: input.title,
+          description: input.description,
+          priority: input.priority,
+          dueDate: new Date(input.dueDate),
+          status: "open",
+          createdBy: ctx.user.id,
+          createdAt: new Date(),
+        });
+        return { success: true, taskId: Number(result.insertId) };
+      }),
+    complete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(adminTasks).set({ status: "completed", completedAt: new Date() }).where(eq(adminTasks.id, input.id));
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.delete(adminTasks).where(eq(adminTasks.id, input.id));
         return { success: true };
       }),
   }),

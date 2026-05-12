@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS admin_tasks (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  title VARCHAR(255) NOT NULL,\n  description TEXT,\n  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium' NOT NULL,\n  status ENUM('open', 'completed', 'cancelled') DEFAULT 'open' NOT NULL,\n  dueDate TIMESTAMP NULL,\n  completedAt TIMESTAMP NULL,\n  createdBy INT NOT NULL,\n  assignedTo INT,\n  tags TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute CREATE TABLE IF NOT EXISTS admin_tasks (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  title VARCHAR(255) NOT NULL,\n  description TEXT,\n  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium' NOT NULL,\n  status ENUM('open', 'completed', 'cancelled') DEFAULT 'open' NOT NULL,\n  dueDate TIMESTAMP NULL,\n  completedAt TIMESTAMP NULL,\n  createdBy INT NOT NULL,\n  assignedTo INT,\n  tags TEXT,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1052
+}

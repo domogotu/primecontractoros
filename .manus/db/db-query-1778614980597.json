@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `consent_records` ADD COLUMN `sourcePage` varchar(255) AFTER `userAgent`;\nALTER TABLE `consent_records` ADD COLUMN `isRequired` boolean DEFAULT true AFTER `sourcePage`;\nALTER TABLE `consent_records` ADD COLUMN `revokedAt` timestamp AFTER `isRequired`;\n\nALTER TABLE `discount_usage` ADD COLUMN `userId` int AFTER `workspaceId`;\nALTER TABLE `discount_usage` ADD COLUMN `planId` int AFTER `userId`;\nALTER TABLE `discount_usage` ADD COLUMN `finalPrice` decimal(10,2) AFTER `amountSaved`;\nALTER TABLE `discount_usage` ADD COLUMN `activationResult` varchar(100) AFTER `finalPrice`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute ALTER TABLE `consent_records` ADD COLUMN `sourcePage` varchar(255) AFTER `userAgent`;\nALTER TABLE `consent_records` ADD COLUMN `isRequired` boolean DEFAULT true AFTER `sourcePage`;\nALTER TABLE `consent_records` ADD COLUMN `revokedAt` timestamp AFTER `isRequired`;\n\nALTER TABLE `discount_usage` ADD COLUMN `userId` int AFTER `workspaceId`;\nALTER TABLE `discount_usage` ADD COLUMN `planId` int AFTER `userId`;\nALTER TABLE `discount_usage` ADD COLUMN `finalPrice` decimal(10,2) AFTER `amountSaved`;\nALTER TABLE `discount_usage` ADD COLUMN `activationResult` varchar(100) AFTER `finalPrice`;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1485
+}

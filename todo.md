@@ -1260,3 +1260,8 @@
 ## Quick Fixes (User Feedback)
 - [x] Dashboard stat cards: spell out "Opps" to "Opportunities", "Outstanding" to "Outstanding Balance", "inv." to full word, add brief explanations to each card
 - [x] Fix mobile sidebar scrolling cutoff: move Platform Admin and Sign Out inside scrollable container in WorkspaceSidebar, PlatformSidebar, and MobileNav
+
+## User Guide and Capability Statement Cleanup
+- [ ] Rewrite User Guide page: official PrimeContractorOS help manual feel, card descriptions, section details, step-by-step instructions, tips, mobile-friendly
+- [ ] Rewrite Capability Statement page: professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
+- [ ] Add Download Capability Statement PDF, Contact, View Services, View PrimeContractorOS buttons

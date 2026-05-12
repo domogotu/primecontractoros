@@ -1532,3 +1532,103 @@ export const platformActivityLog = mysqlTable("platform_activity_log", {
 });
 export type PlatformActivityLogEntry = typeof platformActivityLog.$inferSelect;
 export type InsertPlatformActivityLogEntry = typeof platformActivityLog.$inferInsert;
+
+
+// ==================== PLATFORM ADMIN BUSINESS CONTROL TABLES ====================
+
+// Plan Versions — audit trail for plan changes
+export const planVersions = mysqlTable("plan_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  planId: int("planId").notNull(),
+  changeType: varchar("changeType", { length: 50 }).notNull(), // 'created', 'updated', 'archived', 'duplicated'
+  changedFields: text("changedFields"), // JSON of what changed
+  previousValues: text("previousValues"), // JSON of old values
+  newValues: text("newValues"), // JSON of new values
+  changedBy: int("changedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlanVersion = typeof planVersions.$inferSelect;
+
+// Policy Versions — track versions of legal policies
+export const policyVersions = mysqlTable("policy_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  policyType: varchar("policyType", { length: 100 }).notNull(), // 'terms_of_service', 'privacy_policy', 'billing_authorization', etc.
+  version: varchar("version", { length: 50 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  isActive: boolean("isActive").default(true).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PolicyVersion = typeof policyVersions.$inferSelect;
+
+// Backup Exports — log of all admin data exports
+export const backupExports = mysqlTable("backup_exports", {
+  id: int("id").primaryKey().autoincrement(),
+  exportType: varchar("exportType", { length: 100 }).notNull(), // 'full_csv', 'full_json', 'table_csv', 'table_json', 'workspace_export', 'category_export'
+  tableName: varchar("tableName", { length: 100 }),
+  workspaceId: int("workspaceId"),
+  fileSize: int("fileSize"),
+  status: varchar("status", { length: 50 }).default("completed").notNull(),
+  notes: text("notes"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BackupExport = typeof backupExports.$inferSelect;
+
+// Platform Tasks — scheduled/background platform jobs
+export const platformTasks = mysqlTable("platform_tasks", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull(),
+  taskType: varchar("taskType", { length: 100 }).notNull(), // 'database_backup', 'email_digest', 'trial_expiration_check', 'billing_status_check', 'payment_retry_check', 'workspace_cleanup', 'support_reminder_check', 'ai_usage_sync', 'data_export_cleanup', 'consent_audit_check', 'security_activity_review', 'stale_workspace_check'
+  description: text("description"),
+  schedule: varchar("schedule", { length: 100 }), // cron expression or 'manual'
+  isEnabled: boolean("isEnabled").default(true).notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  lastDurationMs: int("lastDurationMs"),
+  lastResult: varchar("lastResult", { length: 50 }), // 'success', 'failed', 'partial', 'skipped'
+  lastError: text("lastError"),
+  retryCount: int("retryCount").default(0),
+  relatedWorkspaceId: int("relatedWorkspaceId"),
+  metadata: text("metadata"), // JSON config
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlatformTask = typeof platformTasks.$inferSelect;
+
+// Platform Task Runs — execution history for platform tasks
+export const platformTaskRuns = mysqlTable("platform_task_runs", {
+  id: int("id").primaryKey().autoincrement(),
+  taskId: int("taskId").notNull(),
+  status: varchar("status", { length: 50 }).notNull(), // 'running', 'success', 'failed', 'partial', 'skipped'
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  durationMs: int("durationMs"),
+  result: text("result"), // JSON summary
+  errorMessage: text("errorMessage"),
+  triggeredBy: varchar("triggeredBy", { length: 50 }).default("scheduled"), // 'scheduled', 'manual', 'retry'
+  triggeredByUserId: int("triggeredByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlatformTaskRun = typeof platformTaskRuns.$inferSelect;
+
+
+// Admin Tasks — operational tasks for platform admins
+export const adminTasks = mysqlTable("admin_tasks", {
+  id: int("id").primaryKey().autoincrement(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium").notNull(),
+  status: mysqlEnum("status", ["open", "completed", "cancelled"]).default("open").notNull(),
+  dueDate: timestamp("dueDate"),
+  completedAt: timestamp("completedAt"),
+  createdBy: int("createdBy").notNull(),
+  assignedTo: int("assignedTo"),
+  tags: text("tags"), // JSON array of tag strings
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AdminTask = typeof adminTasks.$inferSelect;
+export type InsertAdminTask = typeof adminTasks.$inferInsert;
