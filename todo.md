@@ -461,12 +461,12 @@
 - [x] Wire Files page to use built-in + S3 storage with category filtering
 
 ### 2. Email Notifications
-- [ ] [DEFERRED - requires Resend API key] Resend integration with configurable API key
-- [ ] [DEFERRED] Welcome email on signup
-- [ ] [DEFERRED] Deadline reminder emails (3 days before)
-- [ ] [DEFERRED] Invoice alert emails
-- [ ] [DEFERRED] Database-only fallback when email not configured
-- [ ] [DEFERRED] Email templates system
+- [x] Resend integration with platform-level API key + workspace override (Phase 22)
+- [x] Welcome email on signup (auto-sent on workspace creation)
+- [x] Deadline reminder emails (sent on deadline creation with days-left count)
+- [x] Invoice alert emails (sent on invoice creation)
+- [x] Database-only fallback when email not configured (emailNotifications table logs all)
+- [x] Email templates system (welcome, deadlineReminder, invoiceAlert in services/email.ts)
 
 ### 3. Stripe Payment Processing
 - [x] Stripe integration for subscription billing (Phase 21)
@@ -747,3 +747,12 @@
 - [x] Billing mock added to crud.test.ts so plan limit checks don't break tests
 - [x] 47 tests passing, 0 TypeScript errors
 - [x] Deployed to primecontractor-bk79t4ta.manus.space
+
+## Phase 22: Resend Email Notifications
+- [x] RESEND_API_KEY configured as secret and validated (3 tests passing)
+- [x] Email service updated to use platform-level API key with workspace override
+- [x] Welcome email wired to workspace auto-creation in getMyWorkspace
+- [x] Invoice alert email wired to invoice create mutation
+- [x] Deadline reminder email wired to deadline create mutation with days-left calculation
+- [x] Database-only fallback: all emails logged to emailNotifications table regardless of send status
+- [x] 50 tests passing, 0 TypeScript errors

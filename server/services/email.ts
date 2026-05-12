@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { getDb } from "../db";
 import { emailNotifications, workspaceSettings } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { ENV } from "../_core/env";
 
 export interface EmailConfig {
   apiKey: string;
@@ -22,8 +23,8 @@ export async function getEmailConfig(workspaceId: number): Promise<EmailConfig |
     if (s.settingValue) settingsMap[s.settingKey] = s.settingValue;
   }
 
-  const apiKey = settingsMap["resend_api_key"];
-  const fromEmail = settingsMap["email_from_address"] || "noreply@example.com";
+  const apiKey = settingsMap["resend_api_key"] || ENV.resendApiKey;
+  const fromEmail = settingsMap["email_from_address"] || "onboarding@resend.dev";
   const fromName = settingsMap["email_from_name"] || "PrimeContractorOS";
 
   if (!apiKey) return null;

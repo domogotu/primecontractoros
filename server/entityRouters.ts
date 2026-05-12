@@ -1,6 +1,7 @@
 import { protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
 import {
   listFiles, createFile, deleteFile,
   listContacts, createContact, updateContact, deleteContact,
@@ -107,12 +108,20 @@ export const invoicesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       const { issuedDate, dueDate, ...rest } = input;
-      return createInvoice({
+      const result = await createInvoice({
         ...rest,
         workspaceId: wsId,
         issuedDate: issuedDate ? new Date(issuedDate) : undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,
       });
+      // Send invoice alert email asynchronously
+      if (ctx.user.email) {
+        sendInvoiceAlert(
+          wsId, ctx.user.email, input.invoiceNumber,
+          input.amount, "Contract", "Created"
+        ).catch(err => console.error("[Email] Invoice alert failed:", err));
+      }
+      return result;
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), invoiceNumber: z.string().optional(), amount: z.string().optional(), status: z.string().optional(), description: z.string().optional() }))
@@ -250,11 +259,22 @@ export const deadlinesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       const { dueDate, ...rest } = input;
-      return createDeadline({
+      const result = await createDeadline({
         ...rest,
         workspaceId: wsId,
         dueDate: new Date(dueDate),
       });
+      // Send deadline reminder email asynchronously
+      if (ctx.user.email) {
+        const dueDateObj = new Date(dueDate);
+        const daysLeft = Math.max(0, Math.ceil((dueDateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+        sendDeadlineReminder(
+          wsId, ctx.user.email, input.title,
+          dueDateObj.toLocaleDateString(), input.linkedRecordType || "General",
+          input.title, daysLeft
+        ).catch(err => console.error("[Email] Deadline reminder failed:", err));
+      }
+      return result;
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), priority: z.string().optional(), status: z.string().optional() }))

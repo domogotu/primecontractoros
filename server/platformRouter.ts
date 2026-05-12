@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getDb } from "./db";
 import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers } from "../drizzle/schema";
 import { eq, desc, and, sql, count } from "drizzle-orm";
+import { sendWelcomeEmail } from "./services/email";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({
@@ -22,6 +23,12 @@ export const workspaceRouter = router({
     });
     const insertId = result[0].insertId;
     const [newWs] = await db.select().from(workspaces).where(eq(workspaces.id, insertId)).limit(1);
+    // Send welcome email asynchronously (don't block workspace creation)
+    if (ctx.user.email && newWs) {
+      sendWelcomeEmail(insertId, ctx.user.email, ctx.user.name || "there", newWs.name).catch(err =>
+        console.error("[Email] Failed to send welcome email:", err)
+      );
+    }
     return newWs;
   }),
 
