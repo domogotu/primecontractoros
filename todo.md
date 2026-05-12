@@ -469,10 +469,10 @@
 - [ ] [DEFERRED] Email templates system
 
 ### 3. Stripe Payment Processing
-- [ ] Stripe integration for subscription billing (keys provided)
-- [ ] Billing page (view plan, upgrade/downgrade, invoices)
+- [x] Stripe integration for subscription billing (Phase 21)
+- [x] Billing page (view plan, upgrade/downgrade, invoices) - /app/billing
 - [x] Platform owner manages plans and pricing (Plans page in Platform Admin)
-- [ ] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
+- [x] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
 - [x] Development mode (all unlocked) when Stripe not configured (current behavior)
 
 ### 4. Reports Generation
