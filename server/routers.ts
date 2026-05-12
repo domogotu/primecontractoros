@@ -47,8 +47,8 @@ import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templates
 import { guidanceRouter } from "./guidanceRouter";
 import { platformAdminRouter } from "./platformAdminRouter";
 import { pdfRouter } from "./pdfRouter";
-// import { aiRouter } from "./aiRouter";
-// import { systemInfraRouter } from "./systemInfraRouter";
+import { aiRouter } from "./aiRouter";
+import { systemInfraRouter } from "./systemInfraRouter";
 import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter } from "./batch1Router";
 import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
@@ -95,8 +95,8 @@ export const appRouter = router({
   lessonsLearnedV2: lessonsLearnedRouter,
   capability: capabilityRouter,
   guidance: guidanceRouter,
-  // aiWorkflow: aiRouter,
-  // systemInfra: systemInfraRouter,
+  aiWorkflow: aiRouter,
+  systemInfra: systemInfraRouter,
   onboarding: onboardingRouter,
   recordNotes: recordNotesRouter,
   recordTimeline: recordTimelineRouter,

@@ -907,3 +907,15 @@
 - [x] Frontend: Handbook builder (compliance handbook generation)
 - [x] Frontend: External viewer role (read-only access)
 - [x] Frontend: Consistency check (data validation)
+
+## Phase 25: Re-enable AI Router and System Infrastructure Router
+- [x] Verify aiEngine.ts exists with all 6 workflow functions (contract scan, file analysis, opportunity review, proposal assistance, invoice review, dashboard summary)
+- [x] Verify all functions use structured JSON outputs via response_format
+- [x] Verify usage tracking (tokens, cost, model, timestamp) on every call
+- [x] Uncomment aiRouter import and registration in routers.ts
+- [x] Uncomment systemInfraRouter import and registration in routers.ts
+- [x] Server starts cleanly with both routers enabled
+- [x] Build passes (vite build)
+- [x] All 63 tests pass (vitest run)
+- [x] Deploy to production
+- [x] Push to GitHub
