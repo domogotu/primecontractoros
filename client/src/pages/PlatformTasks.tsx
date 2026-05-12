@@ -55,7 +55,7 @@ export default function PlatformTasks() {
         ? tasks.filter((t) => t.status === "open")
         : filter === "completed"
           ? tasks.filter((t) => t.status === "completed")
-          : tasks.filter((t) => t.status === "open" && new Date(t.dueDate) < new Date());
+          : tasks.filter((t) => t.status === "open" && t.dueDate && new Date(t.dueDate) < new Date());
 
   if (tasksQuery.isLoading) return <LoadingState />;
 

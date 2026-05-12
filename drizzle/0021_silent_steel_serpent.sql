@@ -1,0 +1,1 @@
+ALTER TABLE `platformAuditLog` MODIFY COLUMN `targetType` enum('workspace','user','plan','billing','discount','backup','task','support','recovery') NOT NULL;

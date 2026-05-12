@@ -1265,3 +1265,51 @@
 - [ ] Rewrite User Guide page: official PrimeContractorOS help manual feel, card descriptions, section details, step-by-step instructions, tips, mobile-friendly
 - [ ] Rewrite Capability Statement page: professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
 - [ ] Add Download Capability Statement PDF, Contact, View Services, View PrimeContractorOS buttons
+
+
+## Phase 25: 7 Platform Admin Business Control Pages
+
+### Database Schema
+- [x] admin_tasks table (id, title, priority, dueDate, status, description, createdBy, createdAt, updatedAt)
+- [x] platformBilling table (workspace_id, plan_id, billing_status, current_period_start, current_period_end, trial_ends_at, next_billing_date, created_at, updated_at)
+- [x] backupExports table (export_type, workspace_id, file_size, status, notes, created_by, created_at)
+- [x] platformAuditLog table (action, target_type, target_id, performed_by, reason, metadata, created_at)
+- [x] consentRecords table (workspace_id, user_id, document_type, version, accepted_at, ip_address)
+
+### Backend Routers (adminProcedure protected)
+- [x] platformAdmin.plans.list / create / update / delete
+- [x] platformAdmin.discounts.list / create / update / delete
+- [x] platformAdmin.billing.list / stats
+- [x] platformAdmin.overrides.list / create / delete
+- [x] platformAdmin.consent.list / stats
+- [x] platformAdmin.backups.list / create
+- [x] platformAdmin.tasks.list / create / complete / delete / stats
+
+### Frontend Pages (7 total)
+- [x] /platform/plans - Plans Management (create, edit, delete plans)
+- [x] /platform/discounts - Discounts & Promo Codes (create, edit, delete discounts)
+- [x] /platform/billing - Billing & Activation (list workspace billing records)
+- [x] /platform/overrides - Owner Overrides (platform-owner corrections and manual overrides)
+- [x] /platform/consent-records - Consent Records (legal acceptance tracking)
+- [x] /platform/backups - Backups & Export (workspace data exports)
+- [x] /platform/tasks - Platform Tasks (admin operational tasks and follow-ups)
+
+### Security & Isolation
+- [x] All routers use adminProcedure (platform owner only)
+- [x] Customer users cannot access /platform routes
+- [x] All audit operations logged to platformAuditLog
+- [x] No customer data exposed to platform admin pages
+- [x] All mutations require reason/explanation for audit trail
+
+### Testing & Deployment
+- [x] Build succeeds with 0 TypeScript errors
+- [x] All 80 tests passing (platformAdmin.test.ts + others)
+- [x] Checkpoint saved (ec129c33)
+- [x] Deployed to primecontractor-bk79t4ta.manus.space (public)
+
+## Phase 26: Fix Placeholder Pages (Support, Ownership Recovery, Pricing History)
+
+- [x] /platform/support - Build full Support Tickets page with ticket list, status, priority, create/reply
+- [x] /platform/ownership-recovery - Build full Ownership Recovery page with recovery requests, approve/deny
+- [x] /platform/pricing-history - Build full Pricing History page with plan version history and price changes
+- [x] Deploy updated pages to production

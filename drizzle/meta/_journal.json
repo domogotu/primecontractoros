@@ -148,6 +148,13 @@
       "when": 1778617152316,
       "tag": "0020_neat_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1778619667539,
+      "tag": "0021_silent_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

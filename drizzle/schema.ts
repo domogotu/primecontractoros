@@ -871,7 +871,7 @@ export type InsertPlatformNote = typeof platformNotes.$inferInsert;
 export const platformAuditLog = mysqlTable("platformAuditLog", {
   id: int("id").autoincrement().primaryKey(),
   action: varchar("action", { length: 100 }).notNull(), // "suspend_workspace", "reactivate_workspace", "disable_user", "add_note", etc.
-  targetType: mysqlEnum("targetType", ["workspace", "user", "plan", "billing"]).notNull(),
+  targetType: mysqlEnum("targetType", ["workspace", "user", "plan", "billing", "discount", "backup", "task", "support", "recovery"]).notNull(),
   targetId: int("targetId").notNull(),
   performedBy: int("performedBy").notNull(),
   reason: text("reason"),

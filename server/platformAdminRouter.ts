@@ -752,7 +752,7 @@ export const platformAdminRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-        const [result] = await db.insert(workspaceHealthFlags).values({
+        await db.insert(workspaceHealthFlags).values({
           workspaceId: input.workspaceId,
           flagType: input.flagType,
           severity: input.severity,
@@ -760,7 +760,7 @@ export const platformAdminRouter = router({
           description: input.description || null,
           metadata: input.metadata || null,
         });
-        return { id: Number(result.insertId) };
+        return { success: true };
       }),
 
     resolve: adminProcedure
@@ -812,7 +812,7 @@ export const platformAdminRouter = router({
       .mutation(async ({ input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-        const [result] = await db.insert(platformActivityLog).values({
+        await db.insert(platformActivityLog).values({
           workspaceId: input.workspaceId || null,
           userId: input.userId || null,
           activityType: input.activityType,
@@ -820,7 +820,7 @@ export const platformAdminRouter = router({
           description: input.description || null,
           metadata: input.metadata || null,
         });
-        return { id: Number(result.insertId) };
+        return { success: true };
       }),
   }),
 
@@ -962,44 +962,39 @@ export const platformAdminRouter = router({
 
   // --- Plans Management ---
   plans: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db.query.plans.findMany();
+      return db.select().from(plans).orderBy(desc(plans.createdAt));
     }),
     create: adminProcedure
       .input(z.object({
         name: z.string(),
-        internalCode: z.string(),
         description: z.string().optional(),
-        monthlyPrice: z.number(),
-        annualPrice: z.number(),
-        setupFee: z.number().optional(),
-        trialAllowed: z.boolean().optional(),
-        discountAllowed: z.boolean().optional(),
-        isActive: z.boolean().optional(),
+        monthlyPrice: z.string(),
+        annualPrice: z.string().optional(),
+        features: z.string().optional(),
         maxUsers: z.number().optional(),
-        maxOpportunities: z.number().optional(),
-        maxProposals: z.number().optional(),
         maxContracts: z.number().optional(),
-        storageGb: z.number().optional(),
-        aiScanLimit: z.number().optional(),
-        supportLevel: z.string().optional(),
-        exportAccess: z.boolean().optional(),
-        reportingLevel: z.string().optional(),
+        isActive: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-        const result = await db.insert(plans).values({
-          ...input,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+        await db.insert(plans).values({
+          name: input.name,
+          description: input.description,
+          monthlyPrice: input.monthlyPrice,
+          annualPrice: input.annualPrice,
+          features: input.features,
+          maxUsers: input.maxUsers,
+          maxContracts: input.maxContracts,
+          isActive: input.isActive ?? true,
         });
         await db.insert(platformAuditLog).values({
           action: "create_plan",
           targetType: "plan",
-          targetId: Number(result.insertId),
+          targetId: 0,
           performedBy: ctx.user.id,
         });
         return { success: true };
@@ -1022,37 +1017,39 @@ export const platformAdminRouter = router({
 
   // --- Discounts Management ---
   discounts: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: adminProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
-      return db.query.discounts.findMany();
+      return db.select().from(discounts).orderBy(desc(discounts.createdAt));
     }),
     create: adminProcedure
       .input(z.object({
         code: z.string(),
-        name: z.string().optional(),
         description: z.string().optional(),
-        discountType: z.enum(["percent", "flat", "free_month", "trial_extension"]),
-        value: z.number(),
-        appliesToAllPlans: z.boolean().optional(),
-        newCustomersOnly: z.boolean().optional(),
-        usageLimit: z.number().optional(),
-        startDate: z.string().optional(),
-        expirationDate: z.string().optional(),
+        percentOff: z.number().optional(),
+        amountOff: z.string().optional(),
+        maxUses: z.number().optional(),
+        applicablePlanId: z.number().optional(),
         isActive: z.boolean().optional(),
+        expiresAt: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-        const result = await db.insert(discounts).values({
-          ...input,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+        await db.insert(discounts).values({
+          code: input.code,
+          description: input.description,
+          percentOff: input.percentOff,
+          amountOff: input.amountOff,
+          maxUses: input.maxUses,
+          applicablePlanId: input.applicablePlanId,
+          isActive: input.isActive ?? true,
+          expiresAt: input.expiresAt ? new Date(input.expiresAt) : undefined,
         });
         await db.insert(platformAuditLog).values({
           action: "create_discount",
           targetType: "discount",
-          targetId: Number(result.insertId),
+          targetId: 0,
           performedBy: ctx.user.id,
         });
         return { success: true };
@@ -1086,11 +1083,11 @@ export const platformAdminRouter = router({
       const records = await db.select().from(platformBilling);
       return {
         totalRecords: records.length,
-        activeSubscriptions: records.filter((r: any) => r.billingStatus === "active paid").length,
-        activeTrials: records.filter((r: any) => r.billingStatus === "trial").length,
-        pendingPayments: records.filter((r: any) => r.billingStatus === "pending payment").length,
-        pastDue: records.filter((r: any) => r.billingStatus === "past due").length,
-        failedPayments: records.filter((r: any) => r.billingStatus === "failed").length,
+        activeSubscriptions: records.filter((r) => r.status === "active").length,
+        activeTrials: records.filter((r) => r.status === "trial").length,
+        pendingPayments: records.filter((r) => r.status === "expired").length,
+        pastDue: records.filter((r) => r.status === "past_due").length,
+        failedPayments: records.filter((r) => r.status === "cancelled").length,
       };
     }),
   }),
@@ -1120,7 +1117,7 @@ export const platformAdminRouter = router({
           targetId: input.workspaceId,
           performedBy: ctx.user.id,
         });
-        return { success: true, backupId: Number(result.insertId) };
+        return { success: true };
       }),
   }),
 
@@ -1186,7 +1183,7 @@ export const platformAdminRouter = router({
           createdBy: ctx.user.id,
           createdAt: new Date(),
         });
-        return { success: true, taskId: Number(result.insertId) };
+        return { success: true };
       }),
     complete: adminProcedure
       .input(z.object({ id: z.number() }))
