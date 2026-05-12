@@ -6,6 +6,7 @@ import { Link, useLocation } from "wouter";
 import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact, AlertCircle, CheckCircle2, Clock, Bell, ListTodo } from "lucide-react";
 import { GuidancePanel } from "@/components/GuidancePanel";
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
+import PageGuide from "@/components/PageGuide";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -42,6 +43,13 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-full bg-gray-100 flex flex-col">
+      <PageGuide
+        title="Workspace Dashboard"
+        description="Your command center for government contracting operations."
+        whenToUse="Check this page daily to see what needs attention, track your pipeline, and manage upcoming deadlines."
+        whatToDoNext={["Review any open alerts or overdue tasks", "Check your opportunity pipeline for new leads", "Follow up on pending proposals", "Review upcoming contract deadlines"]}
+        relatedRecords={[{ label: "Opportunities", path: "/app/opportunities" }, { label: "Proposals", path: "/app/proposals" }, { label: "Contracts", path: "/app/contracts" }, { label: "Tasks", path: "/app/tasks" }]}
+      />
       {/* Navy Header */}
       <div className="bg-blue-900 text-white px-4 sm:px-6 md:px-8 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">

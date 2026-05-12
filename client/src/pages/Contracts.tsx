@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, FileCheck, ExternalLink, Loader2 } from "lucide-react";
 import ContractForm from "@/components/ContractForm";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Contracts() {
   const [, navigate] = useLocation();
@@ -45,6 +46,13 @@ export default function Contracts() {
         </Button>
       }
     >
+      <PageGuide
+        title="Contracts"
+        description="Active and historical contracts with status tracking and lifecycle management."
+        whenToUse="When managing active contracts, checking compliance, or reviewing contract history."
+        whatToDoNext={["Review active contract statuses", "Check for upcoming deadlines or deliverables", "Open Contract Hub for detailed management", "Start closeout process for completed contracts"]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Finance", path: "/app/finance" }, { label: "Deliverables", path: "/app/deliverables" }]}
+      />
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

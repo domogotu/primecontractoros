@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Obligations() {
   const [showForm, setShowForm] = useState(false);
@@ -70,6 +71,13 @@ export default function Obligations() {
         </Button>
       }
     >
+      <PageGuide
+        title="Obligations"
+        description="Track contractual obligations extracted from contracts and AI reviews."
+        whenToUse="When reviewing what you owe under each contract or checking obligation fulfillment."
+        whatToDoNext={["Review pending obligations", "Mark fulfilled obligations", "Link obligations to deliverables", "Check for upcoming obligation deadlines"]}
+        relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Deliverables", path: "/app/deliverables" }, { label: "Compliance", path: "/app/compliance" }]}
+      />
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

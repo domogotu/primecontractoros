@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, Target, ExternalLink, Loader2 } from "lucide-react";
 import OpportunityForm from "@/components/OpportunityForm";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
@@ -47,6 +48,13 @@ export default function Opportunities() {
         </Button>
       }
     >
+      <PageGuide
+        title="Opportunities Pipeline"
+        description="Track and manage government contracting opportunities from discovery to decision."
+        whenToUse="When you find a new opportunity on SAM.gov, receive a tip, or need to evaluate your pipeline."
+        whatToDoNext={["Add new opportunities as you discover them", "Evaluate each opportunity with pursue/hold/no-pursue decision", "Convert pursued opportunities to proposals", "Review AI recommendations for opportunity fit"]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Contacts", path: "/app/contacts" }, { label: "Files", path: "/app/files" }]}
+      />
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

@@ -5,6 +5,7 @@ import PageLayout from "@/components/PageLayout";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
 
 export default function Templates() {
   
@@ -34,6 +35,13 @@ export default function Templates() {
   if (isLoading) {
     return (
       <PageLayout title="Template Library" subtitle="Pre-built templates for government contracting" label="Resources">
+      <PageGuide
+        title="Templates"
+        description="Reusable structures, checklists, and language for proposals, contracts, and operations."
+        whenToUse="When creating reusable templates, applying templates to new records, or improving from lessons learned."
+        whatToDoNext={["Create templates from successful proposals", "Apply templates to new proposals or contracts", "Update templates with lessons learned", "Review template usage and effectiveness"]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Lessons Learned", path: "/app/lessons" }, { label: "Capability Statements", path: "/app/capability-statements" }]}
+      />
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>

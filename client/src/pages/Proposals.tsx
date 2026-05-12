@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, FileText, ExternalLink, Loader2 } from "lucide-react";
 import ProposalForm from "@/components/ProposalForm";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Proposals() {
   const [, navigate] = useLocation();
@@ -47,6 +48,13 @@ export default function Proposals() {
         </Button>
       }
     >
+      <PageGuide
+        title="Proposals"
+        description="Manage your proposal pipeline from draft through submission and decision."
+        whenToUse="When building, reviewing, or tracking proposals for government contracts."
+        whatToDoNext={["Create proposals from pursued opportunities", "Build proposal outlines and compliance matrices", "Track submission deadlines", "Record win/loss outcomes and lessons"]}
+        relatedRecords={[{ label: "Opportunities", path: "/app/opportunities" }, { label: "Contracts", path: "/app/contracts" }, { label: "Templates", path: "/app/templates" }]}
+      />
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
         <div className="flex gap-3">

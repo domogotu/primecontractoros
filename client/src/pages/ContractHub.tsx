@@ -1,282 +1,97 @@
-import { useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock, DollarSign, FileText, Users, MessageSquare, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { trpc } from '@/lib/trpc';
-import { useLocation } from 'wouter';
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import PageGuide from "@/components/PageGuide";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { FileText, CheckCircle2, Clock, AlertTriangle, ArrowRight, Shield, Calendar, DollarSign, Users, Briefcase } from "lucide-react";
 
 export default function ContractHub() {
-  const [activeTab, setActiveTab] = useState('overview');
   const [, navigate] = useLocation();
-  const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
-  const { data: tasks = [] } = trpc.tasks.list.useQuery();
-  const { data: invoices = [] } = trpc.invoices.list.useQuery();
+  const { data: contracts = [] } = trpc.contracts.list.useQuery();
 
-  // Use the first active contract or fall back to a placeholder
-  const activeContracts = (contracts as any[]).filter(c => c.status === 'active' || c.status === 'awarded');
-  const firstContract = activeContracts[0] || (contracts as any[])[0];
-  const contract = firstContract ? {
-    id: firstContract.id,
-    title: firstContract.title || 'Untitled Contract',
-    contractNumber: firstContract.contractNumber || 'N/A',
-    agency: firstContract.agency || 'N/A',
-    value: parseFloat(firstContract.value || '0'),
-    startDate: firstContract.startDate ? new Date(firstContract.startDate).toISOString().split('T')[0] : 'N/A',
-    endDate: firstContract.endDate ? new Date(firstContract.endDate).toISOString().split('T')[0] : 'N/A',
-    status: firstContract.status || 'draft',
-    health: 'Healthy',
-    proposalTitle: '',
-    modifications: 0,
-    openAlerts: 0,
-    openTasks: (tasks as any[]).filter(t => t.contractId === firstContract.id && t.status !== 'done').length,
-    outstandingBalance: (invoices as any[]).filter(i => i.contractId === firstContract.id && i.status !== 'paid').reduce((sum: number, i: any) => sum + parseFloat(i.amount || '0'), 0),
-  } : null;
-
-  if (isLoading) return <div className="flex items-center justify-center h-64 text-gray-500">Loading contracts...</div>;
-
-  if (!contract) return (
-    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-      <FileText className="w-12 h-12 mb-4 text-gray-300" />
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">No Active Contracts</h2>
-      <p className="text-gray-500 mb-4">Create a contract to see the Contract Hub in action.</p>
-      <Button onClick={() => navigate('/app/contracts')}>Go to Contracts</Button>
-    </div>
-  );
+  const activeContracts = contracts.filter((c: any) => c.status === "active");
+  
+  const sections = [
+    { title: "Requirements", description: "Track all contract requirements and verification status", path: "/app/requirements", icon: FileText, count: 0 },
+    { title: "Deliverables", description: "Manage contract deliverables and submission schedules", path: "/app/deliverables", icon: CheckCircle2, count: 0 },
+    { title: "Deadlines", description: "Monitor upcoming deadlines and milestones", path: "/app/deadlines", icon: Calendar, count: 0 },
+    { title: "Compliance Matrix", description: "Full compliance tracking with clause references", path: "/app/compliance", icon: Shield, count: 0 },
+    { title: "Change Management", description: "Track modifications and change orders", path: "/app/change-management", icon: Briefcase, count: 0 },
+    { title: "Finance & Invoicing", description: "Billing, payments, and financial tracking", path: "/app/finance", icon: DollarSign, count: 0 },
+    { title: "Subcontractors", description: "Manage subcontractor relationships and flowdowns", path: "/app/subcontractors", icon: Users, count: 0 },
+    { title: "AI Contract Review", description: "AI-powered contract analysis with confirmation", path: "/app/ai-contract-review", icon: AlertTriangle, count: 0 },
+  ];
 
   return (
-    <div className="min-h-full bg-gray-100 flex flex-col">
-      {/* Navy Header */}
-      <div className="bg-blue-900 text-white px-8 py-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-2">Run the Contract From One Structured Workspace</h1>
-          <p className="text-blue-100 mb-6">Manage all contract activities, track obligations, and maintain compliance in one place</p>
-          <div className="flex gap-3 flex-wrap">
-            <Button className="bg-white text-blue-900 hover:bg-gray-100">
-              <Upload className="w-4 h-4 mr-2" /> Upload Governing File
-            </Button>
-            <Button className="bg-green-500 hover:bg-green-600 text-white">
-              <CheckCircle2 className="w-4 h-4 mr-2" /> Run/Review AI Confirmation
-            </Button>
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white">
-              <MessageSquare className="w-4 h-4 mr-2" /> Add Update/Note
-            </Button>
-            <Button className="bg-gray-600 hover:bg-gray-700 text-white">
-              <FileText className="w-4 h-4 mr-2" /> Open Help
-            </Button>
+    <div className="p-6 max-w-7xl mx-auto">
+      <PageGuide
+        title="Contract Hub"
+        description="Central command center for your active contracts. Access all contract-related modules from one place."
+        whenToUse="Use this as your starting point when working on contract operations. Navigate to specific modules for detailed work."
+        whatToDoNext={[
+          "Review active contract status and upcoming deadlines",
+          "Check compliance matrix for any gaps",
+          "Process pending deliverable submissions",
+          "Review AI findings awaiting confirmation",
+        ]}
+        relatedRecords={[
+          { label: "Contracts", path: "/app/contracts" },
+          { label: "Opportunities", path: "/app/opportunities" },
+          { label: "Closeout", path: "/app/closeout" },
+          { label: "Reports", path: "/app/reports" },
+        ]}
+      />
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">Contract Hub</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          {activeContracts.length} active contract{activeContracts.length !== 1 ? "s" : ""} | Central operations dashboard
+        </p>
+      </div>
+
+      {/* Active Contracts Summary */}
+      {activeContracts.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">Active Contracts</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {activeContracts.slice(0, 4).map((contract: any) => (
+              <Card key={contract.id} className="hover:border-blue-300 transition-colors cursor-pointer" onClick={() => navigate("/app/contracts")}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-900 text-sm">{contract.title}</p>
+                      <p className="text-xs text-slate-500 mt-1">{contract.contractNumber || "No number assigned"}</p>
+                    </div>
+                    <Badge className="bg-green-100 text-green-700">Active</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Module Navigation */}
+      <h2 className="text-lg font-semibold text-slate-800 mb-3">Contract Modules</h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <Card key={section.title} className="hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer group" onClick={() => navigate(section.path)}>
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <Icon className="w-8 h-8 text-blue-600 mb-3" />
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <h3 className="font-semibold text-slate-900 text-sm">{section.title}</h3>
+                <p className="text-xs text-slate-500 mt-1">{section.description}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
-
-      {/* Summary Strip */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Contract Title</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1">{contract.title}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Status</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-sm font-semibold text-gray-900">{contract.status}</p>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Contract Value</p>
-              <p className="text-sm font-semibold text-gray-900 mt-1">${(contract.value / 1000).toFixed(0)}K</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Outstanding Balance</p>
-              <p className="text-sm font-semibold text-red-600 mt-1">${(contract.outstandingBalance / 1000).toFixed(0)}K</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Open Alerts</p>
-              <p className="text-sm font-semibold text-amber-600 mt-1">{contract.openAlerts}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Open Tasks</p>
-              <p className="text-sm font-semibold text-blue-600 mt-1">{contract.openTasks}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 font-semibold uppercase">Health Status</p>
-              <p className="text-sm font-semibold text-green-600 mt-1">{contract.health}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 px-8 py-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Executive Summary */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Executive Summary</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">Contract Number</p>
-                <p className="text-lg font-semibold text-gray-900">{contract.contractNumber}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">Contracting Agency</p>
-                <p className="text-lg font-semibold text-gray-900">{contract.agency}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">Performance Period</p>
-                <p className="text-lg font-semibold text-gray-900">Apr 2026 - Mar 2027</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">Contract Type</p>
-                <p className="text-lg font-semibold text-gray-900">Fixed Price</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Governing Source Summary */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Governing Source Summary</h2>
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">Awarded Proposal</p>
-                <p className="text-sm text-gray-900">{contract.proposalTitle}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-600 font-semibold uppercase mb-2">RFP Reference</p>
-                <p className="text-sm text-gray-900">Defense IT Infrastructure Modernization - Solicitation No. N00123-26-R-0001</p>
-              </div>
-              <Button variant="outline" className="w-full">View Proposal Context</Button>
-            </div>
-          </Card>
-
-          {/* Live Tracking Snapshot */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Live Tracking Snapshot</h2>
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  <p className="text-xs font-semibold text-gray-900 uppercase">Deliverables Met</p>
-                </div>
-                <p className="text-2xl font-bold text-green-600">12/12</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 text-amber-600" />
-                  <p className="text-xs font-semibold text-gray-900 uppercase">At Risk</p>
-                </div>
-                <p className="text-2xl font-bold text-amber-600">1</p>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="w-4 h-4 text-blue-600" />
-                  <p className="text-xs font-semibold text-gray-900 uppercase">Team Members</p>
-                </div>
-                <p className="text-2xl font-bold text-blue-600">8</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-4 h-4 text-red-600" />
-                  <p className="text-xs font-semibold text-gray-900 uppercase">Critical Issues</p>
-                </div>
-                <p className="text-2xl font-bold text-red-600">0</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Changes & Modifications */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Changes & Modifications ({contract.modifications})</h2>
-            <div className="space-y-3">
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">MOD-001: Scope Increase - Additional Support Hours</p>
-                  <p className="text-xs text-gray-600 mt-1">Approved on Apr 15, 2026 • Value: +$25K</p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">Executed</span>
-              </div>
-              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="w-2 h-2 bg-amber-600 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">MOD-002: Schedule Extension - 30 Days</p>
-                  <p className="text-xs text-gray-600 mt-1">Pending approval since May 1, 2026</p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">Pending</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Files, Contacts, Notes */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Files, Contacts & Notes</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
-                <FileText className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <p className="text-2xl font-bold text-gray-900">12</p>
-                <p className="text-sm text-gray-600 mt-2">Contract Documents</p>
-                <Button variant="outline" size="sm" className="w-full mt-4">View Files</Button>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
-                <Users className="w-12 h-12 text-green-600 mx-auto mb-3" />
-                <p className="text-2xl font-bold text-gray-900">8</p>
-                <p className="text-sm text-gray-600 mt-2">Key Contacts</p>
-                <Button variant="outline" size="sm" className="w-full mt-4">View Contacts</Button>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-6 border border-gray-200 text-center">
-                <MessageSquare className="w-12 h-12 text-purple-600 mx-auto mb-3" />
-                <p className="text-2xl font-bold text-gray-900">5</p>
-                <p className="text-sm text-gray-600 mt-2">Notes & Updates</p>
-                <Button variant="outline" size="sm" className="w-full mt-4">View Notes</Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Alerts and Tasks */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Alerts and Tasks</h2>
-            <div className="space-y-3">
-              <div className="flex items-start gap-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Security Compliance Audit Due</p>
-                  <p className="text-xs text-gray-600 mt-1">Due: June 15, 2026 (11 days remaining)</p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">Critical</span>
-              </div>
-              <div className="flex items-start gap-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Monthly Status Report Due</p>
-                  <p className="text-xs text-gray-600 mt-1">Due: May 31, 2026 (27 days remaining)</p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">Warning</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Next Actions */}
-          <Card className="bg-white border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Next Actions</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Q2 Compliance Report Due</p>
-                  <p className="text-xs text-gray-600 mt-1">Due: May 31, 2026</p>
-                </div>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">Start</Button>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Invoice INV-2026-001 Outstanding</p>
-                  <p className="text-xs text-gray-600 mt-1">$125K awaiting payment</p>
-                </div>
-                <Button className="bg-green-600 hover:bg-green-700 text-white">Follow Up</Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-
     </div>
   );
 }

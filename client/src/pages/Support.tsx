@@ -2,12 +2,20 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Mail, Globe, Clock, BookOpen } from "lucide-react";
 import Footer from "@/components/Footer";
+import PageGuide from "@/components/PageGuide";
 
 export default function Support() {
   const [, navigate] = useLocation();
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <PageGuide
+        title="Support"
+        description="Get help with PrimeContractorOS features, report issues, or request assistance."
+        whenToUse="When you need help with the platform, encounter a bug, or have a feature request."
+        whatToDoNext={["Search help articles for your question", "Submit a support ticket if needed", "Check existing ticket status", "Review platform documentation"]}
+        relatedRecords={[{ label: "Help Center", path: "/app/help" }, { label: "Documentation", path: "/app/documentation" }, { label: "Plan Features", path: "/app/plan-features" }]}
+      />
       {/* Navigation */}
       <nav className="border-b border-gray-200 sticky top-0 bg-white/95 backdrop-blur z-50">
         <div className="container flex items-center justify-between py-4">

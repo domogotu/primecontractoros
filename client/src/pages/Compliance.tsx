@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Compliance() {
   const [showForm, setShowForm] = useState(false);
@@ -72,6 +73,13 @@ export default function Compliance() {
         </Button>
       }
     >
+      <PageGuide
+        title="Compliance Tracking"
+        description="Monitor compliance items, requirements, and regulatory obligations across contracts."
+        whenToUse="When checking compliance status, reviewing requirements, or preparing for audits."
+        whatToDoNext={["Review open compliance items", "Update compliance status for active contracts", "Check FAR/DFARS requirements", "Run AI compliance review"]}
+        relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Requirements", path: "/app/requirements" }, { label: "FAR Reference", path: "/app/far-reference" }]}
+      />
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

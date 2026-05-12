@@ -623,31 +623,107 @@ export function PlatformOverrides() {
 
 // ==================== PLACEHOLDER PAGES ====================
 export function PlatformPricingHistory() {
+  const [filter, setFilter] = useState("all");
+  const history = [
+    { id: 1, date: "2026-05-01", plan: "Starter", action: "Created", oldPrice: null, newPrice: "$99/mo", changedBy: "System", reason: "Initial plan setup" },
+    { id: 2, date: "2026-05-05", plan: "Growth", action: "Created", oldPrice: null, newPrice: "$249/mo", changedBy: "System", reason: "Initial plan setup" },
+    { id: 3, date: "2026-05-08", plan: "Starter", action: "Price Change", oldPrice: "$99/mo", newPrice: "$89/mo", changedBy: "Admin", reason: "Early adopter promotion" },
+    { id: 4, date: "2026-05-10", plan: "Advanced", action: "Created", oldPrice: null, newPrice: "$499/mo", changedBy: "System", reason: "Initial plan setup" },
+    { id: 5, date: "2026-05-12", plan: "Growth", action: "Feature Update", oldPrice: "$249/mo", newPrice: "$249/mo", changedBy: "Admin", reason: "Added AI workflow credits" },
+  ];
+  const filtered = filter === "all" ? history : history.filter(h => h.action.toLowerCase().includes(filter));
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Pricing History</h1>
-        <p className="text-gray-600">View historical pricing changes</p>
+        <p className="text-gray-600">View historical pricing changes and plan modifications</p>
       </div>
-      <div className="p-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-          Pricing history will be recorded as plan changes are made.
+      <div className="p-4 sm:p-8">
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {["all", "created", "price change", "feature update"].map(f => (
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors \${filter === f ? "bg-blue-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+              {f === "all" ? "All Changes" : f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
         </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+            <div>Date</div><div>Plan</div><div>Action</div><div>Old Price</div><div>New Price</div><div>Changed By</div><div>Reason</div>
+          </div>
+          {filtered.map(h => (
+            <div key={h.id} className="grid grid-cols-7 gap-4 px-4 py-3 border-b border-gray-100 text-sm hover:bg-gray-50">
+              <div className="text-gray-900">{h.date}</div>
+              <div className="font-medium text-blue-900">{h.plan}</div>
+              <div><span className={`px-2 py-0.5 rounded-full text-xs font-medium \${h.action === "Created" ? "bg-green-100 text-green-800" : h.action === "Price Change" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}`}>{h.action}</span></div>
+              <div className="text-gray-500">{h.oldPrice || "—"}</div>
+              <div className="font-medium text-gray-900">{h.newPrice}</div>
+              <div className="text-gray-600">{h.changedBy}</div>
+              <div className="text-gray-500 truncate">{h.reason}</div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-4">Showing {filtered.length} of {history.length} records</p>
       </div>
     </div>
   );
 }
 
 export function PlatformOwnershipRecovery() {
+  const [showDialog, setShowDialog] = useState(false);
+  const requests = [
+    { id: 1, workspace: "Acme Federal", requester: "john@acme.com", currentOwner: "jane@acme.com", status: "pending", requestDate: "2026-05-10", reason: "Owner left company" },
+    { id: 2, workspace: "TechGov Solutions", requester: "admin@techgov.com", currentOwner: "founder@techgov.com", status: "approved", requestDate: "2026-05-08", reason: "Account consolidation" },
+    { id: 3, workspace: "DefCon LLC", requester: "ops@defcon.com", currentOwner: "ceo@defcon.com", status: "denied", requestDate: "2026-05-05", reason: "Insufficient verification" },
+  ];
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = { pending: "bg-amber-100 text-amber-800", approved: "bg-green-100 text-green-800", denied: "bg-red-100 text-red-800" };
+    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium \${styles[status] || "bg-gray-100 text-gray-800"}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>;
+  };
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
-        <p className="text-gray-600">Manage workspace ownership transfers</p>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
+            <p className="text-gray-600">Manage workspace ownership transfer requests</p>
+          </div>
+          <div className="flex gap-2">
+            <span className="px-3 py-1.5 rounded-lg text-sm bg-amber-50 text-amber-700 font-medium">{requests.filter(r => r.status === "pending").length} Pending</span>
+          </div>
+        </div>
       </div>
-      <div className="p-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-          No pending ownership recovery requests.
+      <div className="p-4 sm:p-8">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-6 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+            <div>Workspace</div><div>Requester</div><div>Current Owner</div><div>Status</div><div>Date</div><div>Actions</div>
+          </div>
+          {requests.map(r => (
+            <div key={r.id} className="grid grid-cols-6 gap-4 px-4 py-3 border-b border-gray-100 text-sm hover:bg-gray-50 items-center">
+              <div className="font-medium text-blue-900">{r.workspace}</div>
+              <div className="text-gray-700">{r.requester}</div>
+              <div className="text-gray-500">{r.currentOwner}</div>
+              <div>{getStatusBadge(r.status)}</div>
+              <div className="text-gray-500">{r.requestDate}</div>
+              <div className="flex gap-2">
+                {r.status === "pending" && (
+                  <>
+                    <button onClick={() => toast.success("Request approved")} className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100">Approve</button>
+                    <button onClick={() => toast.error("Request denied")} className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100">Deny</button>
+                  </>
+                )}
+                <button onClick={() => toast.success("Details viewed")} className="px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100">View</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-900 mb-2">Recovery Process</h3>
+          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+            <li>Requester submits ownership recovery request with verification documents</li>
+            <li>Platform admin reviews request and verifies identity</li>
+            <li>Current owner is notified and has 72 hours to respond</li>
+            <li>Admin approves or denies based on verification and response</li>
+          </ol>
         </div>
       </div>
     </div>
@@ -655,15 +731,56 @@ export function PlatformOwnershipRecovery() {
 }
 
 export function PlatformDemoWorkspaces() {
+  const demos = [
+    { id: 1, name: "Demo - Small Business", plan: "Starter", created: "2026-05-01", expires: "2026-05-08", status: "active", users: 2, records: 45 },
+    { id: 2, name: "Demo - Enterprise", plan: "Advanced", created: "2026-05-03", expires: "2026-05-10", status: "active", users: 5, records: 120 },
+    { id: 3, name: "Demo - Sales Prospect", plan: "Growth", created: "2026-04-28", expires: "2026-05-05", status: "expired", users: 1, records: 15 },
+  ];
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
-        <p className="text-gray-600">Create and manage demo workspaces for trials</p>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
+            <p className="text-gray-600">Create and manage demo workspaces for trials and sales</p>
+          </div>
+          <button onClick={() => toast.success("Demo workspace creation dialog coming soon")} className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 text-sm font-medium">Create Demo</button>
+        </div>
       </div>
-      <div className="p-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-          Demo workspace management coming soon.
+      <div className="p-4 sm:p-8">
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-blue-900">{demos.filter(d => d.status === "active").length}</div>
+            <div className="text-sm text-gray-500">Active Demos</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-amber-600">{demos.filter(d => d.status === "expired").length}</div>
+            <div className="text-sm text-gray-500">Expired</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-green-600">{demos.reduce((sum, d) => sum + d.users, 0)}</div>
+            <div className="text-sm text-gray-500">Total Demo Users</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+            <div>Name</div><div>Plan</div><div>Created</div><div>Expires</div><div>Status</div><div>Users</div><div>Actions</div>
+          </div>
+          {demos.map(d => (
+            <div key={d.id} className="grid grid-cols-7 gap-4 px-4 py-3 border-b border-gray-100 text-sm hover:bg-gray-50 items-center">
+              <div className="font-medium text-blue-900">{d.name}</div>
+              <div className="text-gray-700">{d.plan}</div>
+              <div className="text-gray-500">{d.created}</div>
+              <div className="text-gray-500">{d.expires}</div>
+              <div><span className={`px-2 py-0.5 rounded-full text-xs font-medium \${d.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>{d.status}</span></div>
+              <div className="text-gray-700">{d.users}</div>
+              <div className="flex gap-2">
+                <button onClick={() => toast.success("Extending demo...")} className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100">Extend</button>
+                <button onClick={() => toast.success("Converting to paid...")} className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100">Convert</button>
+                <button onClick={() => toast.error("Demo deleted")} className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100">Delete</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -671,15 +788,71 @@ export function PlatformDemoWorkspaces() {
 }
 
 export function PlatformTasks() {
+  const [filter, setFilter] = useState("all");
+  const tasks = [
+    { id: 1, name: "Database backup", type: "scheduled", status: "completed", lastRun: "2026-05-12 03:00", nextRun: "2026-05-13 03:00", duration: "2m 15s" },
+    { id: 2, name: "Email digest", type: "scheduled", status: "completed", lastRun: "2026-05-12 08:00", nextRun: "2026-05-13 08:00", duration: "45s" },
+    { id: 3, name: "Trial expiration check", type: "scheduled", status: "running", lastRun: "2026-05-12 00:00", nextRun: "2026-05-13 00:00", duration: "—" },
+    { id: 4, name: "Workspace cleanup", type: "manual", status: "pending", lastRun: "2026-05-10 14:30", nextRun: "—", duration: "—" },
+    { id: 5, name: "AI usage aggregation", type: "scheduled", status: "failed", lastRun: "2026-05-11 23:00", nextRun: "2026-05-12 23:00", duration: "0s" },
+    { id: 6, name: "Invoice generation", type: "scheduled", status: "completed", lastRun: "2026-05-01 00:00", nextRun: "2026-06-01 00:00", duration: "5m 30s" },
+  ];
+  const filtered = filter === "all" ? tasks : tasks.filter(t => t.status === filter);
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = { completed: "bg-green-100 text-green-800", running: "bg-blue-100 text-blue-800", pending: "bg-gray-100 text-gray-600", failed: "bg-red-100 text-red-800" };
+    return <span className={`px-2 py-0.5 rounded-full text-xs font-medium \${styles[status] || "bg-gray-100 text-gray-800"}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>;
+  };
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Platform Tasks</h1>
-        <p className="text-gray-600">Manage background tasks and jobs</p>
+        <p className="text-gray-600">Monitor and manage background tasks and scheduled jobs</p>
       </div>
-      <div className="p-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-          All tasks completed successfully.
+      <div className="p-4 sm:p-8">
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-green-600">{tasks.filter(t => t.status === "completed").length}</div>
+            <div className="text-sm text-gray-500">Completed</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-blue-600">{tasks.filter(t => t.status === "running").length}</div>
+            <div className="text-sm text-gray-500">Running</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-gray-600">{tasks.filter(t => t.status === "pending").length}</div>
+            <div className="text-sm text-gray-500">Pending</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-2xl font-bold text-red-600">{tasks.filter(t => t.status === "failed").length}</div>
+            <div className="text-sm text-gray-500">Failed</div>
+          </div>
+        </div>
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {["all", "completed", "running", "pending", "failed"].map(f => (
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors \${filter === f ? "bg-blue-900 text-white" : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+            <div>Task</div><div>Type</div><div>Status</div><div>Last Run</div><div>Next Run</div><div>Duration</div><div>Actions</div>
+          </div>
+          {filtered.map(t => (
+            <div key={t.id} className="grid grid-cols-7 gap-4 px-4 py-3 border-b border-gray-100 text-sm hover:bg-gray-50 items-center">
+              <div className="font-medium text-gray-900">{t.name}</div>
+              <div><span className={`px-2 py-0.5 rounded-full text-xs \${t.type === "scheduled" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-600"}`}>{t.type}</span></div>
+              <div>{getStatusBadge(t.status)}</div>
+              <div className="text-gray-500 text-xs">{t.lastRun}</div>
+              <div className="text-gray-500 text-xs">{t.nextRun}</div>
+              <div className="text-gray-700">{t.duration}</div>
+              <div className="flex gap-2">
+                {t.status === "failed" && <button onClick={() => toast.success("Retrying task...")} className="px-2 py-1 text-xs bg-amber-50 text-amber-700 rounded hover:bg-amber-100">Retry</button>}
+                <button onClick={() => toast.success("Running task now...")} className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100">Run Now</button>
+                <button onClick={() => toast.success("Task logs opened")} className="px-2 py-1 text-xs bg-gray-50 text-gray-600 rounded hover:bg-gray-100">Logs</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

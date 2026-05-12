@@ -17,6 +17,7 @@ import {
   FileText,
   BarChart3,
 } from 'lucide-react';
+import PageGuide from "@/components/PageGuide";
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
@@ -287,6 +288,13 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <PageGuide
+        title="Onboarding Wizard"
+        description="Step-by-step setup to get your workspace ready for government contracting."
+        whenToUse="When first setting up your workspace or completing missing setup steps."
+        whatToDoNext={["Complete your business profile", "Add NAICS codes and certifications", "Set up your contracting model", "Add your first opportunity or contract"]}
+        relatedRecords={[{ label: "Business Profile", path: "/app/business-profile" }, { label: "Dashboard", path: "/app/dashboard" }, { label: "Settings", path: "/app/settings" }]}
+      />
       {/* Header */}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="container flex items-center justify-between py-4">

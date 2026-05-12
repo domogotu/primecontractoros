@@ -23,6 +23,7 @@ import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { Plus, Trash2, UserPlus } from 'lucide-react';
+import PageGuide from "@/components/PageGuide";
 
 // ===== Team Assignments Section =====
 function TeamAssignmentsSection({ proposalId }: { proposalId: number }) {
@@ -38,6 +39,13 @@ function TeamAssignmentsSection({ proposalId }: { proposalId: number }) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-6">
+      <PageGuide
+        title="Proposal Detail"
+        description="Complete proposal workspace with sections, team, compliance, and submission tracking."
+        whenToUse="When actively building, reviewing, or managing a specific proposal."
+        whatToDoNext={["Complete all required proposal sections", "Verify compliance matrix coverage", "Assign team members to sections", "Submit before the deadline"]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Opportunities", path: "/app/opportunities" }, { label: "Templates", path: "/app/templates" }]}
+      />
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
           <UserPlus className="w-5 h-5 text-blue-600" /> Team Assignments

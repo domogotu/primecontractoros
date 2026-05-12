@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Save,
 } from 'lucide-react';
+import PageGuide from "@/components/PageGuide";
 
 export default function BusinessProfile() {
   const [, navigate] = useLocation();
@@ -95,6 +96,13 @@ export default function BusinessProfile() {
       ]}
       actions={
         <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSave} disabled={isSaving}>
+      <PageGuide
+        title="Business Profile"
+        description="Your company information used across proposals, capability statements, and compliance."
+        whenToUse="When setting up your workspace, updating company details, or preparing capability statements."
+        whatToDoNext={["Complete all required business fields", "Add NAICS codes and certifications", "Update past performance references", "Review profile completeness score"]}
+        relatedRecords={[{ label: "Capability Statements", path: "/app/capability-statements" }, { label: "Settings", path: "/app/settings" }, { label: "Onboarding", path: "/app/onboarding" }]}
+      />
           <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save Profile'}
         </Button>
       }

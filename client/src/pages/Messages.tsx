@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Messages() {
   const [showForm, setShowForm] = useState(false);
@@ -75,6 +76,13 @@ export default function Messages() {
         </Button>
       }
     >
+      <PageGuide
+        title="Messages & Communication"
+        description="Communication log for all record-linked messages and correspondence."
+        whenToUse="When logging communications, tracking follow-ups, or reviewing message history."
+        whatToDoNext={["Log important communications", "Link messages to contracts or proposals", "Follow up on unanswered messages", "Review communication timeline"]}
+        relatedRecords={[{ label: "Contacts", path: "/app/contacts" }, { label: "Contracts", path: "/app/contracts" }, { label: "Tasks", path: "/app/tasks" }]}
+      />
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

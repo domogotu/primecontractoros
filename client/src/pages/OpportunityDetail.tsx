@@ -20,6 +20,7 @@ import OpportunityForm from '@/components/OpportunityForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { GuidancePanel } from '@/components/GuidancePanel';
+import PageGuide from "@/components/PageGuide";
 
 export default function OpportunityDetail() {
   const [, params] = useRoute('/app/opportunities/:id');
@@ -41,6 +42,13 @@ export default function OpportunityDetail() {
   if (!opportunityId) {
     return (
       <PageLayout title="Opportunity Detail" subtitle="View and manage this opportunity" label="Opportunities">
+      <PageGuide
+        title="Opportunity Detail"
+        description="Full view of a single opportunity with all related information and actions."
+        whenToUse="When evaluating, updating, or converting an opportunity to a proposal."
+        whatToDoNext={["Review opportunity details and requirements", "Run AI analysis for pursue/hold recommendation", "Add contacts and related files", "Convert to proposal when ready to pursue"]}
+        relatedRecords={[{ label: "Opportunities", path: "/app/opportunities" }, { label: "Proposals", path: "/app/proposals" }, { label: "Contacts", path: "/app/contacts" }]}
+      />
         <div className="p-8">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />

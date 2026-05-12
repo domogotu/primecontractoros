@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function LossReview() {
   const [showForm, setShowForm] = useState(false);
@@ -53,6 +54,13 @@ export default function LossReview() {
         </Button>
       }
     >
+      <PageGuide
+        title="Loss Reviews"
+        description="Capture and analyze why proposals were not selected to improve future performance."
+        whenToUse="After receiving a loss notification to document what happened and extract lessons."
+        whatToDoNext={["Document the loss reason and debrief notes", "Identify improvement areas", "Create lessons learned entries", "Update templates based on findings"]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Lessons Learned", path: "/app/lessons" }, { label: "Templates", path: "/app/templates" }]}
+      />
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

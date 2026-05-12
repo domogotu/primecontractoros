@@ -72,6 +72,11 @@ const FlowdownReview = () => <div className="container py-8"><h1 className="text
 import CustomerAdoption from "./pages/CustomerAdoption";
 import Handbook from "./pages/Handbook";
 import ChangeManagement from "./pages/ChangeManagement";
+import Requirements from "./pages/Requirements";
+import AIContractReview from "./pages/AIContractReview";
+import FarReference from "./pages/FarReference";
+import AlertsAndTasks from "./pages/AlertsAndTasks";
+import CommunicationLog from "./pages/CommunicationLog";
 import PlanFeatures from "./pages/PlanFeatures";
 import EmailTemplates from "./pages/EmailTemplates";
 import ConsistencyCheck from "./pages/ConsistencyCheck";
@@ -154,6 +159,12 @@ function Router() {
       <Route path={"/app/deadlines"} component={withAppShell(Deadlines)} />
       <Route path={"/app/compliance"} component={withAppShell(Compliance)} />
       
+      <Route path={"/app/requirements"} component={withAppShell(Requirements)} />
+      <Route path={"/app/far-reference"} component={withAppShell(FarReference)} />
+      <Route path={"/app/ai-contract-review"} component={withAppShell(AIContractReview)} />
+      <Route path={"/app/alerts-tasks"} component={withAppShell(AlertsAndTasks)} />
+      <Route path={"/app/communication-log"} component={withAppShell(CommunicationLog)} />
+
       {/* User Setup & Profile pages */}
       <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
       <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
@@ -164,13 +175,13 @@ function Router() {
       <Route path={"/app/tasks"} component={withAppShell(Tasks)} />
       
       {/* Contract Hub, AI, and Learning pages */}
-      <Route path={"/app/contracts/:id/hub"} component={withAppShell(ContractHub)} />
+      <Route path={"/app/contract-hub"} component={withAppShell(ContractHub)} />
       <Route path={"/app/reports"} component={withAppShell(Reports)} />
       <Route path={"/app/capability-statements"} component={withAppShell(CapabilityStatements)} />
       <Route path={"/app/templates"} component={withAppShell(Templates)} />
-      <Route path={"/app/contracts/:id/closeout"} component={withAppShell(Closeout)} />
+      <Route path={"/app/closeout"} component={withAppShell(Closeout)} />
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
-      <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/lessons-learned"} component={withAppShell(LessonsLearned)} />
       <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
       
       {/* Batch 1-4: Product Completion Routes */}

@@ -1,0 +1,2236 @@
+Do not rebuild or redesign what already exists. Use the current PrimeContractorOS app as the base. Keep the current visual style, navigation, dark/navy sidebar, cards, badges, Admin/App separation, and Reed’s Solutions branding. Your job is to wire every page, action, reaction, status, and result into a complete working system.
+
+PRIMECONTRACTOROS — FULL PAGE + ACTION + RESULT OPERATING INSTRUCTIONS
+FOR MANUS / BUILDER
+
+GOAL
+PrimeContractorOS is not just a dashboard. It is a complete guided operating system for government contractors, prime contractors, subcontractor coordination, proposal work, contract execution, finance tracking, compliance support, document management, and closeout.
+
+Do not remove existing pages, sidebar groups, modules, cards, routes, or structure unless something is a broken duplicate.
+Do not change the design unless required for mobile usability, accessibility, or broken layout fixes.
+Keep what already exists and make it work fully.
+
+Every page must answer:
+1. What is this page for?
+2. When should the user use it?
+3. What can the user do here?
+4. What happens after each action?
+5. What records are created, updated, linked, or flagged?
+6. What page should the user go to next?
+7. What alerts, tasks, audit logs, or status changes happen in the background?
+
+The system must follow this lifecycle:
+Public Website / Signup
+→ Onboarding
+→ Dashboard
+→ Opportunity
+→ Proposal
+→ Contract
+→ Contract Hub
+→ Active Operations
+→ Finance
+→ Closeout
+→ Lessons Learned
+→ Reports / Reuse / Templates
+
+There are three major layers:
+1. Public entry layer
+2. Customer workspace layer
+3. Platform admin / owner layer
+
+PrimeContractorOS must remain:
+- company/workspace-first
+- government-contracting specific
+- AI review-first
+- source-aware
+- action/result-driven
+- platform-owner controls separate from customer workspace controls
+
+============================================================
+GLOBAL SYSTEM RULES
+============================================================
+
+1. Keep what already exists.
+Do not delete existing sidebar items, modules, cards, or structure unless they are broken duplicates.
+
+2. Every sidebar item must open a real page.
+No blank pages. No placeholder-only pages. If a feature is not complete yet, show a working page with status, explanation, basic records, and next actions.
+
+3. Every major page must include:
+- Page title
+- Plain-language page purpose
+- “What this page is for”
+- “When to use this page”
+- “What to do next”
+- Status summary cards
+- Search/filter controls where useful
+- Main table or card directory
+- Add/create button where useful
+- Detail view
+- Edit/update ability
+- Status fields
+- Related records
+- Alerts/tasks
+- Empty-state guidance
+
+4. Every action must have a visible result.
+If user clicks Save, Create, Upload, Approve, Review, Archive, Assign, Send, Match, Convert, Generate, or Run Check, the system must show:
+- success/failure message
+- what changed
+- where the record went
+- what next action is recommended
+
+5. Every important change must be logged.
+Create audit/activity records for:
+- created records
+- edited records
+- status changes
+- deleted/archived records
+- AI runs
+- admin overrides
+- billing changes
+- user login events
+- document generation
+- file uploads
+- approval/review actions
+- plan changes
+- support ticket changes
+
+6. Alerts and tasks must be core execution tools.
+Alerts = something needs attention.
+Tasks = something needs action.
+Alerts should be dismissible or convertible into tasks.
+Tasks should have:
+- owner
+- due date
+- priority
+- status
+- related record
+- notes
+- created source
+
+7. AI must be review-first.
+AI may suggest, summarize, extract, compare, and generate drafts.
+AI must not automatically make legal/compliance conclusions final.
+AI findings must show:
+- source file
+- source location if available
+- category
+- confidence/review status
+- practical meaning
+- action buttons:
+  - Approve
+  - Hold
+  - Edit
+  - Mark Needs Review
+  - Create Task
+  - Link to Contract Object
+
+8. Government contracting rules must be treated as guidance support, not legal advice.
+The app should track:
+- SAM / UEI / CAGE
+- NAICS
+- solicitation source files
+- set-aside awareness
+- subcontracting / flowdown review
+- governing contract files
+- modifications
+- invoice support
+- payment tracking
+- closeout blockers
+- evidence
+
+9. Awarded contract files become governing truth.
+Proposal-stage assumptions must carry forward as history, but they must not become final contract obligations unless reviewed against the awarded contract or modification.
+
+10. Invoices and payments must be separate.
+Invoice = what was billed.
+Payment = money actually received.
+They can be linked/matched, but they are not the same record.
+
+11. The system must be useful for new contractors and experienced contractors.
+Every complex page must have beginner-friendly guidance without hiding advanced functionality.
+
+12. Every record should connect to the workspace.
+All customer-side records must belong to a workspace.
+
+13. Platform Admin pages must be separated from customer workspace pages.
+Platform Admin is for Reed’s Solutions / PrimeContractorOS owner controls.
+Customer App is for customer operations.
+
+============================================================
+PUBLIC ENTRY PAGES
+============================================================
+
+PAGE: Home
+ROUTE: /
+
+PURPOSE
+The public first impression for PrimeContractorOS.
+
+USER SHOULD SEE
+- Product name: PrimeContractorOS
+- Reed’s Solutions LLC branding
+- Clear explanation that this is a guided workspace for government contracting operations
+- Main workflow: opportunity → proposal → contract → closeout
+- Buttons:
+  - Get Started
+  - Sign In
+  - View Features
+  - View Pricing
+  - Contact Support
+
+ACTIONS AND RESULTS
+
+ACTION: Click Get Started
+RESULT:
+- Routes user to /get-started.
+- No account required.
+- If user is already logged in, route to /app or /platform depending on role.
+
+ACTION: Click Sign In
+RESULT:
+- Routes user to /login.
+
+ACTION: Click Features
+RESULT:
+- Routes user to /features.
+
+ACTION: Click Pricing
+RESULT:
+- Routes user to /pricing.
+
+ACTION: Click Contact Support
+RESULT:
+- Routes user to /support.
+
+BACKGROUND RESULT
+- No customer workspace data changes.
+- Optional public analytics/activity record can log page visit if tracking exists.
+
+------------------------------------------------------------
+
+PAGE: Features
+ROUTE: /features
+
+PURPOSE
+Explain the product capabilities without overwhelming the visitor.
+
+USER SHOULD SEE
+Feature cards for:
+- Guided Dashboard
+- Opportunities
+- Proposals
+- Contracts
+- Contract Hub
+- AI Review
+- Files
+- Contacts
+- Subcontractors
+- Vendors
+- Finance
+- Invoices
+- Payments
+- Change Management
+- Doc Generator
+- Handbook
+- Reports
+- Closeout
+- Platform Admin controls
+
+ACTIONS AND RESULTS
+
+ACTION: Click a feature card
+RESULT:
+- Expands or opens detail explaining:
+  - what the feature does
+  - when to use it
+  - what records it affects
+
+ACTION: Click Get Started
+RESULT:
+- Route to /get-started.
+
+ACTION: Click Request Demo / Contact
+RESULT:
+- Route to /support or contact form.
+
+BACKGROUND RESULT
+- No workspace data created until signup begins.
+
+------------------------------------------------------------
+
+PAGE: Pricing
+ROUTE: /pricing
+
+PURPOSE
+Explain plan choices, trial, limited access, discounts, and paid activation.
+
+USER SHOULD SEE
+- Starter, Growth, Advanced, or current plan cards
+- Trial rules
+- Limited access rules
+- Discount/promo code rules
+- Billing support option
+
+ACTIONS AND RESULTS
+
+ACTION: Click Start Trial
+RESULT:
+- If no workspace exists, route to /get-started.
+- If logged in with workspace, begin trial flow if trial not already used.
+- Create/update subscription access state: Trial Active.
+- Record trial_start_date and trial_end_date.
+- Mark trial_used = true.
+- Create audit log.
+
+ACTION: Click Limited Access
+RESULT:
+- If no workspace exists, route to /get-started.
+- If confirmed, set workspace access_state = Limited Access.
+- Show warning that limited access may affect trial eligibility if that is the current product rule.
+- Create audit log.
+
+ACTION: Click Activate Plan
+RESULT:
+- Route to checkout/activation flow.
+- If payment system is not connected, show “Activation setup pending” with billing support option.
+- Create Pending Payment or Activation Started state.
+
+ACTION: Apply Promo Code
+RESULT:
+- Validate code.
+- If valid, show discount preview.
+- If invalid, show clear error.
+- Do not apply multiple discounts unless allowed by plan rules.
+
+------------------------------------------------------------
+
+PAGE: Get Started
+ROUTE: /get-started
+
+PURPOSE
+Create the company workspace and first owner/admin user.
+
+USER SHOULD SEE
+Step-by-step setup:
+1. Business info
+2. Owner/admin info
+3. Starting path recommendation
+4. Access choice
+5. Confirmation
+
+FIELDS
+Business:
+- Legal business name
+- DBA
+- Business email
+- Business phone
+- Website
+- State
+- Entity type
+- UEI
+- CAGE
+- SAM status
+- Primary NAICS
+- Prime/Sub/Both
+- Uses subcontractors?
+
+Owner:
+- Full name
+- Login email
+- Password
+- Role/title
+- Phone
+
+ACTIONS AND RESULTS
+
+ACTION: Save Business Info
+RESULT:
+- Create workspace record.
+- Create business profile record.
+- Status = Signup Started or Pending Setup.
+- Show progress: Workspace Created.
+- Create audit log.
+
+ACTION: Create Owner/Admin
+RESULT:
+- Create user.
+- Create workspace membership.
+- Role = Owner Admin.
+- Show progress: Owner/Admin Created.
+- Create audit log.
+
+ACTION: Answer Recommendation Questions
+RESULT:
+- Save onboarding answers.
+- Generate recommended starting path:
+  - Trial
+  - Limited Access
+  - Paid Activation
+  - Setup First
+- Show reason for recommendation.
+
+ACTION: Choose Starting Path
+RESULT:
+- Update subscription/access state.
+- Create onboarding state.
+- Route user to login or directly to /app/onboarding if authenticated.
+
+ACTION: Form Error
+RESULT:
+- Show exact missing fields.
+- Preserve entered data.
+- Do not create duplicate workspace on retry.
+
+------------------------------------------------------------
+
+PAGE: Login
+ROUTE: /login
+
+PURPOSE
+Authenticate users and route them correctly.
+
+ACTIONS AND RESULTS
+
+ACTION: Successful login
+RESULT:
+- Create login event.
+- Detect user role and workspace.
+- If platform admin: allow /platform access.
+- If customer user: route to /app router.
+- If both admin and app user: show or preserve switch mode option.
+
+ACTION: Failed login
+RESULT:
+- Show clear error.
+- Log failed login event.
+- Do not expose whether email exists.
+
+ACTION: Forgot Password
+RESULT:
+- Open recovery flow.
+- If email system is not connected, create support/recovery request.
+
+ACTION: Sign Out
+RESULT:
+- End session.
+- Route to /login or homepage.
+- Log sign-out event if tracking exists.
+
+------------------------------------------------------------
+
+PAGE: Help
+ROUTE: /help
+
+PURPOSE
+Teach users how the system and government contracting workflow work.
+
+ACTIONS AND RESULTS
+
+ACTION: Search help
+RESULT:
+- Show matching articles.
+- If no match, suggest contacting support.
+
+ACTION: Open glossary term
+RESULT:
+- Show plain-language definition.
+- Show related app pages.
+
+ACTION: Contact Support
+RESULT:
+- Open support request form.
+
+------------------------------------------------------------
+
+PAGE: Support
+ROUTE: /support
+
+PURPOSE
+Let users request help before or after login.
+
+ACTION: Submit support request
+RESULT:
+- Create support ticket.
+- Link to workspace/user if logged in.
+- If public user, capture email.
+- Show ticket confirmation.
+- Platform admin sees it in Support Inbox.
+
+============================================================
+POST-LOGIN ROUTER
+============================================================
+
+PAGE: App Router
+ROUTE: /app
+
+PURPOSE
+Decide where the logged-in customer goes.
+
+LOGIC
+If workspace status = Pending Setup:
+- Route to /app/onboarding.
+
+If onboarding incomplete:
+- Route to /app/onboarding.
+
+If Trial Active and setup mostly complete:
+- Route to /app/dashboard.
+
+If Limited Access:
+- Route to dashboard with limited-access banner.
+
+If Active Paid:
+- Route to dashboard.
+
+If Pending Payment:
+- Route to dashboard with billing attention banner.
+
+If Past Due:
+- Route to restricted dashboard with billing actions.
+
+If Suspended:
+- Route to suspended/restricted page.
+
+ACTION RESULT
+User should never land on a blank /app page.
+Every route decision should be logged or traceable.
+
+============================================================
+CUSTOMER WORKSPACE MAIN PAGES
+============================================================
+
+PAGE: Dashboard
+ROUTE: /app/dashboard
+
+PURPOSE
+The customer’s operational home screen.
+
+USER SHOULD SEE
+Cards:
+- Active Opportunities
+- Active Proposals
+- Active Contracts
+- Outstanding Finance
+- Open Tasks
+- Open Alerts
+- Workspace Status
+- Plan Status
+
+Sections:
+- Next Best Steps
+- Recent Activity
+- AI Guidance
+- Contract Health
+- Finance Snapshot
+- Setup/Compliance Readiness
+
+ACTIONS AND RESULTS
+
+ACTION: Click Add Opportunity
+RESULT:
+- Open create opportunity form or route to /app/opportunities/new.
+
+ACTION: Click View Contracts
+RESULT:
+- Route to /app/contracts.
+
+ACTION: Click Task
+RESULT:
+- Open task detail.
+- If task relates to contract/invoice/etc., show related record.
+
+ACTION: Mark Task Complete
+RESULT:
+- Update task status.
+- Add completion timestamp.
+- If task came from alert, update/dismiss related alert.
+- Create audit log.
+
+ACTION: Dismiss Alert
+RESULT:
+- Mark alert dismissed.
+- Require optional reason for critical alerts.
+- Create audit log.
+
+ACTION: Accept AI Suggestion
+RESULT:
+- Convert suggestion into task, note, or draft record.
+- Do not finalize source-truth findings without review.
+
+------------------------------------------------------------
+
+PAGE: Onboarding
+ROUTE: /app/onboarding
+
+PURPOSE
+Guide workspace setup.
+
+SECTIONS
+- Business identity
+- Government contracting readiness
+- NAICS/capabilities
+- Prime/subcontractor model
+- Subcontractor use
+- Team/users
+- Preferences
+- First recommended action
+
+ACTIONS AND RESULTS
+
+ACTION: Save Section
+RESULT:
+- Update business profile/onboarding record.
+- Update completion percentage.
+- Create missing-field alerts if important data is absent.
+
+ACTION: Finish Onboarding
+RESULT:
+- Set onboarding_complete = true.
+- Route to dashboard.
+- Create audit log.
+- Generate next-best-step tasks:
+  - Add first opportunity
+  - Add first contract
+  - Complete business profile
+  - Upload source document
+
+ACTION: Skip for Later
+RESULT:
+- Allow dashboard access if access rules allow.
+- Keep setup reminders visible.
+
+------------------------------------------------------------
+
+PAGE: Business Profile
+ROUTE: /app/business-profile
+
+PURPOSE
+Store company identity and government contracting readiness information.
+
+FIELDS
+- Legal name
+- DBA
+- Website
+- Business email/phone
+- Address
+- Entity type
+- UEI
+- CAGE
+- SAM status
+- SAM renewal date
+- NAICS
+- Certifications
+- Capabilities
+- Prime/Sub/Both
+- Uses subcontractors
+- Default contacts
+
+ACTIONS AND RESULTS
+
+ACTION: Save Profile
+RESULT:
+- Update business profile.
+- Recalculate profile completeness.
+- Resolve related missing-profile alerts.
+- Update capability statement inputs.
+- Create audit log.
+
+ACTION: Mark SAM Unknown/In Progress/Active/Expired
+RESULT:
+- Update readiness status.
+- If missing/expired, create alert.
+- If active, clear SAM missing warning.
+
+ACTION: Add NAICS
+RESULT:
+- Save NAICS to profile.
+- Improve opportunity-fit logic.
+
+------------------------------------------------------------
+
+PAGE: User Profile
+ROUTE: /app/profile
+
+PURPOSE
+Manage individual user details.
+
+ACTIONS AND RESULTS
+
+ACTION: Save Profile
+RESULT:
+- Update user record.
+- Does not change business profile.
+
+ACTION: Change preferences
+RESULT:
+- Update guidance depth, reminder style, default start page.
+
+------------------------------------------------------------
+
+PAGE: Settings
+ROUTE: /app/settings
+
+PURPOSE
+Control workspace behavior.
+
+SECTIONS
+- Workspace defaults
+- Guidance preferences
+- Notifications/reminders
+- AI preferences
+- Access preferences
+- Data/export settings
+
+ACTIONS AND RESULTS
+
+ACTION: Save settings
+RESULT:
+- Update workspace settings.
+- Apply behavior across app.
+- Create audit log.
+
+ACTION: Reset defaults
+RESULT:
+- Restore default settings.
+- Confirm before applying.
+
+------------------------------------------------------------
+
+PAGE: Users / Invites
+ROUTE: /app/users or /app/invites
+
+PURPOSE
+Manage workspace login users separately from contacts.
+
+ACTIONS AND RESULTS
+
+ACTION: Invite User
+RESULT:
+- Create invite record.
+- Assign role.
+- Show pending invite.
+- Send email if email is connected; otherwise show invite link/status.
+- Log invite.
+
+ACTION: Change Role
+RESULT:
+- Update membership role.
+- Require admin permission.
+- Create audit log.
+
+ACTION: Deactivate User
+RESULT:
+- Disable login access.
+- Preserve historical activity.
+- Do not delete records created by user.
+
+============================================================
+OPPORTUNITY WORKFLOW
+============================================================
+
+PAGE: Opportunities
+ROUTE: /app/opportunities
+
+PURPOSE
+Track possible government contracting work before proposal stage.
+
+FIELDS
+- Opportunity title
+- Agency/buyer
+- Solicitation/notice number
+- NAICS
+- Set-aside type
+- Due date
+- Source link
+- Opportunity type
+- Status: New, In Review, Pursue, Hold, No Pursue, Moved to Proposal, Archived
+- Notes
+
+ACTIONS AND RESULTS
+
+ACTION: Add Opportunity
+RESULT:
+- Create opportunity record.
+- Status defaults to New.
+- Create task: Review Opportunity.
+- Route to opportunity detail or show in directory.
+
+ACTION: Upload Source File
+RESULT:
+- Create file record.
+- Link file to opportunity.
+- Mark category = Source Notice if selected.
+- Resolve “missing source file” alert.
+
+ACTION: Add Contact
+RESULT:
+- Create or link contact.
+- Contact appears in opportunity detail and contacts directory.
+
+ACTION: Mark Pursue
+RESULT:
+- Update status = Pursue.
+- Show next action: Start Proposal.
+- Create task: Prepare Proposal.
+
+ACTION: Mark Hold
+RESULT:
+- Update status = Hold.
+- Ask for follow-up date.
+- Create follow-up task if date entered.
+
+ACTION: Mark No Pursue
+RESULT:
+- Update status = No Pursue.
+- Ask for reason.
+- Preserve record for lessons/reporting.
+
+ACTION: Start Proposal
+RESULT:
+- Create proposal from opportunity.
+- Carry forward selected files, contacts, notes, AI suggestions.
+- Update opportunity status = Moved to Proposal.
+- Route to Proposal Framework Selector or Proposal Workspace.
+
+------------------------------------------------------------
+
+PAGE: Opportunity Detail
+ROUTE: /app/opportunities/:id
+
+PURPOSE
+Review one opportunity in detail.
+
+SECTIONS
+- Summary
+- Source files
+- Contacts
+- Review checklist
+- AI guidance
+- Pursue/Hold/No Pursue decision
+- Tasks/alerts
+- Carry-forward preview
+
+ACTIONS AND RESULTS
+
+ACTION: Complete Review Checklist
+RESULT:
+- Save checklist state.
+- Update readiness score.
+- If all required items complete, show “Ready for Proposal Decision.”
+
+ACTION: AI Review Opportunity
+RESULT:
+- Generate opportunity suggestions.
+- Highlight missing source, due date risk, NAICS fit, subcontracting concerns.
+- Suggestions can become tasks.
+
+ACTION: Convert to Proposal
+RESULT:
+- Create linked proposal.
+- Preserve opportunity history.
+
+============================================================
+PROPOSAL WORKFLOW
+============================================================
+
+PAGE: Proposal Framework Selector
+ROUTE: /app/proposal-frameworks
+
+PURPOSE
+Help user choose proposal structure.
+
+OPTIONS
+- Standard Structured Proposal
+- Technical / Compliance-Oriented
+- Subcontract / Partner Support
+- Simple Response
+- Blank / Freeform
+
+ACTIONS AND RESULTS
+
+ACTION: Select Framework
+RESULT:
+- Save framework to proposal.
+- Create default proposal sections.
+- Route to Proposal Workspace.
+
+ACTION: Start Blank
+RESULT:
+- Create proposal with no required structure.
+- User can add sections manually.
+
+ACTION: Preview Framework
+RESULT:
+- Show sections before applying.
+
+------------------------------------------------------------
+
+PAGE: Proposals
+ROUTE: /app/proposals
+
+PURPOSE
+Manage proposal records.
+
+STATUSES
+Draft, In Progress, Under Review, Submitted, Won, Lost, Withdrawn, Archived.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Proposal
+RESULT:
+- Create proposal record.
+- Optionally link opportunity.
+- Ask framework choice.
+- Route to proposal workspace.
+
+ACTION: Carry Forward From Opportunity
+RESULT:
+- Show selectable files, contacts, notes, tasks.
+- User chooses what to carry.
+- Create links, not blind duplicates.
+
+ACTION: Mark Submitted
+RESULT:
+- Update status = Submitted.
+- Save submission date.
+- Create audit log.
+
+ACTION: Mark Won
+RESULT:
+- Update status = Won.
+- Show button: Convert to Contract.
+- Create task: Create Contract Record.
+
+ACTION: Mark Lost
+RESULT:
+- Update status = Lost.
+- Show button: Start Loss Review.
+
+ACTION: Withdraw
+RESULT:
+- Update status = Withdrawn.
+- Ask for reason.
+
+------------------------------------------------------------
+
+PAGE: Proposal Workspace
+ROUTE: /app/proposals/:id
+
+PURPOSE
+Work on one proposal.
+
+SECTIONS
+- Overview
+- Proposal sections
+- Files
+- Contacts
+- Readiness checklist
+- AI proposal assistance
+- Submission status
+- Outcome
+
+ACTIONS AND RESULTS
+
+ACTION: Add Section
+RESULT:
+- Create proposal section.
+- Status = Not Started.
+
+ACTION: Edit Section
+RESULT:
+- Save content.
+- Update section completion state.
+
+ACTION: AI Generate Draft Text
+RESULT:
+- Create draft text only.
+- Mark as AI Draft.
+- User must review/edit/approve.
+
+ACTION: Review Readiness
+RESULT:
+- Check required files, contacts, sections, due date, source support.
+- Output readiness status:
+  - Ready
+  - Needs Work
+  - Missing Support
+  - Submission Review Needed
+
+ACTION: Convert Won Proposal to Contract
+RESULT:
+- Create contract record.
+- Link proposal.
+- Carry selected proposal files, contacts, notes, AI context.
+- Route to contract overview.
+
+------------------------------------------------------------
+
+PAGE: Loss Review
+ROUTE: /app/proposals/:id/loss-review
+
+PURPOSE
+Turn lost/withdrawn/no-award proposals into lessons.
+
+ACTIONS AND RESULTS
+
+ACTION: Add Debrief Info
+RESULT:
+- Save debrief notes/files.
+- Separate facts from internal assumptions.
+
+ACTION: Analyze Debrief
+RESULT:
+- AI suggests strengths, weaknesses, lessons.
+- User reviews before saving.
+
+ACTION: Save Lesson
+RESULT:
+- Create lesson record.
+- Link to proposal.
+- Optionally create template improvement task.
+
+ACTION: Apply Lesson to Template
+RESULT:
+- Create template update draft.
+- Does not overwrite template automatically.
+
+============================================================
+CONTRACT WORKFLOW
+============================================================
+
+PAGE: Contracts
+ROUTE: /app/contracts
+
+PURPOSE
+Manage awarded work only.
+
+STATUSES
+Setup Incomplete, In Review, Active, Modification Pending Review, Finance Attention, Closeout Review, Closed, Archived.
+
+ACTIONS AND RESULTS
+
+ACTION: Add Contract
+RESULT:
+- Create contract record.
+- Status = Setup Incomplete.
+- Create task: Upload Governing Contract File.
+- Route to Contract Overview.
+
+ACTION: Carry Forward From Proposal
+RESULT:
+- Show selectable proposal files, contacts, notes, findings.
+- Carry selected items.
+- Preserve proposal history.
+
+ACTION: Upload Governing File
+RESULT:
+- Create file record.
+- Link to contract.
+- Mark link as governing.
+- Resolve missing governing file alert.
+- Create task: Run AI Confirmation.
+
+ACTION: Open Contract Hub
+RESULT:
+- Route to /app/contracts/:id/hub.
+
+ACTION: Archive Contract
+RESULT:
+- Mark archived.
+- Do not delete related files, invoices, payments, messages.
+
+------------------------------------------------------------
+
+PAGE: Contract Overview
+ROUTE: /app/contracts/:id
+
+PURPOSE
+Summary and setup page for one contract.
+
+SECTIONS
+- Contract summary
+- Readiness checklist
+- Governing files
+- Carried-forward proposal history
+- Contacts
+- Tasks/alerts
+- Link to Contract Hub
+
+ACTIONS AND RESULTS
+
+ACTION: Complete Setup Checklist
+RESULT:
+- Update readiness score.
+- If governing file present and contacts present, recommend AI Confirmation.
+
+ACTION: Add Contract Contact
+RESULT:
+- Link contact to contract.
+- Contact appears in Contacts module.
+
+ACTION: Open AI Confirmation
+RESULT:
+- Route to /app/contracts/:id/ai-confirmation.
+
+ACTION: Open Contract Hub
+RESULT:
+- Route to contract operating center.
+
+------------------------------------------------------------
+
+PAGE: Contract Hub
+ROUTE: /app/contracts/:id/hub
+
+PURPOSE
+The live operating center for one awarded contract.
+
+SECTIONS
+- Executive health summary
+- Governing source summary
+- Requirements
+- Deliverables
+- Deadlines
+- Compliance items
+- Changes/modifications
+- Files
+- Contacts
+- Messages
+- Finance snapshot
+- Alerts/tasks
+- Closeout readiness
+
+ACTIONS AND RESULTS
+
+ACTION: Run / Review AI Confirmation
+RESULT:
+- Route to AI Confirmation page or start analysis if files exist.
+- If no governing file, show warning and upload action.
+
+ACTION: Add Requirement
+RESULT:
+- Create requirement record linked to contract.
+- Optional source reference.
+- Status = Open.
+
+ACTION: Approve AI Requirement Finding
+RESULT:
+- Convert AI finding into live requirement.
+- Link source file and location.
+- Mark finding Approved.
+- Create audit log.
+
+ACTION: Add Deliverable
+RESULT:
+- Create deliverable record.
+- Add due date, owner, evidence expectation.
+- Create task if due date exists.
+
+ACTION: Add Deadline
+RESULT:
+- Create deadline record.
+- Create alert/task based on due date.
+
+ACTION: Add Compliance Item
+RESULT:
+- Create compliance item.
+- Link source reference and evidence requirement.
+
+ACTION: Add Modification
+RESULT:
+- Create modification record.
+- Upload/link mod file.
+- Mark “Modification Pending Review.”
+- Create task: Review Modification Impact.
+- Flag prior AI findings as possibly stale if governing source changed.
+
+ACTION: Review Finance
+RESULT:
+- Route to contract-filtered finance page.
+
+ACTION: Start Closeout
+RESULT:
+- Route to closeout page.
+- If blockers exist, show blocked status.
+
+------------------------------------------------------------
+
+PAGE: AI Confirmation
+ROUTE: /app/contracts/:id/ai-confirmation
+
+PURPOSE
+Review awarded contract files and modifications against prior assumptions.
+
+ANALYSIS CATEGORIES
+- Requirements
+- Deliverables
+- Deadlines
+- Billing/payment terms
+- Compliance items
+- Missing information
+- Changes from proposal stage
+- Subcontracting/flowdown concerns
+
+ACTIONS AND RESULTS
+
+ACTION: Select Source Files
+RESULT:
+- User chooses governing contract file and optional modifications/support files.
+- Save file set for analysis.
+
+ACTION: Run Analysis
+RESULT:
+- Create AI analysis run.
+- Generate findings.
+- Each finding includes:
+  - title
+  - category
+  - source file
+  - source location/section if available
+  - extracted/source note
+  - plain-language meaning
+  - practical impact
+  - relation to prior stage: New, Changed, Confirmed, No Longer Supported
+  - review state
+
+ACTION: Approve Finding
+RESULT:
+- Convert finding into appropriate live object:
+  - requirement
+  - deliverable
+  - deadline
+  - compliance item
+  - billing term note
+- Mark finding Approved.
+- Create audit log.
+
+ACTION: Hold Finding
+RESULT:
+- Keep finding visible.
+- Do not create live object.
+
+ACTION: Edit Before Approving
+RESULT:
+- Allow user to adjust title/category/due date/owner/notes.
+- Save approved edited version.
+- Preserve original AI text.
+
+ACTION: Mark Needs Manual Review
+RESULT:
+- Create task for review.
+- Finding does not become live obligation.
+
+ACTION: Re-run Analysis
+RESULT:
+- Create new analysis run.
+- Compare new findings to old:
+  - unchanged
+  - changed
+  - removed
+  - new
+- Mark old findings stale if source set changed.
+
+============================================================
+PARTNERS / SUBCONTRACTORS / VENDORS / CONTACTS
+============================================================
+
+PAGE: Subcontractors
+ROUTE: /app/subcontractors
+
+PURPOSE
+Manage subcontractor companies and subcontracting workflow.
+
+FIELDS
+- Company name
+- Point of contact
+- Services/capabilities
+- NAICS
+- Status
+- Linked opportunities/proposals/contracts
+- Required documents
+- Flowdown notes
+- Consent/subcontracting review status
+
+ACTIONS AND RESULTS
+
+ACTION: Add Subcontractor
+RESULT:
+- Create subcontractor record.
+- Optionally create linked contact.
+- Status = Prospect or Active.
+
+ACTION: Link to Proposal/Contract
+RESULT:
+- Create relationship record.
+- Show subcontractor under that proposal/contract.
+
+ACTION: Add Required Document
+RESULT:
+- Create file request/task.
+- Track missing documents.
+
+ACTION: Mark Flowdown Review Needed
+RESULT:
+- Create compliance/task item.
+
+------------------------------------------------------------
+
+PAGE: Vendors
+ROUTE: /app/vendors
+
+PURPOSE
+Manage vendors/suppliers that support performance but are not necessarily subcontractors.
+
+ACTIONS AND RESULTS
+
+ACTION: Add Vendor
+RESULT:
+- Create vendor record.
+- Link contacts/files/contracts if needed.
+
+ACTION: Link Vendor to Contract
+RESULT:
+- Show vendor on contract operations support list.
+
+ACTION: Track Vendor Document
+RESULT:
+- Save required document/file link.
+
+------------------------------------------------------------
+
+PAGE: Contacts
+ROUTE: /app/contacts
+
+PURPOSE
+Manage operational contacts, not login users.
+
+CONTACT TYPES
+- Agency/client
+- CO
+- COR
+- Billing contact
+- Subcontractor contact
+- Vendor contact
+- Partner
+- Internal
+
+ACTIONS AND RESULTS
+
+ACTION: Add Contact
+RESULT:
+- Create contact.
+- Optionally link to opportunity/proposal/contract/invoice/payment.
+
+ACTION: Add Follow-Up
+RESULT:
+- Create follow-up task.
+- Show next follow-up date.
+
+ACTION: Link Contact to Record
+RESULT:
+- Contact appears on related record detail.
+
+ACTION: Mark Retained Relationship
+RESULT:
+- Preserve contact as valuable even after project closes.
+
+============================================================
+DOCUMENTS / FILES / VERSIONS / DOC GENERATOR / HANDBOOK
+============================================================
+
+PAGE: Files
+ROUTE: /app/files
+
+PURPOSE
+Structured file directory.
+
+FILE TYPES
+- Source notice
+- Proposal support
+- Awarded contract
+- Modification
+- Compliance evidence
+- Invoice support
+- Payment support
+- Closeout evidence
+- General
+
+ACTIONS AND RESULTS
+
+ACTION: Upload File
+RESULT:
+- Create file record.
+- Store metadata.
+- Ask what record to link it to.
+- If linked to contract as governing, update contract source state.
+
+ACTION: Link File
+RESULT:
+- Create file link to selected record.
+- Link includes purpose/category and governing yes/no.
+
+ACTION: Mark Governing
+RESULT:
+- Mark file link as governing for that record.
+- If contract, trigger “AI confirmation needed” alert.
+
+ACTION: Replace File
+RESULT:
+- Create version/replacement record.
+- Mark old findings possibly stale if used in AI analysis.
+
+ACTION: Open File Detail
+RESULT:
+- Show where file is used, AI runs that used it, related records, version history.
+
+------------------------------------------------------------
+
+PAGE: Versions
+ROUTE: /app/versions
+
+PURPOSE
+Track versions of documents, records, generated docs, contract files, and templates.
+
+ACTIONS AND RESULTS
+
+ACTION: View Version History
+RESULT:
+- Show older versions, current version, changed by, changed date.
+
+ACTION: Restore Version
+RESULT:
+- Create new current version based on old version.
+- Preserve full history.
+- Create audit log.
+
+ACTION: Compare Versions
+RESULT:
+- Show differences where possible.
+
+------------------------------------------------------------
+
+PAGE: Doc Generator
+ROUTE: /app/doc-generator
+
+PURPOSE
+Generate business documents from saved workspace data.
+
+DOCUMENT TYPES
+- Capability statement
+- Proposal outline
+- Subcontractor request
+- Invoice support checklist
+- Contract summary
+- Closeout summary
+- Internal task memo
+- Support letter/template
+
+ACTIONS AND RESULTS
+
+ACTION: Select Document Type
+RESULT:
+- Show required inputs and related records.
+
+ACTION: Generate Draft
+RESULT:
+- Create draft document.
+- Mark as draft.
+- Use available business profile and linked record data.
+- Do not invent missing facts.
+- Show missing-data warnings.
+
+ACTION: Save Document
+RESULT:
+- Save generated document record.
+- Optionally export/download.
+- Add to Files/Versions if supported.
+
+ACTION: Edit Document
+RESULT:
+- Save new version.
+
+------------------------------------------------------------
+
+PAGE: Handbook
+ROUTE: /app/handbook
+
+PURPOSE
+Business owner/user manual and internal instruction guide.
+
+ACTIONS AND RESULTS
+
+ACTION: Open Section
+RESULT:
+- Show instructions for that module.
+
+ACTION: Search Handbook
+RESULT:
+- Show matching help/manual content.
+
+ACTION: Generate/Update Handbook
+RESULT:
+- Build handbook from current app modules and business rules.
+- Save version.
+
+============================================================
+OPERATIONS
+============================================================
+
+PAGE: Change Management
+ROUTE: /app/change-management
+
+PURPOSE
+Track changes to contracts, documents, workflows, pricing, plans, or operational records.
+
+CHANGE TYPES
+- Contract modification
+- Scope change
+- Deadline change
+- Deliverable change
+- Finance term change
+- Internal workflow change
+- Template change
+- Plan/access change
+
+ACTIONS AND RESULTS
+
+ACTION: Add Change
+RESULT:
+- Create change record.
+- Link to contract/proposal/document/etc.
+- Status = Pending Review.
+
+ACTION: Review Impact
+RESULT:
+- User records what changed, affected records, risk, tasks needed.
+
+ACTION: Approve Change
+RESULT:
+- Status = Approved.
+- Create needed tasks/alerts.
+- Update related record if user confirms.
+
+ACTION: Reject/Close Change
+RESULT:
+- Status = Closed/Rejected.
+- Preserve history.
+
+------------------------------------------------------------
+
+PAGE: Tasks
+ROUTE: /app/tasks
+
+PURPOSE
+Central execution list.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Task
+RESULT:
+- Create task with owner, due date, priority, related record.
+
+ACTION: Assign Task
+RESULT:
+- Update owner.
+- Notify if notification system exists.
+
+ACTION: Complete Task
+RESULT:
+- Status = Complete.
+- Completion timestamp.
+- Related alert may resolve.
+
+ACTION: Reopen Task
+RESULT:
+- Status = Open.
+- Audit log.
+
+------------------------------------------------------------
+
+PAGE: Alerts
+ROUTE: /app/alerts
+
+PURPOSE
+Attention signals.
+
+ACTIONS AND RESULTS
+
+ACTION: Dismiss Alert
+RESULT:
+- Mark dismissed.
+- Require reason for critical alerts.
+
+ACTION: Convert to Task
+RESULT:
+- Create linked task.
+- Mark alert converted.
+
+ACTION: Resolve Alert
+RESULT:
+- Mark resolved when underlying issue fixed.
+
+============================================================
+FINANCE
+============================================================
+
+PAGE: Finance
+ROUTE: /app/finance
+
+PURPOSE
+Contract-centered finance overview.
+
+USER SHOULD SEE
+- Total billed
+- Total received
+- Outstanding balance
+- Overdue invoices
+- Unmatched payments
+- Finance alerts
+- Contract finance breakdown
+
+ACTIONS AND RESULTS
+
+ACTION: Create Invoice
+RESULT:
+- Route to invoice form.
+
+ACTION: Record Payment
+RESULT:
+- Route to payment form.
+
+ACTION: Match Payment
+RESULT:
+- Open matching workflow.
+
+ACTION: Filter by Contract
+RESULT:
+- Show invoices/payments for selected contract.
+
+------------------------------------------------------------
+
+PAGE: Invoices
+ROUTE: /app/invoices
+
+PURPOSE
+Track what was billed.
+
+STATUSES
+Draft, Submitted, Partially Paid, Paid, Overdue, Disputed, Archived.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Invoice
+RESULT:
+- Create invoice record.
+- Link to contract.
+- Status = Draft or Submitted.
+- If due date exists, create reminder alert/task.
+
+ACTION: Add Support File
+RESULT:
+- Upload/link file as invoice support.
+- Resolve missing support warning.
+
+ACTION: Mark Submitted
+RESULT:
+- Status = Submitted.
+- Save submit date.
+
+ACTION: Mark Disputed
+RESULT:
+- Status = Disputed.
+- Ask for reason.
+- Create follow-up task.
+
+ACTION: Apply Payment
+RESULT:
+- Link payment to invoice.
+- Update amount received and remaining balance.
+- If fully paid, status = Paid.
+- If partial, status = Partially Paid.
+
+------------------------------------------------------------
+
+PAGE: Payments
+ROUTE: /app/payments
+
+PURPOSE
+Track money actually received.
+
+STATUSES
+Recorded, Matched, Partially Matched, Unmatched, Needs Review.
+
+ACTIONS AND RESULTS
+
+ACTION: Record Payment
+RESULT:
+- Create payment record.
+- Link to contract if known.
+- Status = Unmatched unless matched immediately.
+
+ACTION: Match to Invoice
+RESULT:
+- Create invoice_payment_link.
+- Update invoice balance.
+- Update payment match state.
+
+ACTION: Mark Needs Review
+RESULT:
+- Status = Needs Review.
+- Create task.
+
+ACTION: Upload Receipt
+RESULT:
+- Link support file to payment.
+
+============================================================
+REPORTS / CAPABILITY STATEMENTS / TEMPLATES / CLOSEOUT / LESSONS
+============================================================
+
+PAGE: Reports
+ROUTE: /app/reports
+
+PURPOSE
+Whole-workspace oversight.
+
+REPORT TYPES
+- Executive Summary
+- Opportunities
+- Proposals
+- Contracts
+- Finance
+- Tasks/Alerts
+- Files/Contacts
+- Historical
+
+ACTIONS AND RESULTS
+
+ACTION: Open Report
+RESULT:
+- Show filtered summary and linked records.
+
+ACTION: Export Report
+RESULT:
+- Generate export file if supported.
+- Log export.
+
+ACTION: Create Task from Report Issue
+RESULT:
+- Create task linked to report source.
+
+------------------------------------------------------------
+
+PAGE: Capability Statements
+ROUTE: /app/capability-statements
+
+PURPOSE
+Build and maintain capability statements from business profile data.
+
+ACTIONS AND RESULTS
+
+ACTION: Build From Profile
+RESULT:
+- Draft capability statement using saved business profile.
+- Show missing data warnings.
+- Do not invent experience.
+
+ACTION: Create Tailored Version
+RESULT:
+- Duplicate current version with target audience/agency focus.
+- Save as new version.
+
+ACTION: Export
+RESULT:
+- Create downloadable/exported document.
+- Save file/version record.
+
+------------------------------------------------------------
+
+PAGE: Templates
+ROUTE: /app/templates
+
+PURPOSE
+Reusable structures/checklists/language.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Template
+RESULT:
+- Create template record.
+
+ACTION: Apply Template
+RESULT:
+- Apply as starting structure only.
+- Do not overwrite live records silently.
+
+ACTION: Save New Version
+RESULT:
+- Create template version.
+- Preserve old version.
+
+ACTION: Link Lesson to Template
+RESULT:
+- Create improvement draft.
+
+------------------------------------------------------------
+
+PAGE: Closeout
+ROUTE: /app/contracts/:id/closeout
+
+PURPOSE
+Confirm contract is truly ready to close.
+
+CHECKS
+- Open requirements
+- Open deliverables
+- Open deadlines
+- Open compliance items
+- Unpaid invoices
+- Unmatched payments
+- Missing final files
+- Unresolved messages/follow-ups
+- Missing final notes
+
+ACTIONS AND RESULTS
+
+ACTION: Start Closeout Review
+RESULT:
+- Create closeout review record.
+- Calculate blockers.
+- Status = In Review or Blocked.
+
+ACTION: Resolve Blocker
+RESULT:
+- Update blocker status.
+- Recalculate closeout readiness.
+
+ACTION: Mark Ready for Closeout
+RESULT:
+- Only allow if blockers resolved or exceptions documented.
+
+ACTION: Mark Closed
+RESULT:
+- Require final notes.
+- Set contract status = Closed.
+- Create lesson prompt.
+- Archive or retain active tasks appropriately.
+
+------------------------------------------------------------
+
+PAGE: Lessons
+ROUTE: /app/lessons
+
+PURPOSE
+Capture improvement from losses and closeouts.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Lesson
+RESULT:
+- Create lesson linked to proposal/contract/closeout.
+
+ACTION: Convert Lesson to Template Update
+RESULT:
+- Create draft template improvement.
+
+ACTION: Mark Lesson Applied
+RESULT:
+- Update lesson status.
+- Link applied template/workflow.
+
+============================================================
+ADMINISTRATION / PLAN FEATURES / DIAGNOSTICS / ADOPTION / CONSISTENCY
+============================================================
+
+PAGE: Plan Features
+ROUTE: /app/plan-features
+
+PURPOSE
+Show what the current workspace plan allows.
+
+ACTIONS AND RESULTS
+
+ACTION: View Locked Feature
+RESULT:
+- Show why locked and what plan unlocks it.
+- Provide billing/support link.
+
+ACTION: Request Upgrade
+RESULT:
+- Create billing/support request or route to subscription.
+
+------------------------------------------------------------
+
+PAGE: Diagnostics
+ROUTE: /app/diagnostics
+
+PURPOSE
+Check health of routes, data, integrations, AI, billing, files, and missing setup.
+
+ACTIONS AND RESULTS
+
+ACTION: Run Diagnostic
+RESULT:
+- Check routes/pages/modules.
+- Check missing DB/data relationships.
+- Check broken links/buttons where possible.
+- Output pass/warning/error list.
+- Allow creation of tasks from failures.
+
+ACTION: Recheck
+RESULT:
+- Run again and compare status.
+
+------------------------------------------------------------
+
+PAGE: Adoption
+ROUTE: /app/adoption
+
+PURPOSE
+Show how well the workspace is being used.
+
+ACTIONS AND RESULTS
+
+ACTION: View Adoption Report
+RESULT:
+- Show setup completion, active modules, unused modules, first records created, user activity.
+
+ACTION: Create Adoption Task
+RESULT:
+- Create task like “Add first contract” or “Complete business profile.”
+
+------------------------------------------------------------
+
+PAGE: Consistency
+ROUTE: /app/consistency
+
+PURPOSE
+Check whether data is consistent across records.
+
+CHECKS
+- Contract missing governing file
+- Invoice without contract
+- Payment without invoice match
+- Contact not linked
+- Proposal won but no contract
+- Contract active but no contacts
+- Closeout requested but finance open
+- AI findings approved but no live object
+
+ACTIONS AND RESULTS
+
+ACTION: Run Consistency Check
+RESULT:
+- Show issues.
+- Create tasks or quick-fix actions.
+
+ACTION: Fix Issue
+RESULT:
+- Route to the correct record or apply safe correction.
+
+============================================================
+PLATFORM ADMIN / OWNER SIDE
+============================================================
+
+PAGE: Platform Admin Dashboard
+ROUTE: /platform
+
+PURPOSE
+Owner control center for Reed’s Solutions / PrimeContractorOS.
+
+USER SHOULD SEE
+- Total workspaces
+- Active paid
+- Trials
+- Limited access
+- Pending payment
+- Past due
+- Suspended
+- Open support tickets
+- Recent activity
+- Login events
+- Billing attention
+- Onboarding attention
+
+ACTIONS AND RESULTS
+
+ACTION: View All Workspaces
+RESULT:
+- Route to /platform/workspaces.
+
+ACTION: Click metric card
+RESULT:
+- Open filtered list.
+
+ACTION: Switch to App
+RESULT:
+- Route to customer app mode if user has workspace access.
+
+------------------------------------------------------------
+
+PAGE: Workspaces
+ROUTE: /platform/workspaces
+
+PURPOSE
+Manage customer workspaces.
+
+ACTIONS AND RESULTS
+
+ACTION: Open Workspace
+RESULT:
+- Show platform workspace summary.
+
+ACTION: Change Workspace Status
+RESULT:
+- Update access/status.
+- Require reason for sensitive changes.
+- Create platform audit log.
+
+ACTION: Suspend Workspace
+RESULT:
+- Status = Suspended.
+- Customer access restricted.
+- Log reason.
+
+ACTION: Reactivate Workspace
+RESULT:
+- Status restored to Active/Paid/etc.
+- Log reason.
+
+ACTION: Archive Workspace
+RESULT:
+- Mark archived.
+- Preserve data.
+
+------------------------------------------------------------
+
+PAGE: Platform Users
+ROUTE: /platform/users
+
+PURPOSE
+View and manage users across platform.
+
+ACTIONS AND RESULTS
+
+ACTION: Open User
+RESULT:
+- Show user profile, workspace memberships, login events.
+
+ACTION: Disable User
+RESULT:
+- Disable login.
+- Preserve history.
+- Log admin action.
+
+ACTION: Reset/Assist Access
+RESULT:
+- Create recovery action or support note.
+
+------------------------------------------------------------
+
+PAGE: Activity
+ROUTE: /platform/activity
+
+PURPOSE
+Audit trail.
+
+ACTIONS AND RESULTS
+- Filter by workspace, user, action, date.
+- Open activity detail.
+- Export if supported.
+
+------------------------------------------------------------
+
+PAGE: Login Events
+ROUTE: /platform/login-events
+
+PURPOSE
+Security visibility.
+
+ACTIONS AND RESULTS
+- Show successful and failed logins.
+- Filter by user/workspace/date/IP if available.
+- Flag suspicious patterns.
+
+------------------------------------------------------------
+
+PAGE: Plans
+ROUTE: /platform/plans
+
+PURPOSE
+Manage pricing plans and plan features.
+
+ACTIONS AND RESULTS
+
+ACTION: Create/Edit Plan
+RESULT:
+- Save plan version.
+- Do not break existing customers.
+- Log pricing change.
+
+ACTION: Deactivate Plan
+RESULT:
+- Stop new signups.
+- Existing users remain unless migration rule applied.
+
+ACTION: Preview Customer View
+RESULT:
+- Show how pricing appears publicly.
+
+------------------------------------------------------------
+
+PAGE: Discounts
+ROUTE: /platform/discounts
+
+PURPOSE
+Manage promo/discount codes.
+
+ACTIONS AND RESULTS
+
+ACTION: Create Code
+RESULT:
+- Save code with type, value, usage limit, expiration, eligible plans.
+
+ACTION: Disable Code
+RESULT:
+- Code no longer works.
+- Past usage remains.
+
+ACTION: View Usage
+RESULT:
+- Show workspaces/users/code redemptions.
+
+------------------------------------------------------------
+
+PAGE: Billing
+ROUTE: /platform/billing
+
+PURPOSE
+Manage billing/activation states.
+
+ACTIONS AND RESULTS
+
+ACTION: Correct Billing State
+RESULT:
+- Update workspace billing state.
+- Require reason.
+- Log before/after.
+
+ACTION: Start Grace Period
+RESULT:
+- Set grace period dates.
+- Customer gets access state according to grace rules.
+
+ACTION: Mark Past Due
+RESULT:
+- Update access restrictions.
+- Create customer billing alert.
+
+ACTION: Mark Active Paid
+RESULT:
+- Unlock paid access according to plan.
+
+------------------------------------------------------------
+
+PAGE: Platform Support
+ROUTE: /platform/support
+
+PURPOSE
+Manage support tickets.
+
+ACTIONS AND RESULTS
+
+ACTION: Open Ticket
+RESULT:
+- Show thread, workspace, user, category, urgency, attachments.
+
+ACTION: Reply
+RESULT:
+- Add customer-visible reply.
+- Update status.
+
+ACTION: Add Internal Note
+RESULT:
+- Save private platform note.
+
+ACTION: Mark Resolved
+RESULT:
+- Set status resolved.
+- Ask for resolution category.
+
+------------------------------------------------------------
+
+PAGE: Platform Onboarding
+ROUTE: /platform/onboarding
+
+PURPOSE
+Monitor customer onboarding progress.
+
+ACTIONS AND RESULTS
+- View incomplete workspaces.
+- Filter by missing business profile, no first record, trial inactive, stuck setup.
+- Create follow-up/support task.
+
+------------------------------------------------------------
+
+PAGE: Overrides
+ROUTE: /platform/overrides
+
+PURPOSE
+Safe owner recovery controls.
+
+OVERRIDE TYPES
+- Change access state
+- Apply/remove discount
+- Extend trial/discount/grace period
+- Restore archived workspace
+- Correct plan assignment
+- Fix ownership/admin issue
+- Suspend/reactivate
+
+ACTIONS AND RESULTS
+
+ACTION: Apply Override
+RESULT:
+- Require workspace, override type, current value, new value, reason.
+- Preview before applying.
+- Save before/after values.
+- Create audit log.
+
+============================================================
+REQUIRED FINAL RESULT
+============================================================
+
+When complete, the app should feel like this:
+
+1. A public visitor understands what PrimeContractorOS is.
+2. A new user can create a workspace.
+3. The system routes them correctly after login.
+4. Onboarding collects useful government contracting business data.
+5. Dashboard tells the user what to do next.
+6. Opportunities can convert to proposals.
+7. Proposals can convert to contracts.
+8. Contracts have a real Contract Hub.
+9. AI confirmation is source-linked and review-first.
+10. Requirements, deliverables, deadlines, and compliance items become live contract objects only after review.
+11. Files, contacts, messages, subcontractors, vendors, invoices, and payments connect to records.
+12. Finance separates invoices from payments.
+13. Closeout checks blockers before closure.
+14. Lessons feed templates and improvement.
+15. Platform Admin controls workspaces, users, plans, billing, support, discounts, onboarding, activity, login events, and overrides.
+16. Diagnostics and consistency pages help find broken setup/data.
+17. Every action gives a result.
+18. Every important result updates records, status, alerts, tasks, or audit logs.
+19. Nothing important is just visual.
+20. Do not change the current design style unless needed for mobile usability or accessibility.
+
+FINAL INSTRUCTION
+Audit the existing app first.
+Keep the existing UI and navigation.
+Then wire every route, page, button, form, card, table, status, record relationship, and result.
+Do not leave placeholder pages.
+Do not make buttons that do nothing.
+Do not make AI final without review.
+Do not merge invoices and payments.
+Do not mix Platform Admin controls with Customer App controls.

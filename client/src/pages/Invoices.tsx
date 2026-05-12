@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Invoices() {
   const [showForm, setShowForm] = useState(false);
@@ -51,6 +52,13 @@ export default function Invoices() {
       ]}
       actions={
         <div className="flex gap-2">
+      <PageGuide
+        title="Invoices"
+        description="Track what was billed, submission status, and payment application."
+        whenToUse="When creating invoices, tracking submissions, or matching payments to invoices."
+        whatToDoNext={["Create invoices for completed deliverables", "Submit draft invoices to the government", "Apply received payments to invoices", "Follow up on overdue invoices"]}
+        relatedRecords={[{ label: "Payments", path: "/app/payments" }, { label: "Finance", path: "/app/finance" }, { label: "Contracts", path: "/app/contracts" }]}
+      />
           <Button variant="outline" onClick={() => exportFinance.mutate()} disabled={exportFinance.isPending}>
             <Download className="w-4 h-4 mr-2" /> {exportFinance.isPending ? "Exporting..." : "Export PDF"}
           </Button>

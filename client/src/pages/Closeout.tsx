@@ -1,142 +1,121 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CheckCircle2, Circle, Clock, Loader2, Plus } from "lucide-react";
-import PageLayout from "@/components/PageLayout";
-import { trpc } from "@/lib/trpc";
-import { useParams } from "wouter";
-import { toast } from "sonner";
 import { useState } from "react";
+import PageGuide from "@/components/PageGuide";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Circle, Clock, FileText, DollarSign, Users, Shield, Archive } from "lucide-react";
+
+const closeoutSteps = [
+  { id: 1, title: "Final Invoice Submitted", category: "finance", status: "complete", description: "Submit final invoice with all remaining billable items" },
+  { id: 2, title: "All Deliverables Accepted", category: "deliverables", status: "complete", description: "Confirm government acceptance of all CDRLs" },
+  { id: 3, title: "Property Disposition Complete", category: "property", status: "in_progress", description: "Return or dispose of all government-furnished property" },
+  { id: 4, title: "Subcontractor Closeout", category: "subcontracts", status: "in_progress", description: "Close out all subcontracts and verify final payments" },
+  { id: 5, title: "Final Patent/Royalty Report", category: "compliance", status: "not_started", description: "Submit final patent and royalty report per FAR 52.227-11" },
+  { id: 6, title: "Release of Claims", category: "legal", status: "not_started", description: "Execute contractor release of claims" },
+  { id: 7, title: "Final Indirect Cost Rate Proposal", category: "finance", status: "not_started", description: "Submit final indirect cost rate proposal if applicable" },
+  { id: 8, title: "Lessons Learned Documentation", category: "knowledge", status: "not_started", description: "Document lessons learned for future contracts" },
+  { id: 9, title: "Archive Contract Files", category: "records", status: "not_started", description: "Archive all contract files per retention requirements" },
+  { id: 10, title: "Closeout Certification", category: "final", status: "not_started", description: "Obtain final closeout certification from contracting officer" },
+];
+
+const statusIcons: Record<string, typeof CheckCircle2> = {
+  complete: CheckCircle2,
+  in_progress: Clock,
+  not_started: Circle,
+};
+
+const statusColors: Record<string, string> = {
+  complete: "text-green-600",
+  in_progress: "text-amber-600",
+  not_started: "text-slate-400",
+};
 
 export default function Closeout() {
-  const params = useParams<{ id: string }>();
-  const contractId = parseInt(params.id || "0");
-  
-  const [newItem, setNewItem] = useState("");
-
-  const { data: closeoutData = null, isLoading, refetch } = trpc.intCloseout.getByContract.useQuery(
-    { contractId },
-    { enabled: contractId > 0 }
-  );
-
-  const initChecklist = trpc.intCloseout.initiate.useMutation({
-    onSuccess: () => { refetch(); toast.success("Checklist Created: Standard closeout checklist initialized."); },
-  });
-
-  const toggleItem = trpc.intCloseout.toggleItem.useMutation({
-    onSuccess: () => refetch(),
-  });
-
-  const addItem = trpc.intCloseout.addItem.useMutation({
-    onSuccess: () => { refetch(); setNewItem(""); toast.success("Item Added"); },
-  });
-
-  if (isLoading) {
-    return (
-      <PageLayout title="Contract Closeout" subtitle="Checklist-driven closeout workflow" label="Closeout">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-        </div>
-      </PageLayout>
-    );
-  }
-
-  const items = closeoutData?.items || [];
-  const completedCount = items.filter((i: any) => i.completed).length;
-  const totalCount = items.length;
-  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const [steps, setSteps] = useState(closeoutSteps);
+  const completed = steps.filter((s) => s.status === "complete").length;
+  const progress = Math.round((completed / steps.length) * 100);
 
   return (
-    <PageLayout
-      title="Contract Closeout"
-      subtitle={`Contract #${contractId} — Checklist-driven closeout workflow`}
-      label="Closeout"
-      summaryCards={[
-        { label: "Total Items", value: totalCount },
-        { label: "Completed", value: completedCount, color: "text-green-600" },
-        { label: "Remaining", value: totalCount - completedCount, color: "text-orange-600" },
-        { label: "Progress", value: `${progress}%`, color: progress === 100 ? "text-green-600" : "text-blue-600" },
-      ]}
-      actions={
-        totalCount === 0 ? (
-          <Button onClick={() => initChecklist.mutate({ contractId })} disabled={initChecklist.isPending}>
-            {initChecklist.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-            Initialize Checklist
-          </Button>
-        ) : undefined
-      }
-    >
-      {totalCount === 0 ? (
-        <Card className="p-8 text-center border border-gray-200">
-          <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Closeout Checklist</h3>
-          <p className="text-gray-600 mb-4">Initialize a standard closeout checklist to begin the closeout process.</p>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
-            <div
-              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      <PageGuide
+        title="Contract Closeout"
+        description="Guided workflow for closing out completed contracts. Track each closeout step from final invoicing through archival."
+        whenToUse="Use when a contract is nearing completion or has ended. Follow the checklist to ensure all closeout requirements are met."
+        whatToDoNext={[
+          "Complete in-progress closeout steps",
+          "Submit final invoices and deliverables",
+          "Coordinate subcontractor closeout",
+          "Document lessons learned before archiving",
+        ]}
+        relatedRecords={[
+          { label: "Contracts", path: "/app/contracts" },
+          { label: "Finance", path: "/app/finance" },
+          { label: "Lessons Learned", path: "/app/lessons-learned" },
+          { label: "Deliverables", path: "/app/deliverables" },
+        ]}
+      />
 
-          {/* Checklist items */}
-          <div className="space-y-2">
-            {items.map((item: any) => (
-              <Card
-                key={item.id}
-                className={`p-4 border cursor-pointer transition-colors ${item.completed ? "bg-green-50 border-green-200" : "bg-white border-gray-200 hover:border-blue-200"}`}
-                onClick={() => toggleItem.mutate({ itemId: item.id, completed: !item.completed })}
-              >
-                <div className="flex items-center gap-3">
-                  {item.completed ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
-                    <p className={`font-medium ${item.completed ? "text-green-800 line-through" : "text-gray-900"}`}>
-                      {item.title}
-                    </p>
-                    {item.description && (
-                      <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
-                    )}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">Contract Closeout</h1>
+        <p className="text-sm text-slate-500 mt-1">Guided closeout workflow</p>
+      </div>
+
+      {/* Progress */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-slate-900">Closeout Progress</h3>
+            <span className="text-sm font-medium text-slate-600">{completed}/{steps.length} steps complete</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-3">
+            <div className="bg-blue-600 h-3 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-xs text-slate-500 mt-2">{progress}% complete</p>
+        </CardContent>
+      </Card>
+
+      {/* Steps */}
+      <div className="space-y-3">
+        {steps.map((step, idx) => {
+          const Icon = statusIcons[step.status];
+          return (
+            <Card key={step.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Icon className={`w-6 h-6 ${statusColors[step.status]}`} />
                   </div>
-                  {item.completedAt && (
-                    <span className="text-xs text-gray-400">
-                      {new Date(item.completedAt).toLocaleDateString()}
-                    </span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-slate-900 text-sm">{step.title}</h3>
+                      <Badge variant="outline" className="text-xs capitalize">{step.category}</Badge>
+                    </div>
+                    <p className="text-sm text-slate-600">{step.description}</p>
+                  </div>
+                  {step.status !== "complete" && (
+                    <Button
+                      size="sm"
+                      variant={step.status === "in_progress" ? "default" : "outline"}
+                      className={step.status === "in_progress" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}
+                      onClick={() => {
+                        setSteps((prev) =>
+                          prev.map((s) =>
+                            s.id === step.id
+                              ? { ...s, status: s.status === "not_started" ? "in_progress" : "complete" }
+                              : s
+                          )
+                        );
+                      }}
+                    >
+                      {step.status === "in_progress" ? "Mark Complete" : "Start"}
+                    </Button>
                   )}
                 </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Add custom item */}
-          <div className="flex gap-2 mt-4">
-            <input
-              type="text"
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-              placeholder="Add custom checklist item..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && newItem.trim()) {
-                  addItem.mutate({ closeoutId: contractId, label: newItem.trim() });
-                }
-              }}
-            />
-            <Button
-              size="sm"
-              onClick={() => { if (newItem.trim()) addItem.mutate({ closeoutId: contractId, label: newItem.trim() }); }}
-              disabled={!newItem.trim() || addItem.isPending}
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </PageLayout>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }

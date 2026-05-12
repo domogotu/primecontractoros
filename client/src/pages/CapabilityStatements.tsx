@@ -5,6 +5,7 @@ import PageLayout from "@/components/PageLayout";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { toast } from "sonner";
+import PageGuide from "@/components/PageGuide";
 
 export default function CapabilityStatements() {
   
@@ -36,6 +37,13 @@ export default function CapabilityStatements() {
   if (isLoading) {
     return (
       <PageLayout title="Capability Statements" subtitle="Build and manage your capability statements" label="Marketing">
+      <PageGuide
+        title="Capability Statements"
+        description="Build and maintain capability statements from your business profile data."
+        whenToUse="When preparing for networking events, responding to sources sought, or marketing to agencies."
+        whatToDoNext={["Build from your business profile", "Create tailored versions for specific agencies", "Export as downloadable document", "Review for missing data warnings"]}
+        relatedRecords={[{ label: "Business Profile", path: "/app/business-profile" }, { label: "Templates", path: "/app/templates" }, { label: "Files", path: "/app/files" }]}
+      />
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>

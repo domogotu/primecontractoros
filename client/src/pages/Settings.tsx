@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import {
   Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff
 } from 'lucide-react';
+import PageGuide from "@/components/PageGuide";
 
 export default function Settings() {
   const [, navigate] = useLocation();
@@ -77,6 +78,13 @@ export default function Settings() {
       subtitle="Manage workspace settings, preferences, and integrations"
       label="Configuration"
     >
+      <PageGuide
+        title="Workspace Settings"
+        description="Configure your workspace preferences, notifications, and integrations."
+        whenToUse="When adjusting workspace configuration, notification preferences, or team settings."
+        whatToDoNext={["Review notification preferences", "Configure workspace defaults", "Check integration settings", "Update workspace branding"]}
+        relatedRecords={[{ label: "Business Profile", path: "/app/business-profile" }, { label: "Users", path: "/app/users" }, { label: "Plan Features", path: "/app/plan-features" }]}
+      />
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Loading settings...</div>
       ) : (

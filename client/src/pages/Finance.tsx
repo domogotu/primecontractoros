@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Finance() {
   const [, navigate] = useLocation();
@@ -33,6 +34,13 @@ export default function Finance() {
       subtitle="Aggregated financial overview across all contracts — invoices, payments, and outstanding balances"
       label="Financial Overview"
     >
+      <PageGuide
+        title="Finance Overview"
+        description="Contract-centered financial overview with billing, payments, and outstanding balances."
+        whenToUse="When reviewing financial health, tracking payments, or managing invoicing across contracts."
+        whatToDoNext={["Review outstanding invoices", "Match unmatched payments to invoices", "Check overdue balances", "Create new invoices for delivered work"]}
+        relatedRecords={[{ label: "Invoices", path: "/app/invoices" }, { label: "Payments", path: "/app/payments" }, { label: "Contracts", path: "/app/contracts" }]}
+      />
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Loading financial data...</div>
       ) : (invoices as any[]).length === 0 && (payments as any[]).length === 0 ? (

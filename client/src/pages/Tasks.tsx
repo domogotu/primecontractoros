@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Tasks() {
   const [showForm, setShowForm] = useState(false);
@@ -79,6 +80,13 @@ export default function Tasks() {
         </Button>
       }
     >
+      <PageGuide
+        title="Tasks"
+        description="Central execution list for all workspace tasks across contracts and operations."
+        whenToUse="When managing daily work, tracking assignments, or following up on action items."
+        whatToDoNext={["Complete overdue tasks first", "Assign unassigned tasks", "Create tasks from alerts or reports", "Review completed tasks for follow-ups"]}
+        relatedRecords={[{ label: "Alerts", path: "/app/alerts" }, { label: "Contracts", path: "/app/contracts" }, { label: "Dashboard", path: "/app/dashboard" }]}
+      />
       {/* Add Form */}
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>

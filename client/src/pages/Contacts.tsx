@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
+import PageGuide from "@/components/PageGuide";
 
 export default function Contacts() {
   const [showForm, setShowForm] = useState(false);
@@ -91,6 +92,13 @@ export default function Contacts() {
         </Button>
       }
     >
+      <PageGuide
+        title="Contacts"
+        description="People connected to your contracting work across all records."
+        whenToUse="When adding, finding, or managing contacts for opportunities, contracts, or subcontractors."
+        whatToDoNext={["Add contacts for new opportunities", "Link contacts to contracts and proposals", "Update contact information", "Review communication history"]}
+        relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Subcontractors", path: "/app/subcontractors" }, { label: "Messages", path: "/app/messages" }]}
+      />
       {/* Add Contact Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

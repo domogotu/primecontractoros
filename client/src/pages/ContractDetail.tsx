@@ -15,6 +15,7 @@ import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
+import PageGuide from "@/components/PageGuide";
 
 export default function ContractDetail() {
   const [, params] = useRoute('/app/contracts/:id');
@@ -91,6 +92,13 @@ export default function ContractDetail() {
   if (!contractId) {
     return (
       <PageLayout title="Contract Detail" subtitle="View and manage this contract" label="Contracts">
+      <PageGuide
+        title="Contract Detail"
+        description="Complete contract view with requirements, deliverables, compliance, and financial tracking."
+        whenToUse="When managing a specific contract, reviewing compliance, or tracking performance."
+        whatToDoNext={["Review contract requirements and deliverables", "Check compliance status", "Track invoices and payments", "Run AI contract review for findings"]}
+        relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Requirements", path: "/app/requirements" }, { label: "Finance", path: "/app/finance" }]}
+      />
         <div className="p-8 text-center">
           <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
           <h2 className="text-xl font-semibold">Invalid Contract</h2>
