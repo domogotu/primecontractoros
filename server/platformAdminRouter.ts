@@ -1,5 +1,6 @@
 import { adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { Resend } from "resend";
 import { getDb } from "./db";
 import {
   workspaces,
@@ -509,6 +510,68 @@ export const platformAdminRouter = router({
           .from(platformAuditLog)
           .orderBy(desc(platformAuditLog.createdAt))
           .limit(limit);
+      }),
+  }),
+
+  // --- Onboarding Email ---
+  onboarding: router({
+    sendLink: adminProcedure
+      .input(
+        z.object({
+          recipientEmail: z.string().email(),
+          recipientName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const resendKey = process.env.RESEND_API_KEY;
+        if (!resendKey) throw new Error("RESEND_API_KEY not configured");
+        const resend = new Resend(resendKey);
+        const name = input.recipientName || "Team Member";
+        const htmlBody = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Welcome to Reed's Solutions LLC</title></head>
+<body style="margin:0;padding:0;background:#0b1320;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b1320;">
+    <tr><td align="center" style="padding:40px 20px;">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#111d30;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#1a2d4a,#0b1320);padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <h1 style="color:#fff;font-size:24px;margin:0 0 8px;">Welcome to Reed's Solutions LLC</h1>
+          <p style="color:#60a5fa;font-size:14px;margin:0;">PrimeContractorOS — Government Contracting Management Platform</p>
+        </td></tr>
+        <tr><td style="padding:40px;">
+          <p style="color:#e2e8f0;font-size:16px;margin:0 0 20px;">Hi ${name},</p>
+          <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 24px;">
+            Welcome to the team! You now have access to PrimeContractorOS. This platform helps you manage opportunities, proposals, contracts, compliance, and more.
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="padding:20px;background:rgba(59,130,246,0.1);border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+              <p style="color:#60a5fa;font-size:13px;font-weight:bold;margin:0 0 8px;">Step 1: Read the Onboarding Guide</p>
+              <a href="https://reedssolutionsllc.org/onboarding" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;">View Onboarding Guide</a>
+            </td></tr>
+          </table>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="padding:20px;background:rgba(70,210,126,0.08);border-radius:8px;border:1px solid rgba(70,210,126,0.2);">
+              <p style="color:#46d27e;font-size:13px;font-weight:bold;margin:0 0 8px;">Step 2: Log In to PrimeContractorOS</p>
+              <a href="https://primecontractor-bk79t4ta.manus.space/login" style="display:inline-block;background:#46d27e;color:#0b1320;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;">Go to PrimeContractorOS</a>
+            </td></tr>
+          </table>
+          <p style="color:#64748b;font-size:12px;margin:24px 0 0;border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;">
+            Questions? Contact us at <a href="mailto:support@reedssolutionsllc.org" style="color:#60a5fa;">support@reedssolutionsllc.org</a>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+        const result = await resend.emails.send({
+          from: "Reed's Solutions LLC <onboarding@resend.dev>",
+          to: input.recipientEmail,
+          subject: "Welcome to Reed's Solutions LLC — Your Onboarding Guide",
+          html: htmlBody,
+        });
+        if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
+        return { success: true, emailId: result.data?.id };
       }),
   }),
 });

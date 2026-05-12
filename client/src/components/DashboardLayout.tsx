@@ -21,16 +21,11 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain, CreditCard, Shield } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain, CreditCard } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import {
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-
-// Ensure Link is imported from wouter (already imported above)
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
@@ -221,23 +216,19 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+            {/* Sign Out - visible at bottom of nav list */}
+            <div className="px-2 pb-2 pt-1 border-t border-gray-200 mt-1">
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 w-full rounded-md px-3 h-10 text-sm font-normal text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </SidebarContent>
 
-          <SidebarFooter className="p-3 space-y-2">
-            {/* Admin Switcher - Owner Only */}
-            {user?.role === "admin" && (
-              <button
-                onClick={() => window.location.href = "/platform"}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors w-full text-sm font-medium group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                title="Switch to Platform Admin"
-              >
-                <Shield className="h-4 w-4 shrink-0" />
-                <span className="group-data-[collapsible=icon]:hidden">Admin Panel</span>
-              </button>
-            )}
-            
-            {/* User Profile Dropdown */}
-            <DropdownMenu>
+          <SidebarFooter className="p-3 space-y-2">            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-gray-100/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
@@ -255,23 +246,7 @@ function DashboardLayoutContent({
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-xs text-gray-500">
-                  <p className="font-medium text-gray-700">Account</p>
-                  <p className="truncate mt-1">{user?.email}</p>
-                </div>
-                <DropdownMenuItem asChild>
-                  <Link href="/app/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>My Account</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/app/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"

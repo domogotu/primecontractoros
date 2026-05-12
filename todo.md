@@ -708,7 +708,7 @@
 - [x] Fix any missing form fields in create/edit dialogs (done Phase 18)
 
 ### GitHub Push
-- [x] Push code to domogotu/primecontractoros (commit 491f13f)
+- [ ] [DEFERRED - requires valid GitHub token] Push code to domogotu/primecontractoros
 
 ### Deploy
 - [x] Deploy to primecontractor-bk79t4ta.manus.space (public) - done Phase 18
@@ -756,25 +756,3 @@
 - [x] Deadline reminder email wired to deadline create mutation with days-left calculation
 - [x] Database-only fallback: all emails logged to emailNotifications table regardless of send status
 - [x] 50 tests passing, 0 TypeScript errors
-
-## Phase 23: OpenAI API Key & AI Feature Activation
-
-- [ ] Add OPENAI_API_KEY to env.ts and update LLM helper to use it
-- [ ] Add generateFindings procedure to findingsRouter (backend)
-- [ ] Add "Run AI Analysis" button to AIFindings page
-- [ ] Add AI proposal suggestions procedure (generateProposalSuggestions)
-- [ ] Add AI compliance recommendations procedure (generateComplianceRecommendations)
-- [ ] Add AI guidance to Dashboard page
-- [ ] Wire all AI features to use OPENAI_API_KEY via invokeLLM
-- [ ] Test for TypeScript errors
-## Phase 23: OpenAI API Key & AI Features Activation
-- [x] OPENAI_API_KEY configured as environment secret
-- [x] env.ts updated with openaiApiKey field
-- [x] llm.ts updated to use OpenAI API directly when OPENAI_API_KEY is set (falls back to Manus Forge API)
-- [x] Model selection: gpt-4.1-mini when OpenAI key present, gemini-2.5-flash via Forge otherwise
-- [x] generateFindingsRouter added to featureRouter.ts with workspace/contract/proposal/opportunity scopes
-- [x] generateFindingsRouter wired into appRouter in routers.ts
-- [x] "Run AI Analysis" button added to AIFindings page (purple, triggers workspace-wide analysis)
-- [x] ai.generateProposalSuggestions procedure added to routers.ts
-- [x] ai.generateComplianceRecommendations procedure added to routers.ts
-- [x] Build: 0 TypeScript errors, 50 tests passing

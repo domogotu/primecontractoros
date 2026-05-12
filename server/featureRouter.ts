@@ -5,10 +5,9 @@ import { requireWorkspaceId } from "./workspaceMiddleware";
 import {
   contractClins, contractModifications, keyPersonnel, complianceMatrix,
   auditLog, workspaceSettings, workspaceMembers, invoices, payments, contracts,
-  aiFindings, aiRuns, tasks, proposalTeamAssignments, proposals, opportunities
+  aiFindings, aiRuns, tasks, proposalTeamAssignments
 } from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { invokeLLM } from "./_core/llm";
 
 // ===== Contract CLINs =====
 export const clinsRouter = router({
@@ -385,128 +384,6 @@ export const findingsRouter = router({
 
       await logAudit(wsId, ctx.user.id, "update", "aiFinding", input.findingId, { action: input.action, notes: input.notes });
       return { success: true, resultingTaskId };
-    }),
-});
-
-// ===== AI Findings Generation =====
-export const generateFindingsRouter = router({
-  generate: protectedProcedure
-    .input(z.object({
-      scope: z.enum(["workspace", "contract", "proposal", "opportunity"]).default("workspace"),
-      recordId: z.number().optional(),
-    }))
-    .mutation(async ({ input, ctx }) => {
-      const wsId = await requireWorkspaceId(ctx.user.id);
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
-
-      // Gather context based on scope
-      let contextSummary = "";
-      let relatedRecordType = input.scope;
-      let relatedRecordId = input.recordId;
-
-      if (input.scope === "contract" && input.recordId) {
-        const [contract] = await db.select().from(contracts)
-          .where(and(eq(contracts.id, input.recordId), eq(contracts.workspaceId, wsId)));
-        if (contract) {
-          contextSummary = `Contract: ${contract.title}\nAgency: ${contract.agency || "N/A"}\nContract #: ${contract.contractNumber || "N/A"}\nValue: $${contract.value || "N/A"}\nStatus: ${contract.status}\nHealth: ${contract.health}\nStart: ${contract.startDate ? new Date(contract.startDate).toLocaleDateString() : "N/A"}\nEnd: ${contract.endDate ? new Date(contract.endDate).toLocaleDateString() : "N/A"}`;
-        }
-      } else if (input.scope === "proposal" && input.recordId) {
-        const [proposal] = await db.select().from(proposals)
-          .where(and(eq(proposals.id, input.recordId), eq(proposals.workspaceId, wsId)));
-        if (proposal) {
-          contextSummary = `Proposal: ${proposal.title}\nFramework: ${proposal.framework || "N/A"}\nStatus: ${proposal.status}\nDue: ${proposal.dueDate ? new Date(proposal.dueDate).toLocaleDateString() : "N/A"}`;
-        }
-      } else if (input.scope === "opportunity" && input.recordId) {
-        const [opp] = await db.select().from(opportunities)
-          .where(and(eq(opportunities.id, input.recordId), eq(opportunities.workspaceId, wsId)));
-        if (opp) {
-          contextSummary = `Opportunity: ${opp.title}\nAgency: ${opp.agency || "N/A"}\nNAICS: ${opp.naics || "N/A"}\nStatus: ${opp.status}\nDue: ${opp.dueDate ? new Date(opp.dueDate).toLocaleDateString() : "N/A"}\nSummary: ${opp.summary || "N/A"}`;
-        }
-      } else {
-        // Workspace-wide analysis
-        const allContracts = await db.select().from(contracts).where(eq(contracts.workspaceId, wsId));
-        const allProposals = await db.select().from(proposals).where(eq(proposals.workspaceId, wsId));
-        const allOpps = await db.select().from(opportunities).where(eq(opportunities.workspaceId, wsId));
-        contextSummary = `Workspace Analysis:\n- ${allContracts.length} contracts (${allContracts.filter(c => c.status === "active").length} active, ${allContracts.filter(c => c.health === "at_risk").length} at risk)\n- ${allProposals.length} proposals (${allProposals.filter(p => p.status === "in_progress").length} in progress)\n- ${allOpps.length} opportunities (${allOpps.filter(o => o.status === "pursue").length} pursuing)`;
-        relatedRecordType = "workspace";
-      }
-
-      // Create AI run record
-      const runResult = await db.insert(aiRuns).values({
-        workspaceId: wsId,
-        userId: ctx.user.id,
-        relatedRecordType,
-        relatedRecordId: relatedRecordId ?? null,
-        aiType: "findings",
-        purpose: `AI findings analysis for ${input.scope}`,
-        inputSummary: contextSummary.substring(0, 500),
-        status: "processing",
-        modelUsed: "gpt-4.1-mini",
-      });
-      const runId = (runResult as any).insertId as number;
-
-      try {
-        // Call LLM to generate findings
-        const response = await invokeLLM({
-          messages: [
-            {
-              role: "system",
-              content: `You are a government contracting compliance expert. Analyze the provided context and generate specific, actionable findings. Each finding should identify a concrete issue, risk, or improvement opportunity relevant to FAR/DFARS compliance, contract performance, or business development. Return a JSON array of findings.`,
-            },
-            {
-              role: "user",
-              content: `Analyze this government contracting context and return 3-5 findings as a JSON array. Each finding must have: title (string), summary (string, 1-2 sentences), findingType (one of: compliance, risk, missing_item, inconsistency, recommendation), practicalMeaning (string, what this means for the contractor), confidence (integer 60-95).\n\nContext:\n${contextSummary}\n\nReturn ONLY a valid JSON array, no markdown.`,
-            },
-          ],
-          responseFormat: { type: "json_object" } as any,
-        });
-
-        const content = response.choices[0]?.message?.content;
-        if (!content || typeof content !== "string") throw new Error("No response from LLM");
-
-        let findingsData: any[] = [];
-        try {
-          const parsed = JSON.parse(content);
-          findingsData = Array.isArray(parsed) ? parsed : (parsed.findings || parsed.results || []);
-        } catch {
-          // If JSON parse fails, create a single finding from the text
-          findingsData = [{
-            title: "AI Analysis Complete",
-            summary: content.substring(0, 300),
-            findingType: "recommendation",
-            practicalMeaning: "Review the analysis and take appropriate action.",
-            confidence: 70,
-          }];
-        }
-
-        // Store each finding
-        for (const finding of findingsData) {
-          if (!finding.title || !finding.summary) continue;
-          await db.insert(aiFindings).values({
-            workspaceId: wsId,
-            aiRunId: runId,
-            contractId: input.scope === "contract" ? input.recordId ?? null : null,
-            findingType: finding.findingType || "recommendation",
-            title: String(finding.title).substring(0, 255),
-            summary: String(finding.summary),
-            practicalMeaning: finding.practicalMeaning ? String(finding.practicalMeaning) : null,
-            confidence: typeof finding.confidence === "number" ? Math.min(100, Math.max(0, finding.confidence)) : 75,
-            reviewState: "unreviewed",
-            staleStatus: "current",
-          });
-        }
-
-        // Mark run as completed
-        await db.update(aiRuns).set({ status: "completed" }).where(eq(aiRuns.id, runId));
-
-        return { success: true, runId, findingCount: findingsData.length };
-      } catch (error) {
-        // Mark run as failed
-        await db.update(aiRuns).set({ status: "failed" }).where(eq(aiRuns.id, runId));
-        console.error("AI findings generation failed:", error);
-        throw error;
-      }
     }),
 });
 
