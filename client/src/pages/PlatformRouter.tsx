@@ -21,6 +21,7 @@ import PlatformLoginEventsPage from "./PlatformLoginEvents";
 import PlatformWorkspaceDetailPage from "./PlatformWorkspaceDetail";
 import PlatformOnboardingPage from "./PlatformOnboarding";
 import PlatformBackups from "./PlatformBackups";
+import PlatformConsentRecords from "./PlatformConsentRecords";
 import { getLoginUrl } from "@/const";
 import { useState } from "react";
 import { Menu } from "lucide-react";
@@ -81,6 +82,7 @@ export default function PlatformRouter() {
     if (normalizedLocation === "/platform/tasks") return <PlatformTasks />;
     if (normalizedLocation === "/platform/onboarding") return <PlatformOnboardingPage />;
     if (normalizedLocation === "/platform/backups") return <PlatformBackups />;
+    if (normalizedLocation === "/platform/consent-records") return <PlatformConsentRecords />;
     return <PlatformAdmin />;
   };
 
@@ -100,6 +102,7 @@ export default function PlatformRouter() {
     if (n === "/platform/support") return "Support";
     if (n === "/platform/onboarding") return "Onboarding";
     if (n === "/platform/backups") return "Backups & Export";
+    if (n === "/platform/consent-records") return "Consent Records";
     return "Platform Admin";
   })();
 

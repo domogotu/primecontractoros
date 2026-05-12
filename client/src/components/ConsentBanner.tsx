@@ -6,7 +6,24 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 export const CONSENT_KEY = "primecontractoros_consent_accepted";
-export const CONSENT_VERSION = "1.0"; // bump this to re-show the banner after policy updates
+
+/**
+ * IMPORTANT — RELEASE CHECKLIST ITEM:
+ * Whenever you update /terms (Terms of Service) or /privacy (Privacy Policy),
+ * you MUST increment CONSENT_VERSION below (e.g. "1.0" → "1.1" or "2026-06").
+ *
+ * Why: The banner checks this value against localStorage. If the stored version
+ * matches, the banner stays hidden. Bumping the version forces ALL users —
+ * including those who already accepted — to see and respond to the new policy.
+ *
+ * Steps:
+ *  1. Edit the legal document in client/src/pages/Terms.tsx or Privacy.tsx
+ *  2. Update CONSENT_VERSION here
+ *  3. Update the "Last Updated" date at the top of the legal document
+ *  4. Commit, checkpoint, and deploy
+ *  5. Optionally notify users via email that the policy has changed
+ */
+export const CONSENT_VERSION = "1.0";
 
 interface ConsentRecord {
   version: string;

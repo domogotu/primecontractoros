@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import {
-  Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff, Download
+  Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff, Download, ShieldCheck, CheckCircle2, XCircle, Clock
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
 
@@ -71,6 +71,7 @@ export default function Settings() {
     { id: 'team', label: 'Team', icon: Users },
     { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'export', label: 'Export Data', icon: Download },
+    { id: 'privacy', label: 'Privacy & Consent', icon: ShieldCheck },
   ];
 
   return (
@@ -273,7 +274,13 @@ export default function Settings() {
               </div>
             )}
 
-            {/* Save Button */}
+            {/* Privacy & Consent */}
+            {activeTab === 'privacy' && (
+              <PrivacyConsentTab />
+            )}
+
+            {/* Save Button — only show for tabs that have saveable settings */}
+            {activeTab !== 'privacy' && activeTab !== 'export' && (
             <div className="flex gap-3 justify-end mt-8">
               <Button variant="outline" onClick={() => navigate('/app/dashboard')}>Cancel</Button>
               <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={setSetting.isPending}>
@@ -281,9 +288,124 @@ export default function Settings() {
                 {setSetting.isPending ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
+            )}
           </div>
         </div>
       )}
     </PageLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Privacy & Consent sub-component
+// ---------------------------------------------------------------------------
+function PrivacyConsentTab() {
+  const { data: history, isLoading } = trpc.legal.getConsentHistory.useQuery();
+  const recordConsent = trpc.legal.recordConsent.useMutation();
+  const { CONSENT_KEY, CONSENT_VERSION } = { CONSENT_KEY: 'primecontractoros_consent_accepted', CONSENT_VERSION: '1.0' };
+
+  const handleResetConsent = () => {
+    try { localStorage.removeItem(CONSENT_KEY); } catch { /* ignore */ }
+    toast.info('Consent preference cleared. The banner will reappear on your next page load.');
+  };
+
+  const handleAcceptNow = async () => {
+    try {
+      localStorage.setItem(CONSENT_KEY, JSON.stringify({ version: CONSENT_VERSION, acceptedAt: new Date().toISOString(), action: 'accepted' }));
+      await recordConsent.mutateAsync({ policyVersion: CONSENT_VERSION, action: 'accepted', consentType: 'terms_and_privacy' });
+      toast.success('Consent recorded successfully.');
+    } catch {
+      toast.error('Failed to record consent.');
+    }
+  };
+
+  const formatDate = (ts: number | Date | null | undefined) => {
+    if (!ts) return '—';
+    return new Date(ts).toLocaleString();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Current status */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <ShieldCheck className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-slate-900">Privacy &amp; Consent</h2>
+        </div>
+        <p className="text-sm text-slate-600 mb-6">
+          This page shows your consent history for PrimeContractorOS's{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Terms of Service</a>{' '}
+          and{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Privacy Policy</a>.
+          Your acceptance is stored both locally and on our servers for compliance purposes.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleAcceptNow}
+            disabled={recordConsent.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            {recordConsent.isPending ? 'Recording…' : 'Accept Current Policy'}
+          </button>
+          <button
+            onClick={handleResetConsent}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-md transition-colors"
+          >
+            <XCircle className="w-4 h-4" />
+            Reset Consent Preference
+          </button>
+        </div>
+      </div>
+
+      {/* Consent audit trail */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Clock className="w-5 h-5 text-slate-500" />
+          <h3 className="text-base font-semibold text-slate-900">Consent History</h3>
+        </div>
+        {isLoading ? (
+          <p className="text-sm text-slate-400">Loading history…</p>
+        ) : !history || history.length === 0 ? (
+          <p className="text-sm text-slate-500 italic">No consent records found. Use the button above to record your acceptance.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left py-2 pr-4 font-medium text-slate-600">Date &amp; Time</th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-600">Policy Version</th>
+                  <th className="text-left py-2 pr-4 font-medium text-slate-600">Action</th>
+                  <th className="text-left py-2 font-medium text-slate-600">Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((record) => (
+                  <tr key={record.id} className="border-b border-slate-50 hover:bg-slate-50">
+                    <td className="py-2 pr-4 text-slate-700">{formatDate(record.acceptedAt)}</td>
+                    <td className="py-2 pr-4 text-slate-700 font-mono">{record.policyVersion}</td>
+                    <td className="py-2 pr-4">
+                      {record.action === 'accepted' ? (
+                        <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded-full text-xs font-medium">
+                          <CheckCircle2 className="w-3 h-3" /> Accepted
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-red-700 bg-red-50 px-2 py-0.5 rounded-full text-xs font-medium">
+                          <XCircle className="w-3 h-3" /> Declined
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 text-slate-500 text-xs">{record.consentType?.replace(/_/g, ' ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="mt-4 text-xs text-slate-400">
+          Records are retained for compliance purposes. Showing the most recent 20 entries.
+        </p>
+      </div>
+    </div>
   );
 }

@@ -12,8 +12,9 @@ import {
   platformNotes,
   platformAuditLog,
   workspaceMembers,
+  consentRecords,
 } from "../drizzle/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, count } from "drizzle-orm";
 
 // ==================== PLATFORM ADMIN ROUTER ====================
 // All procedures require admin role - customer users cannot access these
@@ -656,5 +657,56 @@ export const platformAdminRouter = router({
         if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
         return { success: true, emailId: result.data?.id };
       }),
+  }),
+
+  // --- Consent Records ---
+  consentRecords: router({
+    // Paginated list of all consent records across all users
+    list: adminProcedure
+      .input(z.object({
+        offset: z.number().default(0),
+        limit: z.number().default(50),
+      }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { records: [], total: 0 };
+        const [records, totalResult] = await Promise.all([
+          db.select().from(consentRecords)
+            .orderBy(desc(consentRecords.acceptedAt))
+            .limit(input.limit)
+            .offset(input.offset),
+          db.select({ count: count() }).from(consentRecords),
+        ]);
+        return { records, total: totalResult[0]?.count ?? 0 };
+      }),
+
+    // Aggregate stats: total, accepted, declined, by policy version
+    stats: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return { total: 0, accepted: 0, declined: 0, byVersion: [] };
+      const all = await db.select({
+        action: consentRecords.action,
+        policyVersion: consentRecords.policyVersion,
+        cnt: count(),
+      }).from(consentRecords)
+        .groupBy(consentRecords.action, consentRecords.policyVersion);
+
+      let total = 0, accepted = 0, declined = 0;
+      const versionMap: Record<string, { accepted: number; declined: number }> = {};
+
+      for (const row of all) {
+        const n = Number(row.cnt);
+        total += n;
+        if (row.action === 'accepted') accepted += n;
+        else declined += n;
+        const v = row.policyVersion ?? 'unknown';
+        if (!versionMap[v]) versionMap[v] = { accepted: 0, declined: 0 };
+        if (row.action === 'accepted') versionMap[v].accepted += n;
+        else versionMap[v].declined += n;
+      }
+
+      const byVersion = Object.entries(versionMap).map(([version, counts]) => ({ version, ...counts }));
+      return { total, accepted, declined, byVersion };
+    }),
   }),
 });
