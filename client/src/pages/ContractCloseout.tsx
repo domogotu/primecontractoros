@@ -88,7 +88,7 @@ export default function ContractCloseout() {
         title="Contract Closeout"
         description="Systematic checklist for closing out a government contract. Each step must be completed and documented before the contract can be formally closed."
         whenToUse="When a contract is nearing completion or has been completed. Start closeout as early as possible to avoid delays in final payment."
-        whatToDoNext="Work through each step below. Mark required items as completed before submitting the final closeout package."
+        whatToDoNext={["Work through each step below. Mark required items as completed before submitting the final closeout package."]}
       />
 
       {/* Progress */}

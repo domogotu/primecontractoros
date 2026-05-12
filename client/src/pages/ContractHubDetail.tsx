@@ -47,7 +47,7 @@ export default function ContractHubDetail() {
         title="Contract Hub"
         description="Central command center for this contract. Access all related modules, track progress, and manage operations from one place."
         whenToUse="Use this hub whenever you need a birds-eye view of a specific contract or need to navigate to any contract-related module."
-        whatToDoNext="Review each section below for items needing attention. Click any card to drill into that module filtered for this contract."
+        whatToDoNext={["Review each section below for items needing attention. Click any card to drill into that module filtered for this contract."]}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

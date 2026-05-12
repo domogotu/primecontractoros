@@ -103,7 +103,7 @@ export default function AIConfirmation() {
         title="AI Confirmation"
         description="Review AI-generated findings from contract analysis. Each finding must be confirmed, rejected, or deferred by a human reviewer before it becomes an official record."
         whenToUse="After running an AI contract scan, use this page to review each finding. AI reads and suggests — you review and approve."
-        whatToDoNext="Review each finding below. Confirm items that are accurate, reject false positives, or defer items that need further investigation."
+        whatToDoNext={["Review each finding below. Confirm items that are accurate, reject false positives, or defer items that need further investigation."]}
       />
 
       {/* Stats */}

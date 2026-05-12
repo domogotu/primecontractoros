@@ -40,6 +40,7 @@ export default function Deadlines() {
 
   const filtered = useMemo(() => {
     return mockDeadlines.filter((d) => {
+      const matchesSearch = !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.contract.toLowerCase().includes(search.toLowerCase());
       const matchesType = typeFilter === "all" || d.type === typeFilter;
       return matchesSearch && matchesType;
     }).sort((a, b) => a.daysUntil - b.daysUntil);
@@ -70,7 +71,7 @@ export default function Deadlines() {
           { label: "Calendar", path: "/app/timeline" },
         ]}
         alerts={[
-          ...(stats.overdue > 0 ? [{ message: stats.overdue + " overdue deadline(s) require immediate attention", type: "error" as const }] : []),
+          ...(stats.overdue > 0 ? [{ message: stats.overdue + " overdue deadline(s) require immediate attention", type: "warning" as const }] : []),
           ...(stats.urgent > 0 ? [{ message: stats.urgent + " deadline(s) due within 14 days", type: "warning" as const }] : []),
         ]}
       />

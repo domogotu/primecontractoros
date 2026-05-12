@@ -15,7 +15,7 @@ export function PlatformWorkspaces() {
     onSuccess: () => { refetch(); toast.success("Workspace updated"); },
     onError: (e) => toast.error(e.message),
   });
-  const sendWelcomeEmail = trpc.platformAdmin.workspaces.sendWelcomeEmail.useMutation({
+  const sendWelcomeEmail = trpc.platformAdmin.sendWelcomeEmail.useMutation({
     onSuccess: () => toast.success("Welcome email sent!"),
     onError: (e: any) => toast.error(e.message),
   });

@@ -28,7 +28,7 @@ export default function AIContractReview() {
   const [reviewType, setReviewType] = useState("full_review");
   const [findings, setFindings] = useState<Finding[]>([]);
 
-  const aiMutation = trpc.aiWorkflow.contractScan.useMutation({
+  const aiMutation = trpc.aiWorkflow.runs.contractScan.useMutation({
     onSuccess: (data: any) => {
       if (data?.findings) {
         setFindings(data.findings.map((f: any, idx: number) => ({
@@ -52,7 +52,7 @@ export default function AIContractReview() {
   const handleStartReview = () => {
     if (!contractText.trim()) return;
     setReviewState("reviewing");
-    aiMutation.mutate({ contractText, analysisType: reviewType });
+    aiMutation.mutate({ workspaceId: 0, contractId: 0, documentContent: contractText, contractTitle: reviewType + " review" });
   };
 
   const updateFindingStatus = (id: string, status: FindingStatus) => {
