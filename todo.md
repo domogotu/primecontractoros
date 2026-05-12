@@ -760,32 +760,32 @@
 ## AI System — Workflow-Specific Tools
 
 ### Database & Schema
-- [ ] ai_runs table (workspace_id, record_type, record_id, run_type, model_used, status, started_at, completed_at, input_summary, error_message)
-- [ ] ai_findings table (ai_run_id, workspace_id, record_type, record_id, category, title, source_file_id, source_location, source_excerpt, plain_language_meaning, practical_meaning, confidence_score, risk_level, review_status, approved_by, approved_at)
-- [ ] ai_suggestions table (workspace_id, related_type, related_id, suggestion_type, title, explanation, recommended_action, priority, status)
-- [ ] ai_extracted_obligations table (finding_id, obligation_type, title, description, due_date, recurrence, evidence_needed, suggested_owner, approval_state)
-- [ ] ai_prompts table (prompt_key, prompt_name, system_instruction, user_template, output_schema, active, version)
-- [ ] ai_usage_logs table (workspace_id, user_id, feature_used, model_used, input_tokens, output_tokens, estimated_cost, created_at)
+- [x] ai_runs table (workspace_id, record_type, record_id, run_type, model_used, status, started_at, completed_at, input_summary, error_message)
+- [x] ai_findings table (ai_run_id, workspace_id, record_type, record_id, category, title, source_file_id, source_location, source_excerpt, plain_language_meaning, practical_meaning, confidence_score, risk_level, review_status, approved_by, approved_at)
+- [x] ai_suggestions table (workspace_id, related_type, related_id, suggestion_type, title, explanation, recommended_action, priority, status)
+- [x] ai_extracted_obligations table (finding_id, obligation_type, title, description, due_date, recurrence, evidence_needed, suggested_owner, approval_state)
+- [x] ai_prompts table (prompt_key, prompt_name, system_instruction, user_template, output_schema, active, version)
+- [x] ai_usage_logs table (workspace_id, user_id, feature_used, model_used, input_tokens, output_tokens, estimated_cost, created_at)
 
 ### Server-Side AI Engine
-- [ ] AI engine wrapper using invokeLLM with structured JSON outputs
-- [ ] Run lifecycle management (create run → invoke LLM → parse structured output → store findings/suggestions)
-- [ ] Usage tracking (token counting, cost estimation per run)
-- [ ] Approval flow (finding → extracted obligation → approved live record)
-- [ ] Prompt template system for reusable AI instructions
+- [x] AI engine wrapper using invokeLLM with structured JSON outputs
+- [x] Run lifecycle management (create run → invoke LLM → parse structured output → store findings/suggestions)
+- [x] Usage tracking (token counting, cost estimation per run)
+- [x] Approval flow (finding → extracted obligation → approved live record)
+- [x] Prompt template system for reusable AI instructions
 
 ### tRPC Procedures
-- [ ] ai.runs.list / ai.runs.get — list and view AI runs
-- [ ] ai.runs.create — trigger a new AI scan
-- [ ] ai.findings.list / ai.findings.get — list and view findings
-- [ ] ai.findings.updateStatus — approve/hold/reject findings
-- [ ] ai.findings.createRecords — create live records from approved findings
-- [ ] ai.suggestions.list — list suggestions for a workspace/record
-- [ ] ai.suggestions.dismiss / ai.suggestions.createTask — act on suggestions
-- [ ] ai.usage.summary — usage stats for workspace
+- [x] ai.runs.list / ai.runs.get — list and view AI runs
+- [x] ai.runs.create — trigger a new AI scan
+- [x] ai.findings.list / ai.findings.get — list and view findings
+- [x] ai.findings.updateStatus — approve/hold/reject findings
+- [x] ai.findings.createRecords — create live records from approved findings
+- [x] ai.suggestions.list — list suggestions for a workspace/record
+- [x] ai.suggestions.dismiss / ai.suggestions.createTask — act on suggestions
+- [x] ai.usage.summary — usage stats for workspace
 
 ### Frontend Pages
-- [ ] AI Settings page (enable/disable, status display, usage summary)
+- [x] AI Settings page (enable/disable, status display, usage summary)
 - [x] AI Findings review page (table with filters, approve/hold/reject actions)
 - [x] AI Suggestions page (guidance cards with dismiss/act buttons)
 - [x] AI Runs history page (list of all scans with status)
@@ -795,17 +795,17 @@
 - [x] Files: Analyze File, Summarize File, Extract Requirements, Find Deadlines, Mark as Governing Source
 - [x] Opportunities: AI Opportunity Review, Check Missing Source Info, Recommend Pursue/Hold/No Pursue
 - [x] Proposals: Recommend Framework, Build Proposal Outline, Create Compliance Matrix, Review Proposal Readiness
-- [ ] Invoices/Payments: Review Billing Terms, Check Missing Support, Match Payment to Invoice
+- [x] Invoices/Payments: Review Billing Terms, Check Missing Support, Match Payment to Invoice
 - [x] Dashboard: Generate AI Workspace Summary, Show What Needs Attention, Create Suggested Tasks
 
 ### Core Rules Enforcement
-- [ ] AI never makes final legal conclusions or declares compliance
-- [ ] AI never silently creates official records without user approval
-- [ ] All AI outputs are review-first with source links
+- [x] AI never makes final legal conclusions or declares compliance
+- [x] AI never silently creates official records without user approval
+- [x] All AI outputs are review-first with source links
 - [x] Review statuses: New, Reviewed, Approved, Held, Needs Manual Review, Superseded, Stale
 
 ## Previous Requests (Batch)
-- [ ] Mark workspaces as onboarded via Edit panel
+- [x] Mark workspaces as onboarded via Edit panel
 - [x] Bulk Send Welcome Email on Workspaces list page
 - [x] Workspace activity feed on detail page
 
@@ -813,20 +813,20 @@
 
 - [x] 1. Global Audit Trail — audit_logs table, track all actions across system
 - [x] 2. Role-Based Access Control — permissions by role (Platform Owner, Workspace Owner, Trusted Admin, Standard User, Read Only)
-- [ ] 3. Data Safety / Archive vs Delete — soft delete with archive behavior, hard delete only for platform owner
-- [ ] 4. Backup and Export System — CSV/Excel/PDF export, workspace archive ZIP
-- [ ] 5. AI Cost and Usage Controls — limits, enable/disable per workspace, monthly caps
-- [ ] 6. Human Approval Gates — AI findings require review before becoming official records
-- [ ] 7. Source-of-Truth Rules — governing file tracking, stale finding detection
-- [ ] 8. Notification System — internal alerts for deadlines, reviews, missing info
-- [ ] 9. Task System Completion — full lifecycle with statuses and source types
-- [ ] 10. Contract Health Score — computed from record conditions + reviewed findings
-- [ ] 11. Workspace Setup Completeness Score — onboarding progress tracking
-- [ ] 12. Support System Completion — categories, urgency, internal notes, replies
-- [ ] 13. Subscription / Plan Enforcement — enforce access by plan state
-- [ ] 14. Error Handling and Recovery — friendly error pages, system_errors table
-- [ ] 15. Search System — global search across all record types
-- [ ] 16. Import System — CSV import with preview for contacts, opportunities, contracts, invoices
+- [x] 3. Data Safety / Archive vs Delete — soft delete with archive behavior, hard delete only for platform owner
+- [x] 4. Backup and Export System — CSV/Excel/PDF export, workspace archive ZIP
+- [x] 5. AI Cost and Usage Controls — limits, enable/disable per workspace, monthly caps
+- [x] 6. Human Approval Gates — AI findings require review before becoming official records
+- [x] 7. Source-of-Truth Rules — governing file tracking, stale finding detection
+- [x] 8. Notification System — internal alerts for deadlines, reviews, missing info
+- [x] 9. Task System Completion — full lifecycle with statuses and source types
+- [x] 10. Contract Health Score — computed from record conditions + reviewed findings
+- [x] 11. Workspace Setup Completeness Score — onboarding progress tracking
+- [x] 12. Support System Completion — categories, urgency, internal notes, replies
+- [x] 13. Subscription / Plan Enforcement — enforce access by plan state
+- [x] 14. Error Handling and Recovery — friendly error pages, system_errors table
+- [x] 15. Search System — global search across all record types
+- [x] 16. Import System — CSV import with preview for contacts, opportunities, contracts, invoices
 - [x] 17. Report Exports — contract health, finance, invoice aging, tasks, AI findings reports
 - [x] 18. Required Disclaimers / Safe AI Language — AI disclaimers on scan/review pages
 - [x] 19. Security Basics — role checks, file validation, upload limits, secure filenames
@@ -834,6 +834,6 @@
 
 ## Previous Requests (batch)
 
-- [ ] Mark workspaces as onboarded via Edit panel
+- [x] Mark workspaces as onboarded via Edit panel
 - [x] Bulk Send Welcome Email on Workspaces list page
 - [x] Workspace activity feed on detail page

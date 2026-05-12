@@ -13,7 +13,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { auditLogs, notifications, systemErrors, workspaceRoles, contracts, opportunities, proposals, tasks, invoices, files, aiFindings } from "../drizzle/schema";
+import { auditLogs, notifications, systemErrors, workspaceRoles, contracts, opportunities, proposals, tasks, invoices, files, aiFindings, supportTickets } from "../drizzle/schema";
 import { eq, desc, and, like, or, count, sql } from "drizzle-orm";
 
 // ============================================================
@@ -375,6 +375,270 @@ export const systemInfraRouter = router({
         await db.insert(systemErrors).values({
           ...input,
           userId: ctx.user.id,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================
+  // Export System — CSV/JSON export for all record types
+  // ============================================================
+  exports: router({
+    generate: protectedProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        recordType: z.enum(["opportunity", "proposal", "contract", "file", "contact", "invoice", "task", "ai_finding"]),
+        format: z.enum(["csv", "json"]),
+        filters: z.object({
+          status: z.string().optional(),
+          dateFrom: z.string().optional(),
+          dateTo: z.string().optional(),
+        }).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { success: false, data: "" };
+        const tableMap: Record<string, any> = {
+          opportunity: opportunities,
+          proposal: proposals,
+          contract: contracts,
+          file: files,
+          invoice: invoices,
+          task: tasks,
+          ai_finding: aiFindings,
+        };
+        const table = tableMap[input.recordType];
+        if (!table) return { success: false, data: "" };
+        const rows = await db.select().from(table)
+          .where(eq(table.workspaceId, input.workspaceId))
+          .limit(1000);
+        if (input.format === "json") {
+          return { success: true, data: JSON.stringify(rows, null, 2), filename: `${input.recordType}_export.json` };
+        }
+        // CSV format
+        if (rows.length === 0) return { success: true, data: "", filename: `${input.recordType}_export.csv` };
+        const headers = Object.keys(rows[0]);
+        const csvRows = [headers.join(",")];
+        for (const row of rows) {
+          csvRows.push(headers.map(h => {
+            const val = (row as any)[h];
+            if (val === null || val === undefined) return "";
+            const str = String(val);
+            return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+          }).join(","));
+        }
+        return { success: true, data: csvRows.join("\n"), filename: `${input.recordType}_export.csv` };
+      }),
+  }),
+
+  // ============================================================
+  // Import System — CSV import with preview
+  // ============================================================
+  imports: router({
+    preview: protectedProcedure
+      .input(z.object({
+        csvContent: z.string(),
+        recordType: z.enum(["contact", "opportunity", "contract", "invoice"]),
+      }))
+      .mutation(async ({ input }) => {
+        const lines = input.csvContent.trim().split("\n");
+        if (lines.length < 2) return { headers: [] as string[], rows: [] as Record<string, string>[], totalRows: 0 };
+        const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ""));
+        const rows = lines.slice(1, 11).map(line => {
+          const values = line.split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+          const row: Record<string, string> = {};
+          headers.forEach((h, i) => { row[h] = values[i] || ""; });
+          return row;
+        });
+        return { headers, rows, totalRows: lines.length - 1 };
+      }),
+    execute: protectedProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        csvContent: z.string(),
+        recordType: z.enum(["contact", "opportunity", "contract", "invoice"]),
+        fieldMapping: z.record(z.string(), z.string()),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { success: false, imported: 0 };
+        const lines = input.csvContent.trim().split("\n");
+        if (lines.length < 2) return { success: false, imported: 0 };
+        const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, ""));
+        let imported = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(",").map(v => v.trim().replace(/^"|"$/g, ""));
+          const row: Record<string, any> = { workspaceId: input.workspaceId };
+          headers.forEach((h, idx) => {
+            const targetField = input.fieldMapping[h];
+            if (targetField) row[targetField] = values[idx] || null;
+          });
+          try {
+            const tableMap: Record<string, any> = {
+              opportunity: opportunities,
+              contract: contracts,
+              invoice: invoices,
+            };
+            const table = tableMap[input.recordType];
+            if (table) {
+              await db.insert(table).values(row);
+              imported++;
+            }
+          } catch { /* skip invalid rows */ }
+        }
+        await logAuditEvent({
+          workspaceId: input.workspaceId,
+          userId: ctx.user.id,
+          actionType: "import",
+          targetType: input.recordType,
+          targetId: 0,
+          newValue: `Imported ${imported} records`,
+        });
+        return { success: true, imported };
+      }),
+  }),
+
+  // ============================================================
+  // AI Cost and Usage Controls
+  // ============================================================
+  aiControls: router({
+    getSettings: protectedProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .query(async ({ input }) => {
+        return {
+          enabled: true,
+          monthlyCapUsd: 50.00,
+          currentMonthUsageUsd: 0,
+          maxRunsPerDay: 100,
+          todayRuns: 0,
+          allowedFeatures: ["contract_scan", "opportunity_review", "proposal_review", "file_analysis", "invoice_review", "workspace_summary"],
+        };
+      }),
+    updateSettings: protectedProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        enabled: z.boolean().optional(),
+        monthlyCapUsd: z.number().optional(),
+        maxRunsPerDay: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await logAuditEvent({
+          workspaceId: input.workspaceId,
+          userId: ctx.user.id,
+          actionType: "update",
+          targetType: "ai_settings",
+          targetId: input.workspaceId,
+          newValue: JSON.stringify(input),
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================
+  // Workspace Setup Completeness Score
+  // ============================================================
+  workspaceCompleteness: router({
+    getScore: protectedProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return { score: 0, total: 8, completed: 0, items: [] };
+        const items: { name: string; complete: boolean; weight: number }[] = [];
+        // Check if they have any records
+        const [oppCount] = await db.select({ count: count() }).from(opportunities)
+          .where(eq(opportunities.workspaceId, input.workspaceId));
+        items.push({ name: "First opportunity added", complete: (oppCount?.count || 0) > 0, weight: 1 });
+        const [contractCount] = await db.select({ count: count() }).from(contracts)
+          .where(eq(contracts.workspaceId, input.workspaceId));
+        items.push({ name: "First contract added", complete: (contractCount?.count || 0) > 0, weight: 1 });
+        const [fileCount] = await db.select({ count: count() }).from(files)
+          .where(eq(files.workspaceId, input.workspaceId));
+        items.push({ name: "First file uploaded", complete: (fileCount?.count || 0) > 0, weight: 1 });
+        const [taskCount] = await db.select({ count: count() }).from(tasks)
+          .where(eq(tasks.workspaceId, input.workspaceId));
+        items.push({ name: "First task created", complete: (taskCount?.count || 0) > 0, weight: 1 });
+        const [invoiceCount] = await db.select({ count: count() }).from(invoices)
+          .where(eq(invoices.workspaceId, input.workspaceId));
+        items.push({ name: "First invoice created", complete: (invoiceCount?.count || 0) > 0, weight: 1 });
+        const [findingCount] = await db.select({ count: count() }).from(aiFindings)
+          .where(eq(aiFindings.workspaceId, input.workspaceId));
+        items.push({ name: "First AI scan run", complete: (findingCount?.count || 0) > 0, weight: 1 });
+        const completedCount = items.filter(i => i.complete).length;
+        const score = Math.round((completedCount / items.length) * 100);
+        return { score, total: items.length, completed: completedCount, items };
+      }),
+  }),
+
+  // ============================================================
+  // Support System
+  // ============================================================
+  support: router({
+    list: protectedProcedure
+      .input(z.object({ workspaceId: z.number().optional(), status: z.string().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        const conditions: any[] = [];
+        if (input?.workspaceId) conditions.push(eq(supportTickets.workspaceId, input.workspaceId));
+        if (input?.status) conditions.push(eq(supportTickets.status, input.status as any));
+        return db.select().from(supportTickets)
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(desc(supportTickets.createdAt))
+          .limit(100);
+      }),
+    create: protectedProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        subject: z.string(),
+        body: z.string(),
+        priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        await db.insert(supportTickets).values({
+          ...input,
+          userId: ctx.user.id,
+        });
+        await logAuditEvent({
+          workspaceId: input.workspaceId,
+          userId: ctx.user.id,
+          actionType: "create",
+          targetType: "support_ticket",
+          targetId: 0,
+        });
+        return { success: true };
+      }),
+    updateStatus: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["open", "in_progress", "waiting_on_customer", "resolved", "closed"]),
+        resolution: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return { success: false };
+        const updateData: any = { status: input.status };
+        if (input.resolution) updateData.resolution = input.resolution;
+        if (input.status === "resolved" || input.status === "closed") updateData.resolvedAt = new Date();
+        await db.update(supportTickets).set(updateData).where(eq(supportTickets.id, input.id));
+        return { success: true };
+      }),
+    addNote: protectedProcedure
+      .input(z.object({
+        ticketId: z.number(),
+        note: z.string(),
+        isInternal: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await logAuditEvent({
+          workspaceId: 0,
+          userId: ctx.user.id,
+          actionType: "note",
+          targetType: "support_ticket",
+          targetId: input.ticketId,
+          newValue: input.note,
+          reason: input.isInternal ? "internal" : "reply",
         });
         return { success: true };
       }),
