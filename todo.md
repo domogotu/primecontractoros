@@ -1024,3 +1024,11 @@
 
 ## Phase 28: Fix PlatformWorkspaceDetail TS Error
 - [x] Fix sendWelcomeEmail type inference error in PlatformWorkspaceDetail.tsx
+
+## Phase 28: Backup & Export Features
+- [x] Backend: exportRouter with database export procedures (admin-only)
+- [x] Backend: workspace data export procedures (owner-scoped)
+- [x] Frontend: Platform Admin Backups page (/platform/backups)
+- [x] Frontend: Workspace Export page (/app/export)
+- [x] Add "Backups & Export" to Platform Admin sidebar
+- [x] Add "Export My Data" section to workspace Settings

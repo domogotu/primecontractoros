@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { secureHeaders, authRateLimit, apiRateLimit, inputSizeLimit } from "../middleware/security";
 import { registerStorageProxy } from "./storageProxy";
 import { stripeWebhookRouter } from "../stripeWebhook";
+import { exportRouter } from "../exportRouter";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -40,6 +41,8 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Export/backup routes (after body parsers)
+  app.use(exportRouter);
   // Rate limiting on auth endpoints
   app.use("/api/oauth", authRateLimit);
   // API rate limiting

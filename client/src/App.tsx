@@ -43,6 +43,7 @@ import Onboarding from "./pages/Onboarding";
 import BusinessProfile from "./pages/BusinessProfile";
 import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
+import WorkspaceExport from "./pages/WorkspaceExport";
 import Billing from "./pages/Billing";
 import Clients from "./pages/Clients";
 import Obligations from "./pages/Obligations";
@@ -175,6 +176,7 @@ function Router() {
       <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
       <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
       <Route path={"/app/settings"} component={withAppShell(Settings)} />
+      <Route path={"/app/export"} component={withAppShell(WorkspaceExport)} />
       <Route path={"/app/billing"} component={withAppShell(Billing)} />
       <Route path={"/app/users"} component={withAppShell(Users)} />
       <Route path={"/app/alerts"} component={withAppShell(Alerts)} />

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import {
-  Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff
+  Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff, Download
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
 
@@ -70,6 +70,7 @@ export default function Settings() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'team', label: 'Team', icon: Users },
     { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'export', label: 'Export Data', icon: Download },
   ];
 
   return (
@@ -241,6 +242,33 @@ export default function Settings() {
                 <div className="bg-white border border-slate-200 rounded-lg p-6">
                   <h2 className="text-lg font-semibold text-slate-900 mb-6">Billing Information</h2>
                   <p className="text-slate-500 italic">Billing management will be available in a future update.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Export Data */}
+            {activeTab === 'export' && (
+              <div className="space-y-6">
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-6">Export My Data</h2>
+                  <p className="text-slate-600 mb-4">
+                    Download your workspace data for backup, compliance, or migration purposes. All exports are scoped to your workspace only.
+                  </p>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <h3 className="font-medium text-slate-900 mb-2">Full Data Export</h3>
+                      <p className="text-sm text-slate-500 mb-3">
+                        Export all your workspace data including contracts, invoices, contacts, files, and more.
+                      </p>
+                      <Button onClick={() => navigate('/app/export')} className="bg-blue-600 hover:bg-blue-700 text-white">
+                        <Download className="w-4 h-4 mr-2" />
+                        Go to Export Page
+                      </Button>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      Exports are generated in real-time from your current data. Available formats: CSV (spreadsheet) and JSON (developer).
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

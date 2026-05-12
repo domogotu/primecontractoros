@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { BarChart3, Users, CreditCard, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive, Activity, Shield, X, Mail } from "lucide-react";
+import { BarChart3, Users, CreditCard, LogOut, Home, Package, AlertCircle, FileText, Inbox, Clock, Archive, Activity, Shield, X, Mail, HardDrive } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useState } from "react";
 
@@ -19,6 +19,7 @@ const navItems = [
   { label: "Ownership Recovery", path: "/platform/ownership-recovery", icon: FileText },
   { label: "Demo Workspaces", path: "/platform/demo-workspaces", icon: Archive },
   { label: "Tasks", path: "/platform/tasks", icon: BarChart3 },
+  { label: "Backups & Export", path: "/platform/backups", icon: HardDrive },
 ];
 
 interface PlatformSidebarProps {
