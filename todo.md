@@ -1256,3 +1256,7 @@
 - [ ] Empty states explain what to do next
 - [ ] No raw JSON/array display to users
 - [ ] Platform owner/admin only access enforced
+
+## Quick Fixes (User Feedback)
+- [x] Dashboard stat cards: spell out "Opps" to "Opportunities", "Outstanding" to "Outstanding Balance", "inv." to full word, add brief explanations to each card
+- [x] Fix mobile sidebar scrolling cutoff: move Platform Admin and Sign Out inside scrollable container in WorkspaceSidebar, PlatformSidebar, and MobileNav

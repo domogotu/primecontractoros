@@ -106,34 +106,34 @@ export default function Dashboard() {
           {/* Summary Cards - Real Data */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/opportunities")}>
-              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Opps</p>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Opportunities</p>
               <p className="text-2xl md:text-3xl font-bold text-purple-700">{activeOpps.length}</p>
-              <p className="text-xs text-gray-500 mt-1">active</p>
+              <p className="text-xs text-gray-500 mt-1">Active opportunities being evaluated or pursued.</p>
             </Card>
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/proposals")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Proposals</p>
               <p className="text-2xl md:text-3xl font-bold text-pink-700">{(proposals as any[]).length}</p>
-              <p className="text-xs text-gray-500 mt-1">total</p>
+              <p className="text-xs text-gray-500 mt-1">Total proposals submitted or in progress.</p>
             </Card>
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/contracts")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Contracts</p>
               <p className="text-2xl md:text-3xl font-bold text-green-700">{activeContracts.length}</p>
-              <p className="text-xs text-gray-500 mt-1">active</p>
+              <p className="text-xs text-gray-500 mt-1">Active or awarded contracts currently in performance.</p>
             </Card>
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/finance")}>
-              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Outstanding</p>
+              <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Outstanding Balance</p>
               <p className="text-2xl md:text-3xl font-bold text-amber-700">${Math.round(totalOutstanding / 1000)}K</p>
-              <p className="text-xs text-gray-500 mt-1">{pendingInvoices.length} inv.</p>
+              <p className="text-xs text-gray-500 mt-1">{pendingInvoices.length} unpaid {pendingInvoices.length === 1 ? "invoice" : "invoices"} awaiting payment.</p>
             </Card>
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/tasks")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Tasks</p>
               <p className="text-2xl md:text-3xl font-bold text-blue-700">{openTasks.length}</p>
-              <p className="text-xs text-gray-500 mt-1">open</p>
+              <p className="text-xs text-gray-500 mt-1">Open tasks requiring your action.</p>
             </Card>
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/alerts")}>
               <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Alerts</p>
               <p className="text-2xl md:text-3xl font-bold text-red-700">{activeAlerts.length}</p>
-              <p className="text-xs text-gray-500 mt-1">active</p>
+              <p className="text-xs text-gray-500 mt-1">Active alerts needing attention.</p>
             </Card>
           </div>
 
