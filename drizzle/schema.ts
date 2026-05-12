@@ -1222,3 +1222,248 @@ export const customerAdoption = mysqlTable("customer_adoption", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
+
+
+// ==================== MISSING TABLES FROM FULL SPEC ====================
+
+// Business Profiles — separate from workspaces, detailed legal/registration info
+export const businessProfiles = mysqlTable("business_profiles", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  legalName: varchar("legalName", { length: 255 }),
+  dba: varchar("dba", { length: 255 }),
+  website: varchar("website", { length: 500 }),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 50 }),
+  address: text("address"),
+  entityType: varchar("entityType", { length: 100 }), // LLC, Corp, Sole Prop, etc.
+  uei: varchar("uei", { length: 50 }),
+  cage: varchar("cage", { length: 20 }),
+  samStatus: mysqlEnum("samStatus", ["active", "expired", "pending", "not_registered"]).default("not_registered"),
+  samRenewalDate: timestamp("samRenewalDate"),
+  naicsCodes: text("naicsCodes"),
+  certifications: text("certifications"), // JSON array
+  capabilities: text("capabilities"),
+  contractingModel: mysqlEnum("contractingModel", ["prime", "sub", "both"]).default("prime"),
+  usesSubcontractors: boolean("usesSubcontractors").default(false),
+  defaultContactName: varchar("defaultContactName", { length: 255 }),
+  defaultContactEmail: varchar("defaultContactEmail", { length: 320 }),
+  defaultContactPhone: varchar("defaultContactPhone", { length: 50 }),
+  profileCompletenessScore: int("profileCompletenessScore").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BusinessProfile = typeof businessProfiles.$inferSelect;
+export type InsertBusinessProfile = typeof businessProfiles.$inferInsert;
+
+// Access States — workspace access/subscription lifecycle state
+export const accessStates = mysqlTable("access_states", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  state: mysqlEnum("state", [
+    "signup_started", "pending_setup", "trial_active", "limited_access",
+    "pending_payment", "active_paid", "past_due", "suspended", "canceled", "archived"
+  ]).default("signup_started").notNull(),
+  previousState: varchar("previousState", { length: 50 }),
+  changedAt: timestamp("changedAt").defaultNow().notNull(),
+  changedBy: int("changedBy"),
+  reason: text("reason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AccessState = typeof accessStates.$inferSelect;
+export type InsertAccessState = typeof accessStates.$inferInsert;
+
+// Discount Usage — track which workspaces used which discounts
+export const discountUsage = mysqlTable("discount_usage", {
+  id: int("id").primaryKey().autoincrement(),
+  discountId: int("discountId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  appliedAt: timestamp("appliedAt").defaultNow().notNull(),
+  amountSaved: decimal("amountSaved", { precision: 10, scale: 2 }),
+});
+export type DiscountUsageEntry = typeof discountUsage.$inferSelect;
+
+// Billing Events — audit trail for billing state changes
+export const billingEvents = mysqlTable("billing_events", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  oldState: varchar("oldState", { length: 50 }),
+  newState: varchar("newState", { length: 50 }),
+  reason: text("reason"),
+  adminId: int("adminId"),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BillingEvent = typeof billingEvents.$inferSelect;
+
+// Support Messages — replies and internal notes on support tickets
+export const supportMessages = mysqlTable("support_messages", {
+  id: int("id").primaryKey().autoincrement(),
+  ticketId: int("ticketId").notNull(),
+  senderType: mysqlEnum("senderType", ["customer", "admin"]).notNull(),
+  senderId: int("senderId"),
+  content: text("content").notNull(),
+  isInternalNote: boolean("isInternalNote").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SupportMessage = typeof supportMessages.$inferSelect;
+
+// Proposal Frameworks — reusable proposal structure templates
+export const proposalFrameworks = mysqlTable("proposal_frameworks", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  frameworkType: mysqlEnum("frameworkType", ["standard", "technical", "subcontract", "simple", "blank"]).default("standard"),
+  sections: text("sections"), // JSON array of default section definitions
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProposalFramework = typeof proposalFrameworks.$inferSelect;
+
+// Proposal Sections — individual sections within a proposal
+export const proposalSections = mysqlTable("proposal_sections", {
+  id: int("id").primaryKey().autoincrement(),
+  proposalId: int("proposalId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "complete", "needs_review"]).default("not_started"),
+  isAiDraft: boolean("isAiDraft").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProposalSection = typeof proposalSections.$inferSelect;
+
+// Contract Requirements — extracted or manually added requirements
+export const contractRequirements = mysqlTable("contract_requirements", {
+  id: int("id").primaryKey().autoincrement(),
+  contractId: int("contractId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  sourceFileId: int("sourceFileId"),
+  sourceLocation: varchar("sourceLocation", { length: 500 }),
+  status: mysqlEnum("status", ["open", "met", "waived", "in_progress"]).default("open"),
+  aiFindingId: int("aiFindingId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContractRequirement = typeof contractRequirements.$inferSelect;
+
+// Contact Links — many-to-many linking contacts to records
+export const contactLinks = mysqlTable("contact_links", {
+  id: int("id").primaryKey().autoincrement(),
+  contactId: int("contactId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 64 }).notNull(),
+  recordId: int("recordId").notNull(),
+  role: varchar("role", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ContactLink = typeof contactLinks.$inferSelect;
+
+// Followups — scheduled follow-up actions for contacts
+export const followups = mysqlTable("followups", {
+  id: int("id").primaryKey().autoincrement(),
+  contactId: int("contactId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  dueDate: timestamp("dueDate"),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["pending", "complete"]).default("pending"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Followup = typeof followups.$inferSelect;
+
+// Invoice Payment Links — many-to-many matching payments to invoices
+export const invoicePaymentLinks = mysqlTable("invoice_payment_links", {
+  id: int("id").primaryKey().autoincrement(),
+  invoiceId: int("invoiceId").notNull(),
+  paymentId: int("paymentId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  amountApplied: decimal("amountApplied", { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type InvoicePaymentLink = typeof invoicePaymentLinks.$inferSelect;
+
+// Invoice Status History — audit trail for invoice status changes
+export const invoiceStatusHistory = mysqlTable("invoice_status_history", {
+  id: int("id").primaryKey().autoincrement(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  oldStatus: varchar("oldStatus", { length: 50 }),
+  newStatus: varchar("newStatus", { length: 50 }).notNull(),
+  changedBy: int("changedBy"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type InvoiceStatusHistoryEntry = typeof invoiceStatusHistory.$inferSelect;
+
+// Finance Notes — notes attached to invoices or payments
+export const financeNotes = mysqlTable("finance_notes", {
+  id: int("id").primaryKey().autoincrement(),
+  recordType: mysqlEnum("recordType", ["invoice", "payment"]).notNull(),
+  recordId: int("recordId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  content: text("content").notNull(),
+  authorId: int("authorId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FinanceNote = typeof financeNotes.$inferSelect;
+
+// Closeout Blocking Items — specific blockers preventing contract closeout
+export const closeoutBlockingItems = mysqlTable("closeout_blocking_items", {
+  id: int("id").primaryKey().autoincrement(),
+  closeoutId: int("closeoutId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  blockerType: varchar("blockerType", { length: 100 }).notNull(),
+  description: text("description"),
+  recordType: varchar("recordType", { length: 64 }),
+  recordId: int("recordId"),
+  status: mysqlEnum("status", ["open", "resolved"]).default("open"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CloseoutBlockingItem = typeof closeoutBlockingItems.$inferSelect;
+
+// Capability Statement Versions — version history for capability statements
+export const capabilityStatementVersions = mysqlTable("capability_statement_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  capabilityStatementId: int("capabilityStatementId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  versionNumber: int("versionNumber").notNull(),
+  content: text("content"),
+  targetAudience: varchar("targetAudience", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CapabilityStatementVersion = typeof capabilityStatementVersions.$inferSelect;
+
+// Template Versions — version history for templates
+export const templateVersions = mysqlTable("template_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  templateId: int("templateId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  versionNumber: int("versionNumber").notNull(),
+  content: text("content"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TemplateVersion = typeof templateVersions.$inferSelect;
+
+// File Versions — version history for uploaded files
+export const fileVersions = mysqlTable("file_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  fileId: int("fileId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  versionNumber: int("versionNumber").notNull().default(1),
+  fileKey: varchar("fileKey", { length: 500 }).notNull(),
+  url: text("url").notNull(),
+  uploadedBy: int("uploadedBy"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FileVersion = typeof fileVersions.$inferSelect;

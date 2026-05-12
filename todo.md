@@ -1064,3 +1064,109 @@
 
 ## Phase 31: Text Visibility Fix
 - [x] Audit and fix text visibility across all pages (ensure lettering readable against backgrounds)
+
+## Phase 32: Full Spec Build-Out
+
+### 1A. Missing Database Tables
+- [x] business_profiles table
+- [x] workspace_memberships table (already exists as workspaceMembers)
+- [x] subscriptions table (already exists)
+- [x] access_states table
+- [x] discount_usage table
+- [x] billing_events table
+- [x] platform_overrides table (already exists as platformOverrides)
+- [x] support_messages table
+- [x] proposal_frameworks table
+- [x] proposal_sections table
+- [x] contract_modifications table (already exists as contractModifications)
+- [x] contract_requirements table
+- [x] file_links table (already exists as fileLinks)
+- [x] file_versions table
+- [x] contact_links table
+- [x] followups table
+- [x] invoice_payment_links table
+- [x] invoice_status_history table
+- [x] finance_notes table
+- [x] closeout_blocking_items table
+- [x] capability_statement_versions table
+- [x] template_versions table
+- [x] Run db:push migration
+
+### 1B. Workspace-Scoped Auth
+- [x] Replace hardcoded workspaceId=1 with actual user workspace (requireWorkspaceId used everywhere)
+- [x] All customer queries filter by user's actual workspaceId (requireWorkspaceId used everywhere)
+
+### 1C. Post-Login Router
+- [x] Route based on workspace/subscription state (Home.tsx routes admin/user, AppShell checks auth)
+
+### 1D. File Upload to S3
+- [x] Wire actual file upload to S3 storage (fileStorageRouter with storagePut fallback)
+
+### 2A. Carry-Forward Workflows
+- [ ] Opportunity → Proposal with selectable carry-forward
+- [ ] Proposal → Contract with selectable carry-forward
+
+### 2B. AI Confirmation Full Workflow
+- [ ] Source file selection and analysis run
+- [ ] Per-finding actions (approve/hold/edit/manual review)
+- [ ] Re-run analysis with diff comparison
+
+### 2C. Contract Hub Live Wiring
+- [ ] All sections wired to real data
+- [ ] Add Requirement/Deliverable/Deadline/Compliance Item buttons
+
+### 2D. Invoice-Payment Matching
+- [ ] invoice_payment_links creation
+- [ ] Balance/status updates on match
+
+### 2E. Dashboard Sections
+- [ ] Next Best Steps, Contract Health, Finance Snapshot, Compliance Readiness
+
+### 2F. Onboarding Full Wiring
+- [ ] Save section progress, completion percentage, alerts
+
+### 2G. Business Profile Full Wiring
+- [ ] Save to business_profiles, SAM tracking, completeness score
+
+### 3A. Plans/Discounts/Billing Full CRUD
+- [ ] Plans CRUD with version history
+- [ ] Discounts CRUD with usage tracking
+- [ ] Billing state correction with audit log
+
+### 3B. Stripe Checkout Flow
+- [ ] Pricing page with trial/limited/paid options
+- [ ] Stripe webhook handling for subscriptions
+
+### 3C. Support Ticket System
+- [ ] Public support form
+- [ ] Admin inbox with replies and internal notes
+
+### 3D. Platform Admin Full CRUD
+- [ ] Login Events, Overrides, Onboarding monitoring, User detail
+
+### 4A. Proposal Framework Selector
+- [ ] Framework options with preview and apply
+
+### 4B. Proposal Workspace Full Wiring
+- [ ] Sections with completion, AI draft, readiness review
+
+### 4C. Loss Review Full Wiring
+- [ ] Debrief, AI analysis, lessons learned
+
+### 4D. Closeout Full Wiring
+- [ ] Blocker calculation, resolve, mark ready/closed
+
+### 4E. Detail Pages Full Wiring
+- [ ] File, Contact, Invoice, Payment detail pages
+
+### 4F. Reports with Export
+- [ ] Report types with export to file
+
+### 4G. Capability Statement Builder
+- [ ] Build from profile, tailored versions, export
+
+### 4H. Public Pages Enhancement
+- [ ] Features, Help, Get Started wizard
+
+### 4I. Seed Data Script
+- [ ] Default plans, roles, statuses, demo workspace

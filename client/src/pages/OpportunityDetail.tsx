@@ -28,6 +28,7 @@ export default function OpportunityDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [proposalTitle, setProposalTitle] = useState('');
+  const [carryForward, setCarryForward] = useState({ contacts: true, files: true, notes: true, tasks: false });
 
   const opportunityId = params?.id ? parseInt(params.id) : undefined;
 
@@ -122,9 +123,9 @@ export default function OpportunityDetail() {
     try {
       const result = await convertToProposalMutation.mutateAsync({
         opportunityId,
-        
         proposalTitle,
         framework: undefined,
+        carryForward,
       });
       setIsConvertDialogOpen(false);
       setProposalTitle('');
@@ -373,6 +374,22 @@ export default function OpportunityDetail() {
                     placeholder="e.g., Proposal for Defense IT Modernization"
                     className="mt-2"
                   />
+                </div>
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  <p className="text-sm font-medium text-slate-700 mb-3">Carry forward from opportunity:</p>
+                  <div className="space-y-2">
+                    {([['contacts', 'Contacts'], ['files', 'Files & Documents'], ['notes', 'Notes'], ['tasks', 'Open Tasks']] as const).map(([key, label]) => (
+                      <label key={key} className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={carryForward[key as keyof typeof carryForward]}
+                          onChange={(e) => setCarryForward(prev => ({ ...prev, [key]: e.target.checked }))}
+                          className="rounded border-slate-300"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex gap-3 justify-end">
                   <Button

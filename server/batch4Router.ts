@@ -67,3 +67,55 @@ export const customerAdoptionRouter = router({
     return { success: true };
   }),
 });
+
+import { businessProfiles } from "../drizzle/schema";
+import { and } from "drizzle-orm";
+
+export const businessProfileRouter = router({
+  get: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    const rows = await db.select().from(businessProfiles).where(eq(businessProfiles.workspaceId, wsId));
+    return rows[0] || null;
+  }),
+  upsert: protectedProcedure.input(z.object({
+    legalName: z.string().optional(),
+    dba: z.string().optional(),
+    website: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    entityType: z.string().optional(),
+    uei: z.string().optional(),
+    cage: z.string().optional(),
+    samStatus: z.enum(["active", "expired", "pending", "not_registered"]).optional(),
+    samRenewalDate: z.string().optional(),
+    naicsCodes: z.string().optional(),
+    certifications: z.string().optional(),
+    capabilities: z.string().optional(),
+    contractingModel: z.enum(["prime", "sub", "both"]).optional(),
+    usesSubcontractors: z.boolean().optional(),
+    defaultContactName: z.string().optional(),
+    defaultContactEmail: z.string().optional(),
+    defaultContactPhone: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    const existing = await db.select().from(businessProfiles).where(eq(businessProfiles.workspaceId, wsId));
+    // Calculate completeness
+    const fields = [input.legalName, input.email, input.phone, input.address, input.uei, input.cage, input.naicsCodes, input.certifications, input.capabilities, input.contractingModel, input.defaultContactName, input.defaultContactEmail];
+    const filled = fields.filter(f => f && f.length > 0).length;
+    const score = Math.round((filled / fields.length) * 100);
+    const data = {
+      ...input,
+      samRenewalDate: input.samRenewalDate ? new Date(input.samRenewalDate) : undefined,
+      profileCompletenessScore: score,
+    };
+    if (existing.length === 0) {
+      await db.insert(businessProfiles).values({ workspaceId: wsId, ...data });
+    } else {
+      await db.update(businessProfiles).set(data).where(eq(businessProfiles.workspaceId, wsId));
+    }
+    return { success: true, completenessScore: score };
+  }),
+});

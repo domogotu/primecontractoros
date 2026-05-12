@@ -5,14 +5,19 @@ import { workspaces, workspaceMembers } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 /**
- * Gets the workspace ID for a user. Returns the workspace they own.
- * If user has no workspace, returns null.
+ * Gets the workspace ID for a user.
+ * First checks if user owns a workspace, then checks workspace membership.
+ * Returns the workspace they have access to, or null if none.
  */
 export async function getWorkspaceIdForUser(userId: number): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
-  const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-  return ws?.id ?? null;
+  // First check if user owns a workspace
+  const [ownedWs] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+  if (ownedWs) return ownedWs.id;
+  // Then check workspace membership
+  const [membership] = await db.select({ workspaceId: workspaceMembers.workspaceId }).from(workspaceMembers).where(eq(workspaceMembers.userId, userId)).limit(1);
+  return membership?.workspaceId ?? null;
 }
 
 /**

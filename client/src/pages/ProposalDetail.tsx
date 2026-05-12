@@ -191,6 +191,7 @@ export default function ProposalDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [contractTitle, setContractTitle] = useState('');
+  const [contractCarryForward, setContractCarryForward] = useState({ contacts: true, files: true, notes: true, tasks: false, deliverables: true });
 
   const proposalId = params?.id ? parseInt(params.id) : undefined;
 
@@ -541,6 +542,22 @@ export default function ProposalDetail() {
                   className="mt-2"
                 />
               </div>
+              <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                <p className="text-sm font-medium text-slate-700 mb-3">Carry forward from proposal:</p>
+                <div className="space-y-2">
+                  {([['contacts', 'Contacts'], ['files', 'Files & Documents'], ['notes', 'Notes'], ['tasks', 'Open Tasks'], ['deliverables', 'Deliverables']] as const).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={contractCarryForward[key as keyof typeof contractCarryForward]}
+                        onChange={(e) => setContractCarryForward(prev => ({ ...prev, [key]: e.target.checked }))}
+                        className="rounded border-slate-300"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-3 justify-end">
                 <Button
                   variant="outline"
@@ -561,8 +578,8 @@ export default function ProposalDetail() {
                     try {
                       const result = await convertToContractMutation.mutateAsync({
                         proposalId,
-                        
                         contractTitle,
+                        carryForward: contractCarryForward,
                       });
                       setIsConvertDialogOpen(false);
                       setContractTitle('');

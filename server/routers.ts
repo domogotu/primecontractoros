@@ -52,7 +52,7 @@ import { systemInfraRouter } from "./systemInfraRouter";
 import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter } from "./batch1Router";
 import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
-import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter } from "./batch4Router";
+import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -109,6 +109,7 @@ export const appRouter = router({
   emailTemplates: emailTemplatesRouter,
   diagnostics: diagnosticsRouter,
   invites: invitesRouter,
+  businessProfile: businessProfileRouter,
   documentGeneration: documentGenerationRouter,
   flowdownReviews: flowdownReviewsRouter,
   customerAdoption: customerAdoptionRouter,
@@ -228,23 +229,56 @@ export const appRouter = router({
         opportunityId: z.number(),
         proposalTitle: z.string().min(1),
         framework: z.string().optional(),
+        carryForward: z.object({
+          contacts: z.boolean().default(true),
+          files: z.boolean().default(true),
+          notes: z.boolean().default(true),
+          tasks: z.boolean().default(false),
+        }).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
+          const { contacts: contactsTbl, files: filesTbl, notes: notesTbl, tasks: tasksTbl, contactLinks, fileLinks } = await import("../drizzle/schema");
           const opportunity = await getOpportunity(input.opportunityId, wsId);
-          if (!opportunity) {
-            throw new Error("Opportunity not found");
-          }
-          const proposal = await createProposal({
+          if (!opportunity) throw new Error("Opportunity not found");
+          const proposalId = await createProposal({
             workspaceId: wsId,
             title: input.proposalTitle,
             opportunityId: input.opportunityId,
             framework: input.framework,
             dueDate: opportunity.dueDate || undefined,
           });
+          const cf = input.carryForward || { contacts: true, files: true, notes: true, tasks: false };
+          const { and: andOp, eq: eqOp } = await import("drizzle-orm");
+          if (cf.contacts) {
+            const linked = await db.select().from(contactsTbl).where(andOp(eqOp(contactsTbl.workspaceId, wsId), eqOp(contactsTbl.linkedRecordType, "opportunity"), eqOp(contactsTbl.linkedRecordId, input.opportunityId)));
+            for (const c of linked) {
+              await db.insert(contactLinks).values({ contactId: c.id, linkedRecordType: "proposal", linkedRecordId: proposalId, workspaceId: wsId });
+            }
+          }
+          if (cf.files) {
+            const linked = await db.select().from(filesTbl).where(andOp(eqOp(filesTbl.workspaceId, wsId), eqOp(filesTbl.linkedRecordType, "opportunity"), eqOp(filesTbl.linkedRecordId, input.opportunityId)));
+            for (const f of linked) {
+              await db.insert(fileLinks).values({ fileId: f.id, linkedRecordType: "proposal", linkedRecordId: proposalId, workspaceId: wsId });
+            }
+          }
+          if (cf.notes) {
+            const linked = await db.select().from(notesTbl).where(andOp(eqOp(notesTbl.workspaceId, wsId), eqOp(notesTbl.linkedRecordType, "opportunity"), eqOp(notesTbl.linkedRecordId, input.opportunityId)));
+            for (const n of linked) {
+              await db.insert(notesTbl).values({ workspaceId: wsId, title: n.title, content: n.content, linkedRecordType: "proposal", linkedRecordId: proposalId, authorId: ctx.user.id });
+            }
+          }
+          if (cf.tasks) {
+            const linked = await db.select().from(tasksTbl).where(andOp(eqOp(tasksTbl.workspaceId, wsId), eqOp(tasksTbl.linkedRecordType, "opportunity"), eqOp(tasksTbl.linkedRecordId, input.opportunityId), eqOp(tasksTbl.status, "open")));
+            for (const t of linked) {
+              await db.insert(tasksTbl).values({ workspaceId: wsId, title: t.title, description: t.description, assignedTo: t.assignedTo, linkedRecordType: "proposal", linkedRecordId: proposalId, priority: t.priority, dueDate: t.dueDate });
+            }
+          }
           await updateOpportunityStatus(input.opportunityId, wsId, "moved_to_proposal");
-          return { success: true, proposalId: proposal };
+          return { success: true, proposalId: proposalId };
         } catch (error) {
           console.error("Error converting opportunity to proposal:", error);
           throw error;
@@ -349,22 +383,62 @@ export const appRouter = router({
         proposalId: z.number(),
         contractTitle: z.string().min(1),
         contractNumber: z.string().optional(),
+        carryForward: z.object({
+          contacts: z.boolean().default(true),
+          files: z.boolean().default(true),
+          notes: z.boolean().default(true),
+          tasks: z.boolean().default(false),
+          deliverables: z.boolean().default(true),
+        }).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
+          const { contacts: contactsTbl, files: filesTbl, notes: notesTbl, tasks: tasksTbl, deliverables: deliverablesTbl, contactLinks, fileLinks } = await import("../drizzle/schema");
+          const { and: andOp, eq: eqOp } = await import("drizzle-orm");
           const proposal = await getProposal(input.proposalId, wsId);
-          if (!proposal) {
-            throw new Error("Proposal not found");
-          }
-          const contract = await createContract({
+          if (!proposal) throw new Error("Proposal not found");
+          const contractId = await createContract({
             workspaceId: wsId,
             title: input.contractTitle,
             proposalId: input.proposalId,
             contractNumber: input.contractNumber || undefined,
           });
+          const cf = input.carryForward || { contacts: true, files: true, notes: true, tasks: false, deliverables: true };
+          if (cf.contacts) {
+            const linked = await db.select().from(contactsTbl).where(andOp(eqOp(contactsTbl.workspaceId, wsId), eqOp(contactsTbl.linkedRecordType, "proposal"), eqOp(contactsTbl.linkedRecordId, input.proposalId)));
+            for (const c of linked) {
+              await db.insert(contactLinks).values({ contactId: c.id, linkedRecordType: "contract", linkedRecordId: contractId, workspaceId: wsId });
+            }
+          }
+          if (cf.files) {
+            const linked = await db.select().from(filesTbl).where(andOp(eqOp(filesTbl.workspaceId, wsId), eqOp(filesTbl.linkedRecordType, "proposal"), eqOp(filesTbl.linkedRecordId, input.proposalId)));
+            for (const f of linked) {
+              await db.insert(fileLinks).values({ fileId: f.id, linkedRecordType: "contract", linkedRecordId: contractId, workspaceId: wsId });
+            }
+          }
+          if (cf.notes) {
+            const linked = await db.select().from(notesTbl).where(andOp(eqOp(notesTbl.workspaceId, wsId), eqOp(notesTbl.linkedRecordType, "proposal"), eqOp(notesTbl.linkedRecordId, input.proposalId)));
+            for (const n of linked) {
+              await db.insert(notesTbl).values({ workspaceId: wsId, title: n.title, content: n.content, linkedRecordType: "contract", linkedRecordId: contractId, authorId: ctx.user.id });
+            }
+          }
+          if (cf.tasks) {
+            const linked = await db.select().from(tasksTbl).where(andOp(eqOp(tasksTbl.workspaceId, wsId), eqOp(tasksTbl.linkedRecordType, "proposal"), eqOp(tasksTbl.linkedRecordId, input.proposalId), eqOp(tasksTbl.status, "open")));
+            for (const t of linked) {
+              await db.insert(tasksTbl).values({ workspaceId: wsId, title: t.title, description: t.description, assignedTo: t.assignedTo, linkedRecordType: "contract", linkedRecordId: contractId, priority: t.priority, dueDate: t.dueDate });
+            }
+          }
+          if (cf.deliverables) {
+            const linked = await db.select().from(deliverablesTbl).where(andOp(eqOp(deliverablesTbl.workspaceId, wsId), eqOp(deliverablesTbl.linkedRecordType, "proposal"), eqOp(deliverablesTbl.linkedRecordId, input.proposalId)));
+            for (const d of linked) {
+              await db.insert(deliverablesTbl).values({ workspaceId: wsId, title: d.title, description: d.description, linkedRecordType: "contract", linkedRecordId: contractId, dueDate: d.dueDate, status: "pending" });
+            }
+          }
           await updateProposalStatus(input.proposalId, wsId, "won");
-          return { success: true, contractId: contract };
+          return { success: true, contractId: contractId };
         } catch (error) {
           console.error("Error converting proposal to contract:", error);
           throw error;
