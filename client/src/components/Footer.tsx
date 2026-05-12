@@ -1,6 +1,16 @@
 import { Link } from "wouter";
+import { CONSENT_KEY } from "./ConsentBanner";
 
 export default function Footer() {
+  const handleCookiePreferences = () => {
+    // Clear the stored consent so the banner re-appears
+    try {
+      localStorage.removeItem(CONSENT_KEY);
+    } catch { /* ignore */ }
+    // Force a page reload so the banner re-initialises
+    window.location.reload();
+  };
+
   return (
     <footer className="bg-slate-900 border-t border-slate-700 text-white py-8 mt-12">
       <div className="max-w-7xl mx-auto px-8">
@@ -36,6 +46,14 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-gray-300">
               <li><Link href="/privacy"><span className="hover:text-white cursor-pointer">Privacy Policy</span></Link></li>
               <li><Link href="/terms"><span className="hover:text-white cursor-pointer">Terms of Service</span></Link></li>
+              <li>
+                <button
+                  onClick={handleCookiePreferences}
+                  className="text-sm text-gray-300 hover:text-white cursor-pointer text-left"
+                >
+                  Cookie Preferences
+                </button>
+              </li>
             </ul>
           </div>
         </div>

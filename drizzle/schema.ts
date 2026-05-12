@@ -1467,3 +1467,17 @@ export const fileVersions = mysqlTable("file_versions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type FileVersion = typeof fileVersions.$inferSelect;
+
+// Consent Records — server-side audit trail for user consent (GDPR/CCPA)
+export const consentRecords = mysqlTable("consent_records", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"),
+  consentType: varchar("consentType", { length: 100 }).notNull().default("terms_and_privacy"),
+  policyVersion: varchar("policyVersion", { length: 50 }).notNull(),
+  action: varchar("action", { length: 50 }).notNull(), // 'accepted' | 'declined'
+  ipAddress: varchar("ipAddress", { length: 100 }),
+  userAgent: varchar("userAgent", { length: 500 }),
+  acceptedAt: timestamp("acceptedAt").defaultNow().notNull(),
+});
+export type ConsentRecord = typeof consentRecords.$inferSelect;

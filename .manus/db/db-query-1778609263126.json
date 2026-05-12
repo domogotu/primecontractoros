@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `consent_records` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`workspaceId` int,\n\t`consentType` varchar(100) NOT NULL DEFAULT 'terms_and_privacy',\n\t`policyVersion` varchar(50) NOT NULL,\n\t`action` varchar(50) NOT NULL,\n\t`ipAddress` varchar(100),\n\t`userAgent` varchar(500),\n\t`acceptedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `consent_records_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute CREATE TABLE `consent_records` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`workspaceId` int,\n\t`consentType` varchar(100) NOT NULL DEFAULT 'terms_and_privacy',\n\t`policyVersion` varchar(50) NOT NULL,\n\t`action` varchar(50) NOT NULL,\n\t`ipAddress` varchar(100),\n\t`userAgent` varchar(500),\n\t`acceptedAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `consent_records_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 370
+}

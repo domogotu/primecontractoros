@@ -737,6 +737,52 @@ export const appRouter = router({
           .limit(1);
         return results[0] || null;
       }),
+    // Server-side consent audit trail (GDPR/CCPA)
+    recordConsent: publicProcedure
+      .input(z.object({
+        policyVersion: z.string().default("1.0"),
+        action: z.enum(["accepted", "declined"]),
+        consentType: z.string().default("terms_and_privacy"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { consentRecords } = await import("../drizzle/schema");
+        const database = await getDb();
+        if (!database) return { success: false };
+        const userId = ctx.user?.id;
+        if (!userId) return { success: false }; // only record for logged-in users
+        // Get workspaceId if available
+        let workspaceId: number | undefined;
+        try {
+          workspaceId = await requireWorkspaceId(userId);
+        } catch { /* no workspace yet is fine */ }
+        // Capture request metadata
+        const ipAddress = (ctx.req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim()
+          || ctx.req.socket?.remoteAddress
+          || undefined;
+        const userAgent = (ctx.req.headers["user-agent"] as string | undefined)?.slice(0, 499);
+        await database.insert(consentRecords).values({
+          userId,
+          workspaceId: workspaceId ?? null,
+          consentType: input.consentType,
+          policyVersion: input.policyVersion,
+          action: input.action,
+          ipAddress,
+          userAgent,
+        });
+        return { success: true };
+      }),
+    // List consent history for the current user
+    getConsentHistory: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { consentRecords } = await import("../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+        const database = await getDb();
+        if (!database) return [];
+        return database.select().from(consentRecords)
+          .where(eq(consentRecords.userId, ctx.user.id))
+          .orderBy(desc(consentRecords.acceptedAt))
+          .limit(20);
+      }),
   }),
 });
 

@@ -2,30 +2,35 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { X, Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
-const CONSENT_KEY = "primecontractoros_consent_accepted";
-const CONSENT_VERSION = "1.0"; // bump this to re-show the banner after policy updates
+export const CONSENT_KEY = "primecontractoros_consent_accepted";
+export const CONSENT_VERSION = "1.0"; // bump this to re-show the banner after policy updates
 
 interface ConsentRecord {
   version: string;
   acceptedAt: string;
+  action: "accepted" | "declined";
 }
 
 export default function ConsentBanner() {
   const [visible, setVisible] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const recordConsent = trpc.legal.recordConsent.useMutation();
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CONSENT_KEY);
       if (stored) {
         const record: ConsentRecord = JSON.parse(stored);
-        // Hide if already accepted the current version
+        // Hide if already responded to the current version
         if (record.version === CONSENT_VERSION) {
           setVisible(false);
           return;
         }
       }
-      // Show banner after a short delay so it doesn't flash immediately
+      // Show banner after a short delay so it doesn't flash immediately on load
       const timer = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(timer);
     } catch {
@@ -33,21 +38,33 @@ export default function ConsentBanner() {
     }
   }, []);
 
-  const handleAccept = () => {
+  const persist = (action: "accepted" | "declined") => {
     try {
       const record: ConsentRecord = {
         version: CONSENT_VERSION,
         acceptedAt: new Date().toISOString(),
+        action,
       };
       localStorage.setItem(CONSENT_KEY, JSON.stringify(record));
     } catch {
       // localStorage unavailable — still dismiss visually
     }
+    // Only call the server if the user is logged in
+    if (isAuthenticated) {
+      recordConsent.mutate({
+        policyVersion: CONSENT_VERSION,
+        action,
+        consentType: "terms_and_privacy",
+      });
+    }
     setVisible(false);
   };
 
+  const handleAccept = () => persist("accepted");
+  const handleDecline = () => persist("declined");
+
   const handleDismiss = () => {
-    // Dismiss without recording — banner will reappear next visit
+    // X button: dismiss without recording — banner will reappear next visit
     setVisible(false);
   };
 
@@ -88,10 +105,10 @@ export default function ConsentBanner() {
             </p>
           </div>
 
-          {/* Dismiss (X) */}
+          {/* Dismiss (X) — does not record, banner will reappear next visit */}
           <button
             onClick={handleDismiss}
-            aria-label="Dismiss"
+            aria-label="Dismiss without recording"
             className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
           >
             <X className="h-4 w-4" />
@@ -103,7 +120,7 @@ export default function ConsentBanner() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDismiss}
+            onClick={handleDecline}
             className="text-gray-600"
           >
             Decline optional cookies
