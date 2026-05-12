@@ -1219,43 +1219,43 @@
 ## Platform Admin Business Control Pages (May 12, 2026)
 
 ### Database/Backend
-- [ ] Add/extend plans table with all fields (name, code, prices, limits, features, etc.)
-- [ ] Add plan_features table for clean feature rows
-- [ ] Add plan_versions table for versioning
-- [ ] Add/extend discounts table with all fields
-- [ ] Add discount_usage table
-- [ ] Add billing_events table
-- [ ] Add subscriptions table
-- [ ] Add platform_overrides table
-- [ ] Add/extend consent_records with all fields
-- [ ] Add policy_versions table
-- [ ] Add backup_exports table
-- [ ] Add platform_tasks table
-- [ ] Add platform_task_runs table
-- [ ] Backend router: Plans CRUD with audit logging
-- [ ] Backend router: Discounts CRUD with audit logging
-- [ ] Backend router: Billing management with status changes and logging
-- [ ] Backend router: Overrides CRUD with required reason and logging
-- [ ] Backend router: Consent records query/export
-- [ ] Backend router: Backups & Export with logging
-- [ ] Backend router: Platform Tasks CRUD with run-now and logging
+- [x] Add/extend plans table with all fields (name, code, prices, limits, features, etc.)
+- [x] Add plan_features table for clean feature rows
+- [x] Add plan_versions table for versioning
+- [x] Add/extend discounts table with all fields
+- [x] Add discount_usage table
+- [x] Add billing_events table
+- [x] Add subscriptions table
+- [x] Add platform_overrides table
+- [x] Add/extend consent_records with all fields
+- [x] Add policy_versions table
+- [x] Add backup_exports table
+- [x] Add platform_tasks table
+- [x] Add platform_task_runs table
+- [x] Backend router: Plans CRUD with audit logging
+- [x] Backend router: Discounts CRUD with audit logging
+- [x] Backend router: Billing management with status changes and logging
+- [x] Backend router: Overrides CRUD with required reason and logging
+- [x] Backend router: Consent records query/export
+- [x] Backend router: Backups & Export with logging
+- [x] Backend router: Platform Tasks CRUD with run-now and logging
 
 ### Frontend Pages
-- [ ] Plans Management: create/edit/duplicate/archive, clean feature display, plan cards
-- [ ] Discounts Management: create/edit/disable, usage history, apply manually
-- [ ] Billing Management: summary cards, billing table, status actions, billing history
-- [ ] Overrides Management: create/view/reverse, override table, required reason
-- [ ] Consent Records: summary cards, consent table, filters, export
-- [ ] Backups & Export: database overview, backup options, table export, backup history
-- [ ] Platform Tasks: summary cards, task table, run-now, task detail/history
+- [x] Plans Management: create/edit/duplicate/archive, clean feature display, plan cards
+- [x] Discounts Management: create/edit/disable, usage history, apply manually
+- [x] Billing Management: summary cards, billing table, status actions, billing history
+- [x] Overrides Management: create/view/reverse, override table, required reason
+- [x] Consent Records: summary cards, consent table, filters, export
+- [x] Backups & Export: database overview, backup options, table export, backup history
+- [x] Platform Tasks: summary cards, task table, run-now, task detail/history
 
 ### Global Requirements
-- [ ] All sensitive actions logged to platform_activity_log
-- [ ] All pages mobile-friendly
-- [ ] All pages keep current dark theme design
-- [ ] Empty states explain what to do next
-- [ ] No raw JSON/array display to users
-- [ ] Platform owner/admin only access enforced
+- [x] All sensitive actions logged to platform_activity_log
+- [x] All pages mobile-friendly
+- [x] All pages keep current dark theme design
+- [x] Empty states explain what to do next
+- [x] No raw JSON/array display to users
+- [x] Platform owner/admin only access enforced
 
 ## Quick Fixes (User Feedback)
 - [x] Dashboard stat cards: spell out "Opps" to "Opportunities", "Outstanding" to "Outstanding Balance", "inv." to full word, add brief explanations to each card
@@ -1313,3 +1313,11 @@
 - [x] /platform/ownership-recovery - Build full Ownership Recovery page with recovery requests, approve/deny
 - [x] /platform/pricing-history - Build full Pricing History page with plan version history and price changes
 - [x] Deploy updated pages to production
+
+## Phase 27: Sign-Out Redirect, User Guide, Capability Statement
+
+- [x] Fix sign-out to always redirect to "/" (home/landing page) instead of /login
+- [x] Rewrite User Guide (/help) page with official help manual feel: section cards, step-by-step instructions, tips, mobile-friendly
+- [x] Rewrite Capability Statement page with professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
+- [x] Add Download Capability Statement as PDF button (wire to existing pdf.exportCapabilityStatement mutation)
+- [x] Deploy and push to GitHub

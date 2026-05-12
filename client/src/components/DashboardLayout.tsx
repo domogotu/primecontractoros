@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = user?.role === "admin";
   const activeItem = menuItems.find(item => item.path === location);
@@ -138,7 +138,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Sign Out — directly below user name for clear association */}
         <button
-          onClick={() => { setMobileOpen(false); logout(); }}
+          onClick={async () => { setMobileOpen(false); await logout(); navigate("/"); }}
           className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors text-sm font-medium mt-1"
         >
           <LogOut className="w-4 h-4 shrink-0" />
