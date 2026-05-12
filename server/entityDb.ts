@@ -441,3 +441,154 @@ export async function updateLossReview(id: number, workspaceId: number, data: Pa
   if (!db) throw new Error("Database not available");
   await db.update(lossReviews).set(data as any).where(and(eq(lossReviews.id, id), eq(lossReviews.workspaceId, workspaceId)));
 }
+
+// ==================== INVOICE-PAYMENT LINKS ====================
+export async function linkPaymentToInvoice(data: { invoiceId: number; paymentId: number; amount: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoicePaymentLinks } = await import("../drizzle/schema");
+  const result = await db.insert(invoicePaymentLinks).values({ ...data, createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function getPaymentLinksForInvoice(invoiceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { invoicePaymentLinks } = await import("../drizzle/schema");
+  return db.select().from(invoicePaymentLinks).where(eq(invoicePaymentLinks.invoiceId, invoiceId));
+}
+
+// ==================== INVOICE STATUS HISTORY ====================
+export async function addInvoiceStatusHistory(data: { invoiceId: number; oldStatus: string; newStatus: string; changedBy?: number; notes?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceStatusHistory } = await import("../drizzle/schema");
+  const result = await db.insert(invoiceStatusHistory).values({ ...data, changedAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function getInvoiceStatusHistory(invoiceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { invoiceStatusHistory } = await import("../drizzle/schema");
+  return db.select().from(invoiceStatusHistory).where(eq(invoiceStatusHistory.invoiceId, invoiceId)).orderBy(invoiceStatusHistory.createdAt);
+}
+
+// ==================== CONTACT LINKS ====================
+export async function createContactLink(data: { contactId: number; linkedRecordType: string; linkedRecordId: number; role?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { contactLinks } = await import("../drizzle/schema");
+  const result = await db.insert(contactLinks).values({ ...data, createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function getContactLinksForRecord(linkedRecordType: string, linkedRecordId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { contactLinks } = await import("../drizzle/schema");
+  return db.select().from(contactLinks).where(and(eq(contactLinks.recordType, linkedRecordType), eq(contactLinks.recordId, linkedRecordId)));
+}
+
+// ==================== FOLLOWUPS ====================
+export async function createFollowup(data: { contactId: number; workspaceId: number; type: string; notes?: string; dueDate?: Date }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { followups } = await import("../drizzle/schema");
+  const result = await db.insert(followups).values({ ...data, status: 'pending', createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listFollowups(workspaceId: number, contactId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { followups } = await import("../drizzle/schema");
+  const conditions: any[] = [eq(followups.workspaceId, workspaceId)];
+  if (contactId) conditions.push(eq(followups.contactId, contactId));
+  return db.select().from(followups).where(and(...conditions)).orderBy(followups.dueDate);
+}
+
+export async function updateFollowup(id: number, workspaceId: number, data: Partial<{ status: string; notes: string; completedAt: Date }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { followups } = await import("../drizzle/schema");
+  await db.update(followups).set(data as any).where(and(eq(followups.id, id), eq(followups.workspaceId, workspaceId)));
+}
+
+// ==================== CLOSEOUT BLOCKING ITEMS ====================
+export async function createCloseoutBlocker(data: { contractId: number; workspaceId: number; title: string; description?: string; category?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { closeoutBlockingItems } = await import("../drizzle/schema");
+  const result = await db.insert(closeoutBlockingItems).values({ ...data, status: 'open', createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listCloseoutBlockers(workspaceId: number, contractId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { closeoutBlockingItems } = await import("../drizzle/schema");
+  return db.select().from(closeoutBlockingItems).where(and(eq(closeoutBlockingItems.workspaceId, workspaceId), eq(closeoutBlockingItems.closeoutId, contractId)));
+}
+
+export async function updateCloseoutBlocker(id: number, workspaceId: number, data: Partial<{ status: string; resolvedAt: Date; resolvedBy: number; notes: string }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { closeoutBlockingItems } = await import("../drizzle/schema");
+  await db.update(closeoutBlockingItems).set(data as any).where(and(eq(closeoutBlockingItems.id, id), eq(closeoutBlockingItems.workspaceId, workspaceId)));
+}
+
+// ==================== FINANCE NOTES ====================
+export async function createFinanceNote(data: { workspaceId: number; recordType: string; recordId: number; content: string; authorId?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { financeNotes } = await import("../drizzle/schema");
+  const result = await db.insert(financeNotes).values({ ...data, createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listFinanceNotes(workspaceId: number, linkedRecordType: string, linkedRecordId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { financeNotes } = await import("../drizzle/schema");
+  return db.select().from(financeNotes).where(and(eq(financeNotes.workspaceId, workspaceId), eq(financeNotes.recordType, linkedRecordType as any), eq(financeNotes.recordId, linkedRecordId))).orderBy(financeNotes.createdAt);
+}
+
+// ==================== FILE VERSIONS ====================
+export async function createFileVersion(data: { fileId: number; versionNumber: number; storageKey: string; storageUrl: string; uploadedBy?: number; notes?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { fileVersions } = await import("../drizzle/schema");
+  const result = await db.insert(fileVersions).values({ ...data, createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listFileVersions(fileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { fileVersions } = await import("../drizzle/schema");
+  return db.select().from(fileVersions).where(eq(fileVersions.fileId, fileId)).orderBy(fileVersions.versionNumber);
+}
+
+// ==================== CONTRACT REQUIREMENTS ====================
+export async function createContractRequirement(data: { contractId: number; workspaceId: number; title: string; description?: string; category?: string; source?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { contractRequirements } = await import("../drizzle/schema");
+  const result = await db.insert(contractRequirements).values({ ...data, status: 'pending', createdAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function listContractRequirements(workspaceId: number, contractId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { contractRequirements } = await import("../drizzle/schema");
+  return db.select().from(contractRequirements).where(and(eq(contractRequirements.workspaceId, workspaceId), eq(contractRequirements.contractId, contractId)));
+}
+
+export async function updateContractRequirement(id: number, workspaceId: number, data: Partial<{ title: string; description: string; status: string; category: string }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { contractRequirements } = await import("../drizzle/schema");
+  await db.update(contractRequirements).set(data as any).where(and(eq(contractRequirements.id, id), eq(contractRequirements.workspaceId, workspaceId)));
+}

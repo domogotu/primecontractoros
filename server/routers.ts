@@ -36,7 +36,9 @@ import {
   filesRouter, contactsRouter, messagesRouter, invoicesRouter, paymentsRouter,
   tasksRouter, alertsRouter, deliverablesRouter, deadlinesRouter, obligationsRouter,
   complianceRouter, notesRouter, capabilityStatementsRouter, templatesRouter,
-  closeoutRouter, lessonsRouter, lossReviewsRouter
+  closeoutRouter, lessonsRouter, lossReviewsRouter,
+  followupsRouter, closeoutBlockersRouter, contractRequirementsRouter,
+  contactLinksRouter, financeNotesRouter, fileVersionsRouter
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
@@ -113,6 +115,12 @@ export const appRouter = router({
   documentGeneration: documentGenerationRouter,
   flowdownReviews: flowdownReviewsRouter,
   customerAdoption: customerAdoptionRouter,
+  followups: followupsRouter,
+  closeoutBlockers: closeoutBlockersRouter,
+  contractRequirements: contractRequirementsRouter,
+  contactLinks: contactLinksRouter,
+  financeNotes: financeNotesRouter,
+  fileVersions: fileVersionsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

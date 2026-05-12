@@ -20,6 +20,14 @@ import {
   listCloseoutRecords, createCloseoutRecord, updateCloseoutRecord,
   listLessonsLearned, createLessonLearned, deleteLessonLearned,
   listLossReviews, createLossReview, updateLossReview,
+  linkPaymentToInvoice, getPaymentLinksForInvoice,
+  addInvoiceStatusHistory, getInvoiceStatusHistory,
+  createContactLink, getContactLinksForRecord,
+  createFollowup, listFollowups, updateFollowup,
+  createCloseoutBlocker, listCloseoutBlockers, updateCloseoutBlocker,
+  createFinanceNote, listFinanceNotes,
+  createFileVersion, listFileVersions,
+  createContractRequirement, listContractRequirements, updateContractRequirement,
 } from "./entityDb";
 
 // Helper: get workspace ID from user context (resolves from DB)
@@ -135,6 +143,29 @@ export const invoicesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       return deleteInvoice(input.id, wsId);
+    }),
+  updateStatus: protectedProcedure
+    .input(z.object({ id: z.number(), oldStatus: z.string(), newStatus: z.string(), notes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      await updateInvoice(input.id, wsId, { status: input.newStatus } as any);
+      await addInvoiceStatusHistory({ invoiceId: input.id, oldStatus: input.oldStatus, newStatus: input.newStatus, changedBy: ctx.user.id, notes: input.notes });
+      return { success: true };
+    }),
+  statusHistory: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ input }) => {
+      return getInvoiceStatusHistory(input.invoiceId);
+    }),
+  paymentLinks: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ input }) => {
+      return getPaymentLinksForInvoice(input.invoiceId);
+    }),
+  linkPayment: protectedProcedure
+    .input(z.object({ invoiceId: z.number(), paymentId: z.number(), amount: z.string() }))
+    .mutation(async ({ input }) => {
+      return linkPaymentToInvoice(input);
     }),
 });
 
@@ -498,5 +529,118 @@ export const lossReviewsRouter = router({
       const wsId = await getWorkspaceId(ctx);
       const { id, ...data } = input;
       return updateLossReview(id, wsId, data);
+    }),
+});
+
+// ==================== FOLLOWUPS ====================
+export const followupsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ contactId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listFollowups(wsId, input?.contactId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ contactId: z.number(), type: z.string(), notes: z.string().optional(), dueDate: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const { dueDate, ...rest } = input;
+      return createFollowup({ ...rest, workspaceId: wsId, dueDate: dueDate ? new Date(dueDate) : undefined });
+    }),
+  update: protectedProcedure
+    .input(z.object({ id: z.number(), status: z.string().optional(), notes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const { id, ...data } = input;
+      return updateFollowup(id, wsId, data as any);
+    }),
+});
+
+// ==================== CLOSEOUT BLOCKERS ====================
+export const closeoutBlockersRouter = router({
+  list: protectedProcedure
+    .input(z.object({ contractId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listCloseoutBlockers(wsId, input.contractId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), category: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return createCloseoutBlocker({ ...input, workspaceId: wsId });
+    }),
+  resolve: protectedProcedure
+    .input(z.object({ id: z.number(), notes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return updateCloseoutBlocker(input.id, wsId, { status: 'resolved', resolvedAt: new Date(), resolvedBy: ctx.user.id, notes: input.notes });
+    }),
+});
+
+// ==================== CONTRACT REQUIREMENTS ====================
+export const contractRequirementsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ contractId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listContractRequirements(wsId, input.contractId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), category: z.string().optional(), source: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return createContractRequirement({ ...input, workspaceId: wsId });
+    }),
+  update: protectedProcedure
+    .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), status: z.string().optional(), category: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const { id, ...data } = input;
+      return updateContractRequirement(id, wsId, data);
+    }),
+});
+
+// ==================== CONTACT LINKS ====================
+export const contactLinksRouter = router({
+  list: protectedProcedure
+    .input(z.object({ linkedRecordType: z.string(), linkedRecordId: z.number() }))
+    .query(async ({ input }) => {
+      return getContactLinksForRecord(input.linkedRecordType, input.linkedRecordId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ contactId: z.number(), linkedRecordType: z.string(), linkedRecordId: z.number(), role: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      return createContactLink(input);
+    }),
+});
+
+// ==================== FINANCE NOTES ====================
+export const financeNotesRouter = router({
+  list: protectedProcedure
+    .input(z.object({ recordType: z.string(), recordId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listFinanceNotes(wsId, input.recordType, input.recordId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ recordType: z.string(), recordId: z.number(), content: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return createFinanceNote({ workspaceId: wsId, recordType: input.recordType, recordId: input.recordId, content: input.content, authorId: ctx.user.id });
+    }),
+});
+
+// ==================== FILE VERSIONS ====================
+export const fileVersionsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ fileId: z.number() }))
+    .query(async ({ input }) => {
+      return listFileVersions(input.fileId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ fileId: z.number(), versionNumber: z.number(), storageKey: z.string(), storageUrl: z.string(), notes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      return createFileVersion({ ...input, uploadedBy: ctx.user.id });
     }),
 });
