@@ -41,7 +41,7 @@ import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { checkPlanLimit } from "./services/billing";
 import { TRPCError } from "@trpc/server";
-import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, teamAssignmentsRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
+import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, teamAssignmentsRouter, settingsRouter, financeRouter, findingsRouter, auditRouter, generateFindingsRouter } from "./featureRouter";
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 import { guidanceRouter } from "./guidanceRouter";
 import { platformAdminRouter } from "./platformAdminRouter";
@@ -78,6 +78,7 @@ export const appRouter = router({
   settings: settingsRouter,
   finance: financeRouter,
   findings: findingsRouter,
+  generateFindings: generateFindingsRouter,
   audit: auditRouter,
   fileStorage: fileStorageRouter,
   email: emailRouter,
@@ -593,6 +594,136 @@ export const appRouter = router({
           return { success: true };
         } catch (error) {
           console.error("Error accepting suggestion:", error);
+          throw error;
+        }
+      }),
+    generateProposalSuggestions: protectedProcedure
+      .input(z.object({
+        proposalId: z.number(),
+        proposalTitle: z.string(),
+        framework: z.string().optional(),
+        status: z.string().optional(),
+        dueDate: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const runResult = await createAiRun({
+            workspaceId: wsId,
+            userId: ctx.user.id,
+            relatedRecordType: "proposal",
+            relatedRecordId: input.proposalId,
+            aiType: "guidance",
+            purpose: "Generate proposal improvement suggestions",
+            inputSummary: `Proposal: ${input.proposalTitle}, Framework: ${input.framework || "N/A"}, Status: ${input.status || "draft"}, Due: ${input.dueDate || "N/A"}`,
+          });
+          const runId = (runResult as any).insertId as number || 1;
+
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are a government contracting proposal expert. Provide specific, actionable suggestions to improve a government proposal. Reference relevant FAR/DFARS requirements and best practices for proposal writing. Return a JSON array of suggestions.",
+              },
+              {
+                role: "user",
+                content: `Proposal: "${input.proposalTitle}"\nFramework: ${input.framework || "Standard"}\nStatus: ${input.status || "draft"}\nDue Date: ${input.dueDate || "N/A"}\n\nProvide 3-4 specific suggestions as a JSON array. Each must have: title (string), text (string, 2-3 sentences), priority ("low"|"medium"|"high"|"critical"), action (string, what to do). Return ONLY valid JSON array.`,
+              },
+            ],
+          });
+
+          const content = response.choices[0]?.message?.content;
+          if (!content || typeof content !== "string") throw new Error("No response from LLM");
+
+          let suggestions: any[] = [];
+          try {
+            const parsed = JSON.parse(content);
+            suggestions = Array.isArray(parsed) ? parsed : (parsed.suggestions || []);
+          } catch {
+            suggestions = [{ title: "Proposal Review", text: content.substring(0, 400), priority: "medium", action: "Review and address the points above" }];
+          }
+
+          for (const s of suggestions) {
+            await createAiSuggestion({
+              workspaceId: wsId,
+              aiRunId: runId,
+              relatedRecordType: "proposal",
+              relatedRecordId: input.proposalId,
+              suggestionTitle: String(s.title || "Proposal Suggestion").substring(0, 255),
+              suggestionText: String(s.text || ""),
+              priority: ["low", "medium", "high", "critical"].includes(s.priority) ? s.priority : "medium",
+              suggestedAction: s.action ? String(s.action) : undefined,
+            });
+          }
+
+          return { success: true, suggestionsCount: suggestions.length };
+        } catch (error) {
+          console.error("Error generating proposal suggestions:", error);
+          throw error;
+        }
+      }),
+    generateComplianceRecommendations: protectedProcedure
+      .input(z.object({
+        contractId: z.number().optional(),
+        proposalId: z.number().optional(),
+        context: z.string(),
+        recordType: z.string(),
+        recordId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const runResult = await createAiRun({
+            workspaceId: wsId,
+            userId: ctx.user.id,
+            relatedRecordType: input.recordType,
+            relatedRecordId: input.recordId,
+            aiType: "guidance",
+            purpose: "Generate compliance recommendations",
+            inputSummary: input.context.substring(0, 500),
+          });
+          const runId = (runResult as any).insertId as number || 1;
+
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: "You are a government contracting compliance expert specializing in FAR/DFARS regulations. Provide specific compliance recommendations and flag potential issues. Return a JSON array of recommendations.",
+              },
+              {
+                role: "user",
+                content: `Analyze this government contracting context for compliance issues and provide recommendations:\n\n${input.context}\n\nReturn 3-4 compliance recommendations as a JSON array. Each must have: title (string), text (string, 2-3 sentences describing the compliance requirement or issue), priority ("low"|"medium"|"high"|"critical"), action (string, specific action to take). Return ONLY valid JSON array.`,
+              },
+            ],
+          });
+
+          const content = response.choices[0]?.message?.content;
+          if (!content || typeof content !== "string") throw new Error("No response from LLM");
+
+          let recommendations: any[] = [];
+          try {
+            const parsed = JSON.parse(content);
+            recommendations = Array.isArray(parsed) ? parsed : (parsed.recommendations || parsed.suggestions || []);
+          } catch {
+            recommendations = [{ title: "Compliance Review", text: content.substring(0, 400), priority: "high", action: "Review and address compliance items" }];
+          }
+
+          for (const r of recommendations) {
+            await createAiSuggestion({
+              workspaceId: wsId,
+              aiRunId: runId,
+              relatedRecordType: input.recordType,
+              relatedRecordId: input.recordId,
+              suggestionTitle: String(r.title || "Compliance Recommendation").substring(0, 255),
+              suggestionText: String(r.text || ""),
+              priority: ["low", "medium", "high", "critical"].includes(r.priority) ? r.priority : "high",
+              suggestedAction: r.action ? String(r.action) : undefined,
+            });
+          }
+
+          return { success: true, recommendationsCount: recommendations.length };
+        } catch (error) {
+          console.error("Error generating compliance recommendations:", error);
           throw error;
         }
       }),

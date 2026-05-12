@@ -42,6 +42,14 @@ export default function AIFindings() {
   const { data: aiRuns = [] } = trpc.findings.runs.useQuery();
   const { data: auditEntries = [] } = trpc.audit.list.useQuery({ limit: 50, entity: "aiFinding" });
 
+  const generateMutation = trpc.generateFindings.generate.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      toast.success(`AI analysis complete — ${data.findingCount} finding${data.findingCount !== 1 ? 's' : ''} generated`);
+    },
+    onError: (err) => toast.error(`AI analysis failed: ${err.message}`),
+  });
+
   const reviewMutation = trpc.findings.review.useMutation({
     onSuccess: (data) => {
       refetch();
@@ -142,6 +150,15 @@ export default function AIFindings() {
       ]}
       actions={
         <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            onClick={() => generateMutation.mutate({ scope: "workspace" })}
+            disabled={generateMutation.isPending}
+          >
+            <Brain className="w-4 h-4 mr-1" />
+            {generateMutation.isPending ? "Analyzing..." : "Run AI Analysis"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowRuns(true)}>
             <Brain className="w-4 h-4 mr-1" /> AI Runs ({(aiRuns as any[]).length})
           </Button>
