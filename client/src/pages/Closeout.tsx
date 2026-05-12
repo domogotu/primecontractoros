@@ -55,7 +55,7 @@ export default function Closeout() {
   if (isLoading) return <div className="p-6 text-center text-slate-500">Loading closeout records...</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Contract Closeout"
         description="Guided workflow for closing out completed contracts. Track each closeout step from final invoicing through archival."

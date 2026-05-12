@@ -45,7 +45,7 @@ export default function FileDetail() {
 
   if (isLoading) return <div className="p-6 text-center text-slate-500">Loading file...</div>;
   if (!file) return (
-    <div className="p-6 max-w-4xl mx-auto text-center">
+    <div className="p-6 max-w-4xl mx-auto text-center pb-32">
       <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
       <h2 className="text-lg font-semibold text-slate-700">File Not Found</h2>
       <p className="text-sm text-slate-500 mt-2">This file may have been deleted or you don't have access.</p>
@@ -61,7 +61,7 @@ export default function FileDetail() {
   );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto pb-32">
       <PageGuide
         title="File Detail"
         description="View file metadata, version history, and linked records."

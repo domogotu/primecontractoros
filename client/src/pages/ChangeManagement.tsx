@@ -49,7 +49,7 @@ export default function ChangeManagement() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Change Management"
         description="Track contract modifications, change orders, and their approval status. Manage scope, cost, schedule, and personnel changes."

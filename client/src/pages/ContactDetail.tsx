@@ -51,7 +51,7 @@ export default function ContactDetail() {
 
   if (isLoading) return <div className="p-6 text-center text-slate-500">Loading contact...</div>;
   if (!contact) return (
-    <div className="p-6 max-w-4xl mx-auto text-center">
+    <div className="p-6 max-w-4xl mx-auto text-center pb-32">
       <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
       <h2 className="text-lg font-semibold text-slate-700">Contact Not Found</h2>
       <Button variant="outline" className="mt-4" onClick={() => setLocation("/app/contacts")}>
@@ -61,7 +61,7 @@ export default function ContactDetail() {
   );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto pb-32">
       <PageGuide
         title="Contact Detail"
         description="View and manage contact information, follow-ups, and linked records."

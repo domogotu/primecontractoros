@@ -25,7 +25,7 @@ export default function ContractHub() {
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Contract Hub"
         description="Central command center for your active contracts. Access all contract-related modules from one place."

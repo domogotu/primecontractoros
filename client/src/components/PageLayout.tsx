@@ -39,8 +39,8 @@ export default function PageLayout({ title, subtitle, label, actions, summaryCar
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8">
+      {/* Main Content — pb-32 ensures content clears fixed bottom banners (e.g. "Made with Manus") on all devices */}
+      <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8 pb-32">
         <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
           {children}
         </div>

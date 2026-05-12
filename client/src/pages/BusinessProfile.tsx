@@ -103,10 +103,10 @@ export default function BusinessProfile() {
       subtitle="Manage your company information and government registration details"
       label="Company"
       summaryCards={[
-        { label: "NAICS Codes", value: formData.naicsCodes ? formData.naicsCodes.split(',').length : 0 },
+        { label: "NAICS (North American Industry Classification System) Codes", value: formData.naicsCodes ? formData.naicsCodes.split(',').length : 0 },
         { label: "Certifications", value: formData.certifications ? formData.certifications.split(',').length : 0, color: "text-green-600" },
         { label: "Profile Complete", value: `${localCompleteness}%`, color: "text-blue-600" },
-        { label: "SAM Status", value: formData.samStatus === 'active' ? 'Active' : formData.samStatus === 'expired' ? 'Expired' : formData.samStatus === 'pending' ? 'Pending' : 'Not Registered', color: formData.samStatus === 'active' ? "text-green-600" : "text-yellow-600" },
+        { label: "SAM (System for Award Management) Status", value: formData.samStatus === 'active' ? 'Active' : formData.samStatus === 'expired' ? 'Expired' : formData.samStatus === 'pending' ? 'Pending' : 'Not Registered', color: formData.samStatus === 'active' ? "text-green-600" : "text-yellow-600" },
       ]}
       actions={
         <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSave} disabled={isSaving}>
@@ -163,7 +163,7 @@ export default function BusinessProfile() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div><Label htmlFor="legalName">Legal Business Name</Label><Input id="legalName" name="legalName" value={formData.legalName} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="dba">DBA / Trade Name</Label><Input id="dba" name="dba" value={formData.dba} onChange={handleInputChange} className="mt-2" /></div>
+                <div><Label htmlFor="dba">DBA (Doing Business As) / Trade Name</Label><Input id="dba" name="dba" value={formData.dba} onChange={handleInputChange} className="mt-2" /></div>
                 <div><Label htmlFor="email">Business Email</Label><Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} className="mt-2" /></div>
                 <div><Label htmlFor="phone">Phone</Label><Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} className="mt-2" /></div>
                 <div><Label htmlFor="website">Website</Label><Input id="website" name="website" value={formData.website} onChange={handleInputChange} className="mt-2" /></div>
@@ -189,9 +189,9 @@ export default function BusinessProfile() {
                 Government Registration
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div><Label htmlFor="uei">UEI</Label><Input id="uei" name="uei" value={formData.uei} onChange={handleInputChange} placeholder="Unique Entity Identifier" className="mt-2" /><p className="text-xs text-slate-500 mt-1">sam.gov identifier</p></div>
-                <div><Label htmlFor="cage">CAGE Code</Label><Input id="cage" name="cage" value={formData.cage} onChange={handleInputChange} placeholder="CAGE code" className="mt-2" /><p className="text-xs text-slate-500 mt-1">Commercial & Government Entity</p></div>
-                <div><Label htmlFor="samStatus">SAM Status</Label>
+                <div><Label htmlFor="uei">UEI (Unique Entity Identifier)</Label><Input id="uei" name="uei" value={formData.uei} onChange={handleInputChange} placeholder="Unique Entity Identifier" className="mt-2" /><p className="text-xs text-slate-500 mt-1">sam.gov identifier</p></div>
+                <div><Label htmlFor="cage">CAGE (Commercial and Government Entity) Code</Label><Input id="cage" name="cage" value={formData.cage} onChange={handleInputChange} placeholder="CAGE code" className="mt-2" /><p className="text-xs text-slate-500 mt-1">Commercial and Government Entity identifier</p></div>
+                <div><Label htmlFor="samStatus">SAM (System for Award Management) Status</Label>
                   <select id="samStatus" name="samStatus" value={formData.samStatus} onChange={handleInputChange} className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
                     <option value="active">Active</option>
                     <option value="expired">Expired</option>
@@ -199,7 +199,7 @@ export default function BusinessProfile() {
                     <option value="not_registered">Not Registered</option>
                   </select>
                 </div>
-                <div><Label htmlFor="samRenewalDate">SAM Renewal Date</Label><Input id="samRenewalDate" name="samRenewalDate" type="date" value={formData.samRenewalDate} onChange={handleInputChange} className="mt-2" /></div>
+                <div><Label htmlFor="samRenewalDate">SAM (System for Award Management) Renewal Date</Label><Input id="samRenewalDate" name="samRenewalDate" type="date" value={formData.samRenewalDate} onChange={handleInputChange} className="mt-2" /></div>
               </div>
             </div>
 

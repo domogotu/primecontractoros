@@ -303,7 +303,7 @@ export default function Onboarding() {
         </div>
       </nav>
 
-      <div className="container max-w-3xl py-12">
+      <div className="container max-w-3xl py-12 pb-32">
         {/* Progress Indicator */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center gap-1">

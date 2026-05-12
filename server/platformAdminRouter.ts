@@ -13,8 +13,16 @@ import {
   platformAuditLog,
   workspaceMembers,
   consentRecords,
+  workspaceHealthFlags,
+  platformActivityLog,
+  subscriptions,
+  tasks,
+  contracts,
+  proposals,
+  opportunities,
+  invoices,
 } from "../drizzle/schema";
-import { eq, desc, and, count } from "drizzle-orm";
+import { eq, desc, and, count, sql, gte } from "drizzle-orm";
 
 // ==================== PLATFORM ADMIN ROUTER ====================
 // All procedures require admin role - customer users cannot access these
@@ -708,5 +716,244 @@ export const platformAdminRouter = router({
       const byVersion = Object.entries(versionMap).map(([version, counts]) => ({ version, ...counts }));
       return { total, accepted, declined, byVersion };
     }),
+  }),
+
+  // --- Workspace Health Flags ---
+  healthFlags: router({
+    list: adminProcedure
+      .input(z.object({
+        workspaceId: z.number().optional(),
+        activeOnly: z.boolean().optional(),
+        severity: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        let flags = await db.select().from(workspaceHealthFlags)
+          .orderBy(desc(workspaceHealthFlags.createdAt));
+        if (input?.workspaceId) flags = flags.filter(f => f.workspaceId === input.workspaceId);
+        if (input?.activeOnly !== false) flags = flags.filter(f => f.isActive);
+        if (input?.severity && input.severity !== "all") flags = flags.filter(f => f.severity === input.severity);
+        return flags;
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        flagType: z.string(),
+        severity: z.enum(["info", "warning", "critical"]),
+        title: z.string(),
+        description: z.string().optional(),
+        metadata: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const [result] = await db.insert(workspaceHealthFlags).values({
+          workspaceId: input.workspaceId,
+          flagType: input.flagType,
+          severity: input.severity,
+          title: input.title,
+          description: input.description || null,
+          metadata: input.metadata || null,
+        });
+        return { id: result.insertId };
+      }),
+
+    resolve: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        resolutionNote: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(workspaceHealthFlags).set({
+          isActive: false,
+          resolvedAt: new Date(),
+          resolvedBy: ctx.user.id,
+          resolutionNote: input.resolutionNote || null,
+        }).where(eq(workspaceHealthFlags.id, input.id));
+        return { success: true };
+      }),
+  }),
+
+  // --- Platform Activity Log ---
+  activityLog: router({
+    list: adminProcedure
+      .input(z.object({
+        workspaceId: z.number().optional(),
+        activityType: z.string().optional(),
+        limit: z.number().default(100),
+      }).optional())
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        let entries = await db.select().from(platformActivityLog)
+          .orderBy(desc(platformActivityLog.createdAt))
+          .limit(input?.limit || 100);
+        if (input?.workspaceId) entries = entries.filter(e => e.workspaceId === input.workspaceId);
+        if (input?.activityType && input.activityType !== "all") entries = entries.filter(e => e.activityType === input.activityType);
+        return entries;
+      }),
+
+    create: adminProcedure
+      .input(z.object({
+        workspaceId: z.number().optional(),
+        userId: z.number().optional(),
+        activityType: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+        metadata: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const [result] = await db.insert(platformActivityLog).values({
+          workspaceId: input.workspaceId || null,
+          userId: input.userId || null,
+          activityType: input.activityType,
+          title: input.title,
+          description: input.description || null,
+          metadata: input.metadata || null,
+        });
+        return { id: result.insertId };
+      }),
+  }),
+
+  // --- Dashboard Metrics ---
+  dashboardMetrics: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return {
+      totalWorkspaces: 0, activeWorkspaces: 0, suspendedWorkspaces: 0,
+      totalUsers: 0, activeUsers: 0, disabledUsers: 0,
+      totalRevenue: 0, openTickets: 0, criticalFlags: 0,
+      newWorkspacesThisMonth: 0, newUsersThisMonth: 0,
+      trialWorkspaces: 0, paidWorkspaces: 0,
+    };
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const allWorkspaces = await db.select().from(workspaces);
+    const allUsers = await db.select().from(users);
+    const allBilling = await db.select().from(platformBilling);
+    const allTickets = await db.select().from(supportTickets);
+    const allFlags = await db.select().from(workspaceHealthFlags).where(eq(workspaceHealthFlags.isActive, true));
+
+    const activeWorkspaces = allWorkspaces.filter(w => w.status === "active");
+    const suspendedWorkspaces = allWorkspaces.filter(w => w.status === "suspended");
+    const activeUsers = allUsers.filter(u => u.accountStatus === "active");
+    const disabledUsers = allUsers.filter(u => u.accountStatus === "disabled" || u.accountStatus === "suspended");
+    const openTickets = allTickets.filter(t => t.status === "open");
+    const criticalFlags = allFlags.filter(f => f.severity === "critical");
+    const newWorkspacesThisMonth = allWorkspaces.filter(w => w.createdAt && new Date(w.createdAt) >= thirtyDaysAgo);
+    const newUsersThisMonth = allUsers.filter(u => u.createdAt && new Date(u.createdAt) >= thirtyDaysAgo);
+    const trialWorkspaces = allWorkspaces.filter(w => w.trialUsed && !w.planId);
+    const paidWorkspaces = allWorkspaces.filter(w => w.planId);
+    const totalRevenue = allBilling.filter(b => b.status === "active").length * 99; // Estimated from active subscriptions
+
+    return {
+      totalWorkspaces: allWorkspaces.length,
+      activeWorkspaces: activeWorkspaces.length,
+      suspendedWorkspaces: suspendedWorkspaces.length,
+      totalUsers: allUsers.length,
+      activeUsers: activeUsers.length,
+      disabledUsers: disabledUsers.length,
+      totalRevenue,
+      openTickets: openTickets.length,
+      criticalFlags: criticalFlags.length,
+      newWorkspacesThisMonth: newWorkspacesThisMonth.length,
+      newUsersThisMonth: newUsersThisMonth.length,
+      trialWorkspaces: trialWorkspaces.length,
+      paidWorkspaces: paidWorkspaces.length,
+    };
+  }),
+
+  // --- Workspace Usage/Product Activity (per workspace) ---
+  workspaceUsage: adminProcedure
+    .input(z.object({ workspaceId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { contracts: 0, proposals: 0, opportunities: 0, invoices: 0, tasks: 0, users: 0 };
+      const [contractCount] = await db.select({ count: count() }).from(contracts).where(eq(contracts.workspaceId, input.workspaceId));
+      const [proposalCount] = await db.select({ count: count() }).from(proposals).where(eq(proposals.workspaceId, input.workspaceId));
+      const [oppCount] = await db.select({ count: count() }).from(opportunities).where(eq(opportunities.workspaceId, input.workspaceId));
+      const [invoiceCount] = await db.select({ count: count() }).from(invoices).where(eq(invoices.workspaceId, input.workspaceId));
+      const [taskCount] = await db.select({ count: count() }).from(tasks).where(eq(tasks.workspaceId, input.workspaceId));
+      const memberCount = await db.select().from(workspaceMembers).where(eq(workspaceMembers.workspaceId, input.workspaceId));
+      return {
+        contracts: Number(contractCount?.count || 0),
+        proposals: Number(proposalCount?.count || 0),
+        opportunities: Number(oppCount?.count || 0),
+        invoices: Number(invoiceCount?.count || 0),
+        tasks: Number(taskCount?.count || 0),
+        users: memberCount.length + 1, // +1 for owner
+      };
+    }),
+
+  // --- Admin Overrides/Recovery ---
+  overrides: router({
+    resetOnboarding: adminProcedure
+      .input(z.object({ workspaceId: z.number(), reason: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(workspaces).set({ onboardingCompleted: false }).where(eq(workspaces.id, input.workspaceId));
+        await db.insert(platformAuditLog).values({
+          action: "reset_onboarding",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+        return { success: true };
+      }),
+
+    changePlan: adminProcedure
+      .input(z.object({ workspaceId: z.number(), planId: z.number().nullable(), reason: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(workspaces).set({ planId: input.planId }).where(eq(workspaces.id, input.workspaceId));
+        await db.insert(platformAuditLog).values({
+          action: "change_plan",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+        return { success: true };
+      }),
+
+    transferOwnership: adminProcedure
+      .input(z.object({ workspaceId: z.number(), newOwnerId: z.number(), reason: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(workspaces).set({ ownerId: input.newOwnerId }).where(eq(workspaces.id, input.workspaceId));
+        await db.insert(platformAuditLog).values({
+          action: "transfer_ownership",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+        return { success: true };
+      }),
+
+    resetTrial: adminProcedure
+      .input(z.object({ workspaceId: z.number(), reason: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.update(workspaces).set({ trialUsed: false }).where(eq(workspaces.id, input.workspaceId));
+        await db.insert(platformAuditLog).values({
+          action: "reset_trial",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+        return { success: true };
+      }),
   }),
 });

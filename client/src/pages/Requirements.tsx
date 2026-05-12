@@ -57,7 +57,7 @@ export default function Requirements() {
   }, [requirements]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Requirements Tracking"
         description="Track all contract requirements, their sources, verification status, and compliance evidence."

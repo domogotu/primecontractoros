@@ -76,7 +76,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="p-5 border-b border-slate-700 flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold leading-tight">PrimeContractorOS</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Reed's Solutions LLC</p>
+          <p className="text-xs text-slate-400 mt-0.5">Reed's Solutions LLC (Limited Liability Company)</p>
         </div>
         {/* Close button — mobile only */}
         <button
@@ -111,8 +111,19 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         })}
       </nav>
 
-      {/* Bottom actions */}
-      <div className="border-t border-slate-700 p-3 space-y-1">
+      {/* User info + Sign Out — grouped together so sign-out is always next to the user's name */}
+      <div className="border-t border-slate-700 p-3">
+        {/* User identity */}
+        <div className="flex items-center gap-3 px-3 py-2 mb-1">
+          <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center shrink-0">
+            <User className="w-4 h-4 text-slate-300" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-white truncate">{user?.name || ""}</p>
+            <p className="text-xs text-slate-400 truncate">{user?.email || ""}</p>
+          </div>
+        </div>
+
         {/* Switch to Admin — only for admin role */}
         {isAdmin && (
           <Link
@@ -125,20 +136,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           </Link>
         )}
 
-        {/* Sign Out */}
+        {/* Sign Out — directly below user name for clear association */}
         <button
           onClick={() => { setMobileOpen(false); logout(); }}
-          className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors text-sm font-medium"
+          className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors text-sm font-medium mt-1"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           <span>Sign Out</span>
         </button>
-      </div>
-
-      {/* User info */}
-      <div className="border-t border-slate-700 px-4 py-3">
-        <p className="text-xs text-slate-400 truncate">{user?.email || ""}</p>
-        <p className="text-sm font-medium text-white truncate">{user?.name || ""}</p>
       </div>
     </div>
   );
@@ -181,8 +186,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           </span>
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto p-4">
+        {/* Page content — pb-32 ensures content clears fixed bottom banners on all devices */}
+        <main className="flex-1 overflow-auto p-4 pb-32">
           {children}
         </main>
       </div>

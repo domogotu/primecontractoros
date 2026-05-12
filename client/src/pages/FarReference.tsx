@@ -67,7 +67,7 @@ export default function FarReference() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="FAR/DFARS Clause Reference"
         description="Searchable library of Federal Acquisition Regulation and Defense FAR Supplement clauses relevant to your contracts."

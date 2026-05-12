@@ -62,7 +62,7 @@ export default function PlatformLoginEventsPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <Input
-            placeholder="Search by email, name, IP..."
+            placeholder="Search by email, name, IP (Internet Protocol) address..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
@@ -97,7 +97,7 @@ export default function PlatformLoginEventsPage() {
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Workspace</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Result</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Timestamp</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-200">IP Address</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">IP (Internet Protocol) Address</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Device</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Failed Count</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Flags</th>

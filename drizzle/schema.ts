@@ -395,11 +395,26 @@ export const lessonsLearned = mysqlTable("lessonsLearned", {
   proposalId: int("proposalId"),
   title: varchar("title", { length: 255 }).notNull(),
   category: varchar("category", { length: 100 }), // "technical", "management", "cost", "schedule", "compliance", "general"
+  lessonType: varchar("lessonType", { length: 100 }).default("other"), // contract_closeout, proposal_win, proposal_loss, subcontractor_teaming, invoice_payment, compliance_requirement, file_documentation, communication_followup, internal_process, other
   description: text("description"),
   impact: mysqlEnum("impact", ["positive", "negative", "neutral"]).default("neutral"),
+  impactLevel: mysqlEnum("impactLevel", ["low", "medium", "high", "critical"]).default("medium"),
   severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
   rootCause: text("rootCause"),
   recommendation: text("recommendation"),
+  whatHappened: text("whatHappened"),
+  whatWorked: text("whatWorked"),
+  whatDidNotWork: text("whatDidNotWork"),
+  actionTaken: text("actionTaken"),
+  preventionSteps: text("preventionSteps"),
+  linkedRecordType: varchar("linkedRecordType", { length: 64 }), // contract, proposal, opportunity, closeout, invoice, subcontractor
+  linkedRecordId: int("linkedRecordId"),
+  linkedRecordTitle: varchar("linkedRecordTitle", { length: 255 }),
+  status: mysqlEnum("lessonStatus", ["draft", "active", "archived", "applied"]).default("active"),
+  visibility: mysqlEnum("visibility", ["workspace", "team", "private"]).default("workspace"),
+  appliedToTemplateId: int("appliedToTemplateId"),
+  createdTaskId: int("createdTaskId"),
+  authorId: int("authorId"),
   tags: varchar("tags", { length: 500 }), // comma-separated tags
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1481,3 +1496,39 @@ export const consentRecords = mysqlTable("consent_records", {
   acceptedAt: timestamp("acceptedAt").defaultNow().notNull(),
 });
 export type ConsentRecord = typeof consentRecords.$inferSelect;
+
+
+// ==================== PLATFORM ADMIN EXTENDED TABLES ====================
+
+// Workspace Health Flags — risk/attention indicators per workspace
+export const workspaceHealthFlags = mysqlTable("workspace_health_flags", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  flagType: varchar("flagType", { length: 100 }).notNull(), // "payment_overdue", "inactive_30d", "trial_expiring", "support_escalation", "onboarding_stalled", "high_error_rate", "user_churn_risk"
+  severity: mysqlEnum("severity", ["info", "warning", "critical"]).default("warning").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedBy: int("resolvedBy"),
+  resolutionNote: text("resolutionNote"),
+  metadata: text("metadata"), // JSON with additional context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WorkspaceHealthFlag = typeof workspaceHealthFlags.$inferSelect;
+export type InsertWorkspaceHealthFlag = typeof workspaceHealthFlags.$inferInsert;
+
+// Platform Activity Log — cross-workspace activity feed for admin dashboard
+export const platformActivityLog = mysqlTable("platform_activity_log", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId"),
+  userId: int("userId"),
+  activityType: varchar("activityType", { length: 100 }).notNull(), // "workspace_created", "user_signup", "plan_upgrade", "plan_downgrade", "payment_received", "payment_failed", "support_ticket_opened", "support_ticket_resolved", "workspace_suspended", "workspace_reactivated", "user_disabled", "user_enabled", "trial_started", "trial_expired", "onboarding_completed"
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  metadata: text("metadata"), // JSON with additional context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PlatformActivityLogEntry = typeof platformActivityLog.$inferSelect;
+export type InsertPlatformActivityLogEntry = typeof platformActivityLog.$inferInsert;

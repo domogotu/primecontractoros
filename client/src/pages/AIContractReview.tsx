@@ -85,7 +85,7 @@ export default function AIContractReview() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="AI Contract Review"
         description="Upload contract text for AI-powered analysis. The AI identifies requirements, risks, compliance gaps, and obligations. You review and confirm each finding."

@@ -1176,3 +1176,42 @@
 
 ### 4I. Seed Data Script
 - [x] Default plans, roles, statuses, demo workspace option
+
+
+## Platform-Wide Fixes (May 12, 2026)
+
+- [x] Spell out all acronyms on first use across all pages (CUI, SAM, NAICS, UEI, CAGE, ITAR, etc.)
+- [x] Position sign-out button near user name display
+- [x] Fix scrolling and mobile responsiveness across all pages
+- [x] Ensure proper punctuation on all sentences (headings, descriptions, help text, empty states, tooltips, labels, banners)
+
+
+## Major Upgrade: Lessons Learned (May 12, 2026)
+
+- [x] Extend lessonsLearned table with lessonType, impactLevel, linkedRecordType/Id, status, visibility, appliedToTemplateId, createdTaskId fields
+- [x] Add workspace_health_flags table for platform admin
+- [x] Add platform_activity_log table for platform admin
+- [x] Run database migrations
+- [x] Upgrade lessonsLearnedRouter with full CRUD, filters, apply-to-template, create-task workflows
+- [x] Rewrite LessonsLearned.tsx with full spec: lesson types, impact levels, related record linking, search/filters, detail view, sample data
+- [x] Implement Apply to Template workflow
+- [x] Implement Create Task workflow
+- [x] Implement lesson detail view with all 12 spec sections
+
+## Major Upgrade: Platform Admin (May 12, 2026)
+
+- [x] Platform Admin Workspace Directory with summary cards, full table fields, search, filters, actions
+- [x] Single Workspace Admin Detail Page with 11 sections
+- [x] User Detail Page (Part 3)
+- [x] Real Billing History structure (Part 4)
+- [x] Admin Dashboard Metrics (Part 5)
+- [x] Platform Admin backend: extend platformAdminRouter with metrics, health flags, activity log, overrides
+- [x] Mobile responsive platform admin pages
+- [x] Security enforcement: customers cannot see platform admin data, other workspaces, or admin tools
+
+## Continuing Fixes (May 12, 2026)
+
+- [x] Verify acronyms spelled out on first use
+- [x] Verify punctuation on all sentences
+- [x] Verify pb-32 scrolling globally
+- [x] Verify sign-off placement near user name

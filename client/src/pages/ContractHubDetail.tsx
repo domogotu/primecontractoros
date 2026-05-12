@@ -31,7 +31,7 @@ export default function ContractHubDetail() {
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="outline" size="sm" onClick={() => navigate("/app/contracts/" + contractId)}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Contract Detail

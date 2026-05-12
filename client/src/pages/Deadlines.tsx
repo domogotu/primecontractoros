@@ -121,7 +121,7 @@ export default function Deadlines() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto pb-32">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-slate-200 rounded w-48" />
           <div className="h-32 bg-slate-200 rounded" />
@@ -132,7 +132,7 @@ export default function Deadlines() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Deadlines"
         description="Monitor all upcoming deadlines across contracts, deliverables, compliance, and operations."

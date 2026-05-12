@@ -120,7 +120,7 @@ export default function PlatformActivityPage() {
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Event Type</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Status</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Timestamp</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-200">IP Address</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">IP (Internet Protocol) Address</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Device</th>
                 <th className="text-left px-4 py-3 font-medium text-slate-200">Flags</th>
               </tr>

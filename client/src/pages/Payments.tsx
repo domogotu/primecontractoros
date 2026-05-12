@@ -99,7 +99,7 @@ export default function Payments() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto pb-32">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-slate-200 rounded w-48" />
           <div className="h-32 bg-slate-200 rounded" />
@@ -109,7 +109,7 @@ export default function Payments() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Payments"
         description="Track all incoming and outgoing payments separately from invoice management. Monitor payment status, methods, and reconciliation."

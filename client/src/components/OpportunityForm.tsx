@@ -188,7 +188,7 @@ export default function OpportunityForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-900 mb-2">
-          NAICS Code
+          NAICS (North American Industry Classification System) Code
         </label>
         <select
           name="naics"

@@ -46,7 +46,7 @@ export default function PaymentDetail() {
 
   if (isLoading) return <div className="p-6 text-center text-slate-500">Loading payment...</div>;
   if (!payment) return (
-    <div className="p-6 max-w-4xl mx-auto text-center">
+    <div className="p-6 max-w-4xl mx-auto text-center pb-32">
       <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
       <h2 className="text-lg font-semibold text-slate-700">Payment Not Found</h2>
       <Button variant="outline" className="mt-4" onClick={() => setLocation("/app/finance")}>
@@ -58,7 +58,7 @@ export default function PaymentDetail() {
   const paymentAmount = parseFloat(payment.amount || "0");
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto pb-32">
       <PageGuide
         title="Payment Detail"
         description="View payment details, linked invoices, and notes."

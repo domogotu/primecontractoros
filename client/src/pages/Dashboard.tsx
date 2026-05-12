@@ -101,7 +101,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8">
+      <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8 pb-32">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Summary Cards - Real Data */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">

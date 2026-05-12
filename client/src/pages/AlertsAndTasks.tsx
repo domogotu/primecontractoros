@@ -47,7 +47,7 @@ export default function AlertsAndTasks() {
   const unreadAlerts = mockAlerts.filter((a) => !a.read).length;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Alerts & Tasks"
         description="Central hub for system alerts, notifications, and task management across all your contracts."

@@ -38,7 +38,7 @@ export default function About() {
               Reed's Solutions LLC is a California-based small business specializing in federal IT and facilities contracting. We help government agencies and partners deliver mission-critical services through technology, operations support, and strategic consulting.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              With direct experience navigating FAR/DFARS regulations, SAM.gov registrations, proposal development, and contract performance, we built PrimeContractorOS from the ground up to address the real challenges contractors face every day.
+              With direct experience navigating FAR (Federal Acquisition Regulation) / DFARS (Defense Federal Acquisition Regulation Supplement) regulations, SAM.gov (System for Award Management) registrations, proposal development, and contract performance, we built PrimeContractorOS from the ground up to address the real challenges contractors face every day.
             </p>
             <p className="text-gray-700 leading-relaxed">
               Learn more about our company at{" "}

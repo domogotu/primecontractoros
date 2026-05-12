@@ -17,6 +17,7 @@ import {
   proposals,
   invoices,
   workspaceSettings,
+  tasks,
 } from "../drizzle/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { getS3Config, uploadToS3, getPresignedDownloadUrl, deleteFromS3, getPresignedUploadUrl } from "./services/fileStorage";
@@ -682,17 +683,49 @@ export const lessonsLearnedRouter = router({
       contractId: z.number().optional(),
       category: z.string().optional(),
       impact: z.string().optional(),
+      lessonType: z.string().optional(),
+      impactLevel: z.string().optional(),
+      status: z.string().optional(),
+      search: z.string().optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
       const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) return [];
 
-      return db
+      let results = await db
         .select()
         .from(lessonsLearned)
         .where(eq(lessonsLearned.workspaceId, workspaceId))
         .orderBy(desc(lessonsLearned.createdAt));
+
+      // Apply filters in memory for flexibility
+      if (input?.lessonType && input.lessonType !== "all") {
+        results = results.filter(r => r.lessonType === input.lessonType);
+      }
+      if (input?.impactLevel && input.impactLevel !== "all") {
+        results = results.filter(r => r.impactLevel === input.impactLevel);
+      }
+      if (input?.impact && input.impact !== "all") {
+        results = results.filter(r => r.impact === input.impact);
+      }
+      if (input?.status && input.status !== "all") {
+        results = results.filter(r => (r as any).lessonStatus === input.status || r.status === input.status);
+      }
+      if (input?.category && input.category !== "all") {
+        results = results.filter(r => r.category === input.category);
+      }
+      if (input?.search) {
+        const s = input.search.toLowerCase();
+        results = results.filter(r =>
+          r.title.toLowerCase().includes(s) ||
+          (r.description || "").toLowerCase().includes(s) ||
+          (r.recommendation || "").toLowerCase().includes(s) ||
+          (r.rootCause || "").toLowerCase().includes(s) ||
+          (r.tags || "").toLowerCase().includes(s)
+        );
+      }
+      return results;
     }),
 
   get: protectedProcedure
@@ -710,15 +743,27 @@ export const lessonsLearnedRouter = router({
 
   create: protectedProcedure
     .input(z.object({
-      title: z.string(),
+      title: z.string().min(1),
       contractId: z.number().optional(),
       proposalId: z.number().optional(),
       category: z.string().optional(),
+      lessonType: z.string().optional(),
       description: z.string().optional(),
       impact: z.enum(["positive", "negative", "neutral"]).optional(),
+      impactLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
       severity: z.enum(["low", "medium", "high", "critical"]).optional(),
       rootCause: z.string().optional(),
       recommendation: z.string().optional(),
+      whatHappened: z.string().optional(),
+      whatWorked: z.string().optional(),
+      whatDidNotWork: z.string().optional(),
+      actionTaken: z.string().optional(),
+      preventionSteps: z.string().optional(),
+      linkedRecordType: z.string().optional(),
+      linkedRecordId: z.number().optional(),
+      linkedRecordTitle: z.string().optional(),
+      status: z.enum(["draft", "active", "archived", "applied"]).optional(),
+      visibility: z.enum(["workspace", "team", "private"]).optional(),
       tags: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -731,11 +776,24 @@ export const lessonsLearnedRouter = router({
         contractId: input.contractId || null,
         proposalId: input.proposalId || null,
         category: input.category || null,
+        lessonType: input.lessonType || "other",
         description: input.description || null,
         impact: input.impact || "neutral",
+        impactLevel: input.impactLevel || "medium",
         severity: input.severity || "medium",
         rootCause: input.rootCause || null,
         recommendation: input.recommendation || null,
+        whatHappened: input.whatHappened || null,
+        whatWorked: input.whatWorked || null,
+        whatDidNotWork: input.whatDidNotWork || null,
+        actionTaken: input.actionTaken || null,
+        preventionSteps: input.preventionSteps || null,
+        linkedRecordType: input.linkedRecordType || null,
+        linkedRecordId: input.linkedRecordId || null,
+        linkedRecordTitle: input.linkedRecordTitle || null,
+        status: input.status || "active",
+        visibility: input.visibility || "workspace",
+        authorId: ctx.user.id,
         tags: input.tags || null,
       });
       return { id: result.insertId };
@@ -746,11 +804,23 @@ export const lessonsLearnedRouter = router({
       id: z.number(),
       title: z.string().optional(),
       category: z.string().optional(),
+      lessonType: z.string().optional(),
       description: z.string().optional(),
       impact: z.enum(["positive", "negative", "neutral"]).optional(),
+      impactLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
       severity: z.enum(["low", "medium", "high", "critical"]).optional(),
       rootCause: z.string().optional(),
       recommendation: z.string().optional(),
+      whatHappened: z.string().optional(),
+      whatWorked: z.string().optional(),
+      whatDidNotWork: z.string().optional(),
+      actionTaken: z.string().optional(),
+      preventionSteps: z.string().optional(),
+      linkedRecordType: z.string().optional(),
+      linkedRecordId: z.number().nullable().optional(),
+      linkedRecordTitle: z.string().nullable().optional(),
+      status: z.enum(["draft", "active", "archived", "applied"]).optional(),
+      visibility: z.enum(["workspace", "team", "private"]).optional(),
       tags: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -758,7 +828,12 @@ export const lessonsLearnedRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...data } = input;
-      await db.update(lessonsLearned).set(data).where(and(eq(lessonsLearned.id, id), eq(lessonsLearned.workspaceId, workspaceId)));
+      // Remove undefined keys
+      const updateData: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(data)) {
+        if (v !== undefined) updateData[k] = v;
+      }
+      await db.update(lessonsLearned).set(updateData).where(and(eq(lessonsLearned.id, id), eq(lessonsLearned.workspaceId, workspaceId)));
       return { success: true };
     }),
 
@@ -770,6 +845,107 @@ export const lessonsLearnedRouter = router({
       if (!db) throw new Error("Database not available");
       await db.delete(lessonsLearned).where(and(eq(lessonsLearned.id, input.id), eq(lessonsLearned.workspaceId, workspaceId)));
       return { success: true };
+    }),
+
+  // Apply lesson to a template
+  applyToTemplate: protectedProcedure
+    .input(z.object({
+      lessonId: z.number(),
+      templateId: z.number(),
+      appendContent: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      // Verify lesson belongs to workspace
+      const [lesson] = await db.select().from(lessonsLearned)
+        .where(and(eq(lessonsLearned.id, input.lessonId), eq(lessonsLearned.workspaceId, workspaceId)));
+      if (!lesson) throw new Error("Lesson not found.");
+      // Verify template belongs to workspace
+      const [template] = await db.select().from(templates)
+        .where(and(eq(templates.id, input.templateId), eq(templates.workspaceId, workspaceId)));
+      if (!template) throw new Error("Template not found.");
+      // Append lesson content to template
+      const lessonContent = input.appendContent || `\n\n---\n**Lesson Learned:** ${lesson.title}\n${lesson.recommendation || lesson.description || ""}`;
+      const newContent = (template.content || "") + lessonContent;
+      await db.update(templates).set({ content: newContent }).where(eq(templates.id, input.templateId));
+      // Mark lesson as applied
+      await db.update(lessonsLearned).set({ appliedToTemplateId: input.templateId, status: "applied" })
+        .where(eq(lessonsLearned.id, input.lessonId));
+      return { success: true };
+    }),
+
+  // Create a task from a lesson
+  createTask: protectedProcedure
+    .input(z.object({
+      lessonId: z.number(),
+      taskTitle: z.string().min(1),
+      taskDescription: z.string().optional(),
+      dueDate: z.date().optional(),
+      priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      // Verify lesson belongs to workspace
+      const [lesson] = await db.select().from(lessonsLearned)
+        .where(and(eq(lessonsLearned.id, input.lessonId), eq(lessonsLearned.workspaceId, workspaceId)));
+      if (!lesson) throw new Error("Lesson not found.");
+      // Create the task
+      const [taskResult] = await db.insert(tasks).values({
+        workspaceId,
+        title: input.taskTitle,
+        description: input.taskDescription || `Task created from lesson: ${lesson.title}`,
+        dueDate: input.dueDate || null,
+        priority: input.priority || "medium",
+        status: "todo",
+        linkedRecordType: "lesson",
+        linkedRecordId: lesson.id,
+      });
+      // Link task back to lesson
+      await db.update(lessonsLearned).set({ createdTaskId: taskResult.insertId })
+        .where(eq(lessonsLearned.id, input.lessonId));
+      return { success: true, taskId: taskResult.insertId };
+    }),
+
+  // Get stats/counts for the lessons page header
+  stats: protectedProcedure.query(async ({ ctx }) => {
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
+    const db = await getDb();
+    if (!db) return { total: 0, positive: 0, negative: 0, neutral: 0, applied: 0 };
+    const all = await db.select().from(lessonsLearned)
+      .where(eq(lessonsLearned.workspaceId, workspaceId));
+    return {
+      total: all.length,
+      positive: all.filter(l => l.impact === "positive").length,
+      negative: all.filter(l => l.impact === "negative").length,
+      neutral: all.filter(l => l.impact === "neutral").length,
+      applied: all.filter(l => (l as any).lessonStatus === "applied" || l.appliedToTemplateId).length,
+    };
+  }),
+
+  // Get linkable records for the linking UI
+  linkableRecords: protectedProcedure
+    .input(z.object({ recordType: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) return [];
+      switch (input.recordType) {
+        case "contract":
+          return (await db.select({ id: contracts.id, title: contracts.title }).from(contracts)
+            .where(eq(contracts.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+        case "proposal":
+          return (await db.select({ id: proposals.id, title: proposals.title }).from(proposals)
+            .where(eq(proposals.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+        case "opportunity":
+          return (await db.select({ id: opportunities.id, title: opportunities.title }).from(opportunities)
+            .where(eq(opportunities.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+        default:
+          return [];
+      }
     }),
 });
 

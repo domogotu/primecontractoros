@@ -78,7 +78,20 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
         })}
       </nav>
 
-      <div className="border-t border-blue-800 p-3">
+      {/* User info + Sign Out — grouped so sign-out is always adjacent to the user's name */}
+      <div className="border-t border-blue-800 p-3 space-y-1">
+        {/* User identity */}
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center shrink-0">
+            <span className="text-sm font-bold text-white">{(user?.name || "A")[0].toUpperCase()}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-blue-300 uppercase font-semibold">Platform Admin</p>
+            <p className="text-sm font-medium text-white truncate">{user?.name || "Admin"}</p>
+          </div>
+        </div>
+
+        {/* Switch to App */}
         <Link
           href="/app/dashboard"
           onClick={onClose}
@@ -86,9 +99,8 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
         >
           Switch to App
         </Link>
-      </div>
 
-      <div className="border-t border-blue-800 p-3">
+        {/* Sign Out — directly below user name for clear association */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors text-sm font-medium"
@@ -96,11 +108,6 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
           <LogOut className="w-4 h-4 shrink-0" />
           Sign Out
         </button>
-      </div>
-
-      <div className="border-t border-blue-800 px-4 py-3">
-        <p className="text-xs text-blue-300 uppercase">Platform Admin</p>
-        <p className="text-sm font-medium text-white truncate">{user?.name || "Admin"}</p>
       </div>
     </div>
   );

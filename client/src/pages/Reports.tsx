@@ -115,7 +115,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto pb-32">
       <PageGuide
         title="Reports"
         description="Generate reports from your real workspace data and export as CSV."

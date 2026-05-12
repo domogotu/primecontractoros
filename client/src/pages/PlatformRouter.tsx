@@ -22,6 +22,7 @@ import PlatformWorkspaceDetailPage from "./PlatformWorkspaceDetail";
 import PlatformOnboardingPage from "./PlatformOnboarding";
 import PlatformBackups from "./PlatformBackups";
 import PlatformConsentRecords from "./PlatformConsentRecords";
+import PlatformUserDetailPage from "./PlatformUserDetail";
 import { getLoginUrl } from "@/const";
 import { useState } from "react";
 import { Menu } from "lucide-react";
@@ -69,6 +70,7 @@ export default function PlatformRouter() {
     if (normalizedLocation === "/platform/workspaces") return <PlatformWorkspaces />;
     if (normalizedLocation.startsWith("/platform/workspaces/")) return <PlatformWorkspaceDetailPage />;
     if (normalizedLocation === "/platform/users") return <PlatformUsersPage />;
+    if (normalizedLocation.startsWith("/platform/users/")) return <PlatformUserDetailPage />;
     if (normalizedLocation === "/platform/activity") return <PlatformActivityPage />;
     if (normalizedLocation === "/platform/login-events") return <PlatformLoginEventsPage />;
     if (normalizedLocation === "/platform/plans") return <PlatformPlans />;
@@ -93,6 +95,7 @@ export default function PlatformRouter() {
     if (n === "/platform/workspaces") return "Workspaces";
     if (n.startsWith("/platform/workspaces/")) return "Workspace Detail";
     if (n === "/platform/users") return "Users";
+    if (n.startsWith("/platform/users/")) return "User Detail";
     if (n === "/platform/activity") return "Activity";
     if (n === "/platform/login-events") return "Login Events";
     if (n === "/platform/plans") return "Plans";
@@ -123,8 +126,8 @@ export default function PlatformRouter() {
           <span className="font-semibold text-white text-sm">{currentPageLabel}</span>
         </div>
 
-        {/* Page content */}
-        <div className="flex-1 overflow-auto text-slate-200">
+        {/* Page content — pb-32 ensures content clears fixed bottom banners on all devices */}
+        <div className="flex-1 overflow-auto text-slate-200 pb-32">
           {renderPage()}
         </div>
       </div>

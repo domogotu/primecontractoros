@@ -81,7 +81,7 @@ export default function Billing() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 pb-32">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Billing & Subscription</h1>

@@ -88,7 +88,7 @@ export default function AIConfirmation() {
   if (contractLoading) return <div className="p-6 flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Loading...</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="outline" size="sm" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
           <ArrowLeft className="w-4 h-4 mr-1" /> Contract Hub

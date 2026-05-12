@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `workspace_health_flags` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `workspaceId` int NOT NULL,\n  `flagType` varchar(100) NOT NULL,\n  `severity` enum('info','warning','critical') NOT NULL DEFAULT 'warning',\n  `title` varchar(255) NOT NULL,\n  `description` text,\n  `isActive` boolean NOT NULL DEFAULT true,\n  `resolvedAt` timestamp NULL,\n  `resolvedBy` int,\n  `resolutionNote` text,\n  `metadata` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `workspace_health_flags_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute CREATE TABLE IF NOT EXISTS `workspace_health_flags` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `workspaceId` int NOT NULL,\n  `flagType` varchar(100) NOT NULL,\n  `severity` enum('info','warning','critical') NOT NULL DEFAULT 'warning',\n  `title` varchar(255) NOT NULL,\n  `description` text,\n  `isActive` boolean NOT NULL DEFAULT true,\n  `resolvedAt` timestamp NULL,\n  `resolvedBy` int,\n  `resolutionNote` text,\n  `metadata` text,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `workspace_health_flags_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 387
+}

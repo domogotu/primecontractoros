@@ -36,7 +36,7 @@ export default function PlatformUsersPage() {
   const formatDateTime = (d: any) => d ? new Date(d).toLocaleString() : "—";
 
   return (
-    <div className="p-6 max-w-full">
+    <div className="p-6 max-w-full pb-32">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Platform Users</h1>
@@ -87,7 +87,11 @@ export default function PlatformUsersPage() {
             <tbody className="divide-y divide-slate-700">
               {filteredUsers.map((u: any) => (
                 <tr key={u.id} className="hover:bg-slate-900">
-                  <td className="px-4 py-3 font-medium text-white">{u.name || "—"}</td>
+                  <td className="px-4 py-3 font-medium text-white">
+                    <button onClick={() => navigate(`/platform/users/${u.id}`)} className="hover:text-blue-400 hover:underline">
+                      {u.name || "—"}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-slate-300">{u.email || "—"}</td>
                   <td className="px-4 py-3">
                     {u.workspaceName ? (

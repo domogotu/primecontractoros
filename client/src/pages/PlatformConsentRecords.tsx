@@ -19,7 +19,7 @@ export default function PlatformConsentRecords() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <ShieldCheck className="w-6 h-6 text-blue-400" />
@@ -129,7 +129,7 @@ export default function PlatformConsentRecords() {
                   <th className="text-left py-3 px-4 font-medium text-slate-400">Version</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-400">Action</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-400">Type</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-400">IP Address</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-400">IP (Internet Protocol) Address</th>
                 </tr>
               </thead>
               <tbody>

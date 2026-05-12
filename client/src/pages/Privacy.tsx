@@ -39,7 +39,7 @@ export default function Privacy() {
               </p>
               <ul className="list-disc pl-6 text-gray-700 space-y-2">
                 <li><strong>Account Information:</strong> When you register for an account, we collect personal information such as your name, email address, phone number, and password.</li>
-                <li><strong>Business Profile Data:</strong> Information about your business, including company name, address, tax identification number, DUNS number, CAGE code, and socioeconomic certifications.</li>
+                <li><strong>Business Profile Data:</strong> Information about your business, including company name, address, tax identification number, DUNS number, Commercial and Government Entity (CAGE) code, and socioeconomic certifications.</li>
                 <li><strong>Contract and Proposal Data:</strong> Documents, contracts, proposals, solicitations, and related information you upload or create within the Service.</li>
                 <li><strong>Financial Records:</strong> Billing information, payment history, invoices, and financial data related to your contracts and subcontractors.</li>
                 <li><strong>Usage Data:</strong> Details of your visits to our Service, including traffic data, location data, logs, and other communication data and the resources that you access and use on the Service.</li>

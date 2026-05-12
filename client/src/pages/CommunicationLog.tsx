@@ -41,7 +41,7 @@ export default function CommunicationLog() {
   }, [search, channelFilter, directionFilter]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto pb-32">
       <PageGuide
         title="Communication Log"
         description="Record and track all contract-related communications with government contacts, subcontractors, and stakeholders."

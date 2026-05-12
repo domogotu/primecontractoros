@@ -7,7 +7,7 @@ export default function HelpPanel({ context = "default" }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const helpContent = {
-    opportunities: { title: "Working with Opportunities", tips: ["Track government contract opportunities from SAM.gov", "Use status workflow: New > In Review > Pursue/Hold/No Pursue", "Link related contacts and files"] },
+    opportunities: { title: "Working with Opportunities", tips: ["Track government contract opportunities from SAM.gov (System for Award Management)", "Use status workflow: New > In Review > Pursue/Hold/No Pursue", "Link related contacts and files"] },
     contracts: { title: "Managing Contracts", tips: ["Track contract performance and compliance", "Use the Contract Hub for comprehensive view", "Monitor health status: Green/Yellow/Red"] },
     proposals: { title: "Building Proposals", tips: ["Start with a proposal framework", "Track status: Draft > In Progress > Submitted > Won/Lost", "Use AI suggestions to improve content"] },
     default: { title: "Getting Help", tips: ["Use sidebar navigation to access modules", "Check the Glossary for terminology", "Visit Help Center for guides"] },
