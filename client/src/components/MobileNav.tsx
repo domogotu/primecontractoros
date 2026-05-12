@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { useLocation } from 'wouter';
+import { useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -9,6 +11,18 @@ interface MobileNavProps {
 
 export default function MobileNav({ sidebarContent, children }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [location] = useLocation();
+  const prevLocationRef = useRef(location);
+
+  // Close sidebar only when the route actually changes (i.e., user navigated to a page)
+  useEffect(() => {
+    if (prevLocationRef.current !== location) {
+      prevLocationRef.current = location;
+      setIsOpen(false);
+    }
+  }, [location]);
+
+  const closeSidebar = useCallback(() => setIsOpen(false), []);
 
   return (
     <div className="flex h-screen">
@@ -25,16 +39,18 @@ export default function MobileNav({ sidebarContent, children }: MobileNavProps) 
         <h1 className="text-lg font-bold ml-4">PrimeContractorOS</h1>
       </div>
 
-      {/* Mobile Drawer Sidebar */}
+      {/* Mobile Drawer Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-30 md:hidden bg-black/50" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 z-30 md:hidden bg-black/50" onClick={closeSidebar} />
       )}
+
+      {/* Mobile Drawer Sidebar - scrollable, does NOT close on click inside */}
       <div
         className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white z-40 md:hidden transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } pt-16`}
+        } pt-16 overflow-y-auto`}
       >
-        <div onClick={() => setIsOpen(false)}>{sidebarContent}</div>
+        {sidebarContent}
       </div>
 
       {/* Desktop Sidebar */}

@@ -919,3 +919,8 @@
 - [x] All 63 tests pass (vitest run)
 - [x] Deploy to production
 - [x] Push to GitHub
+
+## Mobile Sidebar UX Fixes
+- [x] Sidebar content scrolls independently when items overflow viewport
+- [x] Toggling section headers (MAIN, PARTNERS, etc.) keeps sidebar open on mobile
+- [x] Sidebar only closes on mobile when user navigates to an actual page
