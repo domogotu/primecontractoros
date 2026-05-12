@@ -144,7 +144,7 @@ export default function PlatformWorkspaceDetailPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <Users className="w-5 h-5" /> Users ({workspace.members?.length || 1})
         </h2>
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-gray-200 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -182,7 +182,7 @@ export default function PlatformWorkspaceDetailPage() {
           <CreditCard className="w-5 h-5" /> Billing History
         </h2>
         {workspace.billingHistory?.length > 0 ? (
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -226,7 +226,7 @@ export default function PlatformWorkspaceDetailPage() {
           <FileText className="w-5 h-5" /> Support Tickets ({workspace.supportTickets?.length || 0})
         </h2>
         {workspace.supportTickets?.length > 0 ? (
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>

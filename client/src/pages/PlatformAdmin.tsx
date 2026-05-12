@@ -31,13 +31,13 @@ export default function PlatformAdmin() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-6">
         <h1 className="text-3xl font-bold text-blue-900 mb-2">Platform Admin</h1>
         <p className="text-gray-600">Manage all customer workspaces, billing, and support</p>
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between gap-4">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1">
           <Search className="w-5 h-5 text-gray-400" />
           <input
@@ -56,7 +56,7 @@ export default function PlatformAdmin() {
       </div>
 
       {/* Workspace Table */}
-      <div className="bg-white m-6 rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white m-4 sm:m-6 rounded-lg border border-gray-200 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
@@ -113,7 +113,7 @@ export default function PlatformAdmin() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-6 px-6 pb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 px-4 sm:px-6 pb-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <p className="text-xs text-gray-600 font-medium uppercase">Total Workspaces</p>
           <p className="text-3xl font-bold text-blue-900 mt-2">{stats?.totalWorkspaces || 0}</p>

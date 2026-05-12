@@ -19,11 +19,15 @@ import PlatformUsersPage from "./PlatformUsers";
 import PlatformActivityPage from "./PlatformActivity";
 import PlatformLoginEventsPage from "./PlatformLoginEvents";
 import PlatformWorkspaceDetailPage from "./PlatformWorkspaceDetail";
+import PlatformOnboardingPage from "./PlatformOnboarding";
 import { getLoginUrl } from "@/const";
+import { useState } from "react";
+import { Menu } from "lucide-react";
 
 export default function PlatformRouter() {
   const [location, navigate] = useLocation();
   const { user, isAuthenticated, loading } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (loading) {
     return (
@@ -58,7 +62,7 @@ export default function PlatformRouter() {
   // Determine which page to show based on current location
   const renderPage = () => {
     const normalizedLocation = location.replace(/\/$/, '') || '/platform';
-    
+
     if (normalizedLocation === "/platform") return <PlatformAdmin />;
     if (normalizedLocation === "/platform/workspaces") return <PlatformWorkspaces />;
     if (normalizedLocation.startsWith("/platform/workspaces/")) return <PlatformWorkspaceDetailPage />;
@@ -74,14 +78,49 @@ export default function PlatformRouter() {
     if (normalizedLocation === "/platform/ownership-recovery") return <PlatformOwnershipRecovery />;
     if (normalizedLocation === "/platform/demo-workspaces") return <PlatformDemoWorkspaces />;
     if (normalizedLocation === "/platform/tasks") return <PlatformTasks />;
+    if (normalizedLocation === "/platform/onboarding") return <PlatformOnboardingPage />;
     return <PlatformAdmin />;
   };
 
+  // Get current page label for mobile top bar
+  const currentPageLabel = (() => {
+    const n = location.replace(/\/$/, '') || '/platform';
+    if (n === "/platform") return "Platform Admin";
+    if (n === "/platform/workspaces") return "Workspaces";
+    if (n.startsWith("/platform/workspaces/")) return "Workspace Detail";
+    if (n === "/platform/users") return "Users";
+    if (n === "/platform/activity") return "Activity";
+    if (n === "/platform/login-events") return "Login Events";
+    if (n === "/platform/plans") return "Plans";
+    if (n === "/platform/discounts") return "Discounts";
+    if (n === "/platform/billing") return "Billing";
+    if (n === "/platform/overrides") return "Overrides";
+    if (n === "/platform/support") return "Support";
+    if (n === "/platform/onboarding") return "Onboarding";
+    return "Platform Admin";
+  })();
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <PlatformSidebar />
-      <div className="flex-1 overflow-auto">
-        {renderPage()}
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <PlatformSidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 h-14 border-b bg-white shrink-0">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Open admin menu"
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+          <span className="font-semibold text-blue-900 text-sm">{currentPageLabel}</span>
+        </div>
+
+        {/* Page content */}
+        <div className="flex-1 overflow-auto">
+          {renderPage()}
+        </div>
       </div>
     </div>
   );

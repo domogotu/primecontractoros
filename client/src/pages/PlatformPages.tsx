@@ -24,8 +24,8 @@ export function PlatformWorkspaces() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Workspace Directory</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Workspace Directory</h1>
         <p className="text-gray-600">Manage all customer workspaces</p>
       </div>
       <div className="p-8">
@@ -41,7 +41,7 @@ export function PlatformWorkspaces() {
             />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -102,12 +102,12 @@ export function PlatformWorkspaceSummary() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Workspace: {workspace.name}</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Workspace: {workspace.name}</h1>
         <p className="text-gray-600">ID: {workspace.id} | Owner ID: {workspace.ownerId}</p>
       </div>
       <div className="p-8">
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-xs text-gray-600 font-medium uppercase">Onboarding</p>
             <p className={`text-2xl font-bold mt-2 ${workspace.onboardingCompleted ? "text-green-600" : "text-amber-600"}`}>
@@ -176,8 +176,8 @@ export function PlatformPlans() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Plans Management</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Plans Management</h1>
         <p className="text-gray-600">Configure and manage subscription plans</p>
       </div>
       <div className="p-8">
@@ -259,8 +259,8 @@ export function PlatformDiscounts() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Discounts Management</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Discounts Management</h1>
         <p className="text-gray-600">Create and manage promotional discounts</p>
       </div>
       <div className="p-8">
@@ -290,7 +290,7 @@ export function PlatformDiscounts() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -346,27 +346,27 @@ export function PlatformBilling() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Billing Management</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Billing Management</h1>
         <p className="text-gray-600">View and manage workspace billing</p>
       </div>
       <div className="p-8">
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-xs text-gray-600 font-medium uppercase">Total Records</p>
-            <p className="text-3xl font-bold text-blue-900 mt-2">{billingRecords.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{billingRecords.length}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-xs text-gray-600 font-medium uppercase">Active Subscriptions</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{activeCount}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">{activeCount}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-xs text-gray-600 font-medium uppercase">Trials</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">{trialCount}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">{trialCount}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -428,27 +428,27 @@ export function PlatformSupport() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Support Inbox</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Support Inbox</h1>
         <p className="text-gray-600">Manage customer support tickets</p>
       </div>
       <div className="p-8">
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
             <p className="text-xs text-gray-600 font-medium uppercase">Open</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">{openCount}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-2">{openCount}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
             <p className="text-xs text-gray-600 font-medium uppercase">In Progress</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">{inProgressCount}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600 mt-2">{inProgressCount}</p>
           </div>
           <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
             <p className="text-xs text-gray-600 font-medium uppercase">Total</p>
-            <p className="text-3xl font-bold text-blue-900 mt-2">{tickets.length}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-blue-900 mt-2">{tickets.length}</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -529,8 +529,8 @@ export function PlatformOverrides() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Overrides Management</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Overrides Management</h1>
         <p className="text-gray-600">Configure per-workspace feature overrides</p>
       </div>
       <div className="p-8">
@@ -559,7 +559,7 @@ export function PlatformOverrides() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -604,8 +604,8 @@ export function PlatformOverrides() {
 export function PlatformPricingHistory() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Pricing History</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Pricing History</h1>
         <p className="text-gray-600">View historical pricing changes</p>
       </div>
       <div className="p-8">
@@ -620,8 +620,8 @@ export function PlatformPricingHistory() {
 export function PlatformOwnershipRecovery() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Ownership Recovery</h1>
         <p className="text-gray-600">Manage workspace ownership transfers</p>
       </div>
       <div className="p-8">
@@ -636,8 +636,8 @@ export function PlatformOwnershipRecovery() {
 export function PlatformDemoWorkspaces() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Demo Workspaces</h1>
         <p className="text-gray-600">Create and manage demo workspaces for trials</p>
       </div>
       <div className="p-8">
@@ -652,8 +652,8 @@ export function PlatformDemoWorkspaces() {
 export function PlatformTasks() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <h1 className="text-3xl font-bold text-blue-900 mb-2">Platform Tasks</h1>
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-4 sm:px-4 sm:px-8 py-3 sm:py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Platform Tasks</h1>
         <p className="text-gray-600">Manage background tasks and jobs</p>
       </div>
       <div className="p-8">
