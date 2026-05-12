@@ -39,6 +39,8 @@ import {
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { checkPlanLimit } from "./services/billing";
+import { TRPCError } from "@trpc/server";
 import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, teamAssignmentsRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
 import { guidanceRouter } from "./guidanceRouter";
@@ -131,6 +133,14 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
+          const existing = await listOpportunities(wsId);
+          const limitCheck = await checkPlanLimit(wsId, "opportunities", existing.length);
+          if (!limitCheck.allowed) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Plan limit reached: you can have at most ${limitCheck.limit} opportunities. Upgrade your plan to add more.`,
+            });
+          }
           await createOpportunity({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {
@@ -249,6 +259,14 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
+          const existing = await listProposals(wsId);
+          const limitCheck = await checkPlanLimit(wsId, "proposals", existing.length);
+          if (!limitCheck.allowed) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Plan limit reached: you can have at most ${limitCheck.limit} proposals. Upgrade your plan to add more.`,
+            });
+          }
           await createProposal({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {
@@ -364,6 +382,14 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
+          const existing = await listContracts(wsId);
+          const limitCheck = await checkPlanLimit(wsId, "contracts", existing.length);
+          if (!limitCheck.allowed) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: `Plan limit reached: you can have at most ${limitCheck.limit} contracts. Upgrade your plan to add more.`,
+            });
+          }
           await createContract({ ...input, workspaceId: wsId });
           return { success: true };
         } catch (error) {

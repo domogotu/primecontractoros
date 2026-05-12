@@ -37,7 +37,7 @@ export async function getStripeConfig(workspaceId: number): Promise<StripeConfig
 // Platform-level Stripe config (stored in workspace 0 or env vars)
 export function getPlatformStripeConfig(): StripeConfig | null {
   const secretKey = process.env.STRIPE_SECRET_KEY;
-  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+  const publishableKey = process.env.VITE_STRIPE_PUBLISHABLE_KEY || process.env.STRIPE_PUBLISHABLE_KEY;
   if (!secretKey || !publishableKey) return null;
   return {
     secretKey,

@@ -39,7 +39,7 @@ import Onboarding from "./pages/Onboarding";
 import BusinessProfile from "./pages/BusinessProfile";
 import UserProfile from "./pages/UserProfile";
 import Settings from "./pages/Settings";
-import Subscription from "./pages/Subscription";
+import Billing from "./pages/Billing";
 import Clients from "./pages/Clients";
 import Obligations from "./pages/Obligations";
 import Deliverables from "./pages/Deliverables";
@@ -136,7 +136,7 @@ function Router() {
       <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
       <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
       <Route path={"/app/settings"} component={withAppShell(Settings)} />
-      <Route path={"/app/subscription"} component={withAppShell(Subscription)} />
+      <Route path={"/app/billing"} component={withAppShell(Billing)} />
       <Route path={"/app/users"} component={withAppShell(Users)} />
       <Route path={"/app/alerts"} component={withAppShell(Alerts)} />
       <Route path={"/app/tasks"} component={withAppShell(Tasks)} />

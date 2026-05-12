@@ -74,6 +74,21 @@ vi.mock("./_core/llm", () => ({
   invokeLLM: vi.fn().mockResolvedValue({ choices: [{ message: { content: "[]" } }] }),
 }));
 
+// Mock billing service so plan limits don't block create operations in tests
+vi.mock("./services/billing", () => ({
+  checkPlanLimit: vi.fn().mockResolvedValue({ allowed: true, limit: -1, current: 0 }),
+  getPlatformStripeConfig: vi.fn().mockReturnValue(null),
+  getWorkspacePlanLimits: vi.fn().mockResolvedValue({ maxContracts: -1, maxProposals: -1, maxOpportunities: -1, maxTeamMembers: -1 }),
+  getSubscriptionStatus: vi.fn().mockResolvedValue(null),
+  createCheckoutSession: vi.fn().mockResolvedValue({ url: "https://checkout.stripe.com/test" }),
+  PLAN_LIMITS: {
+    starter: { maxContracts: 5, maxProposals: 10, maxOpportunities: 25, maxTeamMembers: 2 },
+    growth: { maxContracts: 25, maxProposals: 50, maxOpportunities: 100, maxTeamMembers: 10 },
+    advanced: { maxContracts: -1, maxProposals: -1, maxOpportunities: -1, maxTeamMembers: -1 },
+    development: { maxContracts: -1, maxProposals: -1, maxOpportunities: -1, maxTeamMembers: -1 },
+  },
+}));
+
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain, CreditCard } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -45,7 +45,7 @@ const menuItems = [
   { icon: Brain, label: "AI Findings", path: "/app/ai-findings" },
   { icon: User, label: "Profile", path: "/app/profile" },
   { icon: Settings, label: "Settings", path: "/app/settings" },
-  { icon: DollarSign, label: "Subscription", path: "/app/subscription" },
+  { icon: CreditCard, label: "Billing", path: "/app/billing" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

@@ -469,10 +469,10 @@
 - [ ] [DEFERRED] Email templates system
 
 ### 3. Stripe Payment Processing
-- [ ] [DEFERRED - requires Stripe keys] Stripe integration for subscription billing
-- [ ] [DEFERRED] Billing page (view plan, upgrade/downgrade, invoices)
+- [ ] Stripe integration for subscription billing (keys provided)
+- [ ] Billing page (view plan, upgrade/downgrade, invoices)
 - [x] Platform owner manages plans and pricing (Plans page in Platform Admin)
-- [ ] [DEFERRED] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
+- [ ] Plan limits enforcement (Starter: 5, Growth: 25, Advanced: unlimited)
 - [x] Development mode (all unlocked) when Stripe not configured (current behavior)
 
 ### 4. Reports Generation
@@ -733,3 +733,17 @@
 - [x] Removed unused imports from LessonsLearned.tsx
 - [x] Confirmed 0 TypeScript errors
 - [x] Fixed intCloseout router references in ContractDetail (was using trpc.closeout instead of trpc.intCloseout)
+
+## Phase 21: Stripe Billing Integration
+- [x] Stripe feature scaffold added (webdev_add_feature)
+- [x] STRIPE_SECRET_KEY and VITE_STRIPE_PUBLISHABLE_KEY configured as secrets
+- [x] Stripe products configuration file (server/stripe/products.ts) with Starter/Growth/Advanced plans
+- [x] Stripe webhook handler (server/stripeWebhook.ts) at /api/stripe/webhook with signature verification
+- [x] Webhook registered before express.json() in server/_core/index.ts
+- [x] Billing service (server/services/billing.ts) with checkPlanLimit, createCheckoutSession, getSubscriptionStatus
+- [x] billingRouter enhanced with createCheckout (with user metadata), cancelSubscription, customerPortal
+- [x] Billing page (/app/billing) with plan cards, current plan display, upgrade/downgrade flow
+- [x] Plan limits enforcement on opportunity/proposal/contract create mutations
+- [x] Billing mock added to crud.test.ts so plan limit checks don't break tests
+- [x] 47 tests passing, 0 TypeScript errors
+- [x] Deployed to primecontractor-bk79t4ta.manus.space

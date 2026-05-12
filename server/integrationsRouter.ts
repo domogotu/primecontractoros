@@ -220,11 +220,126 @@ export const billingRouter = router({
       planId: z.number(),
       successUrl: z.string(),
       cancelUrl: z.string(),
+      billingInterval: z.enum(["month", "year"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await requireWorkspaceId(ctx.user.id);
-      return createCheckoutSession(workspaceId, input.planId, input.successUrl, input.cancelUrl);
+      const config = getPlatformStripeConfig();
+      if (!config) return { url: null, error: "Stripe not configured" };
+
+      const db = await getDb();
+      if (!db) return { url: null, error: "Database not available" };
+
+      const [plan] = await db.select().from(plans).where(eq(plans.id, input.planId));
+      if (!plan) return { url: null, error: "Plan not found" };
+
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(config.secretKey, { apiVersion: "2025-04-30.basil" as any });
+
+      const interval = input.billingInterval || "month";
+      const unitAmount = interval === "year"
+        ? Math.round(parseFloat(plan.annualPrice || plan.monthlyPrice || "0") * 100)
+        : Math.round(parseFloat(plan.monthlyPrice || "0") * 100);
+
+      try {
+        const session = await stripe.checkout.sessions.create({
+          mode: "subscription",
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
+          allow_promotion_codes: true,
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: `PrimeContractorOS - ${plan.name}`,
+                  description: plan.description || undefined,
+                },
+                recurring: { interval },
+                unit_amount: unitAmount,
+              },
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            workspaceId: String(workspaceId),
+            planId: String(input.planId),
+            user_id: String(ctx.user.id),
+            customer_email: ctx.user.email || "",
+            customer_name: ctx.user.name || "",
+          },
+          success_url: input.successUrl,
+          cancel_url: input.cancelUrl,
+        });
+        return { url: session.url };
+      } catch (error: any) {
+        return { url: null, error: error.message };
+      }
     }),
+
+  cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
+    const config = getPlatformStripeConfig();
+    if (!config) return { success: false, error: "Stripe not configured" };
+
+    const db = await getDb();
+    if (!db) return { success: false, error: "Database not available" };
+
+    const [sub] = await db.select().from(subscriptions)
+      .where(and(eq(subscriptions.workspaceId, workspaceId), eq(subscriptions.status, "active")));
+
+    if (!sub || !sub.stripeSubscriptionId) {
+      return { success: false, error: "No active subscription found" };
+    }
+
+    try {
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(config.secretKey, { apiVersion: "2025-04-30.basil" as any });
+      await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+
+      await db.update(subscriptions)
+        .set({ cancelAtPeriodEnd: true })
+        .where(eq(subscriptions.id, sub.id));
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }),
+
+  reactivateSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
+    const config = getPlatformStripeConfig();
+    if (!config) return { success: false, error: "Stripe not configured" };
+
+    const db = await getDb();
+    if (!db) return { success: false, error: "Database not available" };
+
+    const [sub] = await db.select().from(subscriptions)
+      .where(eq(subscriptions.workspaceId, workspaceId));
+
+    if (!sub || !sub.stripeSubscriptionId) {
+      return { success: false, error: "No subscription found" };
+    }
+
+    try {
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(config.secretKey, { apiVersion: "2025-04-30.basil" as any });
+      await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: false,
+      });
+
+      await db.update(subscriptions)
+        .set({ cancelAtPeriodEnd: false, status: "active" })
+        .where(eq(subscriptions.id, sub.id));
+
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }),
 });
 
 // ===== REPORTS ROUTER =====
