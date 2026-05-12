@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
@@ -666,5 +666,66 @@ export const fileVersionsRouter = router({
     .input(z.object({ fileId: z.number(), versionNumber: z.number(), storageKey: z.string(), storageUrl: z.string(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       return createFileVersion({ ...input, uploadedBy: ctx.user.id });
+    }),
+});
+
+// ==================== PROPOSAL FRAMEWORKS ====================
+import { listProposalFrameworks, getProposalFramework, listProposalSections, createProposalSection, updateProposalSection, deleteProposalSection } from "./entityDb";
+
+export const proposalFrameworksRouter = router({
+  list: publicProcedure.query(async () => {
+    return listProposalFrameworks();
+  }),
+  get: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      return getProposalFramework(input.id);
+    }),
+});
+
+// ==================== PROPOSAL SECTIONS ====================
+export const proposalSectionsRouter = router({
+  list: protectedProcedure
+    .input(z.object({ proposalId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listProposalSections(wsId, input.proposalId);
+    }),
+  create: protectedProcedure
+    .input(z.object({ proposalId: z.number(), title: z.string(), content: z.string().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const id = await createProposalSection({ ...input, workspaceId: wsId });
+      return { id };
+    }),
+  update: protectedProcedure
+    .input(z.object({ id: z.number(), title: z.string().optional(), content: z.string().optional(), status: z.string().optional(), isAiDraft: z.boolean().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const { id, ...data } = input;
+      await updateProposalSection(id, wsId, data);
+      return { success: true };
+    }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      await deleteProposalSection(input.id, wsId);
+      return { success: true };
+    }),
+  aiDraft: protectedProcedure
+    .input(z.object({ sectionId: z.number(), proposalId: z.number(), sectionTitle: z.string(), proposalTitle: z.string(), framework: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      const { invokeLLM } = await import("./_core/llm");
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: "You are a government contracting proposal writer. Generate professional, detailed content for the specified proposal section. Use clear, formal language appropriate for government submissions. Include relevant details and structure the content with clear paragraphs." },
+          { role: "user", content: `Generate draft content for the "${input.sectionTitle}" section of a government contracting proposal titled "${input.proposalTitle}". Framework type: ${input.framework || "standard"}. Write 3-5 paragraphs of professional proposal content.` },
+        ],
+      });
+      const content = response.choices?.[0]?.message?.content || "Unable to generate draft content.";
+      await updateProposalSection(input.sectionId, wsId, { content, isAiDraft: true, status: "needs_review" });
+      return { content };
     }),
 });

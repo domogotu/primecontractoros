@@ -38,7 +38,8 @@ import {
   complianceRouter, notesRouter, capabilityStatementsRouter, templatesRouter,
   closeoutRouter, lessonsRouter, lossReviewsRouter,
   followupsRouter, closeoutBlockersRouter, contractRequirementsRouter,
-  contactLinksRouter, financeNotesRouter, fileVersionsRouter
+  contactLinksRouter, financeNotesRouter, fileVersionsRouter,
+  proposalFrameworksRouter, proposalSectionsRouter
 } from "./entityRouters";
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
@@ -118,6 +119,8 @@ export const appRouter = router({
   followups: followupsRouter,
   closeoutBlockers: closeoutBlockersRouter,
   contractRequirements: contractRequirementsRouter,
+  proposalFrameworks: proposalFrameworksRouter,
+  proposalSections: proposalSectionsRouter,
   contactLinks: contactLinksRouter,
   financeNotes: financeNotesRouter,
   fileVersions: fileVersionsRouter,
@@ -333,8 +336,9 @@ export const appRouter = router({
               message: `Plan limit reached: you can have at most ${limitCheck.limit} proposals. Upgrade your plan to add more.`,
             });
           }
-          await createProposal({ ...input, workspaceId: wsId });
-          return { success: true };
+          const result = await createProposal({ ...input, workspaceId: wsId });
+          const insertId = (result as any)?.[0]?.insertId ?? (result as any)?.insertId;
+          return { success: true, id: insertId ? Number(insertId) : 0 };
         } catch (error) {
           console.error("Error creating proposal:", error);
           throw error;

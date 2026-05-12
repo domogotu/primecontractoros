@@ -620,3 +620,53 @@ export async function updateContractRequirement(id: number, workspaceId: number,
   const { contractRequirements } = await import("../drizzle/schema");
   await db.update(contractRequirements).set(data as any).where(and(eq(contractRequirements.id, id), eq(contractRequirements.workspaceId, workspaceId)));
 }
+
+// ==================== PROPOSAL FRAMEWORKS ====================
+export async function listProposalFrameworks() {
+  const db = await getDb();
+  if (!db) return [];
+  const { proposalFrameworks } = await import("../drizzle/schema");
+  return db.select().from(proposalFrameworks);
+}
+
+export async function getProposalFramework(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const { proposalFrameworks } = await import("../drizzle/schema");
+  const { eq } = await import("drizzle-orm");
+  const [row] = await db.select().from(proposalFrameworks).where(eq(proposalFrameworks.id, id)).limit(1);
+  return row || null;
+}
+
+// ==================== PROPOSAL SECTIONS ====================
+export async function listProposalSections(workspaceId: number, proposalId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { proposalSections } = await import("../drizzle/schema");
+  const { and, eq, asc } = await import("drizzle-orm");
+  return db.select().from(proposalSections).where(and(eq(proposalSections.workspaceId, workspaceId), eq(proposalSections.proposalId, proposalId))).orderBy(asc(proposalSections.sortOrder));
+}
+
+export async function createProposalSection(data: { proposalId: number; workspaceId: number; title: string; content?: string; sortOrder?: number; status?: string; isAiDraft?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { proposalSections } = await import("../drizzle/schema");
+  const [result] = await db.insert(proposalSections).values(data as any);
+  return result.insertId;
+}
+
+export async function updateProposalSection(id: number, workspaceId: number, data: Record<string, any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { proposalSections } = await import("../drizzle/schema");
+  const { and, eq } = await import("drizzle-orm");
+  await db.update(proposalSections).set(data as any).where(and(eq(proposalSections.id, id), eq(proposalSections.workspaceId, workspaceId)));
+}
+
+export async function deleteProposalSection(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { proposalSections } = await import("../drizzle/schema");
+  const { and, eq } = await import("drizzle-orm");
+  await db.delete(proposalSections).where(and(eq(proposalSections.id, id), eq(proposalSections.workspaceId, workspaceId)));
+}

@@ -218,7 +218,8 @@ describe("Proposals CRUD", () => {
     const result = await caller.proposals.create({
       title: "New Proposal",
     });
-    expect(result).toEqual({ success: true });
+    expect(result.success).toBe(true);
+    expect(result).toHaveProperty('id');
   });
 
   it("should update a proposal", async () => {

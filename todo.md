@@ -1145,10 +1145,10 @@
 - [x] Login Events, Overrides, Onboarding monitoring, User detail (all PlatformPages sections wired)
 
 ### 4A. Proposal Framework Selector
-- [ ] Framework options with preview and apply
+- [x] Framework options with preview and apply
 
 ### 4B. Proposal Workspace Full Wiring
-- [ ] Sections with completion, AI draft, readiness review
+- [x] Sections with completion, AI draft, readiness review
 
 ### 4C. Loss Review Full Wiring
 - [x] Debrief, AI analysis, lessons learned (LossReview page already wired to tRPC)
