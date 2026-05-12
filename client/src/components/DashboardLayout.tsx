@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain, CreditCard } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, FileText, DollarSign, MessageSquare, BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase, TrendingDown, Award, Brain, CreditCard, ShieldCheck } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -130,6 +130,7 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (isCollapsed) {
@@ -196,6 +197,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
+              {/* Regular nav items */}
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
@@ -215,48 +217,72 @@ function DashboardLayoutContent({
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Divider */}
+              <SidebarMenuItem>
+                <div className="h-px bg-sidebar-border mx-2 my-1" />
+              </SidebarMenuItem>
+
+              {/* Admin Panel — only visible to admin role */}
+              {isAdmin && (
+                <SidebarMenuItem key="/platform">
+                  <Link href="/platform" asChild>
+                    <SidebarMenuButton
+                      isActive={location.startsWith("/platform")}
+                      tooltip="Admin Panel"
+                      className="h-10 transition-all font-medium cursor-pointer text-purple-600 hover:text-purple-700 hover:bg-purple-50 data-[active=true]:bg-purple-100 data-[active=true]:text-purple-700"
+                    >
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      <span>Admin Panel</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              )}
+
+              {/* Sign Out — always visible, red */}
+              <SidebarMenuItem key="sign-out">
+                <SidebarMenuButton
+                  tooltip="Sign Out"
+                  onClick={logout}
+                  className="h-10 transition-all font-medium cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  <span>Sign Out</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
+
           <SidebarFooter className="p-0">
-            {/* Sign Out - pinned at bottom, always visible */}
-            <div className="px-3 pt-2 pb-1 border-t border-sidebar-border">
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 w-full rounded-md px-3 h-10 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:justify-center"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
-              </button>
-            </div>
-            <div className="px-3 pb-3 pt-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-gray-100/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate mt-1.5">
-                      {user?.email || "-"}
-                    </p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="px-3 pb-3 pt-2 border-t border-sidebar-border">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-gray-100/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Avatar className="h-9 w-9 border shrink-0">
+                      <AvatarFallback className="text-xs font-medium">
+                        {user?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                      <p className="text-sm font-medium truncate leading-none">
+                        {user?.name || "-"}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate mt-1.5">
+                        {user?.email || "-"}
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </SidebarFooter>
         </Sidebar>
@@ -275,12 +301,10 @@ function DashboardLayoutContent({
           <div className="flex border-b h-14 items-center justify-between bg-white/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-white" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-gray-900">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="tracking-tight text-gray-900">
+                  {activeMenuItem?.label ?? "Menu"}
+                </span>
               </div>
             </div>
           </div>

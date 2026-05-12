@@ -299,7 +299,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     response_format,
   } = params;
 
-  const useOpenAI = !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0);
+  const useOpenAI = !!(process.env.OPENAI_API_KEY) && (process.env.OPENAI_API_KEY.trim().length > 0);
 
   const payload: Record<string, unknown> = {
     model: resolveModel(),
