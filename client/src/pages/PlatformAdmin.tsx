@@ -26,7 +26,7 @@ export default function PlatformAdmin() {
 
   if (statsLoading || wsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-900" />
       </div>
     );
@@ -60,23 +60,23 @@ export default function PlatformAdmin() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-6">
+      <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-4 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-1">Platform Admin</h1>
-        <p className="text-gray-600 text-sm">Manage all customer workspaces, billing, and support</p>
+        <p className="text-slate-300 text-sm">Manage all customer workspaces, billing, and support</p>
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <Search className="w-4 h-4 text-gray-400 shrink-0" />
+          <Search className="w-4 h-4 text-slate-500 shrink-0" />
           <input
             type="text"
             placeholder="Search workspaces..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+            className="flex-1 min-w-0 px-3 py-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
           />
         </div>
         <Link href="/platform/workspaces">
@@ -87,20 +87,20 @@ export default function PlatformAdmin() {
       </div>
 
       {/* Workspace Table */}
-      <div className="bg-white m-4 sm:m-6 rounded-lg border border-gray-200 overflow-x-auto">
+      <div className="bg-slate-800 m-4 sm:m-6 rounded-lg border border-slate-700 overflow-x-auto">
         <table className="w-full min-w-[480px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-slate-900 border-b border-slate-700">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Workspace</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Onboarded</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900 uppercase">Created</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900 uppercase">View</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Workspace</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Onboarded</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-white uppercase">Created</th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-white uppercase">View</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-700">
             {allFilteredWorkspaces.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-400 text-sm">
                   No workspaces found
                 </td>
               </tr>
@@ -113,10 +113,10 @@ export default function PlatformAdmin() {
                 >
                   <td className="px-4 py-4">
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{ws.name}</p>
-                      <p className="text-xs text-gray-500">ID: {ws.id}</p>
+                      <p className="font-medium text-white text-sm">{ws.name}</p>
+                      <p className="text-xs text-slate-400">ID: {ws.id}</p>
                       {ws.companyName && (
-                        <p className="text-xs text-gray-500">{ws.companyName}</p>
+                        <p className="text-xs text-slate-400">{ws.companyName}</p>
                       )}
                     </div>
                   </td>
@@ -127,7 +127,7 @@ export default function PlatformAdmin() {
                       {ws.onboardingCompleted ? "Yes" : "Pending"}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-xs text-gray-600">
+                  <td className="px-4 py-4 text-xs text-slate-300">
                     {ws.createdAt ? new Date(ws.createdAt).toLocaleDateString() : "—"}
                   </td>
                   <td className="px-4 py-4 text-right">
@@ -140,23 +140,23 @@ export default function PlatformAdmin() {
         </table>
         {/* Pagination */}
         {totalWsPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700">
+            <p className="text-xs text-slate-400">
               Showing {(wsPage - 1) * WS_PAGE_SIZE + 1}–{Math.min(wsPage * WS_PAGE_SIZE, allFilteredWorkspaces.length)} of {allFilteredWorkspaces.length}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setWsPage(p => Math.max(1, p - 1))}
                 disabled={wsPage === 1}
-                className="px-3 py-1 text-xs border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                className="px-3 py-1 text-xs border border-slate-600 rounded-md disabled:opacity-40 hover:bg-slate-900"
               >
                 Previous
               </button>
-              <span className="px-3 py-1 text-xs text-gray-600">{wsPage} / {totalWsPages}</span>
+              <span className="px-3 py-1 text-xs text-slate-300">{wsPage} / {totalWsPages}</span>
               <button
                 onClick={() => setWsPage(p => Math.min(totalWsPages, p + 1))}
                 disabled={wsPage === totalWsPages}
-                className="px-3 py-1 text-xs border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                className="px-3 py-1 text-xs border border-slate-600 rounded-md disabled:opacity-40 hover:bg-slate-900"
               >
                 Next
               </button>
@@ -169,8 +169,8 @@ export default function PlatformAdmin() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 sm:px-6 pb-4">
         {statCards.map((card) => (
           <Link key={card.href} href={card.href}>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:border-blue-300 hover:shadow-sm active:bg-blue-50 transition-all cursor-pointer group">
-              <p className="text-xs text-gray-600 font-medium uppercase leading-tight">{card.label}</p>
+            <div className="bg-slate-800 rounded-lg border border-slate-700 p-4 hover:border-blue-300 hover:shadow-sm active:bg-blue-50 transition-all cursor-pointer group">
+              <p className="text-xs text-slate-300 font-medium uppercase leading-tight">{card.label}</p>
               <p className={`text-2xl sm:text-3xl font-bold mt-2 ${card.color}`}>{card.value}</p>
               <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-xs text-blue-600 font-medium">View</span>

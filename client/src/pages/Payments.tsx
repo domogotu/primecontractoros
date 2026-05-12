@@ -5,15 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, DollarSign, CheckCircle2, Clock, AlertTriangle, ArrowDownRight, ArrowUpRight } from "lucide-react";
-
-const mockPayments = [
-  { id: 1, type: "received", description: "Payment for Invoice #INV-2026-004", amount: 45000, date: "2026-05-08", contract: "IT Services", method: "EFT/ACH", status: "cleared", invoiceRef: "INV-2026-004" },
-  { id: 2, type: "received", description: "Payment for Invoice #INV-2026-003", amount: 32500, date: "2026-04-22", contract: "Engineering Support", method: "EFT/ACH", status: "cleared", invoiceRef: "INV-2026-003" },
-  { id: 3, type: "sent", description: "Subcontractor payment - ABC Corp", amount: 18000, date: "2026-05-05", contract: "IT Services", method: "Wire Transfer", status: "cleared", invoiceRef: "SUB-001" },
-  { id: 4, type: "received", description: "Payment for Invoice #INV-2026-005", amount: 67000, date: "2026-05-12", contract: "IT Services", method: "EFT/ACH", status: "pending", invoiceRef: "INV-2026-005" },
-  { id: 5, type: "sent", description: "Vendor payment - XYZ Supplies", amount: 5200, date: "2026-05-10", contract: "Engineering Support", method: "Check", status: "pending", invoiceRef: "VND-042" },
-];
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Search, DollarSign, ArrowDownRight, ArrowUpRight, Plus, Trash2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   cleared: "bg-green-100 text-green-700",
@@ -26,21 +22,91 @@ export default function Payments() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    amount: "",
+    method: "EFT/ACH",
+    reference: "",
+    notes: "",
+    paymentDate: "",
+    invoiceId: "",
+    contractId: "",
+  });
+
+  const { data: payments = [], isLoading, refetch } = trpc.payments.list.useQuery();
+  const { data: invoices = [] } = trpc.invoices.list.useQuery();
+  const { data: contracts = [] } = trpc.contracts.list.useQuery();
+
+  const createMutation = trpc.payments.create.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowForm(false);
+      setForm({ amount: "", method: "EFT/ACH", reference: "", notes: "", paymentDate: "", invoiceId: "", contractId: "" });
+      toast.success("Payment recorded");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.payments.delete.useMutation({
+    onSuccess: () => { refetch(); toast.success("Payment deleted"); },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const filtered = useMemo(() => {
-    return mockPayments.filter((p) => {
-      const matchesSearch = !search || p.description.toLowerCase().includes(search.toLowerCase());
-      const matchesType = typeFilter === "all" || p.type === typeFilter;
+    return (payments as any[]).filter((p) => {
+      const matchesSearch =
+        !search ||
+        (p.notes || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.reference || "").toLowerCase().includes(search.toLowerCase()) ||
+        (p.method || "").toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-  }, [search, typeFilter, statusFilter]);
+  }, [payments, search, statusFilter]);
 
   const stats = {
-    totalReceived: mockPayments.filter((p) => p.type === "received" && p.status === "cleared").reduce((s, p) => s + p.amount, 0),
-    totalSent: mockPayments.filter((p) => p.type === "sent" && p.status === "cleared").reduce((s, p) => s + p.amount, 0),
-    pending: mockPayments.filter((p) => p.status === "pending").length,
+    totalReceived: (payments as any[])
+      .filter((p) => p.status === "cleared" || p.status === "pending")
+      .reduce((s, p) => s + Number(p.amount || 0), 0),
+    pending: (payments as any[]).filter((p) => p.status === "pending").length,
+    total: (payments as any[]).length,
   };
+
+  const handleCreate = () => {
+    if (!form.amount) {
+      toast.error("Amount is required");
+      return;
+    }
+    createMutation.mutate({
+      amount: form.amount,
+      method: form.method || undefined,
+      reference: form.reference || undefined,
+      notes: form.notes || undefined,
+      paymentDate: form.paymentDate || undefined,
+      invoiceId: form.invoiceId ? parseInt(form.invoiceId) : undefined,
+      contractId: form.contractId ? parseInt(form.contractId) : undefined,
+    });
+  };
+
+  const getInvoiceLabel = (invoiceId: number) => {
+    const inv = (invoices as any[]).find((i) => i.id === invoiceId);
+    return inv ? `${inv.invoiceNumber || "INV-" + inv.id}` : "";
+  };
+
+  const getContractLabel = (contractId: number) => {
+    const c = (contracts as any[]).find((c) => c.id === contractId);
+    return c ? c.title || c.contractNumber || "" : "";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-slate-200 rounded w-48" />
+          <div className="h-32 bg-slate-200 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -66,35 +132,47 @@ export default function Payments() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Payments</h1>
-          <p className="text-sm text-slate-500 mt-1">Track incoming and outgoing payments</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {stats.total} total | ${stats.totalReceived.toLocaleString()} recorded
+          </p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          <DollarSign className="w-4 h-4 mr-2" />
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
+          <Plus className="w-4 h-4 mr-2" />
           Record Payment
         </Button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        <Card><CardContent className="p-4"><p className="text-xs text-green-600 uppercase">Received</p><p className="text-2xl font-bold text-green-700">${stats.totalReceived.toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-red-600 uppercase">Sent</p><p className="text-2xl font-bold text-red-700">${stats.totalSent.toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs text-amber-600 uppercase">Pending</p><p className="text-2xl font-bold text-amber-700">{stats.pending}</p></CardContent></Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-green-600 uppercase">Total Recorded</p>
+            <p className="text-2xl font-bold text-green-700">${stats.totalReceived.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-amber-600 uppercase">Pending</p>
+            <p className="text-2xl font-bold text-amber-700">{stats.pending}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-slate-600 uppercase">Total Payments</p>
+            <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input placeholder="Search payments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Type" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="received">Received</SelectItem>
-            <SelectItem value="sent">Sent</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="cleared">Cleared</SelectItem>
@@ -103,52 +181,190 @@ export default function Payments() {
         </Select>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payment</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Contract</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Amount</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filtered.map((payment) => (
-              <tr key={payment.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {payment.type === "received" ? (
-                      <ArrowDownRight className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    ) : (
-                      <ArrowUpRight className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    )}
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{payment.description}</p>
-                      <p className="text-xs text-slate-500">{payment.method} | Ref: {payment.invoiceRef}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <span className="text-sm text-slate-600">{payment.contract}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={"font-semibold text-sm " + (payment.type === "received" ? "text-green-700" : "text-red-700")}>
-                    {payment.type === "received" ? "+" : "-"}${payment.amount.toLocaleString()}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <Badge className={statusColors[payment.status]}>{payment.status}</Badge>
-                </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <span className="text-xs text-slate-600">{payment.date}</span>
-                </td>
+      {/* Payments Table */}
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <DollarSign className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500">
+              {(payments as any[]).length === 0
+                ? "No payments recorded yet. Record your first payment."
+                : "No payments match your filters."}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payment</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Invoice / Contract</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Amount</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
+                <th className="px-4 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map((payment: any) => (
+                <tr key={payment.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <ArrowDownRight className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-slate-900 text-sm">
+                          {payment.notes || payment.reference || `Payment #${payment.id}`}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {payment.method || "—"} {payment.reference ? `| Ref: ${payment.reference}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <span className="text-sm text-slate-600">
+                      {payment.invoiceId ? getInvoiceLabel(payment.invoiceId) : ""}
+                      {payment.contractId ? ` / ${getContractLabel(payment.contractId)}` : ""}
+                      {!payment.invoiceId && !payment.contractId ? "—" : ""}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="font-semibold text-sm text-green-700">
+                      ${Number(payment.amount || 0).toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge className={statusColors[payment.status] || statusColors.pending}>
+                      {payment.status || "pending"}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <span className="text-xs text-slate-600">
+                      {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : "—"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate({ id: payment.id })}>
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Record Payment Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Amount *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                placeholder="e.g., 45000"
+              />
+            </div>
+            <div>
+              <Label>Payment Date</Label>
+              <Input
+                type="date"
+                value={form.paymentDate}
+                onChange={(e) => setForm({ ...form, paymentDate: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Method</Label>
+              <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EFT/ACH">EFT/ACH</SelectItem>
+                  <SelectItem value="Wire Transfer">Wire Transfer</SelectItem>
+                  <SelectItem value="Check">Check</SelectItem>
+                  <SelectItem value="Credit Card">Credit Card</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Reference / Check #</Label>
+              <Input
+                value={form.reference}
+                onChange={(e) => setForm({ ...form, reference: e.target.value })}
+                placeholder="e.g., CHK-1234"
+              />
+            </div>
+            <div>
+              <Label>Link to Invoice</Label>
+              <Select
+                value={form.invoiceId || "none"}
+                onValueChange={(v) => setForm({ ...form, invoiceId: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select invoice" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Invoice</SelectItem>
+                  {(invoices as any[]).map((inv) => (
+                    <SelectItem key={inv.id} value={String(inv.id)}>
+                      {inv.invoiceNumber || `INV-${inv.id}`} - ${Number(inv.amount || 0).toLocaleString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Link to Contract</Label>
+              <Select
+                value={form.contractId || "none"}
+                onValueChange={(v) => setForm({ ...form, contractId: v === "none" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select contract" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Contract</SelectItem>
+                  {(contracts as any[]).map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.title || c.contractNumber || `Contract #${c.id}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Input
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Optional notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForm(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={createMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {createMutation.isPending ? "Recording..." : "Record Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

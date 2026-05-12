@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 
 export default function PlatformCompliance() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-900 flex flex-col">
       <div className="bg-blue-900 text-white px-8 py-12">
         <div className="max-w-4xl mx-auto">
           <nav className="mb-8">
@@ -19,19 +19,19 @@ export default function PlatformCompliance() {
 
       <div className="flex-1 px-8 py-12">
         <div className="max-w-4xl mx-auto space-y-8">
-          <div className="bg-white border border-gray-200 rounded-lg p-8 space-y-8">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 space-y-8">
             <section>
               <div className="flex items-center gap-3 mb-4">
                 <Shield className="w-6 h-6 text-blue-600" />
-                <h2 className="text-xl font-bold text-gray-900">Compliance Framework</h2>
+                <h2 className="text-xl font-bold text-white">Compliance Framework</h2>
               </div>
-              <p className="text-gray-700 leading-relaxed">
+              <p className="text-slate-200 leading-relaxed">
                 PrimeContractorOS is designed to support contractors in meeting their compliance obligations under the Federal Acquisition Regulation (FAR) and Defense Federal Acquisition Regulation Supplement (DFARS). While the platform provides tools and guidance, ultimate compliance responsibility rests with the contractor.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">What We Help You Track</h2>
+              <h2 className="text-xl font-bold text-white mb-4">What We Help You Track</h2>
               <div className="space-y-3">
                 {[
                   "FAR Part 4 — Administrative matters, record retention, SAM registration",
@@ -45,38 +45,38 @@ export default function PlatformCompliance() {
                 ].map((item) => (
                   <div key={item} className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-700 text-sm">{item}</p>
+                    <p className="text-slate-200 text-sm">{item}</p>
                   </div>
                 ))}
               </div>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Platform Compliance Features</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Platform Compliance Features</h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Compliance Tracking</h3>
-                  <p className="text-sm text-gray-600">Track compliance items per contract with status, due dates, and responsible parties.</p>
+                <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Compliance Tracking</h3>
+                  <p className="text-sm text-slate-300">Track compliance items per contract with status, due dates, and responsible parties.</p>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Deadline Alerts</h3>
-                  <p className="text-sm text-gray-600">Automated alerts for upcoming compliance deadlines and reporting requirements.</p>
+                <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Deadline Alerts</h3>
+                  <p className="text-sm text-slate-300">Automated alerts for upcoming compliance deadlines and reporting requirements.</p>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Document Management</h3>
-                  <p className="text-sm text-gray-600">Organize compliance-related documents linked to specific contracts and requirements.</p>
+                <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Document Management</h3>
+                  <p className="text-sm text-slate-300">Organize compliance-related documents linked to specific contracts and requirements.</p>
                 </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">Closeout Workflow</h3>
-                  <p className="text-sm text-gray-600">Guided closeout process following FAR 4.804 requirements with checklist tracking.</p>
+                <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                  <h3 className="font-semibold text-white mb-2">Closeout Workflow</h3>
+                  <p className="text-sm text-slate-300">Guided closeout process following FAR 4.804 requirements with checklist tracking.</p>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Important Disclaimer</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Important Disclaimer</h2>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <p className="text-slate-200 text-sm leading-relaxed">
                   PrimeContractorOS provides compliance tracking tools and guidance references. It is not a substitute for legal counsel or compliance expertise. Contractors are responsible for ensuring their own compliance with all applicable regulations. Consult with qualified legal and compliance professionals for specific regulatory questions.
                 </p>
               </div>

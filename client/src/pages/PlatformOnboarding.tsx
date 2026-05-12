@@ -64,24 +64,24 @@ export default function PlatformOnboardingPage() {
     completed: "bg-green-100 text-green-700",
     in_progress: "bg-blue-100 text-blue-700",
     stuck: "bg-red-100 text-red-700",
-    not_started: "bg-gray-100 text-gray-600",
+    not_started: "bg-slate-700 text-slate-300",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-6">
+    <div className="min-h-screen bg-slate-900">
+      <div className="bg-slate-800 border-b border-slate-700 px-4 sm:px-8 py-4 sm:py-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">Onboarding Management</h1>
-        <p className="text-gray-600">Send onboarding links and monitor user progress</p>
+        <p className="text-slate-300">Send onboarding links and monitor user progress</p>
       </div>
 
       <div className="p-4 sm:p-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-gray-500">Total Invited</p></CardContent></Card>
-          <Card className="border-l-4 border-l-green-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{stats.completed}</p><p className="text-xs text-gray-500">Completed</p></CardContent></Card>
-          <Card className="border-l-4 border-l-blue-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p><p className="text-xs text-gray-500">In Progress</p></CardContent></Card>
-          <Card className="border-l-4 border-l-red-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{stats.stuck}</p><p className="text-xs text-gray-500">Stuck</p></CardContent></Card>
-          <Card className="border-l-4 border-l-gray-400"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-gray-600">{stats.notStarted}</p><p className="text-xs text-gray-500">Not Started</p></CardContent></Card>
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{stats.total}</p><p className="text-xs text-slate-400">Total Invited</p></CardContent></Card>
+          <Card className="border-l-4 border-l-green-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{stats.completed}</p><p className="text-xs text-slate-400">Completed</p></CardContent></Card>
+          <Card className="border-l-4 border-l-blue-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p><p className="text-xs text-slate-400">In Progress</p></CardContent></Card>
+          <Card className="border-l-4 border-l-red-500"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{stats.stuck}</p><p className="text-xs text-slate-400">Stuck</p></CardContent></Card>
+          <Card className="border-l-4 border-l-gray-400"><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-slate-300">{stats.notStarted}</p><p className="text-xs text-slate-400">Not Started</p></CardContent></Card>
         </div>
 
         {/* Tabs */}
@@ -126,14 +126,14 @@ export default function PlatformOnboardingPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="bg-slate-800 border border-slate-700 rounded-lg p-6 space-y-5">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Recipient Name <span className="text-gray-400 font-normal">(optional)</span></label>
-                <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Jane Smith" className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <label htmlFor="name" className="block text-sm font-medium text-slate-200 mb-1">Recipient Name <span className="text-slate-500 font-normal">(optional)</span></label>
+                <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Jane Smith" className="w-full px-3 py-2 border border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Recipient Email <span className="text-red-500">*</span></label>
-                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="employee@example.com" required className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <label htmlFor="email" className="block text-sm font-medium text-slate-200 mb-1">Recipient Email <span className="text-red-500">*</span></label>
+                <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="employee@example.com" required className="w-full px-3 py-2 border border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
               </div>
               <Button type="submit" disabled={sendLink.isPending || !email.trim()} className="w-full bg-blue-900 hover:bg-blue-800">
                 {sendLink.isPending ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> Sending...</> : <><Send className="w-4 h-4 mr-2" /> Send Onboarding Email</>}
@@ -141,10 +141,10 @@ export default function PlatformOnboardingPage() {
             </form>
 
             <div className="mt-8">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">What the email includes</h2>
+              <h2 className="text-sm font-semibold text-slate-200 mb-3">What the email includes</h2>
               <ul className="space-y-2">
                 {["Welcome message addressed to the recipient by name", "Button linking to the onboarding guide (reedssolutionsllc.org/onboarding)", "Button linking to the PrimeContractorOS login page", "Support contact information", "Reed's Solutions LLC branding and footer"].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600"><Mail className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />{item}</li>
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-300"><Mail className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />{item}</li>
                 ))}
               </ul>
             </div>
@@ -155,10 +155,10 @@ export default function PlatformOnboardingPage() {
           <>
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or email..." className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or email..." className="w-full pl-10 pr-3 py-2 border border-slate-700 rounded-lg text-sm" />
               </div>
-              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+              <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-2 border border-slate-700 rounded-lg text-sm">
                 <option value="all">All Statuses</option>
                 <option value="completed">Completed</option>
                 <option value="in_progress">In Progress</option>
@@ -167,31 +167,31 @@ export default function PlatformOnboardingPage() {
               </select>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+            <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-slate-900 border-b border-slate-700">
                   <tr>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Invited</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Progress</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Last Activity</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">User</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Invited</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Progress</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Status</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Last Activity</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3"><p className="font-medium text-gray-900 text-sm">{user.name}</p><p className="text-xs text-gray-500">{user.email}</p></td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{user.invitedAt}</td>
+                    <tr key={user.id} className="border-b border-slate-700 hover:bg-slate-900">
+                      <td className="px-4 py-3"><p className="font-medium text-white text-sm">{user.name}</p><p className="text-xs text-slate-400">{user.email}</p></td>
+                      <td className="px-4 py-3 text-sm text-slate-300">{user.invitedAt}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-24 bg-gray-200 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: `${(user.stepsCompleted / user.totalSteps) * 100}%` }} /></div>
-                          <span className="text-xs text-gray-500">{user.stepsCompleted}/{user.totalSteps}</span>
+                          <span className="text-xs text-slate-400">{user.stepsCompleted}/{user.totalSteps}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3"><Badge className={statusColors[user.status]}>{user.status.replace(/_/g, " ")}</Badge></td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{user.lastActivity}</td>
+                      <td className="px-4 py-3 text-sm text-slate-300">{user.lastActivity}</td>
                       <td className="px-4 py-3">
                         {user.status === "stuck" && <Button size="sm" variant="outline" onClick={() => toast.info("Reminder sent to " + user.email)} className="text-xs"><Mail className="w-3 h-3 mr-1" /> Nudge</Button>}
                         {user.status === "not_started" && <Button size="sm" variant="outline" onClick={() => toast.info("Resent invite to " + user.email)} className="text-xs"><Send className="w-3 h-3 mr-1" /> Resend</Button>}
@@ -200,7 +200,7 @@ export default function PlatformOnboardingPage() {
                   ))}
                 </tbody>
               </table>
-              {filteredUsers.length === 0 && <div className="p-8 text-center text-gray-500">No users match the current filters.</div>}
+              {filteredUsers.length === 0 && <div className="p-8 text-center text-slate-400">No users match the current filters.</div>}
             </div>
           </>
         )}

@@ -1032,3 +1032,29 @@
 - [x] Frontend: Workspace Export page (/app/export)
 - [x] Add "Backups & Export" to Platform Admin sidebar
 - [x] Add "Export My Data" section to workspace Settings
+
+## Phase 29: Technical Wiring & Polish
+
+### 1. Wire Deadlines page to real database data
+- [x] Replace mock data in Deadlines page with tRPC query to deadlines table
+- [x] Ensure deadlines CRUD operations persist to database
+
+### 2. Fix AI contract scan workspace ID
+- [x] AIContractReview page passes actual user workspace ID instead of 0
+
+### 3. Fix Platform Admin dark mode styling
+- [x] Replace hardcoded light colors (bg-white, text-gray-900) with dark navy theme
+- [x] Make Platform Admin detail pages consistent with customer app dark theme
+
+### 4. Audit and wire major page actions to real DB operations
+- [x] Opportunity → Proposal conversion creates real proposal record (already wired)
+- [x] Proposal → Contract conversion creates real contract record (already wired)
+- [x] Contract Hub actions (add requirement, deliverable, deadline, compliance item) (already wired via ContractDetail)
+- [x] Invoice creation and payment matching (Payments page rewritten with real tRPC data)
+- [x] Task creation and completion (added inline toggle complete)
+- [x] Alert dismissal and conversion to task (added convertToTask button)
+
+### 5. Email notification framework via Resend
+- [x] Create notification service module using Resend API
+- [x] Send notifications for: critical errors, overdue invoices, task assignments, workspace invites
+- [x] Use RESEND_API_KEY environment variable (already wired via ENV.resendApiKey)

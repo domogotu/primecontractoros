@@ -44,8 +44,8 @@ export default function PlatformLoginEventsPage() {
     <div className="p-6 max-w-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Login Events</h1>
-          <p className="text-gray-500 text-sm mt-1">Security review of login attempts</p>
+          <h1 className="text-2xl font-bold text-white">Login Events</h1>
+          <p className="text-slate-400 text-sm mt-1">Security review of login attempts</p>
         </div>
         <div className="flex gap-2">
           <Badge variant="secondary" className="bg-green-100 text-green-800">
@@ -60,7 +60,7 @@ export default function PlatformLoginEventsPage() {
       {/* Filters */}
       <div className="flex gap-3 mb-4 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <Input
             placeholder="Search by email, name, IP..."
             value={search}
@@ -83,32 +83,32 @@ export default function PlatformLoginEventsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900" />
         </div>
       ) : filteredEvents.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-slate-400">
           <Shield className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p>No login events found</p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <div className="overflow-x-auto border border-slate-700 rounded-lg">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-900 border-b border-slate-700">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">User</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Email</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Workspace</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Result</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Timestamp</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">IP Address</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Device</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Failed Count</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Flags</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">User</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Email</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Workspace</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Result</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Timestamp</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">IP Address</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Device</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Failed Count</th>
+                <th className="text-left px-4 py-3 font-medium text-slate-200">Flags</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-700">
               {filteredEvents.map((evt: any) => (
-                <tr key={evt.id} className={`hover:bg-gray-50 ${!evt.success ? "bg-red-50" : ""} ${evt.suspiciousFlag ? "bg-yellow-50" : ""}`}>
-                  <td className="px-4 py-3 font-medium text-gray-900">{evt.userName || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{evt.email || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600">{evt.workspaceName || "—"}</td>
+                <tr key={evt.id} className={`hover:bg-slate-900 ${!evt.success ? "bg-red-50" : ""} ${evt.suspiciousFlag ? "bg-yellow-50" : ""}`}>
+                  <td className="px-4 py-3 font-medium text-white">{evt.userName || "—"}</td>
+                  <td className="px-4 py-3 text-slate-300">{evt.email || "—"}</td>
+                  <td className="px-4 py-3 text-slate-300">{evt.workspaceName || "—"}</td>
                   <td className="px-4 py-3">
                     {evt.success ? (
                       <span className="flex items-center gap-1 text-green-700">
@@ -120,16 +120,16 @@ export default function PlatformLoginEventsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDateTime(evt.createdAt)}</td>
-                  <td className="px-4 py-3 text-gray-600 font-mono text-xs">{evt.ipAddress || "—"}</td>
-                  <td className="px-4 py-3 text-gray-600 text-xs max-w-[150px] truncate">{evt.deviceInfo || "—"}</td>
+                  <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{formatDateTime(evt.createdAt)}</td>
+                  <td className="px-4 py-3 text-slate-300 font-mono text-xs">{evt.ipAddress || "—"}</td>
+                  <td className="px-4 py-3 text-slate-300 text-xs max-w-[150px] truncate">{evt.deviceInfo || "—"}</td>
                   <td className="px-4 py-3">
                     {evt.email && failedCountByEmail[evt.email] ? (
-                      <Badge className={failedCountByEmail[evt.email] >= 3 ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}>
+                      <Badge className={failedCountByEmail[evt.email] >= 3 ? "bg-red-100 text-red-800" : "bg-slate-700 text-slate-100"}>
                         {failedCountByEmail[evt.email]}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400">0</span>
+                      <span className="text-slate-500">0</span>
                     )}
                   </td>
                   <td className="px-4 py-3">

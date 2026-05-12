@@ -32,10 +32,10 @@ export default function PlatformRouter() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mx-auto" />
-          <p className="text-gray-600 mt-4">Loading...</p>
+          <p className="text-slate-300 mt-4">Loading...</p>
         </div>
       </div>
     );
@@ -48,10 +48,10 @@ export default function PlatformRouter() {
 
   if (user?.role !== "admin") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">You don't have admin permissions to access the platform management area.</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-slate-300 mb-6">You don't have admin permissions to access the platform management area.</p>
           <button onClick={() => navigate("/app/dashboard")} className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800">
             Go to Dashboard
           </button>
@@ -104,20 +104,20 @@ export default function PlatformRouter() {
   })();
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-900 overflow-hidden">
       <PlatformSidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 h-14 border-b bg-white shrink-0">
+        <div className="md:hidden flex items-center gap-3 px-4 h-14 border-b border-slate-700 bg-slate-800 shrink-0">
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-700 transition-colors"
             aria-label="Open admin menu"
           >
-            <Menu className="w-5 h-5 text-gray-600" />
+            <Menu className="w-5 h-5 text-slate-300" />
           </button>
-          <span className="font-semibold text-blue-900 text-sm">{currentPageLabel}</span>
+          <span className="font-semibold text-white text-sm">{currentPageLabel}</span>
         </div>
 
         {/* Page content */}

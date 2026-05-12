@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ interface Finding {
 }
 
 export default function AIContractReview() {
+  const { workspaceId } = useWorkspace();
   const [reviewState, setReviewState] = useState<ReviewState>("idle");
   const [contractText, setContractText] = useState("");
   const [reviewType, setReviewType] = useState("full_review");
@@ -52,7 +54,7 @@ export default function AIContractReview() {
   const handleStartReview = () => {
     if (!contractText.trim()) return;
     setReviewState("reviewing");
-    aiMutation.mutate({ workspaceId: 0, contractId: 0, documentContent: contractText, contractTitle: reviewType + " review" });
+    aiMutation.mutate({ workspaceId, contractId: 0, documentContent: contractText, contractTitle: reviewType + " review" });
   };
 
   const updateFindingStatus = (id: string, status: FindingStatus) => {

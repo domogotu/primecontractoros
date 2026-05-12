@@ -86,7 +86,7 @@ export default function PlatformWorkspaceDetailPage() {
         <Button variant="ghost" onClick={() => navigate("/platform/workspaces")}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Workspaces
         </Button>
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-slate-400">
           <p>Workspace not found</p>
         </div>
       </div>
@@ -101,10 +101,10 @@ export default function PlatformWorkspaceDetailPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">
+          <h1 className="text-xl md:text-2xl font-bold text-white truncate">
             {workspace.companyName || workspace.name}
           </h1>
-          <p className="text-gray-500 text-sm">Workspace ID: {workspace.id}</p>
+          <p className="text-slate-400 text-sm">Workspace ID: {workspace.id}</p>
         </div>
         <Badge
           className={
@@ -112,7 +112,7 @@ export default function PlatformWorkspaceDetailPage() {
               ? "bg-green-100 text-green-800"
               : workspace.status === "suspended"
                 ? "bg-red-100 text-red-800"
-                : "bg-gray-100 text-gray-800"
+                : "bg-slate-700 text-slate-100"
           }
         >
           {workspace.status}
@@ -150,25 +150,25 @@ export default function PlatformWorkspaceDetailPage() {
 
       {/* Overview Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">Owner / Admin</p>
-          <p className="font-medium text-gray-900">{workspace.owner?.name || "—"}</p>
-          <p className="text-sm text-gray-500 truncate">{workspace.owner?.email || "—"}</p>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <p className="text-xs text-slate-400 uppercase mb-1">Owner / Admin</p>
+          <p className="font-medium text-white">{workspace.owner?.name || "—"}</p>
+          <p className="text-sm text-slate-400 truncate">{workspace.owner?.email || "—"}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">Plan & Billing</p>
-          <p className="font-medium text-gray-900">{workspace.plan?.name || "No Plan"}</p>
-          <p className="text-sm text-gray-500">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <p className="text-xs text-slate-400 uppercase mb-1">Plan & Billing</p>
+          <p className="font-medium text-white">{workspace.plan?.name || "No Plan"}</p>
+          <p className="text-sm text-slate-400">
             {workspace.billingHistory?.[0]?.status || "No billing"}
           </p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">Created</p>
-          <p className="font-medium text-gray-900">{formatDate(workspace.createdAt)}</p>
-          <p className="text-sm text-gray-500">Last login: {formatDateTime(workspace.lastLogin?.createdAt)}</p>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <p className="text-xs text-slate-400 uppercase mb-1">Created</p>
+          <p className="font-medium text-white">{formatDate(workspace.createdAt)}</p>
+          <p className="text-sm text-slate-400">Last login: {formatDateTime(workspace.lastLogin?.createdAt)}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <p className="text-xs text-gray-500 uppercase mb-1">Status</p>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+          <p className="text-xs text-slate-400 uppercase mb-1">Status</p>
           <div className="space-y-1">
             <p className="text-sm flex items-center gap-1">
               Onboarding:
@@ -187,34 +187,34 @@ export default function PlatformWorkspaceDetailPage() {
 
       {/* Users in Workspace */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <Users className="w-5 h-5" /> Users ({workspace.members?.length || 1})
         </h2>
-        <div className="border border-gray-200 rounded-lg overflow-x-auto">
+        <div className="border border-slate-700 rounded-lg overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-900 border-b border-slate-700">
               <tr>
-                <th className="text-left px-4 py-2 font-medium text-gray-700">Name</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Email</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-700">Role</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Joined</th>
+                <th className="text-left px-4 py-2 font-medium text-slate-200">Name</th>
+                <th className="text-left px-4 py-2 font-medium text-slate-200 hidden sm:table-cell">Email</th>
+                <th className="text-left px-4 py-2 font-medium text-slate-200">Role</th>
+                <th className="text-left px-4 py-2 font-medium text-slate-200 hidden md:table-cell">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-700">
               {workspace.owner && (
-                <tr className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium text-gray-900">{workspace.owner.name || "—"}</td>
-                  <td className="px-4 py-2 text-gray-600 hidden sm:table-cell truncate max-w-[180px]">{workspace.owner.email || "—"}</td>
+                <tr className="hover:bg-slate-900">
+                  <td className="px-4 py-2 font-medium text-white">{workspace.owner.name || "—"}</td>
+                  <td className="px-4 py-2 text-slate-300 hidden sm:table-cell truncate max-w-[180px]">{workspace.owner.email || "—"}</td>
                   <td className="px-4 py-2"><Badge>Owner</Badge></td>
-                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(workspace.owner.createdAt)}</td>
+                  <td className="px-4 py-2 text-slate-300 hidden md:table-cell">{formatDate(workspace.owner.createdAt)}</td>
                 </tr>
               )}
               {workspace.members?.map((m: any) => (
-                <tr key={m.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 font-medium text-gray-900">{m.user?.name || "—"}</td>
-                  <td className="px-4 py-2 text-gray-600 hidden sm:table-cell truncate max-w-[180px]">{m.user?.email || "—"}</td>
+                <tr key={m.id} className="hover:bg-slate-900">
+                  <td className="px-4 py-2 font-medium text-white">{m.user?.name || "—"}</td>
+                  <td className="px-4 py-2 text-slate-300 hidden sm:table-cell truncate max-w-[180px]">{m.user?.email || "—"}</td>
                   <td className="px-4 py-2"><Badge variant="secondary">{m.role}</Badge></td>
-                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(m.joinedAt)}</td>
+                  <td className="px-4 py-2 text-slate-300 hidden md:table-cell">{formatDate(m.joinedAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -224,114 +224,114 @@ export default function PlatformWorkspaceDetailPage() {
 
       {/* Billing History */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <CreditCard className="w-5 h-5" /> Billing History
         </h2>
         {workspace.billingHistory?.length > 0 ? (
-          <div className="border border-gray-200 rounded-lg overflow-x-auto">
+          <div className="border border-slate-700 rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-900 border-b border-slate-700">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Cycle</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Period Start</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Period End</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Created</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200">Status</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200 hidden sm:table-cell">Cycle</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200 hidden md:table-cell">Period Start</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200 hidden md:table-cell">Period End</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-700">
                 {workspace.billingHistory.map((b: any) => (
-                  <tr key={b.id} className="hover:bg-gray-50">
+                  <tr key={b.id} className="hover:bg-slate-900">
                     <td className="px-4 py-2">
                       <Badge className={
                         b.status === "active" ? "bg-green-100 text-green-800" :
                         b.status === "trial" ? "bg-blue-100 text-blue-800" :
                         b.status === "past_due" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-gray-100 text-gray-800"
+                        "bg-slate-700 text-slate-100"
                       }>{b.status}</Badge>
                     </td>
-                    <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">{b.billingCycle || "—"}</td>
-                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(b.currentPeriodStart)}</td>
-                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(b.currentPeriodEnd)}</td>
-                    <td className="px-4 py-2 text-gray-600">{formatDate(b.createdAt)}</td>
+                    <td className="px-4 py-2 text-slate-300 hidden sm:table-cell">{b.billingCycle || "—"}</td>
+                    <td className="px-4 py-2 text-slate-300 hidden md:table-cell">{formatDate(b.currentPeriodStart)}</td>
+                    <td className="px-4 py-2 text-slate-300 hidden md:table-cell">{formatDate(b.currentPeriodEnd)}</td>
+                    <td className="px-4 py-2 text-slate-300">{formatDate(b.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No billing records</p>
+          <p className="text-slate-400 text-sm">No billing records</p>
         )}
       </section>
 
       {/* Support Tickets */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <FileText className="w-5 h-5" /> Support Tickets ({workspace.supportTickets?.length || 0})
         </h2>
         {workspace.supportTickets?.length > 0 ? (
-          <div className="border border-gray-200 rounded-lg overflow-x-auto">
+          <div className="border border-slate-700 rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-slate-900 border-b border-slate-700">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Subject</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Priority</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Created</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200">Subject</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200">Status</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200 hidden sm:table-cell">Priority</th>
+                  <th className="text-left px-4 py-2 font-medium text-slate-200 hidden md:table-cell">Created</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-700">
                 {workspace.supportTickets.map((t: any) => (
-                  <tr key={t.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 text-gray-900">{t.subject}</td>
+                  <tr key={t.id} className="hover:bg-slate-900">
+                    <td className="px-4 py-2 text-white">{t.subject}</td>
                     <td className="px-4 py-2"><Badge variant="secondary">{t.status}</Badge></td>
-                    <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">{t.priority || "—"}</td>
-                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(t.createdAt)}</td>
+                    <td className="px-4 py-2 text-slate-300 hidden sm:table-cell">{t.priority || "—"}</td>
+                    <td className="px-4 py-2 text-slate-300 hidden md:table-cell">{formatDate(t.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No support tickets</p>
+          <p className="text-slate-400 text-sm">No support tickets</p>
         )}
       </section>
 
       {/* Platform Notes */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <FileText className="w-5 h-5" /> Platform Notes
         </h2>
         {workspace.platformNotes?.length > 0 ? (
           <div className="space-y-3">
             {workspace.platformNotes.map((n: any) => (
               <div key={n.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-gray-900">{n.note}</p>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-white">{n.note}</p>
+                <p className="text-xs text-slate-400 mt-2">
                   Added by admin #{n.createdBy} on {formatDateTime(n.createdAt)}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No platform notes</p>
+          <p className="text-slate-400 text-sm">No platform notes</p>
         )}
       </section>
 
       {/* Audit Log Timeline */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <Shield className="w-5 h-5" /> Audit Log
         </h2>
         {workspace.auditLog?.length > 0 ? (
           <div className="space-y-2">
             {workspace.auditLog.map((entry: any) => (
-              <div key={entry.id} className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                <Clock className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              <div key={entry.id} className="flex items-start gap-3 p-3 bg-slate-900 border border-slate-700 rounded-lg">
+                <Clock className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{entry.action}</p>
-                  {entry.reason && <p className="text-sm text-gray-600">{entry.reason}</p>}
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-sm font-medium text-white">{entry.action}</p>
+                  {entry.reason && <p className="text-sm text-slate-300">{entry.reason}</p>}
+                  <p className="text-xs text-slate-500 mt-1">
                     By admin #{entry.performedBy} at {formatDateTime(entry.createdAt)}
                   </p>
                 </div>
@@ -339,7 +339,7 @@ export default function PlatformWorkspaceDetailPage() {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No audit entries</p>
+          <p className="text-slate-400 text-sm">No audit entries</p>
         )}
       </section>
 
@@ -352,7 +352,7 @@ export default function PlatformWorkspaceDetailPage() {
           <DialogBody>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                <label className="block text-sm font-medium text-slate-200 mb-1">Company Name</label>
                 <Input
                   value={editCompanyName}
                   onChange={(e) => setEditCompanyName(e.target.value)}
@@ -360,11 +360,11 @@ export default function PlatformWorkspaceDetailPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contracting Model</label>
+                <label className="block text-sm font-medium text-slate-200 mb-1">Contracting Model</label>
                 <select
                   value={editContractingModel}
                   onChange={(e) => setEditContractingModel(e.target.value as any)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">— Select —</option>
                   <option value="prime">Prime Contractor</option>
@@ -373,7 +373,7 @@ export default function PlatformWorkspaceDetailPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Onboarding Status</label>
+                <label className="block text-sm font-medium text-slate-200 mb-2">Onboarding Status</label>
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -381,7 +381,7 @@ export default function PlatformWorkspaceDetailPage() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors ${
                       editOnboarding === true
                         ? "bg-green-100 border-green-400 text-green-800"
-                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                        : "border-slate-600 text-slate-300 hover:bg-slate-900"
                     }`}
                   >
                     <CheckCircle2 className="w-4 h-4" /> Complete
@@ -392,7 +392,7 @@ export default function PlatformWorkspaceDetailPage() {
                     className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors ${
                       editOnboarding === false
                         ? "bg-yellow-100 border-yellow-400 text-yellow-800"
-                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                        : "border-slate-600 text-slate-300 hover:bg-slate-900"
                     }`}
                   >
                     Incomplete
@@ -420,10 +420,10 @@ export default function PlatformWorkspaceDetailPage() {
             <DialogTitle>Suspend Workspace</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <p className="text-gray-600 mb-4">
+            <p className="text-slate-300 mb-4">
               Suspending <strong>{workspace.companyName || workspace.name}</strong> will prevent all users from accessing it.
             </p>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason (required for audit log)</label>
+            <label className="block text-sm font-medium text-slate-200 mb-1">Reason (required for audit log)</label>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -451,10 +451,10 @@ export default function PlatformWorkspaceDetailPage() {
             <DialogTitle>Reactivate Workspace</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <p className="text-gray-600 mb-4">
+            <p className="text-slate-300 mb-4">
               Reactivate <strong>{workspace.companyName || workspace.name}</strong>? Users will regain access.
             </p>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason (required for audit log)</label>
+            <label className="block text-sm font-medium text-slate-200 mb-1">Reason (required for audit log)</label>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -481,7 +481,7 @@ export default function PlatformWorkspaceDetailPage() {
             <DialogTitle>Add Platform Note</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+            <label className="block text-sm font-medium text-slate-200 mb-1">Note</label>
             <Textarea
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}

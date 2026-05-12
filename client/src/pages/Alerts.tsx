@@ -1,7 +1,8 @@
 import PageGuide from "@/components/PageGuide";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Trash2, AlertCircle, Bell } from "lucide-react";
+import { Plus, Search, Trash2, AlertCircle, Bell, ListTodo } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
@@ -15,6 +16,23 @@ export default function Alerts() {
   const { data: alerts = [], isLoading, refetch } = trpc.alerts.list.useQuery();
   const createMutation = trpc.alerts.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); setForm({ title: "", message: "", type: "info", linkedRecordId: "" }); } });
   const dismissMutation = trpc.alerts.dismiss.useMutation({ onSuccess: () => refetch() });
+  const createTaskMutation = trpc.tasks.create.useMutation({
+    onSuccess: () => {
+      toast.success("Task created from alert");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const convertToTask = (alert: any) => {
+    createTaskMutation.mutate({
+      title: alert.title,
+      description: alert.message || "Created from alert",
+      priority: alert.type === "critical" ? "high" : alert.type === "warning" ? "medium" : "low",
+      linkedRecordType: alert.linkedRecordType || undefined,
+      linkedRecordId: alert.linkedRecordId || undefined,
+    });
+    dismissMutation.mutate({ id: alert.id });
+  };
 
   const filtered = (alerts as any[]).filter((a) =>
     a.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,9 +129,14 @@ export default function Alerts() {
                   {alert.message && <p className="text-sm mt-1">{alert.message}</p>}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => dismissMutation.mutate({ id: alert.id })}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-1 flex-shrink-0">
+                <Button variant="ghost" size="sm" onClick={() => convertToTask(alert)} title="Convert to Task">
+                  <ListTodo className="h-4 w-4 text-blue-600" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => dismissMutation.mutate({ id: alert.id })} title="Dismiss">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
