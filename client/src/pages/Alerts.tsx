@@ -1,3 +1,4 @@
+import PageGuide from "@/components/PageGuide";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, AlertCircle, Bell } from "lucide-react";

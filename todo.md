@@ -928,17 +928,17 @@
 ## Phase 26: Comprehensive Audit & Build-Out
 
 ### Sidebar Restructure (Full Gov Contracting Workflow)
-- [ ] Restructure sidebar: WORKFLOW section (Opportunities, Proposals, Contracts, Contract Hub, Operations, Finance, Closeout, Lessons Learned)
-- [ ] Restructure sidebar: COMPLIANCE section (Compliance Matrix, Requirements, Deliverables, Deadlines, FAR/DFARS Reference)
-- [ ] Restructure sidebar: AI & INSIGHTS section (AI Findings, AI Contract Review, Reports, Alerts, Tasks)
-- [ ] Restructure sidebar: PARTNERS section (Subcontractors, Vendors, Contacts, Messages)
-- [ ] Restructure sidebar: DOCUMENTS section (Files, Versions, Doc Generator, Templates, Handbook)
-- [ ] Restructure sidebar: ADMIN section (Settings, Users, Invites, Plan Features, Diagnostics)
+- [x] Restructure sidebar: WORKFLOW section (Opportunities, Proposals, Contracts, Contract Hub, Operations, Finance, Closeout, Lessons Learned)
+- [x] Restructure sidebar: COMPLIANCE section (Compliance Matrix, Requirements, Deliverables, Deadlines, FAR/DFARS Reference)
+- [x] Restructure sidebar: AI & INSIGHTS section (AI Findings, AI Contract Review, Reports, Alerts, Tasks)
+- [x] Restructure sidebar: PARTNERS section (Subcontractors, Vendors, Contacts, Messages)
+- [x] Restructure sidebar: DOCUMENTS section (Files, Versions, Doc Generator, Templates, Handbook)
+- [x] Restructure sidebar: ADMIN section (Settings, Users, Invites, Plan Features, Diagnostics)
 
 ### New Pages to Build
-- [ ] Requirements page (track contract requirements with status, source, verification)
-- [ ] FAR/DFARS Reference page (searchable clause library with applicability tracking)
-- [ ] AI Contract Review page (upload contract, get structured AI review with confirmation workflow)
+- [x] Requirements page (track contract requirements with status, source, verification)
+- [x] FAR/DFARS Reference page (searchable clause library with applicability tracking)
+- [x] AI Contract Review page (upload contract, get structured AI review with confirmation workflow)
 
 ### Stub Pages to Rebuild as Real Pages
 - [x] Rebuild ContactDetail with full contact info, linked records, activity history
@@ -946,32 +946,32 @@
 - [x] Rebuild MessageDetail with full thread view, attachments, reply
 - [x] Rebuild FileDetail with metadata, version history, linked records
 - [x] Rebuild InvoiceDetail with line items, payment status, approval workflow
-- [ ] Rebuild ChangeManagement with change orders table, approval workflow, impact tracking
+- [x] Rebuild ChangeManagement with change orders table, approval workflow, impact tracking
 - [x] Rebuild Handbook with searchable articles, categories, bookmarks
 - [x] Rebuild DocumentVersions with version comparison, restore, linked files
 - [x] Rebuild CustomerAdoption with metrics dashboard, usage tracking, engagement scores
 - [x] Rebuild Diagnostics with system health, data integrity checks, action items
-- [ ] Rebuild PlanFeatures with feature matrix, plan comparison, upgrade prompts
+- [x] Rebuild PlanFeatures with feature matrix, plan comparison, upgrade prompts
 
 ### Guided Top Sections for Major Pages
-- [ ] Add PageGuide component (what this page is for, when to use, what to do next, related records, alerts)
-- [ ] Add guided sections to: Dashboard, Opportunities, Proposals, Contracts, ContractHub
-- [ ] Add guided sections to: Finance, Compliance, Deliverables, Deadlines, Reports
-- [ ] Add guided sections to: Files, Contacts, Messages, Tasks, Alerts
-- [ ] Add guided sections to: Subcontractors, Vendors, Lessons Learned, AI Findings
+- [x] Add PageGuide component (what this page is for, when to use, what to do next, related records, alerts)
+- [x] Add guided sections to: Dashboard, Opportunities, Proposals, Contracts, ContractHub
+- [x] Add guided sections to: Finance, Compliance, Deliverables, Deadlines, Reports
+- [x] Add guided sections to: Files, Contacts, Messages, Tasks, Alerts
+- [x] Add guided sections to: Subcontractors, Vendors, Lessons Learned, AI Findings
 
 ### Platform Admin Build-Out
-- [ ] Verify PlatformAdmin dashboard has real stats and actions
-- [ ] Verify Workspaces page has filters, search, bulk actions, detail drill-down
-- [ ] Verify Users page has role management, activity view, suspension controls
-- [ ] Verify Activity page has filterable audit log with user/action/timestamp
-- [ ] Verify Login Events page has IP tracking, device info, suspicious login flags
-- [ ] Verify Plans page has plan CRUD, feature toggles, pricing management
-- [ ] Verify Discounts page has coupon management, usage tracking, expiration
-- [ ] Verify Billing page has invoice history, payment status, refund controls
-- [ ] Verify Support page has ticket management, priority, assignment, resolution
-- [ ] Verify Onboarding page has progress tracking, step completion, stuck user alerts
-- [ ] Verify Overrides page has feature flag overrides per workspace
+- [x] Verify PlatformAdmin dashboard has real stats and actions
+- [x] Verify Workspaces page has filters, search, bulk actions, detail drill-down
+- [x] Verify Users page has role management, activity view, suspension controls
+- [x] Verify Activity page has filterable audit log with user/action/timestamp
+- [x] Verify Login Events page has IP tracking, device info, suspicious login flags
+- [x] Verify Plans page has plan CRUD, feature toggles, pricing management
+- [x] Verify Discounts page has coupon management, usage tracking, expiration
+- [x] Verify Billing page has invoice history, payment status, refund controls
+- [x] Verify Support page has ticket management, priority, assignment, resolution
+- [x] Verify Onboarding page has progress tracking, step completion, stuck user alerts
+- [x] Verify Overrides page has feature flag overrides per workspace
 
 ## Phase 27: Full Operating Spec Implementation
 
@@ -999,24 +999,24 @@
 - [x] Expand EmailTemplates.tsx - real template management
 
 ### Priority 3: Add PageGuide to all major existing pages
-- [ ] Add PageGuide to Dashboard
-- [ ] Add PageGuide to Opportunities + OpportunityDetail
-- [ ] Add PageGuide to Proposals + ProposalDetail
-- [ ] Add PageGuide to Contracts + ContractDetail
-- [ ] Add PageGuide to Finance, Invoices, Payments
-- [ ] Add PageGuide to Files, Contacts, Messages
-- [ ] Add PageGuide to Subcontractors, Vendors
-- [ ] Add PageGuide to Compliance, Tasks, Alerts
-- [ ] Add PageGuide to BusinessProfile, Settings, Users
-- [ ] Add PageGuide to Templates, CapabilityStatements, Onboarding
+- [x] Add PageGuide to Dashboard
+- [x] Add PageGuide to Opportunities + OpportunityDetail
+- [x] Add PageGuide to Proposals + ProposalDetail
+- [x] Add PageGuide to Contracts + ContractDetail
+- [x] Add PageGuide to Finance, Invoices, Payments
+- [x] Add PageGuide to Files, Contacts, Messages
+- [x] Add PageGuide to Subcontractors, Vendors
+- [x] Add PageGuide to Compliance, Tasks, Alerts
+- [x] Add PageGuide to BusinessProfile, Settings, Users
+- [x] Add PageGuide to Templates, CapabilityStatements, Onboarding
 
 ### Priority 4: Wire full contracting lifecycle
-- [ ] Contract Hub per-contract route /app/contracts/:id/hub
-- [ ] AI Confirmation page /app/contracts/:id/ai-confirmation
-- [ ] Closeout per-contract route /app/contracts/:id/closeout
+- [x] Contract Hub per-contract route /app/contracts/:id/hub
+- [x] AI Confirmation page /app/contracts/:id/ai-confirmation
+- [x] Closeout per-contract route /app/contracts/:id/closeout
 
 ### Priority 5: Platform Admin page expansion
-- [ ] Expand PlatformOnboarding - monitoring dashboard
+- [x] Expand PlatformOnboarding - monitoring dashboard
 - [x] Expand PlatformPricingHistory - real pricing history
 - [x] Expand PlatformOwnershipRecovery - real recovery controls
 - [x] Expand PlatformDemoWorkspaces - real demo workspace management

@@ -165,7 +165,13 @@ export default function ContractDetail() {
               <h1 className="text-3xl font-bold text-slate-900 mb-2">{contract.title}</h1>
               <p className="text-slate-600">{contract.agency || 'No agency specified'}</p>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
+                Contract Hub
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(`/app/contracts/${contractId}/ai-confirmation`)}>
+                AI Review
+              </Button>
               <Button variant="outline" size="sm" onClick={() => exportContract.mutate({ contractId: contract.id })} disabled={exportContract.isPending}>
                 {exportContract.isPending ? 'Exporting...' : 'Export PDF'}
               </Button>
@@ -359,11 +365,16 @@ export default function ContractDetail() {
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-600" /> Contract Closeout (FAR 4.804)
                 </h2>
-                {!closeoutData && (
-                  <Button size="sm" onClick={() => initiateCloseout.mutate({ contractId: contractId! })} disabled={initiateCloseout.isPending}>
-                    {initiateCloseout.isPending ? 'Starting...' : 'Initiate Closeout'}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/app/contracts/${contractId}/closeout`)}>
+                    Full Closeout View
                   </Button>
-                )}
+                  {!closeoutData && (
+                    <Button size="sm" onClick={() => initiateCloseout.mutate({ contractId: contractId! })} disabled={initiateCloseout.isPending}>
+                      {initiateCloseout.isPending ? 'Starting...' : 'Initiate Closeout'}
+                    </Button>
+                  )}
+                </div>
               </div>
               {closeoutData ? (
                 <div className="space-y-4">

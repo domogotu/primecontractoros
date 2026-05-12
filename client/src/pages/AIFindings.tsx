@@ -1,3 +1,4 @@
+import PageGuide from "@/components/PageGuide";
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Brain, CheckCircle2, XCircle, Clock, AlertTriangle, Search, Filter, ChevronDown, Eye } from "lucide-react";

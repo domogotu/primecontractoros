@@ -7,14 +7,14 @@ import {
   Folder, History, Wand2, BookOpen, GitBranch, ShieldCheck, Mail, UserPlus,
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
-  Scale, ClipboardList,
+  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles,
 } from "lucide-react";
 
 export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [expandedSections, setExpandedSections] = useState<string[]>(["workflow", "contract-hub"]);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["workflow"]);
 
   const toggleSection = (id: string) => {
     setExpandedSections((prev) =>
@@ -31,22 +31,33 @@ export default function WorkspaceSidebar() {
         { icon: Target, label: "Opportunities", path: "/app/opportunities" },
         { icon: FileText, label: "Proposals", path: "/app/proposals" },
         { icon: Briefcase, label: "Contracts", path: "/app/contracts" },
+        { icon: Briefcase, label: "Contract Hub", path: "/app/contract-hub" },
+        { icon: GitBranch, label: "Operations", path: "/app/change-management" },
         { icon: DollarSign, label: "Finance", path: "/app/finance" },
         { icon: Archive, label: "Closeout", path: "/app/closeout" },
         { icon: Lightbulb, label: "Lessons Learned", path: "/app/lessons-learned" },
       ],
     },
     {
-      id: "contract-hub",
-      label: "Contract Hub",
+      id: "compliance",
+      label: "Compliance",
       items: [
-        { icon: Briefcase, label: "Hub Overview", path: "/app/contract-hub" },
+        { icon: ShieldCheck, label: "Compliance Matrix", path: "/app/compliance" },
         { icon: ClipboardList, label: "Requirements", path: "/app/requirements" },
         { icon: Package, label: "Deliverables", path: "/app/deliverables" },
         { icon: Calendar, label: "Deadlines", path: "/app/deadlines" },
-        { icon: ShieldCheck, label: "Compliance Matrix", path: "/app/compliance" },
         { icon: Scale, label: "FAR/DFARS Reference", path: "/app/far-reference" },
+      ],
+    },
+    {
+      id: "ai-insights",
+      label: "AI & Insights",
+      items: [
+        { icon: Sparkles, label: "AI Findings", path: "/app/ai-findings" },
         { icon: Brain, label: "AI Contract Review", path: "/app/ai-contract-review" },
+        { icon: BarChart3, label: "Reports", path: "/app/reports" },
+        { icon: AlertTriangle, label: "Alerts", path: "/app/alerts" },
+        { icon: CheckSquare, label: "Tasks", path: "/app/tasks" },
       ],
     },
     {
@@ -56,6 +67,7 @@ export default function WorkspaceSidebar() {
         { icon: Building2, label: "Subcontractors", path: "/app/subcontractors" },
         { icon: Users, label: "Vendors", path: "/app/vendors" },
         { icon: Users, label: "Contacts", path: "/app/contacts" },
+        { icon: MessageSquare, label: "Messages", path: "/app/messages" },
       ],
     },
     {
@@ -65,32 +77,19 @@ export default function WorkspaceSidebar() {
         { icon: Folder, label: "Files", path: "/app/files" },
         { icon: History, label: "Versions", path: "/app/document-versions" },
         { icon: Wand2, label: "Doc Generator", path: "/app/document-generation" },
+        { icon: FileText, label: "Templates", path: "/app/templates" },
         { icon: BookOpen, label: "Handbook", path: "/app/handbook" },
-      ],
-    },
-    {
-      id: "operations",
-      label: "Operations",
-      items: [
-        { icon: GitBranch, label: "Change Mgmt", path: "/app/change-management" },
-        { icon: ShieldCheck, label: "Flowdown Review", path: "/app/flowdown-review" },
-        { icon: DollarSign, label: "Payments", path: "/app/payments" },
-        { icon: MessageSquare, label: "Comm Log", path: "/app/communication-log" },
-        { icon: Mail, label: "Messages", path: "/app/messages" },
-        { icon: Bell, label: "Alerts & Tasks", path: "/app/alerts-tasks" },
-        { icon: BarChart3, label: "Reports", path: "/app/reports" },
       ],
     },
     {
       id: "admin",
       label: "Administration",
       items: [
+        { icon: Settings, label: "Settings", path: "/app/settings" },
+        { icon: Users, label: "Users", path: "/app/users" },
         { icon: UserPlus, label: "Invites", path: "/app/invites" },
         { icon: Crown, label: "Plan Features", path: "/app/plan-features" },
         { icon: Activity, label: "Diagnostics", path: "/app/diagnostics" },
-        { icon: BarChart3, label: "Adoption", path: "/app/customer-adoption" },
-        { icon: ShieldCheck, label: "Consistency", path: "/app/consistency-check" },
-        { icon: Settings, label: "Settings", path: "/app/settings" },
       ],
     },
   ];

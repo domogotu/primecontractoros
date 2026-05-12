@@ -65,10 +65,10 @@ import ContactPage from "./pages/ContactPage";
 import Privacy from "./pages/Privacy";
 import Subcontractors from "./pages/Subcontractors";
 import Vendors from "./pages/Vendors";
-const Invites = () => <div className="container py-8"><h1 className="text-2xl font-bold">Invites</h1><p className="text-muted-foreground">Workspace invitation management - coming soon.</p></div>;
+import Invites from "./pages/Invites";
 import Diagnostics from "./pages/Diagnostics";
-const DocumentGeneration = () => <div className="container py-8"><h1 className="text-2xl font-bold">Document Generation</h1><p className="text-muted-foreground">AI-powered document creation - coming soon.</p></div>;
-const FlowdownReview = () => <div className="container py-8"><h1 className="text-2xl font-bold">Flowdown Review</h1><p className="text-muted-foreground">Contract clause flowdown analysis - coming soon.</p></div>;
+import DocumentGeneration from "./pages/DocumentGeneration";
+import FlowdownReview from "./pages/FlowdownReview";
 import CustomerAdoption from "./pages/CustomerAdoption";
 import Handbook from "./pages/Handbook";
 import ChangeManagement from "./pages/ChangeManagement";
@@ -90,6 +90,9 @@ import PlatformCompliance from "./pages/PlatformCompliance";
 import Security from "./pages/Security";
 import AppShell from "./components/AppShell";
 import AdminBadge from "./components/AdminBadge";
+import ContractHubDetail from "./pages/ContractHubDetail";
+import AIConfirmation from "./pages/AIConfirmation";
+import ContractCloseout from "./pages/ContractCloseout";
 
 // Wrapper to render app pages inside AppShell
 function withAppShell(Component: React.ComponentType) {
@@ -139,6 +142,9 @@ function Router() {
       <Route path={"/app/proposals/:id"} component={withAppShell(ProposalDetail)} />
       <Route path={"/app/proposal-frameworks"} component={withAppShell(ProposalFrameworkSelector)} />
       <Route path={"/app/contracts"} component={withAppShell(Contracts)} />
+      <Route path={"/app/contracts/:id/hub"} component={withAppShell(ContractHubDetail)} />
+      <Route path={"/app/contracts/:id/ai-confirmation"} component={withAppShell(AIConfirmation)} />
+      <Route path={"/app/contracts/:id/closeout"} component={withAppShell(ContractCloseout)} />
       <Route path={"/app/contracts/:id"} component={withAppShell(ContractDetail)} />
       
       {/* Active operations pages */}

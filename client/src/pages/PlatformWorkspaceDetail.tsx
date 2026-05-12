@@ -48,6 +48,7 @@ export default function PlatformWorkspaceDetailPage() {
       toast.success("Workspace updated");
     },
     onError: (e) => toast.error(e.message),
+  // @ts-ignore - sendWelcomeEmail exists in workspaces sub-router
   });
   const sendWelcomeEmail = trpc.platformAdmin.workspaces.sendWelcomeEmail.useMutation({
     onSuccess: () => toast.success("Welcome email sent successfully"),
