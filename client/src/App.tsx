@@ -84,6 +84,7 @@ import Documentation from "./pages/Documentation";
 import PlatformCompliance from "./pages/PlatformCompliance";
 import Security from "./pages/Security";
 import AppShell from "./components/AppShell";
+import AdminBadge from "./components/AdminBadge";
 
 // Wrapper to render app pages inside AppShell
 function withAppShell(Component: React.ComponentType) {
