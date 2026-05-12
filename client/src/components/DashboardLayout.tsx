@@ -71,7 +71,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const activeItem = menuItems.find(item => item.path === location);
 
   const SidebarContent = () => (
-    <div className="w-64 bg-slate-900 text-white flex flex-col h-full">
+    <div className="w-64 bg-slate-900 text-white flex flex-col h-full min-h-0">
       {/* Logo */}
       <div className="p-5 border-b border-slate-700 flex items-center justify-between">
         <div>
@@ -88,7 +88,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      {/* Nav items */}
+      {/* Nav items — flex-1 overflow-y-auto ensures scrollability when many items exist */}
       <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -163,8 +163,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             className="absolute inset-0 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
-          {/* Drawer */}
-          <div className="relative z-10 flex h-full">
+          {/* Drawer — overflow-y-auto at this level ensures the whole sidebar scrolls on small screens */}
+          <div className="relative z-10 flex h-full overflow-y-auto">
             <SidebarContent />
           </div>
         </div>

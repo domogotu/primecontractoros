@@ -1215,3 +1215,44 @@
 - [x] Verify punctuation on all sentences
 - [x] Verify pb-32 scrolling globally
 - [x] Verify sign-off placement near user name
+
+## Platform Admin Business Control Pages (May 12, 2026)
+
+### Database/Backend
+- [ ] Add/extend plans table with all fields (name, code, prices, limits, features, etc.)
+- [ ] Add plan_features table for clean feature rows
+- [ ] Add plan_versions table for versioning
+- [ ] Add/extend discounts table with all fields
+- [ ] Add discount_usage table
+- [ ] Add billing_events table
+- [ ] Add subscriptions table
+- [ ] Add platform_overrides table
+- [ ] Add/extend consent_records with all fields
+- [ ] Add policy_versions table
+- [ ] Add backup_exports table
+- [ ] Add platform_tasks table
+- [ ] Add platform_task_runs table
+- [ ] Backend router: Plans CRUD with audit logging
+- [ ] Backend router: Discounts CRUD with audit logging
+- [ ] Backend router: Billing management with status changes and logging
+- [ ] Backend router: Overrides CRUD with required reason and logging
+- [ ] Backend router: Consent records query/export
+- [ ] Backend router: Backups & Export with logging
+- [ ] Backend router: Platform Tasks CRUD with run-now and logging
+
+### Frontend Pages
+- [ ] Plans Management: create/edit/duplicate/archive, clean feature display, plan cards
+- [ ] Discounts Management: create/edit/disable, usage history, apply manually
+- [ ] Billing Management: summary cards, billing table, status actions, billing history
+- [ ] Overrides Management: create/view/reverse, override table, required reason
+- [ ] Consent Records: summary cards, consent table, filters, export
+- [ ] Backups & Export: database overview, backup options, table export, backup history
+- [ ] Platform Tasks: summary cards, task table, run-now, task detail/history
+
+### Global Requirements
+- [ ] All sensitive actions logged to platform_activity_log
+- [ ] All pages mobile-friendly
+- [ ] All pages keep current dark theme design
+- [ ] Empty states explain what to do next
+- [ ] No raw JSON/array display to users
+- [ ] Platform owner/admin only access enforced

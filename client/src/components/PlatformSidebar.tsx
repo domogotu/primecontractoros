@@ -41,7 +41,7 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
   const isActive = (path: string) => location === path;
 
   const SidebarInner = () => (
-    <div className="w-64 bg-blue-900 text-white flex flex-col h-full">
+    <div className="w-64 bg-blue-900 text-white flex flex-col h-full min-h-0">
       <div className="p-5 border-b border-blue-800 flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold leading-tight">PrimeContractorOS</h2>
@@ -56,6 +56,9 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
         </button>
       </div>
 
+      {/* Single scrollable container: nav items + bottom actions.
+          Everything is inside overflow-y-auto so all items are reachable
+          by scrolling on any screen height. */}
       <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -76,39 +79,39 @@ export default function PlatformSidebar({ mobileOpen, onClose }: PlatformSidebar
             </Link>
           );
         })}
-      </nav>
 
-      {/* User info + Sign Out — grouped so sign-out is always adjacent to the user's name */}
-      <div className="border-t border-blue-800 p-3 space-y-1">
-        {/* User identity */}
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center shrink-0">
-            <span className="text-sm font-bold text-white">{(user?.name || "A")[0].toUpperCase()}</span>
+        {/* User info + Sign Out — inside the scroll area so always reachable */}
+        <div className="mt-3 pt-3 border-t border-blue-800 space-y-1">
+          {/* User identity */}
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-white">{(user?.name || "A")[0].toUpperCase()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-blue-300 uppercase font-semibold">Platform Admin</p>
+              <p className="text-sm font-medium text-white truncate">{user?.name || "Admin"}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-blue-300 uppercase font-semibold">Platform Admin</p>
-            <p className="text-sm font-medium text-white truncate">{user?.name || "Admin"}</p>
-          </div>
+
+          {/* Switch to App */}
+          <Link
+            href="/app/dashboard"
+            onClick={onClose}
+            className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium block text-center"
+          >
+            Switch to App
+          </Link>
+
+          {/* Sign Out — directly below user name for clear association */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            Sign Out
+          </button>
         </div>
-
-        {/* Switch to App */}
-        <Link
-          href="/app/dashboard"
-          onClick={onClose}
-          className="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium block text-center"
-        >
-          Switch to App
-        </Link>
-
-        {/* Sign Out — directly below user name for clear association */}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 text-red-300 hover:bg-red-500/10 hover:text-red-200 rounded-lg transition-colors text-sm font-medium"
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          Sign Out
-        </button>
-      </div>
+      </nav>
     </div>
   );
 

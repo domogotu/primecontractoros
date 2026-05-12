@@ -44,11 +44,12 @@ export default function MobileNav({ sidebarContent, children }: MobileNavProps) 
         <div className="fixed inset-0 z-30 md:hidden bg-black/50" onClick={closeSidebar} />
       )}
 
-      {/* Mobile Drawer Sidebar - scrollable, does NOT close on click inside */}
+      {/* Mobile Drawer Sidebar - scrollable, does NOT close on click inside.
+          pb-8 adds safe-area padding so content is never cut off at the bottom. */}
       <div
         className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white z-40 md:hidden transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } pt-16 overflow-y-auto`}
+        } pt-16 overflow-y-auto pb-8`}
       >
         {sidebarContent}
       </div>

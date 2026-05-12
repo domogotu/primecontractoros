@@ -98,11 +98,14 @@ export default function WorkspaceSidebar() {
 
   return (
     <div className="w-64 bg-slate-900 text-white h-screen flex flex-col shadow-lg">
-      <div className="p-6 border-b border-slate-800">
+      <div className="p-6 border-b border-slate-800 shrink-0">
         <h1 className="text-xl font-bold text-white">PrimeContractorOS</h1>
         <p className="text-xs text-slate-400 mt-1">{user?.name}</p>
       </div>
-      <nav className="flex-1 overflow-y-auto py-2">
+      {/* Single scrollable area containing all nav items AND the bottom actions.
+          This ensures Platform Admin and Sign Out are always reachable by scrolling,
+          even when all sections are expanded on a small screen. */}
+      <nav className="flex-1 overflow-y-auto py-2 pb-4">
         {sections.map((section) => (
           <div key={section.id} className="mb-1">
             <button
@@ -140,29 +143,29 @@ export default function WorkspaceSidebar() {
             )}
           </div>
         ))}
-      </nav>
-      {isAdmin && (
-        <div className="border-t border-slate-800 p-4">
+
+        {/* Bottom actions inside the scroll container so they are always reachable */}
+        <div className="mt-4 mx-4 pt-4 border-t border-slate-800 space-y-1">
+          {isAdmin && (
+            <Button
+              onClick={() => navigate("/platform")}
+              className="w-full justify-start bg-blue-900 hover:bg-blue-800 text-white"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Platform Admin
+            </Button>
+          )}
           <Button
-            onClick={() => navigate("/platform")}
-            className="w-full justify-start bg-blue-900 hover:bg-blue-800 text-white mb-2"
+            variant="ghost"
+            size="sm"
+            onClick={() => { logout(); navigate("/"); }}
+            className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
           >
-            <Shield className="w-4 h-4 mr-2" />
-            Platform Admin
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
           </Button>
         </div>
-      )}
-      <div className="border-t border-slate-800 p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => { logout(); navigate("/"); }}
-          className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign Out
-        </Button>
-      </div>
+      </nav>
     </div>
   );
 }
