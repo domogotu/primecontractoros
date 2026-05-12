@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -48,11 +47,10 @@ export default function PlatformWorkspaceDetailPage() {
       toast.success("Workspace updated");
     },
     onError: (e) => toast.error(e.message),
-  // @ts-ignore - sendWelcomeEmail exists in workspaces sub-router
   });
-  const sendWelcomeEmail = trpc.platformAdmin.workspaces.sendWelcomeEmail.useMutation({
+  const sendWelcomeEmail = trpc.platformAdmin.sendWelcomeEmail.useMutation({
     onSuccess: () => toast.success("Welcome email sent successfully"),
-    onError: (e) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message),
   });
 
   const formatDate = (d: any) => d ? new Date(d).toLocaleDateString() : "—";

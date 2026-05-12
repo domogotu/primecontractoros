@@ -1021,3 +1021,6 @@
 - [x] Expand PlatformOwnershipRecovery - real recovery controls
 - [x] Expand PlatformDemoWorkspaces - real demo workspace management
 - [x] Expand PlatformTasks - real platform task management
+
+## Phase 28: Fix PlatformWorkspaceDetail TS Error
+- [x] Fix sendWelcomeEmail type inference error in PlatformWorkspaceDetail.tsx

@@ -232,21 +232,24 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    sendWelcomeEmail: adminProcedure
-      .input(z.object({ workspaceId: z.number() }))
-      .mutation(async ({ input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
-        const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, input.workspaceId)).limit(1);
-        if (!ws) throw new Error("Workspace not found");
-        const [owner] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
-        if (!owner?.email) throw new Error("Workspace owner has no email");
-        const resendKey = process.env.RESEND_API_KEY;
-        if (!resendKey) throw new Error("RESEND_API_KEY not configured");
-        const resend = new Resend(resendKey);
-        const name = owner.name || "Team Member";
-        const wsName = ws.companyName || ws.name || "your workspace";
-        const htmlBody = `<!DOCTYPE html>
+  }),
+
+  // --- Send Welcome Email (top-level for type inference) ---
+  sendWelcomeEmail: adminProcedure
+    .input(z.object({ workspaceId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, input.workspaceId)).limit(1);
+      if (!ws) throw new Error("Workspace not found");
+      const [owner] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
+      if (!owner?.email) throw new Error("Workspace owner has no email");
+      const resendKey = process.env.RESEND_API_KEY;
+      if (!resendKey) throw new Error("RESEND_API_KEY not configured");
+      const resend = new Resend(resendKey);
+      const name = owner.name || "Team Member";
+      const wsName = ws.companyName || ws.name || "your workspace";
+      const htmlBody = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Welcome to PrimeContractorOS</title></head>
 <body style="margin:0;padding:0;background:#0b1320;font-family:Arial,sans-serif;">
@@ -277,16 +280,15 @@ export const platformAdminRouter = router({
   </table>
 </body>
 </html>`;
-        const result = await resend.emails.send({
-          from: "Reed's Solutions LLC <onboarding@resend.dev>",
-          to: owner.email,
-          subject: `Welcome to PrimeContractorOS — ${wsName} is Ready`,
-          html: htmlBody,
-        });
-        if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
-        return { success: true, emailId: result.data?.id };
-      }),
-  }),
+      const result = await resend.emails.send({
+        from: "Reed's Solutions LLC <onboarding@resend.dev>",
+        to: owner.email,
+        subject: `Welcome to PrimeContractorOS — ${wsName} is Ready`,
+        html: htmlBody,
+      });
+      if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
+      return { success: true, emailId: result.data?.id };
+    }),
 
   // --- Users (admin view all) ---
   users: router({
