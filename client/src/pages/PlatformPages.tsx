@@ -9,11 +9,26 @@ import { Link, useRoute } from "wouter";
 // ==================== WORKSPACES ====================
 export function PlatformWorkspaces() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { data: workspaces = [], isLoading, refetch } = trpc.platform.workspaces.list.useQuery();
   const updateMutation = trpc.platform.workspaces.update.useMutation({
     onSuccess: () => { refetch(); toast.success("Workspace updated"); },
     onError: (e) => toast.error(e.message),
   });
+  const sendWelcomeEmail = trpc.platformAdmin.workspaces.sendWelcomeEmail.useMutation({
+    onSuccess: () => toast.success("Welcome email sent!"),
+    onError: (e: any) => toast.error(e.message),
+  });
+  const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const handleBulkSendEmail = async () => {
+    if (selectedIds.length === 0) { toast.error("Select workspaces first"); return; }
+    let sent = 0;
+    for (const id of selectedIds) {
+      try { await sendWelcomeEmail.mutateAsync({ workspaceId: id }); sent++; } catch {}
+    }
+    toast.success(`Welcome emails sent to ${sent} workspace(s)`);
+    setSelectedIds([]);
+  };
 
   const filtered = workspaces.filter((ws: any) =>
     ws.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,6 +55,12 @@ export function PlatformWorkspaces() {
               className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {selectedIds.length > 0 && (
+            <Button size="sm" onClick={handleBulkSendEmail} disabled={sendWelcomeEmail.isPending} className="bg-green-600 hover:bg-green-700 text-white">
+              {sendWelcomeEmail.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Send Welcome Email ({selectedIds.length})
+            </Button>
+          )}
         </div>
         <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
           <table className="w-full">
@@ -60,7 +81,7 @@ export function PlatformWorkspaces() {
                 filtered.map((ws: any) => (
                   <tr key={ws.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{ws.name}</p>
+                      <input type="checkbox" checked={selectedIds.includes(ws.id)} onChange={() => toggleSelect(ws.id)} className="mr-2 align-middle" /><span className="font-medium text-gray-900">{ws.name}</span>
                       <p className="text-sm text-gray-500">ID: {ws.id}</p>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{ws.companyName || "—"}</td>

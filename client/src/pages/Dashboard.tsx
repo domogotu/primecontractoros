@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact, AlertCircle, CheckCircle2, Clock, Bell, ListTodo } from "lucide-react";
 import { GuidancePanel } from "@/components/GuidancePanel";
+import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -88,6 +89,7 @@ export default function Dashboard() {
           </div>
 
           {/* Guidance Panel - Command Center */}
+          <AIWorkflowButtons context="dashboard" />
           <GuidancePanel compact={false} showPreferences={true} />
 
           {/* Quick Access Grid */}

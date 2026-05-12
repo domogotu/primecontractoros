@@ -46,6 +46,8 @@ import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templates
 import { guidanceRouter } from "./guidanceRouter";
 import { platformAdminRouter } from "./platformAdminRouter";
 import { pdfRouter } from "./pdfRouter";
+import { aiRouter } from "./aiRouter";
+import { systemInfraRouter } from "./systemInfraRouter";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -88,6 +90,8 @@ export const appRouter = router({
   lessonsLearnedV2: lessonsLearnedRouter,
   capability: capabilityRouter,
   guidance: guidanceRouter,
+  aiWorkflow: aiRouter,
+  systemInfra: systemInfraRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

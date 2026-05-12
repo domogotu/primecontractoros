@@ -116,10 +116,15 @@ export const aiRuns = mysqlTable("aiRuns", {
   relatedRecordType: varchar("relatedRecordType", { length: 50 }).notNull(), // "opportunity", "proposal", "contract", "file", etc.
   relatedRecordId: int("relatedRecordId"),
   aiType: mysqlEnum("aiType", ["guidance", "analysis", "findings"]).notNull(),
+  runType: varchar("runType", { length: 100 }), // "contract_scan", "file_analyze", "opportunity_review", etc.
   purpose: varchar("purpose", { length: 255 }),
   modelUsed: varchar("modelUsed", { length: 100 }).default("gpt-4-mini"),
   inputSummary: text("inputSummary"),
+  inputTokens: int("inputTokens").default(0),
+  outputTokens: int("outputTokens").default(0),
   status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending"),
+  errorMessage: text("errorMessage"),
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -890,3 +895,134 @@ export const proposalTeamAssignments = mysqlTable("proposal_team_assignments", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type ProposalTeamAssignment = typeof proposalTeamAssignments.$inferSelect;
+
+
+// ============================================================
+// AI System — Additional Tables
+// ============================================================
+
+// AI Extracted Obligations — temporary holding table before approval
+export const aiExtractedObligations = mysqlTable("ai_extracted_obligations", {
+  id: int("id").autoincrement().primaryKey(),
+  findingId: int("findingId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  obligationType: varchar("obligationType", { length: 100 }).notNull(), // "requirement", "deliverable", "deadline", "compliance_item", "task", "alert"
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  dueDate: timestamp("dueDate"),
+  recurrence: varchar("recurrence", { length: 100 }), // "once", "monthly", "quarterly", "annually"
+  evidenceNeeded: text("evidenceNeeded"),
+  suggestedOwner: varchar("suggestedOwner", { length: 255 }),
+  approvalState: mysqlEnum("approvalState", ["pending", "approved", "rejected", "edited"]).default("pending").notNull(),
+  approvedBy: int("approvedBy"),
+  approvedAt: timestamp("approvedAt"),
+  createdRecordType: varchar("createdRecordType", { length: 100 }),
+  createdRecordId: int("createdRecordId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AiExtractedObligation = typeof aiExtractedObligations.$inferSelect;
+export type InsertAiExtractedObligation = typeof aiExtractedObligations.$inferInsert;
+
+// AI Prompts — reusable internal prompt templates
+export const aiPrompts = mysqlTable("ai_prompts", {
+  id: int("id").autoincrement().primaryKey(),
+  promptKey: varchar("promptKey", { length: 100 }).notNull().unique(),
+  promptName: varchar("promptName", { length: 255 }).notNull(),
+  systemInstruction: text("systemInstruction").notNull(),
+  userTemplate: text("userTemplate").notNull(),
+  outputSchema: text("outputSchema"),
+  active: boolean("active").default(true).notNull(),
+  version: int("version").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AiPrompt = typeof aiPrompts.$inferSelect;
+export type InsertAiPrompt = typeof aiPrompts.$inferInsert;
+
+// AI Usage Logs — token/cost tracking per invocation
+export const aiUsageLogs = mysqlTable("ai_usage_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  aiRunId: int("aiRunId"),
+  featureUsed: varchar("featureUsed", { length: 100 }).notNull(),
+  modelUsed: varchar("modelUsed", { length: 100 }).notNull(),
+  inputTokens: int("inputTokens").default(0).notNull(),
+  outputTokens: int("outputTokens").default(0).notNull(),
+  estimatedCost: decimal("estimatedCost", { precision: 10, scale: 6 }).default("0"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AiUsageLog = typeof aiUsageLogs.$inferSelect;
+export type InsertAiUsageLog = typeof aiUsageLogs.$inferInsert;
+
+
+// ============================================================
+// System Infrastructure Tables
+// ============================================================
+
+// Audit Logs — Global audit trail
+export const auditLogs = mysqlTable("audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId"),
+  userId: int("userId"),
+  actionType: varchar("actionType", { length: 100 }).notNull(), // "login", "create", "edit", "archive", "delete", "ai_scan", "ai_approve", "ai_reject", "upload", "status_change", "override"
+  targetType: varchar("targetType", { length: 100 }), // "opportunity", "proposal", "contract", "file", "invoice", etc.
+  targetId: int("targetId"),
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  reason: text("reason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// Notifications — Internal alerts
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId"), // target user (null = all workspace users)
+  category: varchar("category", { length: 100 }).notNull(), // "deadline", "review", "missing_info", "billing", "system", "ai"
+  title: varchar("title", { length: 500 }).notNull(),
+  message: text("message"),
+  relatedType: varchar("relatedType", { length: 100 }),
+  relatedId: int("relatedId"),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "urgent"]).default("medium"),
+  isRead: boolean("isRead").default(false).notNull(),
+  dismissedAt: timestamp("dismissedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// System Errors — Error tracking
+export const systemErrors = mysqlTable("system_errors", {
+  id: int("id").autoincrement().primaryKey(),
+  errorType: varchar("errorType", { length: 100 }).notNull(),
+  route: varchar("route", { length: 500 }),
+  userId: int("userId"),
+  workspaceId: int("workspaceId"),
+  message: text("message"),
+  stackTrace: text("stackTrace"),
+  status: mysqlEnum("status", ["new", "investigating", "resolved", "ignored"]).default("new"),
+  resolution: text("resolution"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+});
+export type SystemError = typeof systemErrors.$inferSelect;
+export type InsertSystemError = typeof systemErrors.$inferInsert;
+
+// Workspace Roles — Role assignments per workspace
+export const workspaceRoles = mysqlTable("workspace_roles", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", ["workspace_owner", "trusted_admin", "standard_user", "read_only"]).notNull(),
+  grantedBy: int("grantedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WorkspaceRole = typeof workspaceRoles.$inferSelect;
+export type InsertWorkspaceRole = typeof workspaceRoles.$inferInsert;

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `aiRuns` ADD COLUMN `runType` varchar(100) DEFAULT NULL AFTER `aiType`; ALTER TABLE `aiRuns` ADD COLUMN `completedAt` timestamp NULL AFTER `status`; ALTER TABLE `aiRuns` ADD COLUMN `errorMessage` text AFTER `status`; ALTER TABLE `aiRuns` ADD COLUMN `inputTokens` int DEFAULT 0 AFTER `inputSummary`; ALTER TABLE `aiRuns` ADD COLUMN `outputTokens` int DEFAULT 0 AFTER `inputTokens`;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute ALTER TABLE `aiRuns` ADD COLUMN `runType` varchar(100) DEFAULT NULL AFTER `aiType`; ALTER TABLE `aiRuns` ADD COLUMN `completedAt` timestamp NULL AFTER `status`; ALTER TABLE `aiRuns` ADD COLUMN `errorMessage` text AFTER `status`; ALTER TABLE `aiRuns` ADD COLUMN `inputTokens` int DEFAULT 0 AFTER `inputSummary`; ALTER TABLE `aiRuns` ADD COLUMN `outputTokens` int DEFAULT 0 AFTER `inputTokens`;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1357
+}

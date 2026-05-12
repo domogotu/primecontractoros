@@ -92,6 +92,20 @@
       "when": 1778539564771,
       "tag": "0012_rainy_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1778562450660,
+      "tag": "0013_typical_sabretooth",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1778562582447,
+      "tag": "0014_fat_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }

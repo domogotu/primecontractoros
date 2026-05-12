@@ -31,6 +31,10 @@ import Closeout from "./pages/Closeout";
 import LossReview from "./pages/LossReview";
 import LessonsLearned from "./pages/LessonsLearned";
 import AIFindings from "./pages/AIFindings";
+import AISuggestions from "./pages/AISuggestions";
+import AIRuns from "./pages/AIRuns";
+import AuditLog from "./pages/AuditLog";
+import NotificationsCenter from "./pages/NotificationsCenter";
 import PlatformLogin from "./pages/PlatformLogin";
 import PlatformRouter from "./pages/PlatformRouter";
 import ProposalDetail from "./pages/ProposalDetail";
@@ -151,6 +155,10 @@ function Router() {
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
       <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
+      <Route path={"/app/ai-suggestions"} component={withAppShell(AISuggestions)} />
+      <Route path={"/app/ai-runs"} component={withAppShell(AIRuns)} />
+      <Route path={"/app/audit-log"} component={withAppShell(AuditLog)} />
+      <Route path={"/app/notifications"} component={withAppShell(NotificationsCenter)} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

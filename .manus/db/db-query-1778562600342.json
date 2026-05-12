@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `opportunities` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `proposals` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `contracts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `files` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `contacts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `messages` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `invoices` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `payments` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `tasks` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `alerts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `supportTickets` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `aiFindings` ADD COLUMN `archivedAt` timestamp NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute ALTER TABLE `opportunities` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `proposals` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `contracts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `files` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `contacts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `messages` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `invoices` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `payments` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `tasks` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `alerts` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `supportTickets` ADD COLUMN `archivedAt` timestamp NULL; ALTER TABLE `aiFindings` ADD COLUMN `archivedAt` timestamp NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2305
+}

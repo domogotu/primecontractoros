@@ -21,6 +21,7 @@ import ProposalForm from '@/components/ProposalForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
+import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { Plus, Trash2, UserPlus } from 'lucide-react';
 
 // ===== Team Assignments Section =====
@@ -496,6 +497,7 @@ export default function ProposalDetail() {
             <GuidancePanel compact={true} showPreferences={false} />
 
             {/* AI Assistance Panel */}
+            <AIWorkflowButtons context="proposal" recordId={proposalId} recordTitle={proposal.title} />
             <AIGuidancePanel
               recordType="proposal"
               recordId={proposalId}

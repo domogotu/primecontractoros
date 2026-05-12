@@ -3,7 +3,7 @@ import { getLoginUrl } from "@/const";
 import {
   LayoutDashboard, LogOut, Users, FileText, DollarSign, MessageSquare,
   BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase,
-  TrendingDown, Award, Brain, CreditCard, ShieldCheck, Menu, X
+  TrendingDown, Award, Brain, CreditCard, ShieldCheck, Menu, X, Lightbulb, Activity, Shield, Bell
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
@@ -26,6 +26,10 @@ const menuItems = [
   { icon: BookOpen, label: "Templates", path: "/app/templates" },
   { icon: BookOpen, label: "Lessons Learned", path: "/app/lessons" },
   { icon: Brain, label: "AI Findings", path: "/app/ai-findings" },
+  { icon: Lightbulb, label: "AI Suggestions", path: "/app/ai-suggestions" },
+  { icon: Activity, label: "AI Runs", path: "/app/ai-runs" },
+  { icon: Shield, label: "Audit Log", path: "/app/audit-log" },
+  { icon: Bell, label: "Notifications", path: "/app/notifications" },
   { icon: User, label: "Profile", path: "/app/profile" },
   { icon: Settings, label: "Settings", path: "/app/settings" },
   { icon: CreditCard, label: "Billing", path: "/app/billing" },

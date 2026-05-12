@@ -1,5 +1,6 @@
 import PageLayout from "@/components/PageLayout";
 import { useRoute } from "wouter";
+import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { Button } from "@/components/ui/button";
 
 export default function FileDetail() {
@@ -15,6 +16,9 @@ export default function FileDetail() {
         <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-8">
           <p className="text-blue-100 mb-4">File content will be displayed here</p>
           <Button variant="outline" className="border-white text-white">Download</Button>
+        </div>
+        <div className="bg-white/10 backdrop-blur border border-white/20 rounded-lg p-6">
+          <AIWorkflowButtons context="file" recordId={Number(params?.id)} recordTitle={`File ${params?.id}`} />
         </div>
       </div>
     </PageLayout>

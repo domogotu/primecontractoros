@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import OpportunityForm from '@/components/OpportunityForm';
 import { AIGuidancePanel } from '@/components/AIGuidancePanel';
+import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { GuidancePanel } from '@/components/GuidancePanel';
 
 export default function OpportunityDetail() {
@@ -325,6 +326,7 @@ export default function OpportunityDetail() {
             </div>
 
             {/* Rule-based Guidance Panel */}
+            <AIWorkflowButtons context="opportunity" recordId={opportunityId} recordTitle={opportunity.title} />
             <GuidancePanel compact={true} showPreferences={false} />
 
             {/* AI Assistance Panel */}
