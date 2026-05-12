@@ -216,19 +216,19 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
-            {/* Sign Out - visible at bottom of nav list */}
-            <div className="px-2 pb-2 pt-1 border-t border-gray-200 mt-1">
+          </SidebarContent>
+          <SidebarFooter className="p-0">
+            {/* Sign Out - pinned at bottom, always visible */}
+            <div className="px-3 pt-2 pb-1 border-t border-sidebar-border">
               <button
                 onClick={logout}
-                className="flex items-center gap-2 w-full rounded-md px-3 h-10 text-sm font-normal text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex items-center gap-2 w-full rounded-md px-3 h-10 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:justify-center"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
-                <span>Sign Out</span>
+                <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
               </button>
             </div>
-          </SidebarContent>
-
-          <SidebarFooter className="p-3 space-y-2">            <DropdownMenu>
+            <div className="px-3 pb-3 pt-1">
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-gray-100/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
@@ -256,6 +256,7 @@ function DashboardLayoutContent({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </SidebarFooter>
         </Sidebar>
         <div
