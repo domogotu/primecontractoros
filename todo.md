@@ -1262,9 +1262,9 @@
 - [x] Fix mobile sidebar scrolling cutoff: move Platform Admin and Sign Out inside scrollable container in WorkspaceSidebar, PlatformSidebar, and MobileNav
 
 ## User Guide and Capability Statement Cleanup
-- [ ] Rewrite User Guide page: official PrimeContractorOS help manual feel, card descriptions, section details, step-by-step instructions, tips, mobile-friendly
-- [ ] Rewrite Capability Statement page: professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
-- [ ] Add Download Capability Statement PDF, Contact, View Services, View PrimeContractorOS buttons
+- [x] Rewrite User Guide page: official PrimeContractorOS help manual feel, card descriptions, section details, step-by-step instructions, tips, mobile-friendly
+- [x] Rewrite Capability Statement page: professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
+- [x] Add Download Capability Statement PDF, Contact, View Services, View PrimeContractorOS buttons
 
 
 ## Phase 25: 7 Platform Admin Business Control Pages
