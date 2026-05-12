@@ -91,6 +91,7 @@ import PlatformCompliance from "./pages/PlatformCompliance";
 import Security from "./pages/Security";
 import AppShell from "./components/AppShell";
 import AdminBadge from "./components/AdminBadge";
+import ConsentBanner from "./components/ConsentBanner";
 import ContractHubDetail from "./pages/ContractHubDetail";
 import AIConfirmation from "./pages/AIConfirmation";
 import ContractCloseout from "./pages/ContractCloseout";
@@ -228,6 +229,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <AdminBadge />
+          <ConsentBanner />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

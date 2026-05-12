@@ -345,6 +345,16 @@ export default function Onboarding() {
             {currentStepData.content}
           </div>
 
+          {/* Legal Agreement */}
+          {currentStep === steps.length - 1 && (
+            <p className="text-xs text-slate-400 text-center pt-4">
+              By completing setup, you confirm you have read and agree to the{" "}
+              <a href="/terms" target="_blank" className="text-blue-500 hover:underline">Terms of Service</a>
+              {" "}and{" "}
+              <a href="/privacy" target="_blank" className="text-blue-500 hover:underline">Privacy Policy</a>.
+            </p>
+          )}
+
           {/* Navigation Buttons */}
           <div className="flex justify-between pt-6 border-t border-slate-100">
             <Button

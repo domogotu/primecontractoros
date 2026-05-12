@@ -269,6 +269,15 @@ export default function Billing() {
         })}
       </div>
 
+      {/* Legal Agreement */}
+      <p className="text-xs text-slate-400 text-center">
+        By subscribing, you agree to our{" "}
+        <a href="/terms" target="_blank" className="text-blue-500 hover:underline">Terms of Service</a>
+        {" "}and{" "}
+        <a href="/privacy" target="_blank" className="text-blue-500 hover:underline">Privacy Policy</a>.
+        Subscriptions renew automatically; cancel anytime in your billing settings.
+      </p>
+
       {/* Test Mode Notice */}
       <Card className="p-4 bg-blue-50 border-blue-200">
         <div className="flex items-start gap-3">

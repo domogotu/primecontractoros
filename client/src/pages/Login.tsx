@@ -72,6 +72,12 @@ export default function Login() {
               <p className="text-center text-sm text-gray-500">
                 Secure authentication powered by Manus OAuth. Your credentials are never stored on our servers.
               </p>
+              <p className="text-center text-xs text-gray-400">
+                By signing in, you agree to our{" "}
+                <a href="/terms" target="_blank" className="text-blue-600 hover:underline">Terms of Service</a>
+                {" "}and{" "}
+                <a href="/privacy" target="_blank" className="text-blue-600 hover:underline">Privacy Policy</a>.
+              </p>
             </div>
 
             {/* Divider */}

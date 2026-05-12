@@ -280,6 +280,12 @@ export default function Pricing() {
           >
             Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
+          <p className="text-sm opacity-70">
+            By starting a trial, you agree to our{" "}
+            <a href="/terms" target="_blank" className="underline hover:opacity-100">Terms of Service</a>
+            {" "}and{" "}
+            <a href="/privacy" target="_blank" className="underline hover:opacity-100">Privacy Policy</a>.
+          </p>
         </div>
       </section>
 
@@ -295,6 +301,12 @@ export default function Pricing() {
             </button>
             <button onClick={() => navigate("/help")} className="text-gray-500 hover:text-gray-900">
               Help
+            </button>
+            <button onClick={() => navigate("/terms")} className="text-gray-500 hover:text-gray-900">
+              Terms
+            </button>
+            <button onClick={() => navigate("/privacy")} className="text-gray-500 hover:text-gray-900">
+              Privacy
             </button>
           </div>
         </div>
