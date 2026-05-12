@@ -98,7 +98,8 @@ function Router() {
       
       {/* Platform Owner pages - has its own sidebar via PlatformRouter */}
       <Route path={"/platform/login"} component={PlatformLogin} />
-      <Route path={"/platform*"} component={PlatformRouter} />
+      <Route path={"/platform"} component={PlatformRouter} />
+      <Route path={"/platform/:rest*"} component={PlatformRouter} />
       
       {/* App routes - all wrapped with AppShell (sidebar + auth) */}
       <Route path={"/app"} component={withAppShell(AppRouter)} />

@@ -211,7 +211,7 @@ const normalizeToolChoice = (
 
 // Use OpenAI directly when OPENAI_API_KEY is set, otherwise fall back to Manus Forge API
 const resolveApiUrl = () => {
-  if (!!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0)) {
+  if (!!(process.env.OPENAI_API_KEY) && (process.env.OPENAI_API_KEY.trim().length > 0)) {
     return "https://api.openai.com/v1/chat/completions";
   }
   return ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
@@ -220,22 +220,22 @@ const resolveApiUrl = () => {
 };
 
 const resolveApiKey = () => {
-  if (!!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0)) {
-    return (process.env.OPENAI_API_KEY ?? "");
+  if (!!(process.env.OPENAI_API_KEY) && (process.env.OPENAI_API_KEY.trim().length > 0)) {
+    return process.env.OPENAI_API_KEY || "";
   }
   return ENV.forgeApiKey;
 };
 
 const resolveModel = () => {
   // Use GPT-4.1-mini when OpenAI key is configured (fast, cost-effective, capable)
-  if (!!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim().length > 0)) {
+  if (!!(process.env.OPENAI_API_KEY) && (process.env.OPENAI_API_KEY.trim().length > 0)) {
     return "gpt-4.1-mini";
   }
   return "gemini-2.5-flash";
 };
 
 const assertApiKey = () => {
-  if (!(process.env.OPENAI_API_KEY ?? "") && !ENV.forgeApiKey) {
+  if (!(process.env.OPENAI_API_KEY || "") && !ENV.forgeApiKey) {
     throw new Error("No API key configured. Set OPENAI_API_KEY or BUILT_IN_FORGE_API_KEY.");
   }
 };
