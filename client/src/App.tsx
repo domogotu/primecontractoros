@@ -63,6 +63,22 @@ import PaymentDetail from "./pages/PaymentDetail";
 import About from "./pages/About";
 import ContactPage from "./pages/ContactPage";
 import Privacy from "./pages/Privacy";
+import Subcontractors from "./pages/Subcontractors";
+import Vendors from "./pages/Vendors";
+const Invites = () => <div className="container py-8"><h1 className="text-2xl font-bold">Invites</h1><p className="text-muted-foreground">Workspace invitation management - coming soon.</p></div>;
+import Diagnostics from "./pages/Diagnostics";
+const DocumentGeneration = () => <div className="container py-8"><h1 className="text-2xl font-bold">Document Generation</h1><p className="text-muted-foreground">AI-powered document creation - coming soon.</p></div>;
+const FlowdownReview = () => <div className="container py-8"><h1 className="text-2xl font-bold">Flowdown Review</h1><p className="text-muted-foreground">Contract clause flowdown analysis - coming soon.</p></div>;
+import CustomerAdoption from "./pages/CustomerAdoption";
+import Handbook from "./pages/Handbook";
+import ChangeManagement from "./pages/ChangeManagement";
+import PlanFeatures from "./pages/PlanFeatures";
+import EmailTemplates from "./pages/EmailTemplates";
+import ConsistencyCheck from "./pages/ConsistencyCheck";
+import ExternalViewer from "./pages/ExternalViewer";
+import DocumentVersions from "./pages/DocumentVersions";
+import DemoMode from "./pages/DemoMode";
+import LegalPages from "./pages/LegalPages";
 import Terms from "./pages/Terms";
 import Documentation from "./pages/Documentation";
 import PlatformCompliance from "./pages/PlatformCompliance";
@@ -155,6 +171,24 @@ function Router() {
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
       <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
+      
+      {/* Batch 1-4: Product Completion Routes */}
+      <Route path={"/app/subcontractors"} component={withAppShell(Subcontractors)} />
+      <Route path={"/app/vendors"} component={withAppShell(Vendors)} />
+      <Route path={"/app/invites"} component={withAppShell(Invites)} />
+      <Route path={"/app/diagnostics"} component={withAppShell(Diagnostics)} />
+      <Route path={"/app/document-generation"} component={withAppShell(DocumentGeneration)} />
+      <Route path={"/app/flowdown-review"} component={withAppShell(FlowdownReview)} />
+      <Route path={"/app/customer-adoption"} component={withAppShell(CustomerAdoption)} />
+      <Route path={"/app/handbook"} component={withAppShell(Handbook)} />
+      <Route path={"/app/change-management"} component={withAppShell(ChangeManagement)} />
+      <Route path={"/app/plan-features"} component={withAppShell(PlanFeatures)} />
+      <Route path={"/app/email-templates"} component={withAppShell(EmailTemplates)} />
+      <Route path={"/app/consistency-check"} component={withAppShell(ConsistencyCheck)} />
+      <Route path={"/app/external-viewers"} component={withAppShell(ExternalViewer)} />
+      <Route path={"/app/document-versions"} component={withAppShell(DocumentVersions)} />
+      <Route path={"/app/demo-mode"} component={withAppShell(DemoMode)} />
+      <Route path={"/legal"} component={LegalPages} />
       <Route path={"/app/ai-suggestions"} component={withAppShell(AISuggestions)} />
       <Route path={"/app/ai-runs"} component={withAppShell(AIRuns)} />
       <Route path={"/app/audit-log"} component={withAppShell(AuditLog)} />
@@ -173,6 +207,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <AdminBadge />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

@@ -1,0 +1,81 @@
+// @ts-nocheck
+import { z } from "zod";
+import { router, protectedProcedure } from "./_core/trpc";
+import { getDb } from "./db";
+import { subcontractors, vendors, documentVersions, fileLinks } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+import { requireWorkspaceId } from "./workspaceMiddleware";
+
+export const subcontractorsRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    return db.select().from(subcontractors).where(eq(subcontractors.workspaceId, wsId)).orderBy(desc(subcontractors.createdAt));
+  }),
+  create: protectedProcedure.input(z.object({ companyName: z.string(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), specialty: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    await db.insert(subcontractors).values({ ...input, workspaceId: wsId });
+    return { success: true };
+  }),
+  update: protectedProcedure.input(z.object({ id: z.number(), companyName: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), specialty: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const { id, ...data } = input;
+    await db.update(subcontractors).set(data).where(eq(subcontractors.id, id));
+    return { success: true };
+  }),
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    await db.delete(subcontractors).where(eq(subcontractors.id, input.id));
+    return { success: true };
+  }),
+});
+
+export const vendorsRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    return db.select().from(vendors).where(eq(vendors.workspaceId, wsId)).orderBy(desc(vendors.createdAt));
+  }),
+  create: protectedProcedure.input(z.object({ companyName: z.string(), category: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    await db.insert(vendors).values({ ...input, workspaceId: wsId });
+    return { success: true };
+  }),
+  update: protectedProcedure.input(z.object({ id: z.number(), companyName: z.string().optional(), category: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const { id, ...data } = input;
+    await db.update(vendors).set(data).where(eq(vendors.id, id));
+    return { success: true };
+  }),
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    await db.delete(vendors).where(eq(vendors.id, input.id));
+    return { success: true };
+  }),
+});
+
+export const documentVersionsRouter = router({
+  list: protectedProcedure.input(z.object({ fileId: z.number() })).query(async ({ ctx, input }) => {
+    const db = await getDb();
+    return db.select().from(documentVersions).where(eq(documentVersions.fileId, input.fileId)).orderBy(desc(documentVersions.createdAt));
+  }),
+  create: protectedProcedure.input(z.object({ fileId: z.number(), versionNumber: z.number(), changeDescription: z.string().optional(), fileUrl: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    await db.insert(documentVersions).values({ ...input, createdBy: ctx.user.id });
+    return { success: true };
+  }),
+});
+
+export const fileLinksRouter = router({
+  list: protectedProcedure.input(z.object({ recordType: z.string(), recordId: z.number() })).query(async ({ ctx, input }) => {
+    const db = await getDb();
+    return db.select().from(fileLinks).where(eq(fileLinks.recordType, input.recordType));
+  }),
+  create: protectedProcedure.input(z.object({ fileId: z.number(), recordType: z.string(), recordId: z.number(), linkType: z.string().optional() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    await db.insert(fileLinks).values(input);
+    return { success: true };
+  }),
+});

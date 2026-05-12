@@ -118,7 +118,7 @@ export async function logAudit(params: {
       targetId: params.targetId || null,
       oldValue: params.oldValue || null,
       newValue: params.newValue || null,
-      note: params.note || null,
+      reason: params.note || null,
       ipAddress: params.ipAddress || null,
       userAgent: params.userAgent || null,
     });

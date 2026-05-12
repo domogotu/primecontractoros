@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -1026,3 +1026,199 @@ export const workspaceRoles = mysqlTable("workspace_roles", {
 });
 export type WorkspaceRole = typeof workspaceRoles.$inferSelect;
 export type InsertWorkspaceRole = typeof workspaceRoles.$inferInsert;
+
+// ==================== 25 Product-Completion Tables ====================
+
+export const onboardingProgress = mysqlTable("onboarding_progress", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  userId: int("user_id").notNull(),
+  currentStep: int("current_step").notNull().default(1),
+  totalSteps: int("total_steps").notNull().default(8),
+  stepData: json("step_data"),
+  completedSteps: json("completed_steps"),
+  percentComplete: int("percent_complete").notNull().default(0),
+  status: varchar("status", { length: 32 }).notNull().default("in_progress"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const subcontractors = mysqlTable("subcontractors", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  companyName: varchar("company_name", { length: 255 }).notNull(),
+  pointOfContact: varchar("point_of_contact", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 64 }),
+  role: varchar("role", { length: 128 }),
+  linkedContractId: int("linked_contract_id"),
+  scopeOfWork: text("scope_of_work"),
+  requiredDocuments: json("required_documents"),
+  insuranceCertEvidence: json("insurance_cert_evidence"),
+  flowdownClauses: json("flowdown_clauses"),
+  deliverablesAssigned: json("deliverables_assigned"),
+  paymentStatus: varchar("payment_status", { length: 64 }),
+  performanceNotes: text("performance_notes"),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  archivedAt: timestamp("archived_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const vendors = mysqlTable("vendors", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  companyName: varchar("company_name", { length: 255 }).notNull(),
+  vendorType: varchar("vendor_type", { length: 64 }).notNull(),
+  contactName: varchar("contact_name", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 64 }),
+  address: text("address"),
+  certifications: json("certifications"),
+  documents: json("documents"),
+  notes: text("notes"),
+  linkedOpportunityIds: json("linked_opportunity_ids"),
+  linkedContractIds: json("linked_contract_ids"),
+  status: varchar("status", { length: 32 }).notNull().default("active"),
+  performanceHistory: json("performance_history"),
+  archivedAt: timestamp("archived_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const invites = mysqlTable("invites", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  role: varchar("role", { length: 64 }).notNull().default("standard_user"),
+  invitedBy: int("invited_by").notNull(),
+  token: varchar("token", { length: 255 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("pending"),
+  expiresAt: timestamp("expires_at"),
+  acceptedAt: timestamp("accepted_at"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const documentVersions = mysqlTable("document_versions", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  documentType: varchar("document_type", { length: 64 }).notNull(),
+  documentId: int("document_id"),
+  versionNumber: int("version_number").notNull().default(1),
+  title: varchar("title", { length: 255 }),
+  content: text("content"),
+  fileKey: varchar("file_key", { length: 512 }),
+  changedBy: int("changed_by"),
+  changeNote: text("change_note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const migrationsLog = mysqlTable("migrations_log", {
+  id: int("id").primaryKey().autoincrement(),
+  migrationName: varchar("migration_name", { length: 255 }).notNull(),
+  version: varchar("version", { length: 64 }).notNull(),
+  appliedAt: timestamp("applied_at").notNull().defaultNow(),
+  success: boolean("success").notNull().default(true),
+  rollbackNote: text("rollback_note"),
+  executionTimeMs: int("execution_time_ms"),
+});
+
+export const fileLinks = mysqlTable("file_links", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  fileId: int("file_id").notNull(),
+  targetType: varchar("target_type", { length: 64 }).notNull(),
+  targetId: int("target_id").notNull(),
+  linkType: varchar("link_type", { length: 64 }).notNull(),
+  isPrimary: boolean("is_primary").default(false),
+  createdBy: int("created_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const planFeatures = mysqlTable("plan_features", {
+  id: int("id").primaryKey().autoincrement(),
+  planId: int("plan_id").notNull(),
+  featureKey: varchar("feature_key", { length: 64 }).notNull(),
+  featureValue: varchar("feature_value", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailTemplates = mysqlTable("email_templates", {
+  id: int("id").primaryKey().autoincrement(),
+  templateKey: varchar("template_key", { length: 64 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  htmlBody: text("html_body").notNull(),
+  isEnabled: boolean("is_enabled").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const recordTimeline = mysqlTable("record_timeline", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  targetType: varchar("target_type", { length: 64 }).notNull(),
+  targetId: int("target_id").notNull(),
+  eventType: varchar("event_type", { length: 64 }).notNull(),
+  description: text("description"),
+  oldValue: text("old_value"),
+  newValue: text("new_value"),
+  userId: int("user_id"),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const recordNotes = mysqlTable("record_notes", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  targetType: varchar("target_type", { length: 64 }).notNull(),
+  targetId: int("target_id").notNull(),
+  noteText: text("note_text").notNull(),
+  authorId: int("author_id").notNull(),
+  isPinned: boolean("is_pinned").notNull().default(false),
+  isInternal: boolean("is_internal").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const generatedDocuments = mysqlTable("generated_documents", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  documentType: varchar("document_type", { length: 64 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content"),
+  status: varchar("status", { length: 32 }).notNull().default("draft"),
+  generatedBy: varchar("generated_by", { length: 32 }).notNull().default("ai"),
+  sourceRecordType: varchar("source_record_type", { length: 64 }),
+  sourceRecordId: int("source_record_id"),
+  fileKey: varchar("file_key", { length: 512 }),
+  createdBy: int("created_by"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});
+
+export const flowdownReviews = mysqlTable("flowdown_reviews", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  contractId: int("contract_id").notNull(),
+  subcontractorId: int("subcontractor_id"),
+  clauseReference: varchar("clause_reference", { length: 255 }),
+  clauseText: text("clause_text"),
+  reviewStatus: varchar("review_status", { length: 32 }).notNull().default("pending"),
+  flowdownRequired: boolean("flowdown_required").default(false),
+  notes: text("notes"),
+  reviewedBy: int("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const customerAdoption = mysqlTable("customer_adoption", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspace_id").notNull(),
+  metricKey: varchar("metric_key", { length: 64 }).notNull(),
+  metricValue: varchar("metric_value", { length: 255 }),
+  lastChecked: timestamp("last_checked"),
+  status: varchar("status", { length: 32 }).notNull().default("unknown"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+});

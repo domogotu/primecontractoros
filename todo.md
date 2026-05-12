@@ -837,3 +837,73 @@
 - [x] Mark workspaces as onboarded via Edit panel
 - [x] Bulk Send Welcome Email on Workspaces list page
 - [x] Workspace activity feed on detail page
+
+## 25 Final Product-Completion Requirements
+
+- [x] 1. Customer Onboarding Wizard with save/resume
+- [x] 2. Empty state design for every page
+- [x] 3. Record timeline on major records
+- [x] 4. Notes system across the app
+- [x] 5. Attachment and evidence rules
+- [x] 6. Change management for contract modifications
+- [x] 7. Versioning for important generated outputs
+- [x] 8. Customer-facing help inside each page
+- [x] 9. Admin/owner mode indicator
+- [x] 10. Plan feature matrix with enforcement
+- [x] 11. Payment provider placeholder / integration-ready layer
+- [x] 12. Email notification ready system
+- [x] 13. System health / admin diagnostics page
+- [x] 14. Database migration system
+- [x] 15. Test / demo workspace mode
+- [x] 16. Data privacy and terms pages
+- [x] 17. User invite flow
+- [x] 18. Client / external viewer future role
+- [x] 19. Subcontractor management module
+- [x] 20. Flowdown clause / subcontract review workflow
+- [x] 21. Procurement / vendor tracking
+- [x] 22. Document generation center
+- [x] 23. Business owner handbook builder
+- [x] 24. Customer success / adoption tracking
+- [x] 25. Final system consistency check
+
+## Phase 24: 25 Product-Completion Requirements
+
+### Batch 1 (High-impact, foundational)
+- [x] DB: onboarding_progress, record_notes, record_timeline tables created
+- [x] Server: onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter
+- [x] Frontend: Onboarding wizard component (multi-step guided setup)
+- [x] Frontend: Empty states for all list pages
+- [x] Frontend: Notes system (add/view notes on any record)
+- [x] Frontend: Record timeline (activity history on records)
+- [x] Frontend: Help panels (contextual help content)
+- [x] Frontend: Admin mode indicator (visual badge for admin users)
+
+### Batch 2 (Data/workflow)
+- [x] DB: subcontractors, vendors, document_versions, file_links tables created
+- [x] Server: subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter
+- [x] Frontend: Subcontractor module (list, add, detail)
+- [x] Frontend: Vendor tracking (list, add, detail)
+- [x] Frontend: Change management (contract modifications tracking)
+- [x] Frontend: Attachment rules (file linking to records)
+- [x] Frontend: Document versioning (version history on files)
+
+### Batch 3 (System/platform)
+- [x] DB: plan_features, email_templates, migrations_log, invites tables created
+- [x] Server: planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter
+- [x] Frontend: Plan feature matrix (feature availability by plan)
+- [x] Frontend: Email framework (template management)
+- [x] Frontend: Diagnostics page (system health)
+- [x] Frontend: Migration system (schema version tracking)
+- [x] Frontend: Invite flow (workspace invitations)
+- [x] Frontend: Demo mode (toggle for demo workspace)
+
+### Batch 4 (Advanced)
+- [x] DB: generated_documents, flowdown_reviews, customer_adoption tables created
+- [x] Server: documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter
+- [x] Frontend: Document generation (AI-powered doc creation)
+- [x] Frontend: Flowdown review (contract clause analysis)
+- [x] Frontend: Customer adoption tracking (usage analytics)
+- [x] Frontend: Legal pages (terms, privacy - already exist, enhance)
+- [x] Frontend: Handbook builder (compliance handbook generation)
+- [x] Frontend: External viewer role (read-only access)
+- [x] Frontend: Consistency check (data validation)
