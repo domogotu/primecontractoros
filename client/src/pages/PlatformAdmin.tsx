@@ -6,6 +6,8 @@ import { Link, useLocation } from "wouter";
 
 export default function PlatformAdmin() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [wsPage, setWsPage] = useState(1);
+  const WS_PAGE_SIZE = 10;
   const [, navigate] = useLocation();
 
   const { data: stats, isLoading: statsLoading } = trpc.platform.stats.useQuery();
@@ -14,11 +16,13 @@ export default function PlatformAdmin() {
 
   const openTickets = tickets.filter((t: any) => t.status === "open" || t.status === "in_progress");
 
-  const filteredWorkspaces = workspaces.filter((ws: any) => {
+  const allFilteredWorkspaces = workspaces.filter((ws: any) => {
     const matchesSearch = ws.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ws.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+  const totalWsPages = Math.max(1, Math.ceil(allFilteredWorkspaces.length / WS_PAGE_SIZE));
+  const filteredWorkspaces = allFilteredWorkspaces.slice((wsPage - 1) * WS_PAGE_SIZE, wsPage * WS_PAGE_SIZE);
 
   if (statsLoading || wsLoading) {
     return (
@@ -94,7 +98,7 @@ export default function PlatformAdmin() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredWorkspaces.length === 0 ? (
+            {allFilteredWorkspaces.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-gray-500 text-sm">
                   No workspaces found
@@ -134,6 +138,31 @@ export default function PlatformAdmin() {
             )}
           </tbody>
         </table>
+        {/* Pagination */}
+        {totalWsPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
+              Showing {(wsPage - 1) * WS_PAGE_SIZE + 1}–{Math.min(wsPage * WS_PAGE_SIZE, allFilteredWorkspaces.length)} of {allFilteredWorkspaces.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setWsPage(p => Math.max(1, p - 1))}
+                disabled={wsPage === 1}
+                className="px-3 py-1 text-xs border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1 text-xs text-gray-600">{wsPage} / {totalWsPages}</span>
+              <button
+                onClick={() => setWsPage(p => Math.min(totalWsPages, p + 1))}
+                disabled={wsPage === totalWsPages}
+                className="px-3 py-1 text-xs border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Clickable Stat Cards */}

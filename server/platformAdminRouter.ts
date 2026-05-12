@@ -205,6 +205,87 @@ export const platformAdminRouter = router({
         });
         return { success: true };
       }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        companyName: z.string().optional(),
+        contractingModel: z.enum(["prime", "sub", "both"]).optional(),
+        onboardingCompleted: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { id, ...fields } = input;
+        const updateFields: Record<string, unknown> = {};
+        if (fields.companyName !== undefined) updateFields.companyName = fields.companyName;
+        if (fields.contractingModel !== undefined) updateFields.contractingModel = fields.contractingModel;
+        if (fields.onboardingCompleted !== undefined) updateFields.onboardingCompleted = fields.onboardingCompleted;
+        await db.update(workspaces).set(updateFields).where(eq(workspaces.id, id));
+        await db.insert(platformAuditLog).values({
+          action: "update_workspace",
+          targetType: "workspace",
+          targetId: id,
+          performedBy: ctx.user.id,
+          reason: `Updated: ${Object.keys(updateFields).join(", ")}`,
+        });
+        return { success: true };
+      }),
+
+    sendWelcomeEmail: adminProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, input.workspaceId)).limit(1);
+        if (!ws) throw new Error("Workspace not found");
+        const [owner] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
+        if (!owner?.email) throw new Error("Workspace owner has no email");
+        const resendKey = process.env.RESEND_API_KEY;
+        if (!resendKey) throw new Error("RESEND_API_KEY not configured");
+        const resend = new Resend(resendKey);
+        const name = owner.name || "Team Member";
+        const wsName = ws.companyName || ws.name || "your workspace";
+        const htmlBody = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Welcome to PrimeContractorOS</title></head>
+<body style="margin:0;padding:0;background:#0b1320;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0b1320;">
+    <tr><td align="center" style="padding:40px 20px;">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#111d30;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+        <tr><td style="background:linear-gradient(135deg,#1a2d4a,#0b1320);padding:40px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <h1 style="color:#fff;font-size:24px;margin:0 0 8px;">Welcome to Reed's Solutions LLC</h1>
+          <p style="color:#60a5fa;font-size:14px;margin:0;">PrimeContractorOS — Government Contracting Management Platform</p>
+        </td></tr>
+        <tr><td style="padding:40px;">
+          <p style="color:#e2e8f0;font-size:16px;margin:0 0 20px;">Hi ${name},</p>
+          <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 24px;">
+            Your workspace <strong style="color:#e2e8f0;">${wsName}</strong> is ready on PrimeContractorOS. Log in to start managing your government contracting operations.
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+            <tr><td style="padding:20px;background:rgba(59,130,246,0.1);border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+              <p style="color:#60a5fa;font-size:13px;font-weight:bold;margin:0 0 12px;">Get Started Now</p>
+              <a href="https://primecontractor-bk79t4ta.manus.space/login" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:bold;">Log In to PrimeContractorOS</a>
+            </td></tr>
+          </table>
+          <p style="color:#64748b;font-size:12px;margin:24px 0 0;border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;">
+            Questions? Contact us at <a href="mailto:support@reedssolutionsllc.org" style="color:#60a5fa;">support@reedssolutionsllc.org</a>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+        const result = await resend.emails.send({
+          from: "Reed's Solutions LLC <onboarding@resend.dev>",
+          to: owner.email,
+          subject: `Welcome to PrimeContractorOS — ${wsName} is Ready`,
+          html: htmlBody,
+        });
+        if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
+        return { success: true, emailId: result.data?.id };
+      }),
   }),
 
   // --- Users (admin view all) ---

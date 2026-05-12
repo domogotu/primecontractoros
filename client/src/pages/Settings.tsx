@@ -65,7 +65,7 @@ export default function Settings() {
 
   const tabs = [
     { id: 'general', label: 'General', icon: SettingsIcon },
-    { id: 'ai', label: 'AI Configuration', icon: Zap },
+    { id: 'ai', label: 'AI Features', icon: Zap },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'team', label: 'Team', icon: Users },
     { id: 'billing', label: 'Billing', icon: CreditCard },
@@ -150,81 +150,30 @@ export default function Settings() {
               </div>
             )}
 
-            {/* AI Configuration */}
+            {/* AI Features */}
             {activeTab === 'ai' && (
               <div className="space-y-6">
                 <div className="bg-white border border-slate-200 rounded-lg p-6">
-                  <h2 className="text-lg font-semibold text-slate-900 mb-2">AI Configuration</h2>
+                  <h2 className="text-lg font-semibold text-slate-900 mb-2">AI Features</h2>
                   <p className="text-sm text-slate-600 mb-6">
-                    Configure your OpenAI API key to enable AI-powered features like proposal review, compliance analysis, and intelligent recommendations.
+                    AI-powered features are managed at the platform level and are always available to your workspace — no API key required.
                   </p>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className="flex items-center gap-3 mb-4">
-                        <input type="checkbox" checked={aiEnabled} onChange={e => setAiEnabled(e.target.checked)} className="w-4 h-4 rounded" />
-                        <span className="font-medium text-slate-900">Enable AI Features</span>
-                      </label>
-                    </div>
-
-                    {aiEnabled && (
-                      <div>
-                        <Label htmlFor="openaiKey">OpenAI API Key</Label>
-                        <div className="mt-2 flex gap-2">
-                          <div className="relative flex-1">
-                            <Input
-                              id="openaiKey"
-                              type={showApiKey ? 'text' : 'password'}
-                              value={openaiApiKey}
-                              onChange={e => setOpenaiApiKey(e.target.value)}
-                              placeholder="sk-..."
-                            />
-                          </div>
-                          <Button variant="outline" size="icon" onClick={() => setShowApiKey(!showApiKey)}>
-                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </Button>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Proposal Review', desc: 'AI-assisted proposal scoring and gap analysis' },
+                      { label: 'Compliance Analysis', desc: 'Automated compliance checks against contract requirements' },
+                      { label: 'Smart Recommendations', desc: 'Opportunity matching and next-step guidance' },
+                    ].map(({ label, desc }) => (
+                      <div key={label} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{label}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                          Your API key is stored encrypted and only used server-side for AI features.
-                        </p>
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 shrink-0 ml-3">Active</span>
                       </div>
-                    )}
-
-                    {!aiEnabled && (
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <p className="text-sm text-amber-800">
-                          <strong>AI Disabled:</strong> AI-powered features like proposal review, compliance analysis, and intelligent recommendations are currently disabled. Enable AI and provide an API key to activate these features.
-                        </p>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-
-                {aiEnabled && (
-                  <div className="bg-white border border-slate-200 rounded-lg p-6">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-4">AI Features Status</h2>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <span className="text-slate-700">Proposal Review</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${openaiApiKey ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
-                          {openaiApiKey ? 'Enabled' : 'Needs API Key'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <span className="text-slate-700">Compliance Analysis</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${openaiApiKey ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
-                          {openaiApiKey ? 'Enabled' : 'Needs API Key'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <span className="text-slate-700">Smart Recommendations</span>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${openaiApiKey ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
-                          {openaiApiKey ? 'Enabled' : 'Needs API Key'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 

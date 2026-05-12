@@ -3,12 +3,14 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft, Users, CreditCard, FileText, Clock, Shield,
-  Plus, Ban, RotateCcw
+  Plus, Ban, RotateCcw, Edit2, Mail, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export default function PlatformWorkspaceDetailPage() {
   const [location, navigate] = useLocation();
@@ -17,8 +19,12 @@ export default function PlatformWorkspaceDetailPage() {
   const [showSuspendDialog, setShowSuspendDialog] = useState(false);
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
   const [showNoteDialog, setShowNoteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [reason, setReason] = useState("");
   const [noteText, setNoteText] = useState("");
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [editContractingModel, setEditContractingModel] = useState<"prime" | "sub" | "both" | "">("");
+  const [editOnboarding, setEditOnboarding] = useState<boolean | null>(null);
 
   const { data: workspace, isLoading, refetch } = trpc.platformAdmin.workspaces.get.useQuery(
     { id: workspaceId },
@@ -34,9 +40,37 @@ export default function PlatformWorkspaceDetailPage() {
   const addNote = trpc.platformAdmin.notes.create.useMutation({
     onSuccess: () => { refetch(); setShowNoteDialog(false); setNoteText(""); },
   });
+  const updateWorkspace = trpc.platformAdmin.workspaces.update.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowEditDialog(false);
+      toast.success("Workspace updated");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const sendWelcomeEmail = trpc.platformAdmin.workspaces.sendWelcomeEmail.useMutation({
+    onSuccess: () => toast.success("Welcome email sent successfully"),
+    onError: (e) => toast.error(e.message),
+  });
 
   const formatDate = (d: any) => d ? new Date(d).toLocaleDateString() : "—";
   const formatDateTime = (d: any) => d ? new Date(d).toLocaleString() : "—";
+
+  const openEditDialog = () => {
+    if (!workspace) return;
+    setEditCompanyName(workspace.companyName || "");
+    setEditContractingModel((workspace.contractingModel as any) || "");
+    setEditOnboarding(workspace.onboardingCompleted ?? false);
+    setShowEditDialog(true);
+  };
+
+  const handleEdit = () => {
+    const payload: any = { id: workspaceId };
+    if (editCompanyName.trim()) payload.companyName = editCompanyName.trim();
+    if (editContractingModel) payload.contractingModel = editContractingModel;
+    if (editOnboarding !== null) payload.onboardingCompleted = editOnboarding;
+    updateWorkspace.mutate(payload);
+  };
 
   if (isLoading) {
     return (
@@ -60,14 +94,14 @@ export default function PlatformWorkspaceDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-6xl">
+    <div className="p-4 md:p-6 max-w-6xl">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-start gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => navigate("/platform/workspaces")}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">
             {workspace.companyName || workspace.name}
           </h1>
           <p className="text-gray-500 text-sm">Workspace ID: {workspace.id}</p>
@@ -83,28 +117,43 @@ export default function PlatformWorkspaceDetailPage() {
         >
           {workspace.status}
         </Badge>
-        <div className="flex gap-2">
-          {workspace.status === "active" ? (
-            <Button variant="destructive" size="sm" onClick={() => setShowSuspendDialog(true)}>
-              <Ban className="w-4 h-4 mr-1" /> Suspend
-            </Button>
-          ) : workspace.status === "suspended" ? (
-            <Button size="sm" onClick={() => setShowReactivateDialog(true)}>
-              <RotateCcw className="w-4 h-4 mr-1" /> Reactivate
-            </Button>
-          ) : null}
-          <Button variant="outline" size="sm" onClick={() => setShowNoteDialog(true)}>
-            <Plus className="w-4 h-4 mr-1" /> Add Note
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Button variant="outline" size="sm" onClick={openEditDialog}>
+          <Edit2 className="w-4 h-4 mr-1" /> Edit
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => sendWelcomeEmail.mutate({ workspaceId: workspace.id })}
+          disabled={sendWelcomeEmail.isPending}
+          className="text-blue-700 border-blue-300 hover:bg-blue-50"
+        >
+          <Mail className="w-4 h-4 mr-1" />
+          {sendWelcomeEmail.isPending ? "Sending..." : "Send Welcome Email"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowNoteDialog(true)}>
+          <Plus className="w-4 h-4 mr-1" /> Add Note
+        </Button>
+        {workspace.status === "active" ? (
+          <Button variant="destructive" size="sm" onClick={() => setShowSuspendDialog(true)}>
+            <Ban className="w-4 h-4 mr-1" /> Suspend
           </Button>
-        </div>
+        ) : workspace.status === "suspended" ? (
+          <Button size="sm" onClick={() => setShowReactivateDialog(true)}>
+            <RotateCcw className="w-4 h-4 mr-1" /> Reactivate
+          </Button>
+        ) : null}
       </div>
 
       {/* Overview Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500 uppercase mb-1">Owner / Admin</p>
           <p className="font-medium text-gray-900">{workspace.owner?.name || "—"}</p>
-          <p className="text-sm text-gray-500">{workspace.owner?.email || "—"}</p>
+          <p className="text-sm text-gray-500 truncate">{workspace.owner?.email || "—"}</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500 uppercase mb-1">Plan & Billing</p>
@@ -121,19 +170,16 @@ export default function PlatformWorkspaceDetailPage() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <p className="text-xs text-gray-500 uppercase mb-1">Status</p>
           <div className="space-y-1">
-            <p className="text-sm">
-              Onboarding: {workspace.onboardingCompleted ? (
+            <p className="text-sm flex items-center gap-1">
+              Onboarding:
+              {workspace.onboardingCompleted ? (
                 <Badge className="bg-green-100 text-green-800 ml-1">Complete</Badge>
               ) : (
                 <Badge variant="secondary" className="ml-1">Incomplete</Badge>
               )}
             </p>
             <p className="text-sm">
-              Trial Used: {workspace.trialUsed ? (
-                <Badge className="bg-yellow-100 text-yellow-800 ml-1">Yes</Badge>
-              ) : (
-                <Badge variant="secondary" className="ml-1">No</Badge>
-              )}
+              Model: <span className="font-medium capitalize">{workspace.contractingModel || "—"}</span>
             </p>
           </div>
         </div>
@@ -149,26 +195,26 @@ export default function PlatformWorkspaceDetailPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-2 font-medium text-gray-700">Name</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-700">Email</th>
+                <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Email</th>
                 <th className="text-left px-4 py-2 font-medium text-gray-700">Role</th>
-                <th className="text-left px-4 py-2 font-medium text-gray-700">Joined</th>
+                <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Joined</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {workspace.owner && (
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-2 font-medium text-gray-900">{workspace.owner.name || "—"}</td>
-                  <td className="px-4 py-2 text-gray-600">{workspace.owner.email || "—"}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden sm:table-cell truncate max-w-[180px]">{workspace.owner.email || "—"}</td>
                   <td className="px-4 py-2"><Badge>Owner</Badge></td>
-                  <td className="px-4 py-2 text-gray-600">{formatDate(workspace.owner.createdAt)}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(workspace.owner.createdAt)}</td>
                 </tr>
               )}
               {workspace.members?.map((m: any) => (
                 <tr key={m.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2 font-medium text-gray-900">{m.user?.name || "—"}</td>
-                  <td className="px-4 py-2 text-gray-600">{m.user?.email || "—"}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden sm:table-cell truncate max-w-[180px]">{m.user?.email || "—"}</td>
                   <td className="px-4 py-2"><Badge variant="secondary">{m.role}</Badge></td>
-                  <td className="px-4 py-2 text-gray-600">{formatDate(m.joinedAt)}</td>
+                  <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(m.joinedAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -187,10 +233,9 @@ export default function PlatformWorkspaceDetailPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-4 py-2 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Cycle</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Period Start</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Period End</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Trial Ends</th>
+                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Cycle</th>
+                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Period Start</th>
+                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Period End</th>
                   <th className="text-left px-4 py-2 font-medium text-gray-700">Created</th>
                 </tr>
               </thead>
@@ -205,10 +250,9 @@ export default function PlatformWorkspaceDetailPage() {
                         "bg-gray-100 text-gray-800"
                       }>{b.status}</Badge>
                     </td>
-                    <td className="px-4 py-2 text-gray-600">{b.billingCycle || "—"}</td>
-                    <td className="px-4 py-2 text-gray-600">{formatDate(b.currentPeriodStart)}</td>
-                    <td className="px-4 py-2 text-gray-600">{formatDate(b.currentPeriodEnd)}</td>
-                    <td className="px-4 py-2 text-gray-600">{formatDate(b.trialEndsAt)}</td>
+                    <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">{b.billingCycle || "—"}</td>
+                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(b.currentPeriodStart)}</td>
+                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(b.currentPeriodEnd)}</td>
                     <td className="px-4 py-2 text-gray-600">{formatDate(b.createdAt)}</td>
                   </tr>
                 ))}
@@ -232,17 +276,17 @@ export default function PlatformWorkspaceDetailPage() {
                 <tr>
                   <th className="text-left px-4 py-2 font-medium text-gray-700">Subject</th>
                   <th className="text-left px-4 py-2 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Priority</th>
-                  <th className="text-left px-4 py-2 font-medium text-gray-700">Created</th>
+                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden sm:table-cell">Priority</th>
+                  <th className="text-left px-4 py-2 font-medium text-gray-700 hidden md:table-cell">Created</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {workspace.supportTickets.map((t: any) => (
                   <tr key={t.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-medium text-gray-900">{t.subject || "—"}</td>
+                    <td className="px-4 py-2 text-gray-900">{t.subject}</td>
                     <td className="px-4 py-2"><Badge variant="secondary">{t.status}</Badge></td>
-                    <td className="px-4 py-2 text-gray-600">{t.priority || "—"}</td>
-                    <td className="px-4 py-2 text-gray-600">{formatDate(t.createdAt)}</td>
+                    <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">{t.priority || "—"}</td>
+                    <td className="px-4 py-2 text-gray-600 hidden md:table-cell">{formatDate(t.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -298,6 +342,76 @@ export default function PlatformWorkspaceDetailPage() {
           <p className="text-gray-500 text-sm">No audit entries</p>
         )}
       </section>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Workspace</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                <Input
+                  value={editCompanyName}
+                  onChange={(e) => setEditCompanyName(e.target.value)}
+                  placeholder="Company name..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contracting Model</label>
+                <select
+                  value={editContractingModel}
+                  onChange={(e) => setEditContractingModel(e.target.value as any)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">— Select —</option>
+                  <option value="prime">Prime Contractor</option>
+                  <option value="sub">Subcontractor</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Onboarding Status</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditOnboarding(true)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors ${
+                      editOnboarding === true
+                        ? "bg-green-100 border-green-400 text-green-800"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Complete
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditOnboarding(false)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors ${
+                      editOnboarding === false
+                        ? "bg-yellow-100 border-yellow-400 text-yellow-800"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    Incomplete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button
+              disabled={updateWorkspace.isPending}
+              onClick={handleEdit}
+            >
+              {updateWorkspace.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Suspend Dialog */}
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
