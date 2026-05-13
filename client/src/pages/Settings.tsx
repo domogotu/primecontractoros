@@ -450,6 +450,7 @@ function TeamTab() {
           <p className="text-slate-500 italic">No invitations sent yet. Invite team members to collaborate on your workspace.</p>
         ) : (
           <div className="rounded-md border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
@@ -484,6 +485,7 @@ function TeamTab() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

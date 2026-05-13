@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageLayout from "@/components/PageLayout";
 import { trpc } from "@/lib/trpc";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import PageGuide from "@/components/PageGuide";
@@ -85,7 +86,7 @@ export default function AIContractReview() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout label="AI Tools" title="AI Contract Review" subtitle="AI-powered contract analysis that identifies risks, compliance issues, and optimization opportunities.">
       <PageGuide
         title="AI Contract Review"
         description="Upload contract text for AI-powered analysis. The AI identifies requirements, risks, compliance gaps, and obligations. You review and confirm each finding."
@@ -231,82 +232,61 @@ export default function AIContractReview() {
                 <Card key={finding.id} className="border-l-4" style={{ borderLeftColor: finding.severity === "high" ? "#ef4444" : finding.severity === "medium" ? "#f59e0b" : "#3b82f6" }}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge className={severityColors[finding.severity]}>
-                            {finding.severity}
-                          </Badge>
-                          <Badge variant="outline">{finding.category}</Badge>
-                          <Badge className={statusColors[finding.status]}>
-                            {finding.status.replace("_", " ")}
-                          </Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h4 className="font-semibold text-slate-900">{finding.title}</h4>
+                          <Badge className={severityColors[finding.severity]}>{finding.severity}</Badge>
+                          <Badge className={statusColors[finding.status]}>{finding.status.replace("_", " ")}</Badge>
+                          <span className="text-xs text-slate-400">{finding.category}</span>
                         </div>
-                        <h3 className="font-semibold text-slate-900 text-sm">{finding.title}</h3>
-                        <p className="text-sm text-slate-600 mt-1">{finding.description}</p>
+                        <p className="text-sm text-slate-600 mb-2">{finding.description}</p>
                         {finding.clauseReference && (
-                          <p className="text-xs text-slate-400 mt-2">
-                            <span className="font-medium">Source:</span> {finding.clauseReference}
+                          <p className="text-xs text-slate-500 mb-1">
+                            <FileText className="w-3 h-3 inline mr-1" />
+                            Clause: {finding.clauseReference}
                           </p>
                         )}
                         {finding.recommendation && (
-                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-800">
-                            <span className="font-medium">Recommendation:</span> {finding.recommendation}
-                          </div>
+                          <p className="text-xs text-blue-600 bg-blue-50 rounded p-2 mt-2">
+                            <AlertTriangle className="w-3 h-3 inline mr-1" />
+                            {finding.recommendation}
+                          </p>
                         )}
                       </div>
-                      {finding.status === "pending" && (
-                        <div className="flex flex-col gap-1 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-700 border-green-300 hover:bg-green-50"
-                            onClick={() => updateFindingStatus(finding.id, "accepted")}
-                          >
-                            <ThumbsUp className="w-3 h-3 mr-1" />
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-700 border-red-300 hover:bg-red-50"
-                            onClick={() => updateFindingStatus(finding.id, "rejected")}
-                          >
-                            <ThumbsDown className="w-3 h-3 mr-1" />
-                            Reject
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-purple-700 border-purple-300 hover:bg-purple-50"
-                            onClick={() => updateFindingStatus(finding.id, "needs_discussion")}
-                          >
-                            <Clock className="w-3 h-3 mr-1" />
-                            Discuss
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant={finding.status === "accepted" ? "default" : "outline"}
+                          className={finding.status === "accepted" ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+                          onClick={() => updateFindingStatus(finding.id, "accepted")}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={finding.status === "rejected" ? "default" : "outline"}
+                          className={finding.status === "rejected" ? "bg-red-600 hover:bg-red-700 text-white" : ""}
+                          onClick={() => updateFindingStatus(finding.id, "rejected")}
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={finding.status === "needs_discussion" ? "default" : "outline"}
+                          className={finding.status === "needs_discussion" ? "bg-purple-600 hover:bg-purple-700 text-white" : ""}
+                          onClick={() => updateFindingStatus(finding.id, "needs_discussion")}
+                        >
+                          <Clock className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))
             )}
           </div>
-
-          {/* Disclaimer */}
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">AI Disclaimer</p>
-                <p className="text-xs text-amber-700 mt-1">
-                  AI findings are suggestions only. They do not constitute legal advice or official compliance determinations.
-                  All findings must be reviewed and confirmed by a qualified human before being treated as actionable.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

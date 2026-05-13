@@ -89,61 +89,7 @@ export default function Deliverables() {
     }
   });
 
-  // Fallback demo data if tRPC fails or is empty
-  const demoDeliverables = [
-    {
-      id: "DEL-001",
-      title: "Monthly Progress Report",
-      contract: "CON-2024-001",
-      contractName: "Cloud Migration Services",
-      dueDate: "2024-06-30",
-      status: "Submitted",
-      assignedTo: "Jane Doe",
-      submissionDate: "2024-06-28",
-    },
-    {
-      id: "DEL-002",
-      title: "Security Architecture Design",
-      contract: "CON-2024-002",
-      contractName: "Zero Trust Implementation",
-      dueDate: "2024-07-15",
-      status: "In Progress",
-      assignedTo: "John Smith",
-      submissionDate: null,
-    },
-    {
-      id: "DEL-003",
-      title: "Q2 Financial Audit",
-      contract: "CON-2024-003",
-      contractName: "Financial Systems Support",
-      dueDate: "2024-05-31",
-      status: "Overdue",
-      assignedTo: "Alice Johnson",
-      submissionDate: null,
-    },
-    {
-      id: "DEL-004",
-      title: "Phase 1 Sign-off",
-      contract: "CON-2024-001",
-      contractName: "Cloud Migration Services",
-      dueDate: "2024-06-15",
-      status: "Accepted",
-      assignedTo: "Jane Doe",
-      submissionDate: "2024-06-14",
-    },
-    {
-      id: "DEL-005",
-      title: "Draft User Manual",
-      contract: "CON-2024-004",
-      contractName: "Training Portal Development",
-      dueDate: "2024-07-01",
-      status: "Rejected",
-      assignedTo: "Bob Wilson",
-      submissionDate: "2024-06-25",
-    }
-  ];
-
-  const deliverables = deliverablesData || demoDeliverables;
+  const deliverables = deliverablesData || [];
 
   // Filtering
   const filteredDeliverables = deliverables.filter(d => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageLayout from "@/components/PageLayout";
+import LifecycleProgress from "@/components/LifecycleProgress";
+import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
+import WhatsNext, { NextAction } from "@/components/WhatsNext";
+import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
 
 const statusIcons: Record<string, typeof CheckCircle2> = {
   complete: CheckCircle2,
@@ -77,6 +81,20 @@ export default function Closeout() {
           { label: "Lessons Learned", path: "/app/lessons-learned" },
         ]}
       />
+
+      {/* Lifecycle Progress */}
+      <LifecycleProgress currentPhase="closeout" />
+
+      {/* AI Status Panel */}
+      <AIStatusPanel checks={[
+        { id: "active-closeouts", name: "Active Closeouts", status: records.filter((r: any) => r.status !== "complete" && r.status !== "closed").length > 0 ? "flagged" : "verified", message: records.filter((r: any) => r.status !== "complete" && r.status !== "closed").length > 0 ? `${records.filter((r: any) => r.status !== "complete" && r.status !== "closed").length} contract(s) in closeout process` : "No active closeouts", severity: "info" },
+        { id: "contracts-ready", name: "Contracts Ready for Closeout", status: activeContracts.filter((c: any) => c.status === "closeout").length > 0 ? "flagged" : "verified", message: activeContracts.filter((c: any) => c.status === "closeout").length > 0 ? `${activeContracts.filter((c: any) => c.status === "closeout").length} contract(s) in closeout status without a record` : "All closeout-status contracts have records", severity: activeContracts.filter((c: any) => c.status === "closeout").length > 0 ? "warning" : "info" },
+      ] as AICheck[]} title="CLOSEOUT STATUS" />
+
+      {/* What's Next */}
+      {records.filter((r: any) => r.status !== "complete" && r.status !== "closed").length > 0 && <WhatsNext actions={[
+        { id: "complete-checklist", title: "Complete Closeout Checklists", description: "Finish remaining checklist items on active closeout records", priority: "high" as const },
+      ] as NextAction[]} />}
 
       <div className="flex items-center justify-between mb-6">
         <div>

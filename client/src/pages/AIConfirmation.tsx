@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageLayout from "@/components/PageLayout";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
@@ -88,16 +89,10 @@ export default function AIConfirmation() {
   if (contractLoading) return <div className="p-6 flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Loading...</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Contract Hub
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Contract Review</h1>
-          <p className="text-sm text-gray-500">{contract?.title || contract?.contractNumber || `Contract #${contractId}`}</p>
-        </div>
-      </div>
+    <PageLayout label="AI Tools" title="AI Finding Confirmation" subtitle="Review and approve AI-identified findings before they are applied to your contracts.">
+      <Button variant="outline" size="sm" className="mb-4" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Contract Hub
+      </Button>
 
       <PageGuide
         title="AI Confirmation"
@@ -188,6 +183,6 @@ export default function AIConfirmation() {
           ))
         )}
       </div>
-    </div>
+    </PageLayout>
   );
 }

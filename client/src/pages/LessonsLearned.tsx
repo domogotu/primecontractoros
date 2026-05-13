@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/hooks/use-toast";
 import PageLayout from "@/components/PageLayout";
+import LifecycleProgress from "@/components/LifecycleProgress";
+import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
+import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import {
   Plus, Search, Lightbulb, ThumbsUp, ThumbsDown, BookOpen, ArrowLeft,
   FileText, CheckCircle2, ListTodo, Link2, Eye, Archive, Pencil, Trash2,
@@ -420,6 +423,21 @@ export default function LessonsLearned() {
           { label: "Tasks", path: "/app/tasks" },
         ]}
       />
+
+      {/* Lifecycle Progress */}
+      <LifecycleProgress currentPhase="closeout" />
+
+      {/* AI Status Panel */}
+      <AIStatusPanel checks={[
+        { id: "lessons-captured", name: "Lessons Captured", status: stats.total > 0 ? "verified" : "pending", message: stats.total > 0 ? `${stats.total} lesson(s) documented` : "No lessons captured yet — document your first lesson", severity: stats.total === 0 ? "warning" : "info" },
+        { id: "negative-unresolved", name: "Unresolved Challenges", status: stats.negative > 0 ? "flagged" : "verified", message: stats.negative > 0 ? `${stats.negative} challenge(s) documented — review for process improvements` : "No unresolved challenges", severity: stats.negative > 0 ? "warning" : "info" },
+        { id: "applied-lessons", name: "Applied to Templates", status: stats.applied > 0 ? "verified" : "pending", message: stats.applied > 0 ? `${stats.applied} lesson(s) applied to templates` : "Apply lessons to templates for future use", severity: "info" },
+      ] as AICheck[]} title="LESSONS LEARNED STATUS" />
+
+      {/* What's Next */}
+      {stats.total === 0 && <WhatsNext actions={[
+        { id: "first-lesson", title: "Document Your First Lesson", description: "Capture a lesson from a recent contract, proposal, or operational experience", priority: "high" as const, action: { label: "Add Lesson", onClick: () => { resetForm(); setShowForm(true); } } },
+      ] as NextAction[]} />}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">

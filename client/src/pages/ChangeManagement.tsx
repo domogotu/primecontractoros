@@ -162,6 +162,7 @@ export default function ChangeManagement() {
         <Card><CardContent className="py-12 text-center text-slate-500">No change requests found. {canWrite && "Create your first change request to track contract modifications."}</CardContent></Card>
       ) : (
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -214,6 +215,7 @@ export default function ChangeManagement() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

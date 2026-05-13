@@ -299,6 +299,7 @@ function WebhookDeliveries({ webhookId }: { webhookId: number }) {
 
   return (
     <div className="mt-3 border rounded-md overflow-hidden">
+      <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted/50">
           <tr>
@@ -329,6 +330,7 @@ function WebhookDeliveries({ webhookId }: { webhookId: number }) {
           ))}
         </tbody>
       </table>
+      </div>
     
     </div>
   );

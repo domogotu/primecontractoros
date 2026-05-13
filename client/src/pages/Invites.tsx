@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageLayout from "@/components/PageLayout";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export default function Invites() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <PageLayout label="Team" title="Workspace Invites" subtitle="Manage team invitations and track pending access requests for your workspace.">
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Invites</h1>
@@ -162,6 +163,6 @@ export default function Invites() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageLayout>
   );
 }

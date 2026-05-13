@@ -34,26 +34,25 @@ export default function CustomerAdoption() {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskName, setTaskName] = useState("");
 
-  // Try to use tRPC, fallback to demo data
   const { data: metrics, isLoading } = trpc.customerAdoption.getMetrics.useQuery(undefined, {
     retry: false,
     initialData: {
-      setupCompletion: 65,
-      adoptionScore: 72,
+      setupCompletion: 0,
+      adoptionScore: 0,
       userActivity: {
-        activeUsers: 4,
-        totalUsers: 5,
-        loginsThisWeek: 18,
-        actionsThisWeek: 142
+        activeUsers: 0,
+        totalUsers: 0,
+        loginsThisWeek: 0,
+        actionsThisWeek: 0
       },
       modules: [
-        { id: "profile", name: "Business Profile", icon: Building2, active: true, firstRecord: "2023-10-15", totalRecords: 1, lastActivity: "2023-11-02" },
-        { id: "opportunities", name: "Opportunities", icon: Briefcase, active: true, firstRecord: "2023-10-18", totalRecords: 12, lastActivity: "2023-11-10" },
-        { id: "proposals", name: "Proposals", icon: FileText, active: true, firstRecord: "2023-10-25", totalRecords: 4, lastActivity: "2023-11-08" },
+        { id: "profile", name: "Business Profile", icon: Building2, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
+        { id: "opportunities", name: "Opportunities", icon: Briefcase, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
+        { id: "proposals", name: "Proposals", icon: FileText, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
         { id: "contracts", name: "Contracts", icon: CheckCircle2, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
         { id: "finance", name: "Finance", icon: DollarSign, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
-        { id: "files", name: "Files", icon: Folder, active: true, firstRecord: "2023-10-16", totalRecords: 45, lastActivity: "2023-11-11" },
-        { id: "contacts", name: "Contacts", icon: Users, active: true, firstRecord: "2023-10-15", totalRecords: 28, lastActivity: "2023-11-05" },
+        { id: "files", name: "Files", icon: Folder, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
+        { id: "contacts", name: "Contacts", icon: Users, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
         { id: "ai", name: "AI Assistant", icon: Bot, active: false, firstRecord: null, totalRecords: 0, lastActivity: null },
       ]
     }

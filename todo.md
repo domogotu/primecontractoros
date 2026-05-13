@@ -1539,3 +1539,18 @@
 - [ ] Vendors — contextual guidance, AI monitoring
 
 - [ ] Deploy and push to GitHub
+
+### Phase 35 Final: JSX Fixes, Mobile Responsiveness, Demo Data Removal
+- [x] Fix broken JSX in AIContractReview.tsx (findings.map Card/CardContent closing tags)
+- [x] Fix broken JSX in FlowdownReview.tsx (PageLayout wrapping with full content)
+- [x] Fix DocumentGeneration.tsx TS error (targetType → recordType/recordId/context)
+- [x] 0 TypeScript errors confirmed
+- [x] Add overflow-x-auto to all table elements for mobile responsiveness
+- [x] Remove demo data from Deliverables.tsx (Alice Johnson, Bob Wilson fallback)
+- [x] Remove demo data from CustomerAdoption.tsx (fake metrics initialData)
+- [x] Rewrite FlowdownReview.tsx to use real tRPC data instead of SAMPLE_CLAUSES
+- [x] All 92 tests passing
+- [x] Production build succeeds
+- [x] Checkpoint saved
+- [x] Deploy to production
+- [x] Push to GitHub

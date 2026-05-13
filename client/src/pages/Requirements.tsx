@@ -189,6 +189,7 @@ export default function Requirements() {
         </Card>
       ) : (
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -228,6 +229,7 @@ export default function Requirements() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     

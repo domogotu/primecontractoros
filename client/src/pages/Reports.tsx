@@ -204,6 +204,7 @@ export default function Reports() {
                 </div>
                 {activeReport.data.contracts?.length > 0 ? (
                   <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50">
                         <tr>
@@ -224,6 +225,7 @@ export default function Reports() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 ) : <p className="text-sm text-slate-500">No contracts found</p>}
               </div>
@@ -247,6 +249,7 @@ export default function Reports() {
                 </div>
                 {activeReport.data.byContract?.length > 0 ? (
                   <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50">
                         <tr>
@@ -269,6 +272,7 @@ export default function Reports() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 ) : <p className="text-sm text-slate-500">No financial data found</p>}
               </div>
@@ -319,6 +323,7 @@ export default function Reports() {
                 </div>
                 {activeReport.data.contracts?.length > 0 ? (
                   <div className="border rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-50">
                         <tr>
@@ -337,6 +342,7 @@ export default function Reports() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 ) : <p className="text-sm text-slate-500">No contracts found</p>}
               </div>

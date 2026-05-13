@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PageLayout from "@/components/PageLayout";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
@@ -73,16 +74,10 @@ export default function ContractCloseout() {
   if (isLoading) return <div className="p-6 flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Loading...</div>;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Contract Hub
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contract Closeout</h1>
-          <p className="text-sm text-gray-500">{contract?.title || contract?.contractNumber || `Contract #${contractId}`}</p>
-        </div>
-      </div>
+    <PageLayout label="Contract Lifecycle" title="Contract Closeout" subtitle="Track and complete all closeout activities. Ensure all requirements are met before final closure.">
+      <Button variant="outline" size="sm" className="mb-4" onClick={() => navigate(`/app/contracts/${contractId}/hub`)}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Contract Hub
+      </Button>
 
       <PageGuide
         title="Contract Closeout"
@@ -170,6 +165,6 @@ export default function ContractCloseout() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </PageLayout>
   );
 }
