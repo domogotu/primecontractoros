@@ -1349,3 +1349,10 @@
 - [x] Workspace detail inline add-note form — inline textarea + submit button in the Notes section
 - [x] Filtered CSV export — pass search and status query params to /api/export/admin/workspaces so only filtered rows are downloaded
 - [x] Deploy and push to GitHub
+
+## Phase 31: Platform Admin Enhancements
+
+- [x] Delete Note button — trash icon next to each platform note, wired to platformAdmin.workspaces.deleteNote
+- [x] CSV column selection popover — checkbox list for column selection before export
+- [x] Bulk status breakdown — show count by status in bulk action bar (e.g., "3 workspaces selected (2 active, 1 suspended)")
+- [x] Deploy and push to GitHub

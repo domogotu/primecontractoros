@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   ArrowLeft, Users, CreditCard, FileText, Clock, Shield,
   Plus, Ban, RotateCcw, Edit2, Mail, CheckCircle2, Flag,
-  Activity, BarChart3, AlertTriangle, Settings, RefreshCw
+  Activity, BarChart3, AlertTriangle, Settings, RefreshCw, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,10 @@ export default function PlatformWorkspaceDetailPage() {
   });
   const addInlineNote = trpc.platformAdmin.workspaces.addNote.useMutation({
     onSuccess: () => { refetch(); setInlineNoteText(""); toast.success("Note added."); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteNote = trpc.platformAdmin.workspaces.deleteNote.useMutation({
+    onSuccess: () => { refetch(); toast.success("Note deleted."); },
     onError: (e) => toast.error(e.message),
   });
   const updateWorkspace = trpc.platformAdmin.workspaces.update.useMutation({
@@ -478,11 +482,25 @@ export default function PlatformWorkspaceDetailPage() {
         {workspace.platformNotes?.length > 0 ? (
           <div className="space-y-3">
             {workspace.platformNotes.map((n: any) => (
-              <div key={n.id} className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-4">
-                <p className="text-slate-200">{n.note}</p>
-                <p className="text-xs text-slate-500 mt-2">
-                  Added by admin #{n.createdBy} on {formatDateTime(n.createdAt)}
-                </p>
+              <div key={n.id} className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-4 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-slate-200">{n.note}</p>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Added by admin #{n.createdBy} on {formatDateTime(n.createdAt)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (window.confirm("Delete this note? This cannot be undone.")) {
+                      deleteNote.mutate({ noteId: n.id });
+                    }
+                  }}
+                  disabled={deleteNote.isPending}
+                  className="shrink-0 p-1.5 rounded text-slate-500 hover:text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                  title="Delete note"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             ))}
           </div>

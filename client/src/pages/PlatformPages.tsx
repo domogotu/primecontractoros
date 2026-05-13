@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square } from "lucide-react";
+import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 // ==================== SHARED COMPONENTS ====================
@@ -807,6 +807,30 @@ export function PlatformWorkspaces() {
   const [bulkSuspendReason, setBulkSuspendReason] = React.useState("");
   const [showBulkReactivateDialog, setShowBulkReactivateDialog] = React.useState(false);
   const [bulkReactivateReason, setBulkReactivateReason] = React.useState("");
+  const [showColumnPicker, setShowColumnPicker] = React.useState(false);
+  const ALL_COLUMNS = [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Workspace Name" },
+    { key: "companyName", label: "Company Name" },
+    { key: "status", label: "Status" },
+    { key: "plan", label: "Plan" },
+    { key: "ownerName", label: "Owner Name" },
+    { key: "ownerEmail", label: "Owner Email" },
+    { key: "contractingModel", label: "Contracting Model" },
+    { key: "onboardingCompleted", label: "Onboarding Completed" },
+    { key: "createdAt", label: "Created At" },
+    { key: "updatedAt", label: "Updated At" },
+  ] as const;
+  const [selectedColumns, setSelectedColumns] = React.useState<Set<string>>(
+    new Set(["name", "companyName", "status", "ownerName", "ownerEmail", "plan", "createdAt"])
+  );
+  const toggleColumn = (key: string) => {
+    setSelectedColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); } else next.add(key);
+      return next;
+    });
+  };
 
   const { data: workspaces = [], isLoading, refetch } = trpc.platformAdmin.workspaces.list.useQuery();
   const { data: metrics } = trpc.platformAdmin.dashboardMetrics.useQuery();
@@ -853,8 +877,9 @@ export function PlatformWorkspaces() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (statusFilter !== "all") params.set("status", statusFilter);
-    const qs = params.toString();
-    window.open(`/api/export/admin/workspaces${qs ? `?${qs}` : ""}`, "_blank");
+    params.set("columns", Array.from(selectedColumns).join(","));
+    window.open(`/api/export/admin/workspaces?${params.toString()}`, "_blank");
+    setShowColumnPicker(false);
   };
 
   const filtered = workspaces.filter(ws => {
@@ -929,20 +954,54 @@ export function PlatformWorkspaces() {
           <option value="suspended">Suspended</option>
           <option value="deactivated">Deactivated</option>
         </select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={exportCsv}
-          className="border-slate-600 text-slate-300 hover:bg-slate-700 shrink-0"
-        >
-          <Download className="w-4 h-4 mr-1" /> Export CSV
-        </Button>
+        <div className="relative shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowColumnPicker(v => !v)}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <Download className="w-4 h-4 mr-1" /> Export CSV <ChevronDown className="w-3 h-3 ml-1" />
+          </Button>
+          {showColumnPicker && (
+            <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-slate-800 border border-slate-600 rounded-lg shadow-xl p-3">
+              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-2">Columns to export</p>
+              <div className="space-y-1 mb-3">
+                {ALL_COLUMNS.map(col => (
+                  <label key={col.key} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 px-2 py-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedColumns.has(col.key)}
+                      onChange={() => toggleColumn(col.key)}
+                      className="accent-blue-500"
+                    />
+                    <span className="text-sm text-slate-200">{col.label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 bg-blue-700 hover:bg-blue-600 text-white" onClick={exportCsv}>
+                  <Download className="w-3 h-3 mr-1" /> Download
+                </Button>
+                <Button size="sm" variant="ghost" className="text-slate-400" onClick={() => setShowColumnPicker(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bulk Action Bar */}
-      {selectedIds.size > 0 && (
+      {selectedIds.size > 0 && (() => {
+        const selectedWorkspaces = filtered.filter(ws => selectedIds.has(ws.id));
+        const statusCounts = { active: 0, suspended: 0, deactivated: 0 };
+        selectedWorkspaces.forEach(ws => {
+          const st = ws.status as keyof typeof statusCounts;
+          if (st in statusCounts) statusCounts[st]++;
+        });
+        const breakdown = Object.entries(statusCounts).filter(([_, c]) => c > 0).map(([st, c]) => `${c} ${st}`).join(', ');
+        return (
         <div className="flex items-center gap-3 px-4 py-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
-          <span className="text-sm text-blue-300 font-medium">{selectedIds.size} workspace{selectedIds.size !== 1 ? 's' : ''} selected</span>
+          <span className="text-sm text-blue-300 font-medium">{selectedIds.size} workspace{selectedIds.size !== 1 ? 's' : ''} selected ({breakdown})</span>
           <Button
             size="sm"
             variant="outline"
@@ -968,7 +1027,8 @@ export function PlatformWorkspaces() {
             Clear
           </Button>
         </div>
-      )}
+        );
+      })()}
 
       {/* Workspace Table */}
       {filtered.length === 0 ? (
