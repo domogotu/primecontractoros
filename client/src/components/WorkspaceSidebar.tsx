@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Target, FileText, Briefcase, DollarSign, Building2, Users,
   Folder, History, Wand2, BookOpen, GitBranch, ShieldCheck, Mail, UserPlus,
-  Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight,
+  Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
   Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles,
 } from "lucide-react";
@@ -90,6 +90,7 @@ export default function WorkspaceSidebar() {
         { icon: UserPlus, label: "Invites", path: "/app/invites" },
         { icon: Crown, label: "Plan Features", path: "/app/plan-features" },
         { icon: Activity, label: "Diagnostics", path: "/app/diagnostics" },
+        { icon: Webhook, label: "Webhooks", path: "/app/webhooks" },
       ],
     },
   ];

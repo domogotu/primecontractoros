@@ -5,6 +5,8 @@ import { getDb } from "./db";
 import { generatedDocuments, flowdownReviews, customerAdoption } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { enforcePermission } from "./rbacMiddleware";
+import { logAudit } from "./featureRouter";
 
 export const documentGenerationRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -14,8 +16,9 @@ export const documentGenerationRouter = router({
   }),
   create: protectedProcedure.input(z.object({ templateType: z.string(), title: z.string(), parameters: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
     await db.insert(generatedDocuments).values({ workspaceId: wsId, templateType: input.templateType, title: input.title, parameters: input.parameters || "{}", status: "draft", createdBy: ctx.user.id });
+    try { await logAudit(wsId, ctx.user.id, "create", "documentGeneration", 0, input); } catch {}
     return { success: true };
   }),
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
@@ -33,14 +36,17 @@ export const flowdownReviewsRouter = router({
   }),
   create: protectedProcedure.input(z.object({ contractId: z.number(), clauseReference: z.string(), clauseText: z.string().optional(), flowdownRequired: z.boolean().optional(), notes: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
     await db.insert(flowdownReviews).values({ ...input, workspaceId: wsId, status: "pending", reviewedBy: ctx.user.id });
+    try { await logAudit(wsId, ctx.user.id, "create", "flowdownReviews", 0, input); } catch {}
     return { success: true };
   }),
   update: protectedProcedure.input(z.object({ id: z.number(), status: z.string().optional(), notes: z.string().optional(), flowdownRequired: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "write");
     const { id, ...data } = input;
     await db.update(flowdownReviews).set(data).where(eq(flowdownReviews.id, id));
+    try { await logAudit(wsId, ctx.user.id, "update", "flowdownReviews", 0, input); } catch {}
     return { success: true };
   }),
 });
@@ -64,6 +70,7 @@ export const customerAdoptionRouter = router({
       if (!features.includes(input.featureName)) features.push(input.featureName);
       await db.update(customerAdoption).set({ featuresUsed: JSON.stringify(features), lastActive: new Date(), adoptionScore: Math.min(100, features.length * 10) }).where(eq(customerAdoption.workspaceId, wsId));
     }
+    try { await logAudit(wsId, ctx.user.id, "update", "customerAdoption", 0, input); } catch {}
     return { success: true };
   }),
 });
@@ -100,7 +107,7 @@ export const businessProfileRouter = router({
     defaultContactPhone: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
+    const { wsId } = await enforcePermission(ctx.user.id, "manage_settings");
     const existing = await db.select().from(businessProfiles).where(eq(businessProfiles.workspaceId, wsId));
     // Calculate completeness
     const fields = [input.legalName, input.email, input.phone, input.address, input.uei, input.cage, input.naicsCodes, input.certifications, input.capabilities, input.contractingModel, input.defaultContactName, input.defaultContactEmail];

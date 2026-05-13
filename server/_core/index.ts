@@ -11,6 +11,7 @@ import { exportRouter } from "../exportRouter";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { emailScanHandler } from "../scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -49,6 +50,8 @@ async function startServer() {
   app.use("/api/trpc", apiRateLimit);
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  // Scheduled endpoints (heartbeat cron callbacks)
+  app.post("/api/scheduled/email-scan", emailScanHandler);
   // tRPC API
   app.use(
     "/api/trpc",

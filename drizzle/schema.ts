@@ -270,6 +270,7 @@ export const invoices = mysqlTable("invoices", {
   dueDate: timestamp("dueDate"),
   paidDate: timestamp("paidDate"),
   description: text("description"),
+  lastRemindedAt: timestamp("lastRemindedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -471,6 +472,7 @@ export const deadlines = mysqlTable("deadlines", {
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
   status: mysqlEnum("status", ["upcoming", "due_soon", "overdue", "completed"]).default("upcoming"),
   completedAt: timestamp("completedAt"),
+  lastRemindedAt: timestamp("lastRemindedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1632,3 +1634,36 @@ export const adminTasks = mysqlTable("admin_tasks", {
 });
 export type AdminTask = typeof adminTasks.$inferSelect;
 export type InsertAdminTask = typeof adminTasks.$inferInsert;
+
+// Webhooks — user-configurable outbound webhook endpoints
+export const webhooks = mysqlTable("webhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  url: varchar("url", { length: 2048 }).notNull(),
+  description: varchar("description", { length: 255 }),
+  secret: varchar("secret", { length: 255 }), // HMAC signing secret
+  events: text("events").notNull(), // JSON array of subscribed event types
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Webhook = typeof webhooks.$inferSelect;
+export type InsertWebhook = typeof webhooks.$inferInsert;
+
+// Webhook delivery log
+export const webhookDeliveries = mysqlTable("webhook_deliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  webhookId: int("webhookId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  eventType: varchar("eventType", { length: 100 }).notNull(),
+  payload: text("payload").notNull(), // JSON
+  responseStatus: int("responseStatus"),
+  responseBody: text("responseBody"),
+  success: boolean("success").default(false).notNull(),
+  attemptCount: int("attemptCount").default(1).notNull(),
+  deliveredAt: timestamp("deliveredAt").defaultNow().notNull(),
+});
+
+export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
+export type InsertWebhookDelivery = typeof webhookDeliveries.$inferInsert;

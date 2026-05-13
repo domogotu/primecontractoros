@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import { planFeatures, emailTemplates, invites } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { logAudit } from "./featureRouter";
 
 export const planFeaturesRouter = router({
   getMatrix: protectedProcedure.query(async () => {
@@ -27,6 +28,7 @@ export const emailTemplatesRouter = router({
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
     await db.insert(emailTemplates).values({ ...input, workspaceId: wsId });
+    try { await logAudit(wsId, ctx.user.id, "create", "emailTemplates", 0, input); } catch {}
     return { success: true };
   }),
   update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), subject: z.string().optional(), body: z.string().optional(), category: z.string().optional() })).mutation(async ({ ctx, input }) => {
@@ -64,6 +66,7 @@ export const invitesRouter = router({
     const wsId = await requireWorkspaceId(ctx.user.id);
     const token = Math.random().toString(36).substring(2, 15);
     await db.insert(invites).values({ email: input.email, role: input.role || "member", workspaceId: wsId, invitedBy: ctx.user.id, token, status: "pending" });
+    try { await logAudit(wsId, ctx.user.id, "create", "invites", 0, input); } catch {}
     return { success: true, token };
   }),
   revoke: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

@@ -1,6 +1,9 @@
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { enforcePermission } from "./rbacMiddleware";
+import { logAudit } from "./featureRouter";
+import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
 import {
   listFiles, createFile, deleteFile, getFileById,
@@ -36,6 +39,19 @@ async function getWorkspaceId(ctx: any): Promise<number> {
   return requireWorkspaceId(ctx.user.id);
 }
 
+// RBAC helpers: enforce write/delete permissions and return wsId
+async function requireWrite(ctx: any): Promise<number> {
+  if (!ctx.user?.id) throw new Error("Not authenticated");
+  const { wsId } = await enforcePermission(ctx.user.id, "write");
+  return wsId;
+}
+
+async function requireDelete(ctx: any): Promise<number> {
+  if (!ctx.user?.id) throw new Error("Not authenticated");
+  const { wsId } = await enforcePermission(ctx.user.id, "delete");
+  return wsId;
+}
+
 export const filesRouter = router({
   list: protectedProcedure
     .input(z.object({ linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional() }).optional())
@@ -52,13 +68,15 @@ export const filesRouter = router({
   create: protectedProcedure
     .input(z.object({ name: z.string(), fileKey: z.string(), url: z.string(), mimeType: z.string().optional(), size: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), category: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "files", 0, input); } catch {}
       return createFile({ ...input, workspaceId: wsId, uploadedBy: ctx.user?.id });
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "files", 0, null); } catch {}
       return deleteFile(input.id, wsId);
     }),
 });
@@ -79,20 +97,23 @@ export const contactsRouter = router({
   create: protectedProcedure
     .input(z.object({ firstName: z.string(), lastName: z.string(), email: z.string().optional(), phone: z.string().optional(), organization: z.string().optional(), title: z.string().optional(), role: z.string().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "contacts", 0, input); } catch {}
       return createContact({ ...input, workspaceId: wsId });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), firstName: z.string().optional(), lastName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), organization: z.string().optional(), title: z.string().optional(), role: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "contacts", 0, input); } catch {}
       return updateContact(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "contacts", 0, null); } catch {}
       return deleteContact(input.id, wsId);
     }),
 });
@@ -105,13 +126,15 @@ export const messagesRouter = router({
   create: protectedProcedure
     .input(z.object({ subject: z.string(), body: z.string(), recipientId: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "messages", 0, input); } catch {}
       return createMessage({ ...input, workspaceId: wsId, senderId: ctx.user?.id || 0 });
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "messages", 0, null); } catch {}
       return deleteMessage(input.id, wsId);
     }),
 });
@@ -132,7 +155,7 @@ export const invoicesRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number().optional(), invoiceNumber: z.string(), amount: z.string(), status: z.string().optional(), issuedDate: z.string().optional(), dueDate: z.string().optional(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { issuedDate, dueDate, ...rest } = input;
       const result = await createInvoice({
         ...rest,
@@ -147,27 +170,32 @@ export const invoicesRouter = router({
           input.amount, "Contract", "Created"
         ).catch(err => console.error("[Email] Invoice alert failed:", err));
       }
+      try { await logAudit(wsId, ctx.user.id, "create", "invoices", 0, input); } catch {}
+      dispatchWebhookEvent(wsId, "invoice.created", { invoiceNumber: input.invoiceNumber, amount: input.amount }).catch(() => {});
       return result;
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), invoiceNumber: z.string().optional(), amount: z.string().optional(), status: z.string().optional(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "invoices", 0, input); } catch {}
       return updateInvoice(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "invoices", 0, null); } catch {}
       return deleteInvoice(input.id, wsId);
     }),
   updateStatus: protectedProcedure
     .input(z.object({ id: z.number(), oldStatus: z.string(), newStatus: z.string(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
       await updateInvoice(input.id, wsId, { status: input.newStatus } as any);
       await addInvoiceStatusHistory({ invoiceId: input.id, oldStatus: input.oldStatus, newStatus: input.newStatus, changedBy: ctx.user.id, notes: input.notes });
+      try { await logAudit(wsId, ctx.user.id, "delete", "invoices", input.id, null); } catch {}
       return { success: true };
     }),
   statusHistory: protectedProcedure
@@ -182,7 +210,9 @@ export const invoicesRouter = router({
     }),
   linkPayment: protectedProcedure
     .input(z.object({ invoiceId: z.number(), paymentId: z.number(), amount: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "invoicePaymentLink", 0, input); } catch {}
       return linkPaymentToInvoice(input);
     }),
 });
@@ -203,8 +233,9 @@ export const paymentsRouter = router({
   create: protectedProcedure
     .input(z.object({ invoiceId: z.number().optional(), contractId: z.number().optional(), amount: z.string(), paymentDate: z.string().optional(), method: z.string().optional(), reference: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { paymentDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "payments", 0, input); } catch {}
       return createPayment({
         ...rest,
         workspaceId: wsId,
@@ -214,7 +245,8 @@ export const paymentsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "payments", 0, null); } catch {}
       return deletePayment(input.id, wsId);
     }),
 });
@@ -229,8 +261,9 @@ export const tasksRouter = router({
   create: protectedProcedure
     .input(z.object({ title: z.string(), description: z.string().optional(), assignedTo: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), priority: z.string().optional(), dueDate: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "tasks", 0, input); } catch {}
       return createTask({
         ...rest,
         workspaceId: wsId,
@@ -240,14 +273,16 @@ export const tasksRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), status: z.string().optional(), priority: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "tasks", 0, input); } catch {}
       return updateTask(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "tasks", 0, null); } catch {}
       return deleteTask(input.id, wsId);
     }),
 });
@@ -260,13 +295,15 @@ export const alertsRouter = router({
   create: protectedProcedure
     .input(z.object({ title: z.string(), message: z.string().optional(), type: z.string().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "alerts", 0, input); } catch {}
       return createAlert({ ...input, workspaceId: wsId });
     }),
   dismiss: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "update", "alerts", 0, input); } catch {}
       return dismissAlert(input.id, wsId);
     }),
 });
@@ -281,8 +318,9 @@ export const deliverablesRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), dueDate: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "deliverables", 0, input); } catch {}
       return createDeliverable({
         ...rest,
         workspaceId: wsId,
@@ -292,14 +330,16 @@ export const deliverablesRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "deliverables", 0, input); } catch {}
       return updateDeliverable(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "deliverables", 0, null); } catch {}
       return deleteDeliverable(input.id, wsId);
     }),
 });
@@ -312,7 +352,7 @@ export const deadlinesRouter = router({
   create: protectedProcedure
     .input(z.object({ title: z.string(), description: z.string().optional(), dueDate: z.string(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), priority: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
       const result = await createDeadline({
         ...rest,
@@ -329,19 +369,22 @@ export const deadlinesRouter = router({
           input.title, daysLeft
         ).catch(err => console.error("[Email] Deadline reminder failed:", err));
       }
+      try { await logAudit(wsId, ctx.user.id, "create", "deadlines", 0, input); } catch {}
       return result;
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), priority: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "deadlines", 0, input); } catch {}
       return updateDeadline(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "deadlines", 0, null); } catch {}
       return deleteDeadline(input.id, wsId);
     }),
 });
@@ -356,8 +399,9 @@ export const obligationsRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), obligationType: z.string().optional(), frequency: z.string().optional(), dueDate: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "obligations", 0, input); } catch {}
       return createObligation({
         ...rest,
         workspaceId: wsId,
@@ -367,14 +411,16 @@ export const obligationsRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "obligations", 0, input); } catch {}
       return updateObligation(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "obligations", 0, null); } catch {}
       return deleteObligation(input.id, wsId);
     }),
 });
@@ -389,8 +435,9 @@ export const complianceRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number().optional(), title: z.string(), description: z.string().optional(), regulation: z.string().optional(), category: z.string().optional(), dueDate: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "compliance", 0, input); } catch {}
       return createComplianceItem({
         ...rest,
         workspaceId: wsId,
@@ -400,14 +447,16 @@ export const complianceRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), regulation: z.string().optional(), category: z.string().optional(), status: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "compliance", 0, input); } catch {}
       return updateComplianceItem(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "compliance", 0, null); } catch {}
       return deleteComplianceItem(input.id, wsId);
     }),
 });
@@ -422,20 +471,23 @@ export const notesRouter = router({
   create: protectedProcedure
     .input(z.object({ title: z.string().optional(), content: z.string(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "notes", 0, input); } catch {}
       return createNote({ ...input, workspaceId: wsId, authorId: ctx.user?.id });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), content: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "notes", 0, input); } catch {}
       return updateNote(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "notes", 0, null); } catch {}
       return deleteNote(input.id, wsId);
     }),
 });
@@ -448,20 +500,23 @@ export const capabilityStatementsRouter = router({
   create: protectedProcedure
     .input(z.object({ title: z.string(), version: z.string().optional(), content: z.string().optional(), naicsCodes: z.string().optional(), pastPerformance: z.string().optional(), differentiators: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "capabilityStatements", 0, input); } catch {}
       return createCapabilityStatement({ ...input, workspaceId: wsId });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), version: z.string().optional(), content: z.string().optional(), naicsCodes: z.string().optional(), pastPerformance: z.string().optional(), differentiators: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "capabilityStatements", 0, input); } catch {}
       return updateCapabilityStatement(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "capabilityStatements", 0, null); } catch {}
       return deleteCapabilityStatement(input.id, wsId);
     }),
 });
@@ -474,20 +529,23 @@ export const templatesRouter = router({
   create: protectedProcedure
     .input(z.object({ name: z.string(), category: z.string().optional(), content: z.string().optional(), isDefault: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "templates", 0, input); } catch {}
       return createTemplate({ ...input, workspaceId: wsId });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), name: z.string().optional(), category: z.string().optional(), content: z.string().optional(), isDefault: z.boolean().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "templates", 0, input); } catch {}
       return updateTemplate(id, wsId, data);
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "templates", 0, null); } catch {}
       return deleteTemplate(input.id, wsId);
     }),
 });
@@ -500,14 +558,16 @@ export const closeoutRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "closeout", 0, input); } catch {}
       return createCloseoutRecord({ ...input, workspaceId: wsId });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), status: z.string().optional(), finalInvoiceSubmitted: z.boolean().optional(), deliverablesComplete: z.boolean().optional(), governmentPropertyReturned: z.boolean().optional(), finalReportSubmitted: z.boolean().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "closeout", 0, input); } catch {}
       return updateCloseoutRecord(id, wsId, data);
     }),
 });
@@ -520,13 +580,15 @@ export const lessonsRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number().optional(), proposalId: z.number().optional(), title: z.string(), category: z.string().optional(), description: z.string().optional(), impact: z.string().optional(), recommendation: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "lessons", 0, input); } catch {}
       return createLessonLearned({ ...input, workspaceId: wsId });
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "lessons", 0, null); } catch {}
       return deleteLessonLearned(input.id, wsId);
     }),
 });
@@ -539,8 +601,9 @@ export const lossReviewsRouter = router({
   create: protectedProcedure
     .input(z.object({ proposalId: z.number(), reviewDate: z.string().optional(), reasonLost: z.string().optional(), competitorInfo: z.string().optional(), lessonsLearned: z.string().optional(), actionItems: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { reviewDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "lossReviews", 0, input); } catch {}
       return createLossReview({
         ...rest,
         workspaceId: wsId,
@@ -550,8 +613,9 @@ export const lossReviewsRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), reasonLost: z.string().optional(), competitorInfo: z.string().optional(), lessonsLearned: z.string().optional(), actionItems: z.string().optional(), status: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "lossReviews", 0, input); } catch {}
       return updateLossReview(id, wsId, data);
     }),
 });
@@ -567,15 +631,17 @@ export const followupsRouter = router({
   create: protectedProcedure
     .input(z.object({ contactId: z.number(), type: z.string(), notes: z.string().optional(), dueDate: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { dueDate, ...rest } = input;
+      try { await logAudit(wsId, ctx.user.id, "create", "followups", 0, input); } catch {}
       return createFollowup({ ...rest, workspaceId: wsId, dueDate: dueDate ? new Date(dueDate) : undefined });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), status: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "followups", 0, input); } catch {}
       return updateFollowup(id, wsId, data as any);
     }),
 });
@@ -591,13 +657,15 @@ export const closeoutBlockersRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), category: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "closeoutBlockers", 0, input); } catch {}
       return createCloseoutBlocker({ ...input, workspaceId: wsId });
     }),
   resolve: protectedProcedure
     .input(z.object({ id: z.number(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "closeoutBlockers", 0, input); } catch {}
       return updateCloseoutBlocker(input.id, wsId, { status: 'resolved', resolvedAt: new Date(), resolvedBy: ctx.user.id, notes: input.notes });
     }),
 });
@@ -613,14 +681,16 @@ export const contractRequirementsRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number(), title: z.string(), description: z.string().optional(), category: z.string().optional(), source: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "contractRequirements", 0, input); } catch {}
       return createContractRequirement({ ...input, workspaceId: wsId });
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), status: z.string().optional(), category: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "contractRequirements", 0, input); } catch {}
       return updateContractRequirement(id, wsId, data);
     }),
 });
@@ -634,7 +704,9 @@ export const contactLinksRouter = router({
     }),
   create: protectedProcedure
     .input(z.object({ contactId: z.number(), linkedRecordType: z.string(), linkedRecordId: z.number(), role: z.string().optional() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "contactLinks", 0, input); } catch {}
       return createContactLink(input);
     }),
 });
@@ -650,7 +722,8 @@ export const financeNotesRouter = router({
   create: protectedProcedure
     .input(z.object({ recordType: z.string(), recordId: z.number(), content: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "financeNotes", 0, input); } catch {}
       return createFinanceNote({ workspaceId: wsId, recordType: input.recordType, recordId: input.recordId, content: input.content, authorId: ctx.user.id });
     }),
 });
@@ -665,6 +738,8 @@ export const fileVersionsRouter = router({
   create: protectedProcedure
     .input(z.object({ fileId: z.number(), versionNumber: z.number(), storageKey: z.string(), storageUrl: z.string(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "fileVersions", 0, input); } catch {}
       return createFileVersion({ ...input, uploadedBy: ctx.user.id });
     }),
 });
@@ -694,29 +769,32 @@ export const proposalSectionsRouter = router({
   create: protectedProcedure
     .input(z.object({ proposalId: z.number(), title: z.string(), content: z.string().optional(), sortOrder: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const id = await createProposalSection({ ...input, workspaceId: wsId });
+      try { await logAudit(wsId, ctx.user.id, "create", "proposalSections", 0, input); } catch {}
       return { id };
     }),
   update: protectedProcedure
     .input(z.object({ id: z.number(), title: z.string().optional(), content: z.string().optional(), status: z.string().optional(), isAiDraft: z.boolean().optional(), sortOrder: z.number().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireWrite(ctx);
       const { id, ...data } = input;
       await updateProposalSection(id, wsId, data);
+      try { await logAudit(wsId, ctx.user.id, "update", "proposalSections", 0, input); } catch {}
       return { success: true };
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
       await deleteProposalSection(input.id, wsId);
+      try { await logAudit(wsId, ctx.user.id, "delete", "proposalSections", input.id, null); } catch {}
       return { success: true };
     }),
   aiDraft: protectedProcedure
     .input(z.object({ sectionId: z.number(), proposalId: z.number(), sectionTitle: z.string(), proposalTitle: z.string(), framework: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await getWorkspaceId(ctx);
+      const wsId = await requireDelete(ctx);
       const { invokeLLM } = await import("./_core/llm");
       const response = await invokeLLM({
         messages: [
@@ -726,6 +804,7 @@ export const proposalSectionsRouter = router({
       });
       const content = response.choices?.[0]?.message?.content || "Unable to generate draft content.";
       await updateProposalSection(input.sectionId, wsId, { content, isAiDraft: true, status: "needs_review" });
+      try { await logAudit(wsId, ctx.user.id, "delete", "proposalSections", 0, null); } catch {}
       return { content };
     }),
 });

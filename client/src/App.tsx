@@ -95,6 +95,7 @@ import ConsentBanner from "./components/ConsentBanner";
 import ContractHubDetail from "./pages/ContractHubDetail";
 import AIConfirmation from "./pages/AIConfirmation";
 import ContractCloseout from "./pages/ContractCloseout";
+import Webhooks from "./pages/Webhooks";
 
 // Wrapper to render app pages inside AppShell
 function withAppShell(Component: React.ComponentType) {
@@ -177,6 +178,7 @@ function Router() {
       <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
       <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
       <Route path={"/app/settings"} component={withAppShell(Settings)} />
+      <Route path={"/app/webhooks"} component={withAppShell(Webhooks)} />
       <Route path={"/app/export"} component={withAppShell(WorkspaceExport)} />
       <Route path={"/app/billing"} component={withAppShell(Billing)} />
       <Route path={"/app/users"} component={withAppShell(Users)} />

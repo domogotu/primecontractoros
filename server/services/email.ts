@@ -298,3 +298,27 @@ export async function sendInvoiceAlert(
   const body = template.body({ invoiceNumber, amount, contractName, action });
   return sendEmail(workspaceId, recipientEmail, subject, body, template.name);
 }
+
+export async function sendContractStatusChangeNotification(
+  workspaceId: number,
+  recipientEmail: string,
+  contractTitle: string,
+  contractNumber: string,
+  previousStatus: string,
+  newStatus: string
+): Promise<{ success: boolean }> {
+  const subject = `Contract Status Update: ${contractTitle} — ${newStatus}`;
+  const body = `
+    <h2>Contract Status Changed</h2>
+    <p>A contract in your workspace has been updated:</p>
+    <table style="border-collapse: collapse; width: 100%;">
+      <tr><td style="padding: 8px; font-weight: bold;">Contract:</td><td style="padding: 8px;">${contractTitle}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Contract Number:</td><td style="padding: 8px;">${contractNumber || "N/A"}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Previous Status:</td><td style="padding: 8px;">${previousStatus}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">New Status:</td><td style="padding: 8px; font-weight: bold; color: #2563eb;">${newStatus}</td></tr>
+      <tr><td style="padding: 8px; font-weight: bold;">Changed At:</td><td style="padding: 8px;">${new Date().toISOString()}</td></tr>
+    </table>
+    <p>Please review the contract details and take any necessary actions.</p>
+  `;
+  return sendEmail(workspaceId, recipientEmail, subject, body, "contract_status_change");
+}

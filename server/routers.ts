@@ -44,7 +44,10 @@ import {
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { planVersionsRouter, discountUsageRouter, billingEventsRouter, consentRecordsRouter, backupExportsRouter, platformTasksRouter, policyVersionsRouter } from "./platformBusinessRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { enforcePermission } from "./rbacMiddleware";
+import { logAudit } from "./featureRouter";
 import { checkPlanLimit } from "./services/billing";
+import { sendContractStatusChangeNotification } from "./services/email";
 import { TRPCError } from "@trpc/server";
 import { clinsRouter, modificationsRouter, personnelRouter, complianceMatrixRouter, teamAssignmentsRouter, settingsRouter, financeRouter, findingsRouter, auditRouter } from "./featureRouter";
 import { fileStorageRouter, emailRouter, billingRouter, reportsRouter, templatesRouter as intTemplatesRouter, closeoutRouter as intCloseoutRouter, lessonsLearnedRouter, capabilityRouter } from "./integrationsRouter";
@@ -57,6 +60,8 @@ import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter }
 import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
 import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
+import { webhookRouter } from "./webhookRouter";
+import { dispatchWebhookEvent } from "./services/webhookDispatch";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -134,6 +139,7 @@ export const appRouter = router({
   contactLinks: contactLinksRouter,
   financeNotes: financeNotesRouter,
   fileVersions: fileVersionsRouter,
+  webhooks: webhookRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -178,7 +184,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const existing = await listOpportunities(wsId);
           const limitCheck = await checkPlanLimit(wsId, "opportunities", existing.length);
           if (!limitCheck.allowed) {
@@ -188,6 +194,8 @@ export const appRouter = router({
             });
           }
           await createOpportunity({ ...input, workspaceId: wsId });
+          try { await logAudit(wsId, ctx.user.id, "create", "opportunities", 0, input); } catch {}
+          dispatchWebhookEvent(wsId, "opportunity.created", { title: input.title, agency: input.agency }).catch(() => {});
           return { success: true };
         } catch (error) {
           console.error("Error creating opportunity:", error);
@@ -209,9 +217,10 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const { id, ...data } = input;
           await updateOpportunity(id, wsId, data);
+          try { await logAudit(wsId, ctx.user.id, "update", "opportunities", 0, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error updating opportunity:", error);
@@ -222,8 +231,9 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "delete");
           await deleteOpportunity(input.id, wsId);
+          try { await logAudit(wsId, ctx.user.id, "delete", "opportunities", input.id, null); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error deleting opportunity:", error);
@@ -237,8 +247,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           await updateOpportunityStatus(input.id, wsId, input.status);
+          try { await logAudit(wsId, ctx.user.id, "update", "opportunities", input.id, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error updating opportunity status:", error);
@@ -259,7 +270,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const db = await getDb();
           if (!db) throw new Error("Database not available");
           const { contacts: contactsTbl, files: filesTbl, notes: notesTbl, tasks: tasksTbl, contactLinks, fileLinks } = await import("../drizzle/schema");
@@ -299,6 +310,7 @@ export const appRouter = router({
             }
           }
           await updateOpportunityStatus(input.opportunityId, wsId, "moved_to_proposal");
+          try { await logAudit(wsId, ctx.user.id, "update", "opportunities", 0, input); } catch {}
           return { success: true, proposalId: proposalId };
         } catch (error) {
           console.error("Error converting opportunity to proposal:", error);
@@ -337,7 +349,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const existing = await listProposals(wsId);
           const limitCheck = await checkPlanLimit(wsId, "proposals", existing.length);
           if (!limitCheck.allowed) {
@@ -348,6 +360,7 @@ export const appRouter = router({
           }
           const result = await createProposal({ ...input, workspaceId: wsId });
           const insertId = (result as any)?.[0]?.insertId ?? (result as any)?.insertId;
+          try { await logAudit(wsId, ctx.user.id, "create", "proposals", 0, input); } catch {}
           return { success: true, id: insertId ? Number(insertId) : 0 };
         } catch (error) {
           console.error("Error creating proposal:", error);
@@ -364,9 +377,10 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const { id, ...data } = input;
           await updateProposal(id, wsId, data);
+          try { await logAudit(wsId, ctx.user.id, "update", "proposals", 0, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error updating proposal:", error);
@@ -377,8 +391,9 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "delete");
           await deleteProposal(input.id, wsId);
+          try { await logAudit(wsId, ctx.user.id, "delete", "proposals", input.id, null); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error deleting proposal:", error);
@@ -392,8 +407,12 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           await updateProposalStatus(input.id, wsId, input.status);
+          try { await logAudit(wsId, ctx.user.id, "update", "proposals", input.id, input); } catch {}
+          if (input.status === "submitted") {
+            dispatchWebhookEvent(wsId, "proposal.submitted", { proposalId: input.id, status: input.status }).catch(() => {});
+          }
           return { success: true };
         } catch (error) {
           console.error("Error updating proposal status:", error);
@@ -415,7 +434,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const db = await getDb();
           if (!db) throw new Error("Database not available");
           const { contacts: contactsTbl, files: filesTbl, notes: notesTbl, tasks: tasksTbl, deliverables: deliverablesTbl, contactLinks, fileLinks } = await import("../drizzle/schema");
@@ -460,6 +479,8 @@ export const appRouter = router({
             }
           }
           await updateProposalStatus(input.proposalId, wsId, "won");
+          try { await logAudit(wsId, ctx.user.id, "update", "proposals", 0, input); } catch {}
+          dispatchWebhookEvent(wsId, "opportunity.converted", { proposalId: input.proposalId, contractId }).catch(() => {});
           return { success: true, contractId: contractId };
         } catch (error) {
           console.error("Error converting proposal to contract:", error);
@@ -501,7 +522,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const existing = await listContracts(wsId);
           const limitCheck = await checkPlanLimit(wsId, "contracts", existing.length);
           if (!limitCheck.allowed) {
@@ -511,6 +532,8 @@ export const appRouter = router({
             });
           }
           await createContract({ ...input, workspaceId: wsId });
+          try { await logAudit(wsId, ctx.user.id, "create", "contracts", 0, input); } catch {}
+          dispatchWebhookEvent(wsId, "contract.created", { title: input.title, contractNumber: input.contractNumber }).catch(() => {});
           return { success: true };
         } catch (error) {
           console.error("Error creating contract:", error);
@@ -530,9 +553,10 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           const { id, ...data } = input;
           await updateContract(id, wsId, data);
+          try { await logAudit(wsId, ctx.user.id, "update", "contracts", 0, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error updating contract:", error);
@@ -543,8 +567,9 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "delete");
           await deleteContract(input.id, wsId);
+          try { await logAudit(wsId, ctx.user.id, "delete", "contracts", input.id, null); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error deleting contract:", error);
@@ -558,8 +583,33 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
+          // Get current contract to capture previous status
+          const contract = await getContract(input.id, wsId);
+          const previousStatus = contract?.status || "unknown";
           await updateContractStatus(input.id, wsId, input.status);
+          // Send email notification about status change (fire-and-forget)
+          try {
+            const db2 = await getDb();
+            if (db2 && contract) {
+              const { workspaces, users } = await import("../drizzle/schema");
+              const { eq } = await import("drizzle-orm");
+              const [ws] = await db2.select({ ownerId: workspaces.ownerId }).from(workspaces).where(eq(workspaces.id, wsId));
+              if (ws) {
+                const [owner] = await db2.select({ email: users.email }).from(users).where(eq(users.id, ws.ownerId));
+                if (owner?.email) {
+                  await sendContractStatusChangeNotification(
+                    wsId, owner.email, contract.title, contract.contractNumber || "",
+                    previousStatus, input.status
+                  );
+                }
+              }
+            }
+          } catch (emailErr) {
+            console.error("Failed to send contract status change email:", emailErr);
+          }
+          try { await logAudit(wsId, ctx.user.id, "update", "contracts", input.id, input); } catch {}
+          dispatchWebhookEvent(wsId, "contract.status_changed", { contractId: input.id, previousStatus, newStatus: input.status, title: contract?.title }).catch(() => {});
           return { success: true };
         } catch (error) {
           console.error("Error updating contract status:", error);
@@ -573,8 +623,9 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const wsId = await requireWorkspaceId(ctx.user.id);
+          const { wsId } = await enforcePermission(ctx.user.id, "write");
           await updateContractHealth(input.id, wsId, input.health);
+          try { await logAudit(wsId, ctx.user.id, "update", "contracts", input.id, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error updating contract health:", error);
@@ -672,6 +723,7 @@ export const appRouter = router({
             });
           }
 
+          try { await logAudit(wsId, ctx.user.id, "update", "ai", 0, input); } catch {}
           return { success: true, suggestionsCount: suggestions.length };
         } catch (error) {
           console.error("Error generating guidance:", error);
@@ -698,6 +750,7 @@ export const appRouter = router({
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
           await dismissAiSuggestion(input.id, wsId);
+          try { await logAudit(wsId, ctx.user.id, "update", "ai", input.id, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error dismissing suggestion:", error);
@@ -710,6 +763,7 @@ export const appRouter = router({
         try {
           const wsId = await requireWorkspaceId(ctx.user.id);
           await acceptAiSuggestion(input.id, wsId);
+          try { await logAudit(wsId, ctx.user.id, "update", "ai", input.id, input); } catch {}
           return { success: true };
         } catch (error) {
           console.error("Error accepting suggestion:", error);
@@ -779,6 +833,7 @@ export const appRouter = router({
           ipAddress,
           userAgent,
         });
+        try { await logAudit(workspaceId, ctx.user.id, "update", "legal", 0, input); } catch {}
         return { success: true };
       }),
     // List consent history for the current user

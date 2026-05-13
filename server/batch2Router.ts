@@ -5,6 +5,8 @@ import { getDb } from "./db";
 import { subcontractors, vendors, documentVersions, fileLinks } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { enforcePermission } from "./rbacMiddleware";
+import { logAudit } from "./featureRouter";
 
 export const subcontractorsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -14,19 +16,24 @@ export const subcontractorsRouter = router({
   }),
   create: protectedProcedure.input(z.object({ companyName: z.string(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), specialty: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
     await db.insert(subcontractors).values({ ...input, workspaceId: wsId });
+    try { await logAudit(wsId, ctx.user.id, "create", "subcontractors", 0, input); } catch {}
     return { success: true };
   }),
   update: protectedProcedure.input(z.object({ id: z.number(), companyName: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), specialty: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "write");
     const { id, ...data } = input;
     await db.update(subcontractors).set(data).where(eq(subcontractors.id, id));
+    try { await logAudit(wsId, ctx.user.id, "update", "subcontractors", 0, input); } catch {}
     return { success: true };
   }),
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "delete");
     await db.delete(subcontractors).where(eq(subcontractors.id, input.id));
+    try { await logAudit(wsId, ctx.user.id, "delete", "subcontractors", input.id, null); } catch {}
     return { success: true };
   }),
 });
@@ -39,19 +46,24 @@ export const vendorsRouter = router({
   }),
   create: protectedProcedure.input(z.object({ companyName: z.string(), category: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
     await db.insert(vendors).values({ ...input, workspaceId: wsId });
+    try { await logAudit(wsId, ctx.user.id, "create", "vendors", 0, input); } catch {}
     return { success: true };
   }),
   update: protectedProcedure.input(z.object({ id: z.number(), companyName: z.string().optional(), category: z.string().optional(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "write");
     const { id, ...data } = input;
     await db.update(vendors).set(data).where(eq(vendors.id, id));
+    try { await logAudit(wsId, ctx.user.id, "update", "vendors", 0, input); } catch {}
     return { success: true };
   }),
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "delete");
     await db.delete(vendors).where(eq(vendors.id, input.id));
+    try { await logAudit(wsId, ctx.user.id, "delete", "vendors", input.id, null); } catch {}
     return { success: true };
   }),
 });
@@ -63,7 +75,9 @@ export const documentVersionsRouter = router({
   }),
   create: protectedProcedure.input(z.object({ fileId: z.number(), versionNumber: z.number(), changeDescription: z.string().optional(), fileUrl: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "write");
     await db.insert(documentVersions).values({ ...input, createdBy: ctx.user.id });
+    try { await logAudit(wsId, ctx.user.id, "create", "documentVersions", 0, input); } catch {}
     return { success: true };
   }),
 });
@@ -75,7 +89,9 @@ export const fileLinksRouter = router({
   }),
   create: protectedProcedure.input(z.object({ fileId: z.number(), recordType: z.string(), recordId: z.number(), linkType: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    await enforcePermission(ctx.user.id, "write");
     await db.insert(fileLinks).values(input);
+    try { await logAudit(wsId, ctx.user.id, "create", "fileLinks", 0, input); } catch {}
     return { success: true };
   }),
 });

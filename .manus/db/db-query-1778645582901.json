@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE deadlines ADD COLUMN lastRemindedAt TIMESTAMP NULL DEFAULT NULL;\nALTER TABLE invoices ADD COLUMN lastRemindedAt TIMESTAMP NULL DEFAULT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute ALTER TABLE deadlines ADD COLUMN lastRemindedAt TIMESTAMP NULL DEFAULT NULL;\nALTER TABLE invoices ADD COLUMN lastRemindedAt TIMESTAMP NULL DEFAULT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1211
+}

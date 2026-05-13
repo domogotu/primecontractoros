@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords } from "../drizzle/schema";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import { sendWelcomeEmail } from "./services/email";
+import { getUserWorkspaceRole, requireWorkspaceId as requireWsId } from "./workspaceMiddleware";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({
@@ -80,6 +81,20 @@ export const workspaceRouter = router({
         .where(eq(workspaces.id, ws.id));
       return { success: true, workspaceId: ws.id };
     }),
+
+  // Get current user's workspace role
+  getMyRole: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { role: "member" as const };
+    const userId = ctx.user.id;
+    // Find workspace
+    const [ws] = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+    if (ws) return { role: "owner" as const };
+    // Check membership
+    const wsId = await requireWsId(userId);
+    const role = await getUserWorkspaceRole(userId, wsId);
+    return { role };
+  }),
 
   // Update workspace settings
   update: protectedProcedure

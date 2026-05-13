@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "./_core/trpc";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { logAudit } from "./featureRouter";
 import { getDb } from "./db";
 import {
   files,
@@ -77,6 +78,7 @@ export const fileStorageRouter = router({
         uploadedBy: ctx.user?.id || null,
       });
 
+      try { await logAudit(workspaceId, ctx.user.id, "create", "fileStorage", 0, input); } catch {}
       return { id: result.insertId, fileKey, url };
     }),
 
@@ -135,6 +137,7 @@ export const fileStorageRouter = router({
         .set({ deletedAt: new Date() })
         .where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId)));
 
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "fileStorage", 0, null); } catch {}
       return { success: true };
     }),
 });
@@ -290,6 +293,7 @@ export const billingRouter = router({
       .where(and(eq(subscriptions.workspaceId, workspaceId), eq(subscriptions.status, "active")));
 
     if (!sub || !sub.stripeSubscriptionId) {
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "billing", 0, null); } catch {}
       return { success: false, error: "No active subscription found" };
     }
 
@@ -304,6 +308,7 @@ export const billingRouter = router({
         .set({ cancelAtPeriodEnd: true })
         .where(eq(subscriptions.id, sub.id));
 
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "billing", 0, null); } catch {}
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -322,6 +327,7 @@ export const billingRouter = router({
       .where(eq(subscriptions.workspaceId, workspaceId));
 
     if (!sub || !sub.stripeSubscriptionId) {
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "billing", 0, null); } catch {}
       return { success: false, error: "No subscription found" };
     }
 
@@ -336,6 +342,7 @@ export const billingRouter = router({
         .set({ cancelAtPeriodEnd: false, status: "active" })
         .where(eq(subscriptions.id, sub.id));
 
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "billing", 0, null); } catch {}
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -505,6 +512,7 @@ export const templatesRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const [result] = await db.insert(templates).values({ workspaceId, ...input });
+      try { await logAudit(workspaceId, ctx.user.id, "create", "templates", 0, input); } catch {}
       return { id: result.insertId };
     }),
 
@@ -521,6 +529,7 @@ export const templatesRouter = router({
       if (!db) throw new Error("Database not available");
       const { id, ...data } = input;
       await db.update(templates).set(data).where(and(eq(templates.id, id), eq(templates.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "templates", 0, input); } catch {}
       return { success: true };
     }),
 
@@ -531,6 +540,7 @@ export const templatesRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.delete(templates).where(and(eq(templates.id, input.id), eq(templates.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "templates", input.id, null); } catch {}
       return { success: true };
     }),
 
@@ -548,6 +558,7 @@ export const templatesRouter = router({
         category: defaultTemplate.category,
         content: defaultTemplate.content,
       });
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "templates", 0, null); } catch {}
       return { id: result.insertId };
     }),
 });
@@ -628,6 +639,7 @@ export const closeoutRouter = router({
         });
       }
 
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "closeout", 0, null); } catch {}
       return { id: closeoutId, alreadyExists: false };
     }),
 
@@ -796,6 +808,7 @@ export const lessonsLearnedRouter = router({
         authorId: ctx.user.id,
         tags: input.tags || null,
       });
+      try { await logAudit(workspaceId, ctx.user.id, "create", "lessonsLearned", 0, input); } catch {}
       return { id: result.insertId };
     }),
 
@@ -834,6 +847,7 @@ export const lessonsLearnedRouter = router({
         if (v !== undefined) updateData[k] = v;
       }
       await db.update(lessonsLearned).set(updateData).where(and(eq(lessonsLearned.id, id), eq(lessonsLearned.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "lessonsLearned", 0, input); } catch {}
       return { success: true };
     }),
 
@@ -844,6 +858,7 @@ export const lessonsLearnedRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.delete(lessonsLearned).where(and(eq(lessonsLearned.id, input.id), eq(lessonsLearned.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "lessonsLearned", input.id, null); } catch {}
       return { success: true };
     }),
 
@@ -873,6 +888,7 @@ export const lessonsLearnedRouter = router({
       // Mark lesson as applied
       await db.update(lessonsLearned).set({ appliedToTemplateId: input.templateId, status: "applied" })
         .where(eq(lessonsLearned.id, input.lessonId));
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "lessonsLearned", 0, null); } catch {}
       return { success: true };
     }),
 
@@ -907,6 +923,7 @@ export const lessonsLearnedRouter = router({
       // Link task back to lesson
       await db.update(lessonsLearned).set({ createdTaskId: taskResult.insertId })
         .where(eq(lessonsLearned.id, input.lessonId));
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "lessonsLearned", 0, null); } catch {}
       return { success: true, taskId: taskResult.insertId };
     }),
 
@@ -991,6 +1008,7 @@ export const capabilityRouter = router({
         differentiators: input.differentiators || null,
         status: "draft",
       });
+      try { await logAudit(workspaceId, ctx.user.id, "create", "capability", 0, input); } catch {}
       return { id: result.insertId };
     }),
 
@@ -1011,6 +1029,7 @@ export const capabilityRouter = router({
       if (!db) throw new Error("Database not available");
       const { id, ...data } = input;
       await db.update(capabilityStatements).set(data).where(and(eq(capabilityStatements.id, id), eq(capabilityStatements.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "capability", 0, input); } catch {}
       return { success: true };
     }),
 
@@ -1021,6 +1040,7 @@ export const capabilityRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       await db.delete(capabilityStatements).where(and(eq(capabilityStatements.id, input.id), eq(capabilityStatements.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "delete", "capability", input.id, null); } catch {}
       return { success: true };
     }),
 

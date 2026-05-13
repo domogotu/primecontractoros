@@ -4,6 +4,7 @@ import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
 import { onboardingProgress, recordNotes, recordTimeline } from "../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { logAudit } from "./featureRouter";
 
 export const onboardingRouter = router({
   getProgress: protectedProcedure.query(async ({ ctx }) => {
@@ -23,6 +24,7 @@ export const onboardingRouter = router({
         current[input.step] = input.completed;
         await db.update(onboardingProgress).set({ completedSteps: JSON.stringify(current), currentStep: input.step }).where(eq(onboardingProgress.userId, ctx.user.id));
       }
+      try { await logAudit(workspaceId, ctx.user.id, "update", "onboarding", 0, input); } catch {}
       return { success: true };
     }),
 });

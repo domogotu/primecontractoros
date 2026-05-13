@@ -1356,3 +1356,15 @@
 - [x] CSV column selection popover — checkbox list for column selection before export
 - [x] Bulk status breakdown — show count by status in bulk action bar (e.g., "3 workspaces selected (2 active, 1 suspended)")
 - [x] Deploy and push to GitHub
+
+## Phase 32: Infrastructure Wiring — RBAC, Scheduled Emails, Audit Logs, Webhooks
+
+- [x] 1. Enforce RBAC in all tRPC procedures — wire requirePermission/hasPermission into entity routers
+- [x] 1b. Frontend role-gating — hide create/edit/delete buttons for viewer/read-only users
+- [x] 1c. Add useWorkspaceRole hook to expose user's workspace role to frontend
+- [x] 2. Scheduled email scans — heartbeat endpoint scanning deadlines within 48h and invoices overdue >7d
+- [x] 2b. Add lastRemindedAt column to deadlines and invoices to prevent duplicate emails
+- [x] 3. Contract status change email — trigger email when contract status is updated
+- [x] 4. Expand audit log coverage — consolidate on audit_logs table, log all CRUD across all entity routers
+- [x] 5. Wire outbound webhooks — webhooks/webhook_deliveries tables, registration UI at /app/webhooks, dispatch on key events
+- [x] Deploy and push to GitHub

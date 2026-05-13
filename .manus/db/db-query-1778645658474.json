@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS webhooks (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  workspaceId INT NOT NULL,\n  url VARCHAR(2048) NOT NULL,\n  description VARCHAR(255),\n  secret VARCHAR(255),\n  events TEXT NOT NULL,\n  isActive BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS webhook_deliveries (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  webhookId INT NOT NULL,\n  workspaceId INT NOT NULL,\n  eventType VARCHAR(100) NOT NULL,\n  payload TEXT NOT NULL,\n  responseStatus INT,\n  responseBody TEXT,\n  success BOOLEAN NOT NULL DEFAULT FALSE,\n  attemptCount INT NOT NULL DEFAULT 1,\n  deliveredAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute CREATE TABLE IF NOT EXISTS webhooks (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  workspaceId INT NOT NULL,\n  url VARCHAR(2048) NOT NULL,\n  description VARCHAR(255),\n  secret VARCHAR(255),\n  events TEXT NOT NULL,\n  isActive BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS webhook_deliveries (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  webhookId INT NOT NULL,\n  workspaceId INT NOT NULL,\n  eventType VARCHAR(100) NOT NULL,\n  payload TEXT NOT NULL,\n  responseStatus INT,\n  responseBody TEXT,\n  success BOOLEAN NOT NULL DEFAULT FALSE,\n  attemptCount INT NOT NULL DEFAULT 1,\n  deliveredAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 508
+}
