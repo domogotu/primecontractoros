@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -795,13 +795,230 @@ export function PlatformOwnershipRecovery() {
   );
 }
 
-// ==================== STUB EXPORTS ====================
+// ==================== WORKSPACES DIRECTORY ====================
 export function PlatformWorkspaces() {
-  return <div className="p-8 text-slate-300">Workspaces Directory (implemented in PlatformAdmin.tsx)</div>;
+  const [search, setSearch] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [suspendReason, setSuspendReason] = React.useState("");
+  const [suspendTarget, setSuspendTarget] = React.useState<number | null>(null);
+  const [reactivateTarget, setReactivateTarget] = React.useState<number | null>(null);
+
+  const { data: workspaces = [], isLoading, refetch } = trpc.platformAdmin.workspaces.list.useQuery();
+  const { data: metrics } = trpc.platformAdmin.dashboardMetrics.useQuery();
+  const suspendMut = trpc.platformAdmin.workspaces.suspend.useMutation({ onSuccess: () => { refetch(); setSuspendTarget(null); setSuspendReason(""); toast.success("Workspace suspended"); } });
+  const reactivateMut = trpc.platformAdmin.workspaces.reactivate.useMutation({ onSuccess: () => { refetch(); setReactivateTarget(null); toast.success("Workspace reactivated"); } });
+
+  const filtered = workspaces.filter(ws => {
+    const matchSearch = !search ||
+      ws.name.toLowerCase().includes(search.toLowerCase()) ||
+      (ws.ownerName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (ws.ownerEmail || "").toLowerCase().includes(search.toLowerCase()) ||
+      (ws.companyName || "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "all" || ws.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const statusColor = (s: string) => {
+    if (s === "active") return "bg-green-900/40 text-green-300 border border-green-700";
+    if (s === "suspended") return "bg-red-900/40 text-red-300 border border-red-700";
+    if (s === "deactivated") return "bg-slate-700/40 text-slate-400 border border-slate-600";
+    return "bg-slate-700/40 text-slate-400 border border-slate-600";
+  };
+
+  const billingColor = (s: string) => {
+    if (s === "active") return "text-green-400";
+    if (s === "trial") return "text-cyan-400";
+    if (s === "past_due") return "text-yellow-400";
+    if (s === "none") return "text-slate-500";
+    return "text-slate-400";
+  };
+
+  if (isLoading) return <LoadingState />;
+
+  const summaryCards = [
+    { label: "Total Workspaces", value: metrics?.totalWorkspaces ?? workspaces.length, color: "text-blue-300" },
+    { label: "Active Paid", value: metrics?.paidWorkspaces ?? 0, color: "text-green-400" },
+    { label: "Trial", value: metrics?.trialWorkspaces ?? 0, color: "text-cyan-400" },
+    { label: "Suspended", value: metrics?.suspendedWorkspaces ?? 0, color: "text-red-400" },
+    { label: "Open Tickets", value: metrics?.openTickets ?? 0, color: "text-yellow-400" },
+    { label: "New (30d)", value: metrics?.newWorkspacesThisMonth ?? 0, color: "text-purple-400" },
+  ];
+
+  return (
+    <div className="p-6 space-y-6">
+      <PageHeader title="Workspace Directory" description="All customer workspaces — search, filter, and manage access." />
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {summaryCards.map(c => (
+          <div key={c.label} className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">{c.label}</p>
+            <p className={`text-2xl font-bold mt-1 ${c.color}`}>{c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, owner, company, or email..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+        >
+          <option value="all">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="deactivated">Deactivated</option>
+        </select>
+      </div>
+
+      {/* Workspace Table */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <p className="text-lg font-medium">No workspaces found</p>
+          <p className="text-sm mt-1">{search || statusFilter !== "all" ? "Try adjusting your search or filter." : "No workspaces have been created yet."}</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-slate-700">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-800 border-b border-slate-700">
+                <th className="text-left px-4 py-3 text-slate-400 font-medium">Workspace</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium hidden md:table-cell">Owner</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium hidden lg:table-cell">Plan</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium">Status</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium hidden lg:table-cell">Billing</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium hidden xl:table-cell">Created</th>
+                <th className="text-left px-4 py-3 text-slate-400 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {filtered.map(ws => (
+                <tr key={ws.id} className="bg-slate-900 hover:bg-slate-800/60 transition-colors">
+                  <td className="px-4 py-3">
+                    <div>
+                      <p className="font-medium text-white">{ws.name}</p>
+                      {ws.companyName && <p className="text-xs text-slate-400">{ws.companyName}</p>}
+                      <p className="text-xs text-slate-500 md:hidden">{ws.ownerEmail}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <div>
+                      <p className="text-white">{ws.ownerName}</p>
+                      <p className="text-xs text-slate-400">{ws.ownerEmail}</p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    <span className="text-slate-300">{ws.planName || "No Plan"}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColor(ws.status)}`}>{ws.status}</span>
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell">
+                    <span className={`text-xs font-medium ${billingColor(ws.billingStatus || "none")}`}>{ws.billingStatus || "none"}</span>
+                  </td>
+                  <td className="px-4 py-3 hidden xl:table-cell">
+                    <span className="text-slate-400 text-xs">{ws.createdAt ? new Date(ws.createdAt).toLocaleDateString() : "—"}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs border-slate-600 text-slate-300 hover:bg-slate-700"
+                        onClick={() => window.location.href = `/platform/workspaces/${ws.id}`}
+                      >
+                        <Eye className="w-3 h-3 mr-1" /> View
+                      </Button>
+                      {ws.status === "active" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs border-red-800 text-red-400 hover:bg-red-900/30"
+                          onClick={() => setSuspendTarget(ws.id)}
+                        >
+                          Suspend
+                        </Button>
+                      ) : ws.status === "suspended" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs border-green-800 text-green-400 hover:bg-green-900/30"
+                          onClick={() => setReactivateTarget(ws.id)}
+                        >
+                          Reactivate
+                        </Button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Suspend Dialog */}
+      {suspendTarget !== null && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-semibold text-white">Suspend Workspace</h3>
+            <p className="text-sm text-slate-400">This will immediately block all access for this workspace. Provide a reason for the audit log.</p>
+            <textarea
+              value={suspendReason}
+              onChange={e => setSuspendReason(e.target.value)}
+              placeholder="Reason for suspension (required)..."
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" className="text-slate-400" onClick={() => { setSuspendTarget(null); setSuspendReason(""); }}>Cancel</Button>
+              <Button
+                className="bg-red-700 hover:bg-red-600 text-white"
+                disabled={!suspendReason.trim() || suspendMut.isPending}
+                onClick={() => suspendMut.mutate({ id: suspendTarget, reason: suspendReason })}
+              >
+                {suspendMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Suspend Workspace"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reactivate Dialog */}
+      {reactivateTarget !== null && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-semibold text-white">Reactivate Workspace</h3>
+            <p className="text-sm text-slate-400">This will restore full access for this workspace.</p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" className="text-slate-400" onClick={() => setReactivateTarget(null)}>Cancel</Button>
+              <Button
+                className="bg-green-700 hover:bg-green-600 text-white"
+                disabled={reactivateMut.isPending}
+                onClick={() => reactivateMut.mutate({ id: reactivateTarget, reason: "Manually reactivated by platform admin" })}
+              >
+                {reactivateMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reactivate"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function PlatformWorkspaceSummary() {
-  return <div className="p-8 text-slate-300">Workspace Summary (implemented in PlatformAdmin.tsx)</div>;
+  return <PlatformWorkspaces />;
 }
 
 export function PlatformDemoWorkspaces() {

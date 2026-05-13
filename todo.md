@@ -1321,3 +1321,12 @@
 - [x] Rewrite Capability Statement page with professional mobile layout, section cards, proper spacing, Reed's Solutions LLC branding, accurate past performance language, print/export ready
 - [x] Add Download Capability Statement as PDF button (wire to existing pdf.exportCapabilityStatement mutation)
 - [x] Deploy and push to GitHub
+
+## Phase 28: Fix Platform Admin Workspaces Page
+
+- [x] Replace placeholder text in /platform/workspaces with real workspace directory UI
+- [x] Summary cards: total, active paid, trial, pending, past due, suspended, open tickets
+- [x] Full workspace table with search by name/owner/company and status filter
+- [x] Each row: workspace name, owner, plan, status, created date, action buttons (View, Suspend, Delete)
+- [x] Wire to existing platformAdmin.workspaces tRPC procedures
+- [x] Deploy and push to GitHub
