@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { useLocation } from 'wouter';
@@ -27,18 +27,37 @@ export default function BusinessProfile() {
   const [formData, setFormData] = useState({
     legalName: '',
     dba: '',
+    businessStructure: '',
+    stateOfIncorporation: '',
+    businessSize: '',
+    yearFounded: '',
+    numberOfEmployees: '',
     email: '',
     phone: '',
     website: '',
     address: '',
-    entityType: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: 'United States',
     uei: '',
     cage: '',
     samStatus: 'not_registered' as 'active' | 'expired' | 'pending' | 'not_registered',
-    samRenewalDate: '',
-    naicsCodes: '',
-    certifications: '',
+    samExpirationDate: '',
+    samRegistrationDate: '',
+    gsaScheduleNumber: '',
+    gsaScheduleExpiration: '',
+    naicsPrimary: '',
+    naicsSecondary: '',
+    socioeconomicCerts: '',
+    keyPersonnel: '',
     capabilities: '',
+    coreCompetencies: '',
+    pastPerformance: '',
+    bankingInfo: '',
+    bondingCapacity: '',
+    insuranceSummary: '',
+    annualRevenue: '',
     contractingModel: 'prime' as 'prime' | 'sub' | 'both',
     usesSubcontractors: false,
     defaultContactName: '',
@@ -52,18 +71,37 @@ export default function BusinessProfile() {
       const fd = {
         legalName: profile.legalName || '',
         dba: profile.dba || '',
+        businessStructure: profile.businessStructure || '',
+        stateOfIncorporation: profile.stateOfIncorporation || '',
+        businessSize: profile.businessSize || '',
+        yearFounded: profile.yearFounded || '',
+        numberOfEmployees: profile.numberOfEmployees || '',
         email: profile.email || '',
         phone: profile.phone || '',
         website: profile.website || '',
         address: profile.address || '',
-        entityType: profile.entityType || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        zip: profile.zip || '',
+        country: profile.country || 'United States',
         uei: profile.uei || '',
         cage: profile.cage || '',
         samStatus: (profile.samStatus as any) || 'not_registered',
-        samRenewalDate: profile.samRenewalDate ? new Date(profile.samRenewalDate).toISOString().split('T')[0] : '',
-        naicsCodes: profile.naicsCodes || '',
-        certifications: profile.certifications || '',
+        samExpirationDate: profile.samExpirationDate ? new Date(profile.samExpirationDate).toISOString().split('T')[0] : '',
+        samRegistrationDate: profile.samRegistrationDate ? new Date(profile.samRegistrationDate).toISOString().split('T')[0] : '',
+        gsaScheduleNumber: profile.gsaScheduleNumber || '',
+        gsaScheduleExpiration: profile.gsaScheduleExpiration ? new Date(profile.gsaScheduleExpiration).toISOString().split('T')[0] : '',
+        naicsPrimary: profile.naicsPrimary || '',
+        naicsSecondary: profile.naicsSecondary || '',
+        socioeconomicCerts: profile.socioeconomicCerts || '',
+        keyPersonnel: profile.keyPersonnel || '',
         capabilities: profile.capabilities || '',
+        coreCompetencies: profile.coreCompetencies || '',
+        pastPerformance: profile.pastPerformance || '',
+        bankingInfo: profile.bankingInfo || '',
+        bondingCapacity: profile.bondingCapacity || '',
+        insuranceSummary: profile.insuranceSummary || '',
+        annualRevenue: profile.annualRevenue || '',
         contractingModel: (profile.contractingModel as any) || 'prime',
         usesSubcontractors: profile.usesSubcontractors || false,
         defaultContactName: profile.defaultContactName || '',
@@ -83,200 +121,526 @@ export default function BusinessProfile() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const result = await upsertMutation.mutateAsync(formData);
-      setCompleteness(result.completenessScore);
-      utils.businessProfile.get.invalidate();
-      toast.success('Business profile saved successfully!');
-    } catch (error) {
-      toast.error('Failed to save profile. Please try again.');
+      await upsertMutation.mutateAsync(formData as any);
+      await utils.businessProfile.get.invalidate();
+      toast.success('Business profile saved successfully');
+    } catch (err) {
+      toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const fields = [formData.legalName, formData.email, formData.phone, formData.address, formData.uei, formData.cage, formData.naicsCodes, formData.certifications, formData.capabilities, formData.contractingModel, formData.defaultContactName, formData.defaultContactEmail];
-  const localCompleteness = Math.round((fields.filter(f => f && f.length > 0).length / fields.length) * 100);
+  if (isLoading) return <div className="p-8">Loading profile...</div>;
 
   return (
     <PageLayout
       title="Business Profile"
-      subtitle="Manage your company information and government registration details"
-      label="Company"
-      summaryCards={[
-        { label: "NAICS (North American Industry Classification System) Codes", value: formData.naicsCodes ? formData.naicsCodes.split(',').length : 0 },
-        { label: "Certifications", value: formData.certifications ? formData.certifications.split(',').length : 0, color: "text-green-600" },
-        { label: "Profile Complete", value: `${localCompleteness}%`, color: "text-blue-600" },
-        { label: "SAM (System for Award Management) Status", value: formData.samStatus === 'active' ? 'Active' : formData.samStatus === 'expired' ? 'Expired' : formData.samStatus === 'pending' ? 'Pending' : 'Not Registered', color: formData.samStatus === 'active' ? "text-green-600" : "text-yellow-600" },
-      ]}
+      subtitle="Complete your company information for government contracting"
+      label="SETUP"
       actions={
-        <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={handleSave} disabled={isSaving}>
-      <PageGuide
-        title="Business Profile"
-        description="Your company information used across proposals, capability statements, and compliance."
-        whenToUse="When setting up your workspace, updating company details, or preparing capability statements."
-        whatToDoNext={["Complete all required business fields", "Add NAICS codes and certifications", "Set your contracting model (prime/sub/both)", "Add default contact information"]}
-        relatedRecords={[{ label: "Capability Statements", path: "/app/capability-statements" }, { label: "Settings", path: "/app/settings" }, { label: "Onboarding", path: "/app/onboarding" }]}
-      />
-          <Save className="w-4 h-4 mr-2" /> {isSaving ? 'Saving...' : 'Save Profile'}
+        <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+          <Save className="mr-2 h-4 w-4" />
+          {isSaving ? 'Saving...' : 'Save Profile'}
         </Button>
       }
+      summaryCards={[
+        { label: 'Completeness', value: `${completeness}%`, color: 'text-blue-600' },
+        { label: 'Status', value: profile?.samStatus === 'active' ? 'SAM Active' : 'SAM Inactive', color: profile?.samStatus === 'active' ? 'text-green-600' : 'text-amber-600' },
+      ]}
     >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Completeness */}
-          <div className="lg:col-span-1">
-            <div className="bg-white border border-slate-200 rounded-lg p-6 sticky top-8">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4">Profile Completeness</h2>
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">Overall</span>
-                  <span className="text-2xl font-bold text-blue-600">{localCompleteness}%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-blue-600 h-3 rounded-full transition-all" style={{ width: `${localCompleteness}%` }}></div>
-                </div>
-              </div>
-              <div className="space-y-3 text-sm">
-                {[
-                  { label: "Business Identity", done: !!(formData.legalName && formData.email) },
-                  { label: "Registration Info", done: !!(formData.uei && formData.cage) },
-                  { label: "NAICS Codes", done: !!formData.naicsCodes },
-                  { label: "Certifications", done: !!formData.certifications },
-                  { label: "Capabilities", done: !!formData.capabilities },
-                  { label: "Default Contact", done: !!(formData.defaultContactName && formData.defaultContactEmail) },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-start gap-2">
-                    {item.done ? <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />}
-                    <span className="text-slate-700">{item.label}</span>
-                  </div>
-                ))}
-              </div>
+      <PageGuide
+        title="Business Profile"
+        description="Your profile auto-populates across proposals, contracts, and compliance forms."
+        whenToUse="Complete this profile once, and it flows everywhere in the system."
+        whatToDoNext={[
+          'Fill in your company legal name and business structure',
+          'Add your UEI and CAGE code from SAM.gov',
+          'List your NAICS codes and certifications',
+          'Add key personnel and banking information',
+          'Save to auto-populate across the app'
+        ]}
+        alerts={completeness < 50 ? [{ message: 'Profile is incomplete. Fill in critical fields to enable full functionality.', type: 'warning' }] : []}
+      />
+
+      <div className="space-y-8">
+        {/* Company Identity */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-600" />
+            Company Identity
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="legalName">Legal Company Name *</Label>
+              <Input
+                id="legalName"
+                name="legalName"
+                value={formData.legalName}
+                onChange={handleInputChange}
+                placeholder="Your company's legal name"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dba">DBA (Doing Business As)</Label>
+              <Input
+                id="dba"
+                name="dba"
+                value={formData.dba}
+                onChange={handleInputChange}
+                placeholder="If different from legal name"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="businessStructure">Business Structure</Label>
+              <select
+                id="businessStructure"
+                name="businessStructure"
+                value={formData.businessStructure}
+                onChange={handleInputChange}
+                className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select...</option>
+                <option value="LLC">LLC</option>
+                <option value="S-Corp">S-Corp</option>
+                <option value="C-Corp">C-Corp</option>
+                <option value="Sole Proprietor">Sole Proprietor</option>
+                <option value="Partnership">Partnership</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="stateOfIncorporation">State of Incorporation</Label>
+              <Input
+                id="stateOfIncorporation"
+                name="stateOfIncorporation"
+                value={formData.stateOfIncorporation}
+                onChange={handleInputChange}
+                placeholder="e.g., Delaware"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="businessSize">Business Size</Label>
+              <select
+                id="businessSize"
+                name="businessSize"
+                value={formData.businessSize}
+                onChange={handleInputChange}
+                className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select...</option>
+                <option value="small">Small Business</option>
+                <option value="large">Large Business</option>
+                <option value="other_than_small">Other Than Small</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="yearFounded">Year Founded</Label>
+              <Input
+                id="yearFounded"
+                name="yearFounded"
+                value={formData.yearFounded}
+                onChange={handleInputChange}
+                placeholder="YYYY"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="numberOfEmployees">Number of Employees</Label>
+              <Input
+                id="numberOfEmployees"
+                name="numberOfEmployees"
+                value={formData.numberOfEmployees}
+                onChange={handleInputChange}
+                placeholder="e.g., 25"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="annualRevenue">Annual Revenue</Label>
+              <Input
+                id="annualRevenue"
+                name="annualRevenue"
+                value={formData.annualRevenue}
+                onChange={handleInputChange}
+                placeholder="e.g., $5M - $10M"
+                className="mt-2"
+              />
             </div>
           </div>
+        </section>
 
-          {/* Right Column: Form */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Business Identity Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-blue-600" />
-                Business Identity
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><Label htmlFor="legalName">Legal Business Name</Label><Input id="legalName" name="legalName" value={formData.legalName} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="dba">DBA (Doing Business As) / Trade Name</Label><Input id="dba" name="dba" value={formData.dba} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="email">Business Email</Label><Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="phone">Phone</Label><Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="website">Website</Label><Input id="website" name="website" value={formData.website} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="entityType">Entity Type</Label>
-                  <select id="entityType" name="entityType" value={formData.entityType} onChange={handleInputChange} className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-                    <option value="">Select...</option>
-                    <option value="LLC">LLC</option>
-                    <option value="Corporation">Corporation</option>
-                    <option value="S-Corp">S-Corp</option>
-                    <option value="Sole Proprietorship">Sole Proprietorship</option>
-                    <option value="Partnership">Partnership</option>
-                    <option value="Non-Profit">Non-Profit</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2"><Label htmlFor="address">Address</Label><Textarea id="address" name="address" value={formData.address} onChange={handleInputChange} rows={2} className="mt-2" /></div>
-              </div>
+        {/* Contact & Address */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Contact & Address</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="company@example.com"
+                className="mt-2"
+              />
             </div>
-
-            {/* Registration/Entity Info Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-blue-600" />
-                Government Registration
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div><Label htmlFor="uei">UEI (Unique Entity Identifier)</Label><Input id="uei" name="uei" value={formData.uei} onChange={handleInputChange} placeholder="Unique Entity Identifier" className="mt-2" /><p className="text-xs text-slate-500 mt-1">sam.gov identifier</p></div>
-                <div><Label htmlFor="cage">CAGE (Commercial and Government Entity) Code</Label><Input id="cage" name="cage" value={formData.cage} onChange={handleInputChange} placeholder="CAGE code" className="mt-2" /><p className="text-xs text-slate-500 mt-1">Commercial and Government Entity identifier</p></div>
-                <div><Label htmlFor="samStatus">SAM (System for Award Management) Status</Label>
-                  <select id="samStatus" name="samStatus" value={formData.samStatus} onChange={handleInputChange} className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-                    <option value="active">Active</option>
-                    <option value="expired">Expired</option>
-                    <option value="pending">Pending</option>
-                    <option value="not_registered">Not Registered</option>
-                  </select>
-                </div>
-                <div><Label htmlFor="samRenewalDate">SAM (System for Award Management) Renewal Date</Label><Input id="samRenewalDate" name="samRenewalDate" type="date" value={formData.samRenewalDate} onChange={handleInputChange} className="mt-2" /></div>
-              </div>
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="+1 (555) 000-0000"
+                className="mt-2"
+              />
             </div>
-
-            {/* Contracting Model Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                Contracting Model
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><Label htmlFor="contractingModel">Primary Role</Label>
-                  <select id="contractingModel" name="contractingModel" value={formData.contractingModel} onChange={handleInputChange} className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-                    <option value="prime">Prime Contractor</option>
-                    <option value="sub">Subcontractor</option>
-                    <option value="both">Both</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-3 pt-6">
-                  <input type="checkbox" id="usesSubcontractors" checked={formData.usesSubcontractors} onChange={(e) => setFormData(prev => ({ ...prev, usesSubcontractors: e.target.checked }))} className="rounded border-slate-300" />
-                  <Label htmlFor="usesSubcontractors">Uses Subcontractors</Label>
-                </div>
-              </div>
+            <div>
+              <Label htmlFor="website">Website</Label>
+              <Input
+                id="website"
+                name="website"
+                value={formData.website}
+                onChange={handleInputChange}
+                placeholder="https://example.com"
+                className="mt-2"
+              />
             </div>
-
-            {/* NAICS & Capabilities Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6">NAICS Codes & Capabilities</h2>
-              <div className="space-y-6">
-                <div><Label htmlFor="naicsCodes">NAICS Codes</Label><Textarea id="naicsCodes" name="naicsCodes" value={formData.naicsCodes} onChange={handleInputChange} placeholder="e.g., 541511, 541512, 541519" rows={2} className="mt-2" /><p className="text-xs text-slate-500 mt-1">Comma-separated NAICS codes</p></div>
-                <div><Label htmlFor="capabilities">Capabilities Statement</Label><Textarea id="capabilities" name="capabilities" value={formData.capabilities} onChange={handleInputChange} placeholder="Describe your core competencies and capabilities..." rows={4} className="mt-2" /></div>
-              </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="address">Street Address</Label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                placeholder="123 Main Street"
+                className="mt-2"
+              />
             </div>
-
-            {/* Certifications Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6">Certifications & Designations</h2>
-              <div><Label htmlFor="certifications">Active Certifications</Label><Textarea id="certifications" name="certifications" value={formData.certifications} onChange={handleInputChange} placeholder="e.g., Woman-Owned Small Business, Veteran-Owned Small Business, 8(a), HUBZone" rows={4} className="mt-2" /><p className="text-xs text-slate-500 mt-2">Comma-separated list of all active certifications and designations</p></div>
+            <div>
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder="City"
+                className="mt-2"
+              />
             </div>
-
-            {/* Default Contact Section */}
-            <div className="bg-white border border-slate-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                Default Contact
-              </h2>
-              <p className="text-sm text-slate-500 mb-4">Used as the default point of contact on proposals and contracts.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div><Label htmlFor="defaultContactName">Name</Label><Input id="defaultContactName" name="defaultContactName" value={formData.defaultContactName} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="defaultContactEmail">Email</Label><Input id="defaultContactEmail" name="defaultContactEmail" type="email" value={formData.defaultContactEmail} onChange={handleInputChange} className="mt-2" /></div>
-                <div><Label htmlFor="defaultContactPhone">Phone</Label><Input id="defaultContactPhone" name="defaultContactPhone" value={formData.defaultContactPhone} onChange={handleInputChange} className="mt-2" /></div>
-              </div>
+            <div>
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                name="state"
+                value={formData.state}
+                onChange={handleInputChange}
+                placeholder="State"
+                className="mt-2"
+              />
             </div>
-
-            {/* AI Behavior Panel */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
-                AI Behavior & Recommendations
-              </h2>
-              <p className="text-slate-700 mb-4">Based on your profile, AI will:</p>
-              <ul className="space-y-2 text-sm text-slate-700">
-                <li>✓ Recommend opportunities matching your NAICS codes</li>
-                <li>✓ Flag compliance requirements based on certifications</li>
-                <li>✓ Suggest proposal frameworks for your capabilities</li>
-                <li>✓ Alert you to registration updates or expiring certifications</li>
-              </ul>
+            <div>
+              <Label htmlFor="zip">ZIP Code</Label>
+              <Input
+                id="zip"
+                name="zip"
+                value={formData.zip}
+                onChange={handleInputChange}
+                placeholder="12345"
+                className="mt-2"
+              />
             </div>
-
-            {/* Save Button */}
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => navigate('/app/dashboard')}>Cancel</Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave} disabled={isSaving}>
-                <Save className="w-4 h-4 mr-2" />{isSaving ? 'Saving...' : 'Save Profile'}
-              </Button>
+            <div>
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                name="country"
+                value={formData.country}
+                onChange={handleInputChange}
+                placeholder="United States"
+                className="mt-2"
+              />
             </div>
           </div>
+        </section>
+
+        {/* Government Registrations */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Shield className="h-5 w-5 text-green-600" />
+            Government Registrations
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="uei">UEI (Unique Entity Identifier) *</Label>
+              <Input
+                id="uei"
+                name="uei"
+                value={formData.uei}
+                onChange={handleInputChange}
+                placeholder="From SAM.gov"
+                className="mt-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">Formerly DUNS number</p>
+            </div>
+            <div>
+              <Label htmlFor="cage">CAGE Code</Label>
+              <Input
+                id="cage"
+                name="cage"
+                value={formData.cage}
+                onChange={handleInputChange}
+                placeholder="From SAM.gov"
+                className="mt-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">Commercial and Government Entity</p>
+            </div>
+            <div>
+              <Label htmlFor="samStatus">SAM Registration Status</Label>
+              <select
+                id="samStatus"
+                name="samStatus"
+                value={formData.samStatus}
+                onChange={handleInputChange}
+                className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="not_registered">Not Registered</option>
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="samExpirationDate">SAM Expiration Date</Label>
+              <Input
+                id="samExpirationDate"
+                name="samExpirationDate"
+                type="date"
+                value={formData.samExpirationDate}
+                onChange={handleInputChange}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="gsaScheduleNumber">GSA Schedule Number</Label>
+              <Input
+                id="gsaScheduleNumber"
+                name="gsaScheduleNumber"
+                value={formData.gsaScheduleNumber}
+                onChange={handleInputChange}
+                placeholder="If applicable"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="gsaScheduleExpiration">GSA Schedule Expiration</Label>
+              <Input
+                id="gsaScheduleExpiration"
+                name="gsaScheduleExpiration"
+                type="date"
+                value={formData.gsaScheduleExpiration}
+                onChange={handleInputChange}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* NAICS & Certifications */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">NAICS Codes & Certifications</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="naicsPrimary">Primary NAICS Code</Label>
+              <Input
+                id="naicsPrimary"
+                name="naicsPrimary"
+                value={formData.naicsPrimary}
+                onChange={handleInputChange}
+                placeholder="e.g., 541512"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="naicsSecondary">Secondary NAICS Codes</Label>
+              <Textarea
+                id="naicsSecondary"
+                name="naicsSecondary"
+                value={formData.naicsSecondary}
+                onChange={handleInputChange}
+                placeholder="e.g., 541519, 541512 (comma-separated)"
+                rows={2}
+                className="mt-2"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="socioeconomicCerts">Socioeconomic Certifications</Label>
+              <Textarea
+                id="socioeconomicCerts"
+                name="socioeconomicCerts"
+                value={formData.socioeconomicCerts}
+                onChange={handleInputChange}
+                placeholder="e.g., 8(a), HUBZone, SDVOSB, WOSB (comma-separated)"
+                rows={2}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Capabilities & Personnel */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-amber-600" />
+            Capabilities & Personnel
+          </h2>
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <Label htmlFor="coreCompetencies">Core Competencies</Label>
+              <Textarea
+                id="coreCompetencies"
+                name="coreCompetencies"
+                value={formData.coreCompetencies}
+                onChange={handleInputChange}
+                placeholder="Describe your core competencies..."
+                rows={3}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="capabilities">Capabilities Statement</Label>
+              <Textarea
+                id="capabilities"
+                name="capabilities"
+                value={formData.capabilities}
+                onChange={handleInputChange}
+                placeholder="Your capabilities summary..."
+                rows={3}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="keyPersonnel">Key Personnel (JSON)</Label>
+              <Textarea
+                id="keyPersonnel"
+                name="keyPersonnel"
+                value={formData.keyPersonnel}
+                onChange={handleInputChange}
+                placeholder='[{"name":"John Doe","title":"CEO","email":"john@example.com"}]'
+                rows={3}
+                className="mt-2 font-mono text-xs"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Financial Information */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Financial Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="bondingCapacity">Bonding Capacity</Label>
+              <Input
+                id="bondingCapacity"
+                name="bondingCapacity"
+                value={formData.bondingCapacity}
+                onChange={handleInputChange}
+                placeholder="e.g., $5M"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="bankingInfo">Banking Info (JSON)</Label>
+              <Input
+                id="bankingInfo"
+                name="bankingInfo"
+                value={formData.bankingInfo}
+                onChange={handleInputChange}
+                placeholder='{"bankName":"Bank","accountName":"Acct"}'
+                className="mt-2 font-mono text-xs"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="insuranceSummary">Insurance Summary (JSON)</Label>
+              <Textarea
+                id="insuranceSummary"
+                name="insuranceSummary"
+                value={formData.insuranceSummary}
+                onChange={handleInputChange}
+                placeholder='{"generalLiability":"$1M","workersComp":"$2M"}'
+                rows={2}
+                className="mt-2 font-mono text-xs"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Past Performance */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Past Performance</h2>
+          <div>
+            <Label htmlFor="pastPerformance">Past Performance References (JSON)</Label>
+            <Textarea
+              id="pastPerformance"
+              name="pastPerformance"
+              value={formData.pastPerformance}
+              onChange={handleInputChange}
+              placeholder='[{"contractNumber":"N00000-00-C-0000","agency":"DoD","description":"IT Services","value":"$5M"}]'
+              rows={4}
+              className="mt-2 font-mono text-xs"
+            />
+          </div>
+        </section>
+
+        {/* Contracting Model */}
+        <section className="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold mb-4">Contracting Model</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contractingModel">Contracting Model</Label>
+              <select
+                id="contractingModel"
+                name="contractingModel"
+                value={formData.contractingModel}
+                onChange={handleInputChange}
+                className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="prime">Prime Contractor</option>
+                <option value="sub">Subcontractor</option>
+                <option value="both">Both Prime & Sub</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="usesSubcontractors" className="flex items-center gap-2">
+                <input
+                  id="usesSubcontractors"
+                  name="usesSubcontractors"
+                  type="checkbox"
+                  checked={formData.usesSubcontractors}
+                  onChange={(e) => setFormData(prev => ({ ...prev, usesSubcontractors: e.target.checked }))}
+                  className="w-4 h-4"
+                />
+                Uses Subcontractors
+              </Label>
+            </div>
+          </div>
+        </section>
+
+        {/* Save Button */}
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => navigate('/app/dashboard')}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? 'Saving...' : 'Save Profile'}
+          </Button>
         </div>
+      </div>
     </PageLayout>
   );
 }

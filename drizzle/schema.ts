@@ -1247,22 +1247,55 @@ export const customerAdoption = mysqlTable("customer_adoption", {
 export const businessProfiles = mysqlTable("business_profiles", {
   id: int("id").primaryKey().autoincrement(),
   workspaceId: int("workspaceId").notNull(),
+  // Company Identity
   legalName: varchar("legalName", { length: 255 }),
   dba: varchar("dba", { length: 255 }),
+  businessStructure: varchar("businessStructure", { length: 100 }), // LLC, S-Corp, C-Corp, Sole Proprietor, Partnership
+  stateOfIncorporation: varchar("stateOfIncorporation", { length: 100 }),
+  businessSize: varchar("businessSize", { length: 50 }), // small, large, other_than_small
+  yearFounded: varchar("yearFounded", { length: 10 }),
+  numberOfEmployees: varchar("numberOfEmployees", { length: 50 }),
+  // Contact & Address
   website: varchar("website", { length: 500 }),
   email: varchar("email", { length: 320 }),
   phone: varchar("phone", { length: 50 }),
   address: text("address"),
-  entityType: varchar("entityType", { length: 100 }), // LLC, Corp, Sole Prop, etc.
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zip: varchar("zip", { length: 20 }),
+  country: varchar("country", { length: 100 }).default("United States"),
+  // Government Registrations
   uei: varchar("uei", { length: 50 }),
   cage: varchar("cage", { length: 20 }),
   samStatus: mysqlEnum("samStatus", ["active", "expired", "pending", "not_registered"]).default("not_registered"),
-  samRenewalDate: timestamp("samRenewalDate"),
-  naicsCodes: text("naicsCodes"),
-  certifications: text("certifications"), // JSON array
+  samExpirationDate: timestamp("samExpirationDate"),
+  samRegistrationDate: timestamp("samRegistrationDate"),
+  gsaScheduleNumber: varchar("gsaScheduleNumber", { length: 100 }),
+  gsaScheduleExpiration: timestamp("gsaScheduleExpiration"),
+  // NAICS
+  naicsPrimary: varchar("naicsPrimary", { length: 20 }),
+  naicsSecondary: text("naicsSecondary"), // JSON array of {code, description}
+  // Socioeconomic Certifications — JSON array of {name, certNumber, expirationDate, issuingAgency}
+  socioeconomicCerts: text("socioeconomicCerts"),
+  // Key Personnel — JSON array of {name, title, clearanceLevel, role, email, phone}
+  keyPersonnel: text("keyPersonnel"),
+  // Capabilities
   capabilities: text("capabilities"),
+  coreCompetencies: text("coreCompetencies"),
+  // Past Performance — JSON array of {contractNumber, agency, description, value, periodOfPerformance, contactName, contactPhone}
+  pastPerformance: text("pastPerformance"),
+  // Financial
+  bankingInfo: text("bankingInfo"), // JSON: {bankName, accountName, routingNumber, accountNumber, paymentMethod}
+  bondingCapacity: varchar("bondingCapacity", { length: 100 }),
+  insuranceSummary: text("insuranceSummary"), // JSON: {generalLiability, professionalLiability, workersComp, cyber}
+  annualRevenue: varchar("annualRevenue", { length: 100 }),
+  // Contracting Model
   contractingModel: mysqlEnum("contractingModel", ["prime", "sub", "both"]).default("prime"),
   usesSubcontractors: boolean("usesSubcontractors").default(false),
+  // Legacy fields
+  naicsCodes: text("naicsCodes"),
+  certifications: text("certifications"),
+  entityType: varchar("entityType", { length: 100 }),
   defaultContactName: varchar("defaultContactName", { length: 255 }),
   defaultContactEmail: varchar("defaultContactEmail", { length: 320 }),
   defaultContactPhone: varchar("defaultContactPhone", { length: 50 }),

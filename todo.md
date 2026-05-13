@@ -1406,4 +1406,136 @@
 - [x] Users — wire real tRPC workspace.listMembers
 - [x] UserProfile — fix password change stub
 
+- [x] Deploy and push to GitHub
+
+## Phase 35: Guided AI-Monitored Experience Transformation
+
+### Reusable Components
+- [ ] LifecycleProgress — horizontal stepper showing 5 lifecycle phases with current phase highlighted
+- [ ] AIStatusPanel — collapsible panel showing AI checks, verifications, and flags for current page
+- [ ] WhatsNext — guided action section with ordered next steps and direct action buttons
+- [ ] ValidationWarnings — inline warning/blocker banners for incomplete or at-risk items
+- [ ] ContextualHelp — expandable guidance explaining what this step is and why it matters
+- [ ] MobileResponsiveTable — wrapper that stacks table rows on mobile instead of overflowing
+
+### Dashboard Transformation
+- [ ] Add lifecycle overview showing progress across all 5 phases
+- [ ] Add AI monitoring summary (items checked, flagged, verified)
+- [ ] Add guided "What's Next" section with prioritized actions
+- [ ] Add validation warnings for overdue/at-risk items
+
+### Bug Fixes & Missing Features
+- [ ] Fix crashing page (identify and resolve)
+- [ ] Fix Contractor Handbook empty blue banner text
+- [ ] Add blue header banner to Document Generator page
+- [ ] Add blue header banner to Email Preferences page
+- [ ] Add blue header banner to Team page
+- [ ] Fix mobile responsiveness — tables overlapping and truncated text
+
+### Opportunity Pages Guided Experience
+- [ ] Opportunities list — lifecycle position, AI flags, guided next actions
+- [ ] Opportunity detail — progress indicator, AI compliance checks, what's next
+
+### Proposal Pages Guided Experience
+- [ ] Proposals list — lifecycle position, AI flags, guided next actions
+- [ ] Proposal workspace — progress indicator, AI compliance checks, what's next
+
+### Contract & Performance Pages Guided Experience
+- [ ] Contracts list — lifecycle position, AI flags, guided next actions
+- [ ] Contract Hub — progress indicator, AI compliance checks, what's next
+- [ ] Deliverables — AI monitoring, validation warnings
+- [ ] Invoicing — AI monitoring, validation warnings
+- [ ] Change Management — AI monitoring, validation warnings
+- [ ] Compliance — AI monitoring, validation warnings
+
+### Remaining Pages Guided Experience
+- [ ] Closeout/Lessons Learned — lifecycle position, guided experience
+- [ ] Subcontractors — contextual guidance, AI monitoring
+- [ ] Vendors — contextual guidance, AI monitoring
+- [ ] Communication Log — contextual guidance
+- [ ] Alerts & Tasks — guided prioritization
+- [ ] AI Runs & Suggestions — enhanced AI status display
+
+- [ ] Deploy and push to GitHub
+
+## Phase 35: Guided AI-Monitored Experience + Zero Demo Data + Comprehensive Profile
+
+### Zero Demo/Sample Data
+- [x] Remove all hardcoded demo/sample data from DocumentGeneration.tsx (mock generatedDocs)
+- [x] Remove all hardcoded demo/sample data from CustomerAdoption.tsx
+- [x] Remove all hardcoded demo/sample data from PlatformPages.tsx (fake workspace rows)
+- [x] Audit and remove any remaining mock arrays in all pages
+- [x] Ensure app shows empty states (not demo data) on first login
+
+### Comprehensive Business Profile Schema
+- [x] Expanded business_profiles table with 30+ new fields (company identity, registrations, NAICS, certifications, personnel, capabilities, financial, past performance)
+- [x] Database migration applied successfully
+- [x] All new columns added to schema.ts
+
+### Comprehensive Business Profile Page
+- [x] Rebuilt BusinessProfile.tsx with all required fields in organized sections
+- [x] Section: Company Identity (legal name, DBA, structure, state of incorporation, size, founding, employees, revenue)
+- [x] Section: Government Registrations (CAGE, UEI, SAM status/expiration, GSA schedule)
+- [x] Section: NAICS Codes (primary + secondary)
+- [x] Section: Certifications (socioeconomic certs with expiration dates)
+- [x] Section: Key Personnel (JSON format for flexibility)
+- [x] Section: Contact & Address (address, phone, email, website, city, state, zip, country)
+- [x] Section: Financial (banking info, bonding capacity, insurance summary)
+- [x] Section: Capabilities (core competencies, capabilities statement, past performance)
+- [x] Profile completion percentage indicator
+- [x] Real tRPC integration with businessProfile.get and businessProfile.upsert
+
+### Auto-Population Across App
+- [ ] Proposals: auto-fill company name, CAGE, UEI, NAICS, certifications from profile
+- [ ] Capability Statements: auto-fill company data, certifications, NAICS from profile
+- [ ] Contract setup: auto-fill company info from profile
+- [ ] Invoicing: auto-fill company name and banking info from profile
+- [ ] Compliance forms: auto-fill certifications and registration data from profile
+
+### Guided Experience Components
+- [ ] LifecycleProgress component — 5-phase stepper with current phase highlighted
+- [ ] AIStatusPanel component — shows AI checks, verifications, flags for current page
+- [ ] WhatsNext component — ordered next steps with direct action buttons
+- [ ] ValidationWarning component — inline warning/blocker for incomplete/at-risk items
+- [ ] ContextualHelp component — expandable guidance for each page
+
+### Dashboard Transformation
+- [ ] Add lifecycle overview showing progress across all 5 phases
+- [ ] Add AI monitoring summary (items checked, flagged, verified)
+- [ ] Add guided setup checklist for new users (profile incomplete, no opportunities, etc.)
+- [ ] Fix mobile responsiveness — tables overlapping
+
+### Bug Fixes
+- [ ] Fix crashing page (identify and resolve)
+- [ ] Fix Contractor Handbook — add blue banner, fix external links (open real URLs)
+- [ ] Fix Handbook Generate Section button — wire to real AI generation
+- [ ] Add blue header banner to DocumentGeneration page
+- [ ] Add blue header banner to EmailNotificationPreferences page
+- [ ] Add blue header banner to WorkspaceTeam page
+- [ ] Fix PlatformPages stub buttons (View details, Billing detail)
+- [ ] Fix PlatformWorkspaceDetail stub buttons (Plan change, Transfer ownership)
+- [ ] Fix PlanFeatures Downgrade button
+- [ ] Fix PlatformDemoWorkspaces placeholder
+
+### Opportunity Pages Guided Experience
+- [ ] Opportunities list — lifecycle step 1 indicator, AI flags, guided next actions
+- [ ] Opportunity detail — progress indicator, AI compliance checks, what's next
+
+### Proposal Pages Guided Experience
+- [ ] Proposals list — lifecycle step 2 indicator, AI flags, guided next actions
+- [ ] Proposal workspace — progress indicator, AI compliance checks, what's next
+
+### Contract & Performance Pages Guided Experience
+- [ ] Contracts list — lifecycle step 3 indicator, AI flags, guided next actions
+- [ ] Contract Hub — progress indicator, AI compliance checks, what's next
+- [ ] Deliverables — AI monitoring, validation warnings
+- [ ] Invoicing — AI monitoring, validation warnings
+- [ ] Change Management — AI monitoring, validation warnings
+- [ ] Compliance — AI monitoring, validation warnings
+
+### Closeout & Remaining Pages
+- [ ] Closeout/Lessons Learned — lifecycle step 5, guided experience
+- [ ] Subcontractors — contextual guidance, AI monitoring
+- [ ] Vendors — contextual guidance, AI monitoring
+
 - [ ] Deploy and push to GitHub
