@@ -55,8 +55,13 @@ export default function PlatformWorkspaceDetailPage() {
   const reactivateWorkspace = trpc.platformAdmin.workspaces.reactivate.useMutation({
     onSuccess: () => { refetch(); setShowReactivateDialog(false); setReason(""); toast.success("Workspace reactivated."); },
   });
-  const addNote = trpc.platformAdmin.notes.create.useMutation({
+  const [inlineNoteText, setInlineNoteText] = useState("");
+  const addNote = trpc.platformAdmin.workspaces.addNote.useMutation({
     onSuccess: () => { refetch(); setShowNoteDialog(false); setNoteText(""); toast.success("Note added."); },
+  });
+  const addInlineNote = trpc.platformAdmin.workspaces.addNote.useMutation({
+    onSuccess: () => { refetch(); setInlineNoteText(""); toast.success("Note added."); },
+    onError: (e) => toast.error(e.message),
   });
   const updateWorkspace = trpc.platformAdmin.workspaces.update.useMutation({
     onSuccess: () => { refetch(); setShowEditDialog(false); toast.success("Workspace updated."); },
@@ -446,6 +451,30 @@ export default function PlatformWorkspaceDetailPage() {
         <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
           <FileText className="w-5 h-5 text-yellow-400" /> Platform Notes (Internal)
         </h2>
+
+        {/* Inline Add Note Form */}
+        <div className="mb-4 bg-slate-800/60 border border-slate-700 rounded-lg p-4">
+          <label className="block text-sm font-medium text-slate-300 mb-2">Add a Note</label>
+          <textarea
+            value={inlineNoteText}
+            onChange={e => setInlineNoteText(e.target.value)}
+            placeholder="Enter an internal note about this workspace..."
+            rows={3}
+            className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-yellow-600 resize-none"
+          />
+          <div className="flex justify-end mt-2">
+            <Button
+              size="sm"
+              className="bg-yellow-700 hover:bg-yellow-600 text-white"
+              disabled={!inlineNoteText.trim() || addInlineNote.isPending}
+              onClick={() => addInlineNote.mutate({ workspaceId: workspace.id, note: inlineNoteText })}
+            >
+              {addInlineNote.isPending ? "Saving..." : "Add Note"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Existing Notes */}
         {workspace.platformNotes?.length > 0 ? (
           <div className="space-y-3">
             {workspace.platformNotes.map((n: any) => (
@@ -458,7 +487,7 @@ export default function PlatformWorkspaceDetailPage() {
             ))}
           </div>
         ) : (
-          <p className="text-slate-400 text-sm">No platform notes.</p>
+          <p className="text-slate-400 text-sm">No platform notes yet.</p>
         )}
       </section>
 

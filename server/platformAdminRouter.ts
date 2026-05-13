@@ -339,6 +339,24 @@ export const platformAdminRouter = router({
         return { success: true, count: input.ids.length };
       }),
 
+    bulkReactivate: adminProcedure
+      .input(z.object({ ids: z.array(z.number()), reason: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        for (const id of input.ids) {
+          await db.update(workspaces).set({ status: "active" }).where(eq(workspaces.id, id));
+          await db.insert(platformAuditLog).values({
+            action: "reactivate_workspace",
+            targetType: "workspace",
+            targetId: id,
+            performedBy: ctx.user.id,
+            reason: input.reason,
+          });
+        }
+        return { success: true, count: input.ids.length };
+      }),
+
     addNote: adminProcedure
       .input(z.object({ workspaceId: z.number(), note: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {

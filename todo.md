@@ -1341,3 +1341,11 @@
 - [x] Frontend: Bulk action bar appears when rows are selected (suspend selected, clear selection)
 - [x] Frontend: CSV export button above table — exports filtered workspace list
 - [x] Deploy and push to GitHub
+
+## Phase 30: Workspace Bulk Reactivate, Inline Note Form, Filtered CSV Export
+
+- [x] Bulk reactivate — add "Reactivate Selected" button in bulk action bar (alongside Suspend Selected)
+- [x] Backend: platformAdmin.workspaces.bulkReactivate procedure
+- [x] Workspace detail inline add-note form — inline textarea + submit button in the Notes section
+- [x] Filtered CSV export — pass search and status query params to /api/export/admin/workspaces so only filtered rows are downloaded
+- [x] Deploy and push to GitHub

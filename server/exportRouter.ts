@@ -134,6 +134,47 @@ router.get("/api/export/admin/info", async (req: Request, res: Response) => {
 });
 
 // ============================================================
+// PLATFORM ADMIN: Export workspaces with optional search/status filter
+// ============================================================
+router.get("/api/export/admin/workspaces", async (req: Request, res: Response) => {
+  const user = await authenticateRequest(req, res);
+  if (!user) return;
+  if (!isAdmin(user)) return res.status(403).json({ error: "Admin access required" });
+
+  const db = await getDb();
+  if (!db) return res.status(500).json({ error: "Database not available" });
+
+  const { search = "", status = "" } = req.query as { search?: string; status?: string };
+
+  try {
+    let rows = await db.select().from(workspaces);
+
+    // Apply search filter
+    if (search) {
+      const q = search.toLowerCase();
+      rows = rows.filter(ws =>
+        ws.name.toLowerCase().includes(q) ||
+        (ws.companyName || "").toLowerCase().includes(q)
+      );
+    }
+
+    // Apply status filter
+    if (status && status !== "all") {
+      rows = rows.filter(ws => ws.status === status);
+    }
+
+    const csv = rowsToCsv(rows);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filterSuffix = status && status !== "all" ? `_${status}` : "";
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="workspaces${filterSuffix}_${dateStr}.csv"`);
+    res.send(csv);
+  } catch (error: any) {
+    res.status(500).json({ error: "Failed to export workspaces", details: error.message });
+  }
+});
+
+// ============================================================
 // PLATFORM ADMIN: Export single table as CSV
 // ============================================================
 router.get("/api/export/admin/table/:tableName", async (req: Request, res: Response) => {

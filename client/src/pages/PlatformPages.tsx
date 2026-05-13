@@ -805,6 +805,8 @@ export function PlatformWorkspaces() {
   const [selectedIds, setSelectedIds] = React.useState<Set<number>>(new Set());
   const [showBulkSuspendDialog, setShowBulkSuspendDialog] = React.useState(false);
   const [bulkSuspendReason, setBulkSuspendReason] = React.useState("");
+  const [showBulkReactivateDialog, setShowBulkReactivateDialog] = React.useState(false);
+  const [bulkReactivateReason, setBulkReactivateReason] = React.useState("");
 
   const { data: workspaces = [], isLoading, refetch } = trpc.platformAdmin.workspaces.list.useQuery();
   const { data: metrics } = trpc.platformAdmin.dashboardMetrics.useQuery();
@@ -817,6 +819,16 @@ export function PlatformWorkspaces() {
       setShowBulkSuspendDialog(false);
       setBulkSuspendReason("");
       toast.success(`${data.count} workspace(s) suspended.`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const bulkReactivateMut = trpc.platformAdmin.workspaces.bulkReactivate.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      setSelectedIds(new Set());
+      setShowBulkReactivateDialog(false);
+      setBulkReactivateReason("");
+      toast.success(`${data.count} workspace(s) reactivated.`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -838,7 +850,11 @@ export function PlatformWorkspaces() {
   };
 
   const exportCsv = () => {
-    window.open("/api/export/admin/table/workspaces", "_blank");
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    const qs = params.toString();
+    window.open(`/api/export/admin/workspaces${qs ? `?${qs}` : ""}`, "_blank");
   };
 
   const filtered = workspaces.filter(ws => {
@@ -934,6 +950,14 @@ export function PlatformWorkspaces() {
             onClick={() => setShowBulkSuspendDialog(true)}
           >
             Suspend Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-green-700 text-green-400 hover:bg-green-900/30"
+            onClick={() => setShowBulkReactivateDialog(true)}
+          >
+            Reactivate Selected
           </Button>
           <Button
             size="sm"
@@ -1112,6 +1136,32 @@ export function PlatformWorkspaces() {
                 onClick={() => bulkSuspendMut.mutate({ ids: Array.from(selectedIds), reason: bulkSuspendReason })}
               >
                 {bulkSuspendMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : `Suspend ${selectedIds.size} Workspace${selectedIds.size !== 1 ? 's' : ''}`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Reactivate Dialog */}
+      {showBulkReactivateDialog && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-semibold text-white">Reactivate {selectedIds.size} Workspace{selectedIds.size !== 1 ? 's' : ''}</h3>
+            <p className="text-sm text-slate-400">This will restore full access for all selected workspaces. Provide a reason for the audit log.</p>
+            <textarea
+              value={bulkReactivateReason}
+              onChange={e => setBulkReactivateReason(e.target.value)}
+              placeholder="Reason for bulk reactivation (required)..."
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-green-600 min-h-[80px]"
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" className="text-slate-400" onClick={() => { setShowBulkReactivateDialog(false); setBulkReactivateReason(""); }}>Cancel</Button>
+              <Button
+                className="bg-green-700 hover:bg-green-600 text-white"
+                disabled={!bulkReactivateReason.trim() || bulkReactivateMut.isPending}
+                onClick={() => bulkReactivateMut.mutate({ ids: Array.from(selectedIds), reason: bulkReactivateReason })}
+              >
+                {bulkReactivateMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : `Reactivate ${selectedIds.size} Workspace${selectedIds.size !== 1 ? 's' : ''}`}
               </Button>
             </div>
           </div>
