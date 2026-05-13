@@ -11,16 +11,23 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
+  // Core Workflow
   { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
   { icon: Zap, label: "Opportunities", path: "/app/opportunities" },
   { icon: FileText, label: "Proposals", path: "/app/proposals" },
   { icon: Briefcase, label: "Contracts", path: "/app/contracts" },
+  
+  // Operations
   { icon: CheckCircle2, label: "Files", path: "/app/files" },
   { icon: Users, label: "Contacts", path: "/app/contacts" },
   { icon: MessageSquare, label: "Messages", path: "/app/messages" },
+  
+  // Finance
   { icon: DollarSign, label: "Invoices", path: "/app/invoices" },
   { icon: BarChart3, label: "Payments", path: "/app/payments" },
   { icon: TrendingDown, label: "Finance", path: "/app/finance" },
+  
+  // Intelligence
   { icon: BarChart3, label: "Reports", path: "/app/reports" },
   { icon: Award, label: "Capability Statements", path: "/app/capability-statements" },
   { icon: BookOpen, label: "Templates", path: "/app/templates" },
@@ -30,7 +37,10 @@ const menuItems = [
   { icon: Activity, label: "AI Runs", path: "/app/ai-runs" },
   { icon: Shield, label: "Audit Log", path: "/app/audit-log" },
   { icon: Bell, label: "Notifications", path: "/app/notifications" },
-  { icon: User, label: "Profile", path: "/app/profile" },
+  
+  // Account & Settings
+  { icon: Briefcase, label: "Business Profile", path: "/app/business-profile" },
+  { icon: User, label: "User Profile", path: "/app/profile" },
   { icon: Settings, label: "Settings", path: "/app/settings" },
   { icon: CreditCard, label: "Billing", path: "/app/billing" },
 ];

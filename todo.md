@@ -1493,17 +1493,17 @@
 - [ ] Compliance forms: auto-fill certifications and registration data from profile
 
 ### Guided Experience Components
-- [ ] LifecycleProgress component — 5-phase stepper with current phase highlighted
-- [ ] AIStatusPanel component — shows AI checks, verifications, flags for current page
-- [ ] WhatsNext component — ordered next steps with direct action buttons
-- [ ] ValidationWarning component — inline warning/blocker for incomplete/at-risk items
+- [x] LifecycleProgress component — 5-phase stepper with current phase highlighted
+- [x] AIStatusPanel component — shows AI checks, verifications, flags for current page
+- [x] WhatsNext component — ordered next steps with direct action buttons
+- [x] ValidationWarning component — inline warning/blocker for incomplete/at-risk items
 - [ ] ContextualHelp component — expandable guidance for each page
 
 ### Dashboard Transformation
-- [ ] Add lifecycle overview showing progress across all 5 phases
-- [ ] Add AI monitoring summary (items checked, flagged, verified)
-- [ ] Add guided setup checklist for new users (profile incomplete, no opportunities, etc.)
-- [ ] Fix mobile responsiveness — tables overlapping
+- [x] Add lifecycle overview showing progress across all 5 phases
+- [x] Add AI monitoring summary (items checked, flagged, verified)
+- [x] Add guided "What's Next" section with prioritized actions
+- [x] Add validation warnings for overdue/at-risk itemsness — tables overlapping
 
 ### Bug Fixes
 - [ ] Fix crashing page (identify and resolve)
