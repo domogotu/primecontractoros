@@ -64,7 +64,7 @@ export default function Billing() {
         description="Manage your workspace subscription, payment methods, and billing history."
         whenToUse="When reviewing your plan, updating payment information, or checking billing history."
         whatToDoNext={["Review your current plan and usage", "Check billing history for recent charges", "Update payment method if needed", "Compare plans for upgrade options"]}
-        relatedRecords={[{ label: "Plan Features", path: "/app/plan-features" }, { label: "Settings", path: "/app/settings" }, { label: "Support", path: "/app/support" }]}
+        relatedRecords={[{ label: "Plan Features", path: "/app/plan-features" }, { label: "Settings", path: "/app/settings" }, { label: "Support", path: "/support" }]}
       />
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>

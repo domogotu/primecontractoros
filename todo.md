@@ -1554,3 +1554,10 @@
 - [x] Checkpoint saved
 - [x] Deploy to production
 - [x] Push to GitHub
+
+### Bug Fix: WhatsNext Action Links Crashing Pages
+- [x] Identify all WhatsNext action links across pages and verify target routes exist
+- [x] Fix broken links that navigate to non-existent routes (causing crashes)
+- [x] Add React error boundary to prevent full-page crashes
+- [x] Test all WhatsNext links work correctly
+- [x] Deploy fix

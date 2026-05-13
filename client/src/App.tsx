@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -99,12 +99,15 @@ import Webhooks from "./pages/Webhooks";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
 import EmailNotificationPreferences from "./pages/EmailNotificationPreferences";
 
-// Wrapper to render app pages inside AppShell
+// Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
   return function WrappedWithAppShell() {
+    const [location] = useLocation();
     return (
       <AppShell>
-        <Component />
+        <ErrorBoundary fallbackKey={location}>
+          <Component />
+        </ErrorBoundary>
       </AppShell>
     );
   };

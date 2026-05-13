@@ -142,7 +142,7 @@ export default function LossReview() {
         description="Capture and analyze why proposals were not selected to improve future performance."
         whenToUse="After receiving a loss notification to document what happened and extract lessons."
         whatToDoNext={["Document the loss reason and debrief notes", "Run AI analysis to identify patterns", "Save lessons learned", "Update templates based on findings"]}
-        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Lessons Learned", path: "/app/lessons" }, { label: "Templates", path: "/app/templates" }]}
+        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Lessons Learned", path: "/app/lessons-learned" }, { label: "Templates", path: "/app/templates" }]}
       />
 
       {/* Create Dialog */}

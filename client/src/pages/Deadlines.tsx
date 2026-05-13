@@ -153,7 +153,7 @@ export default function Deadlines() {
           { label: "Deliverables", path: "/app/deliverables" },
           { label: "Contracts", path: "/app/contracts" },
           { label: "Alerts & Tasks", path: "/app/alerts" },
-          { label: "Calendar", path: "/app/timeline" },
+
         ]}
         alerts={[
           ...(stats.overdue > 0

@@ -48,7 +48,7 @@ export default function PlatformOnboardingPage() {
 
   const filteredUsers = onboardingUsers.filter(u => {
     if (filterStatus !== "all" && u.status !== filterStatus) return false;
-    if (searchQuery && !u.name.toLowerCase().includes(searchQuery.toLowerCase()) && !u.email.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery && !(u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) && !(u.email || "").toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 

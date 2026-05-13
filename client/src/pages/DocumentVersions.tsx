@@ -131,7 +131,7 @@ export default function DocumentVersions() {
         whenToUse="Use this page to review the history of a document, see what changed between versions, or restore an earlier version."
         whatToDoNext={["Upload a new version of an existing file, or click a row to view its full version timeline on the right."]}
         relatedRecords={[
-          { label: "Documents", path: "/app/documents" },
+          { label: "Files", path: "/app/files" },
           { label: "Contracts", path: "/app/contracts" },
         ]}
       />

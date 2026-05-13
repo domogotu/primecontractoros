@@ -53,7 +53,7 @@ export default function FlowdownReview() {
         description="Ensure required FAR/DFARS clauses are properly flowed down to subcontractors. Missing flowdown clauses create compliance risk."
         whenToUse="When issuing subcontracts, during compliance reviews, or when prime contract modifications add new clauses."
         whatToDoNext={["Review missing clauses and add them to subcontracts", "Mark review-needed items after legal review", "Run AI analysis for automated clause detection"]}
-        relatedRecords={[{ label: "FAR/DFARS Reference", path: "/app/far-reference" }, { label: "Compliance Matrix", path: "/app/compliance-matrix" }, { label: "Subcontractors", path: "/app/subcontractors" }]}
+        relatedRecords={[{ label: "FAR/DFARS Reference", path: "/app/far-reference" }, { label: "Compliance", path: "/app/compliance" }, { label: "Subcontractors", path: "/app/subcontractors" }]}
       />
 
       <div className="flex items-start justify-between mb-6">

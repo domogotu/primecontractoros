@@ -104,7 +104,7 @@ export default function AIRuns() {
           title="AI Run History"
           description="View and manage all AI workflow executions across your organization."
           whenToUse="Use this page to audit AI usage, troubleshoot failed runs, and monitor token consumption and costs."
-          whatToDoNext="Review recent runs, filter by workflow type, or expand a run to see the full input and output."
+          whatToDoNext={["Review recent runs, filter by workflow type, or expand a run to see the full input and output."]}
           relatedRecords={[
             { label: "Settings", path: "/app/settings" },
             { label: "Billing", path: "/app/billing" }

@@ -154,8 +154,8 @@ export default function Deliverables() {
           title="Deliverables Tracker"
           description="Track contract deliverables with status, due dates, and submissions."
           whenToUse="Use this page to monitor upcoming deadlines, review submitted deliverables, and manage the acceptance process."
-          whatToDoNext="Review overdue items, process submitted deliverables, or add new requirements."
-          relatedRecords={["Contracts", "Requirements", "Files"]}
+          whatToDoNext={["Review overdue items, process submitted deliverables, or add new requirements."]}
+          relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Requirements", path: "/app/requirements" }, { label: "Files", path: "/app/files" }]}
           alerts={stats.overdue > 0 ? [{ type: "warning", message: `You have ${stats.overdue} overdue deliverables requiring immediate attention.` }] : []}
         />
 

@@ -83,7 +83,7 @@ export default function CustomerAdoption() {
           title="Workspace Adoption"
           description="Monitor how well your team is utilizing PrimeContractorOS features and track setup progress."
           whenToUse="Use this page to identify unused features, track team engagement, and improve your workspace setup."
-          whatToDoNext="Review inactive modules and create adoption tasks to encourage usage."
+          whatToDoNext={["Review inactive modules and create adoption tasks to encourage usage."]}
           relatedRecords={[
             { label: "Team Settings", url: "/app/settings/team" },
             { label: "Workspace Config", url: "/app/settings/workspace" }

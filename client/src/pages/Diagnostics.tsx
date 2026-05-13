@@ -123,8 +123,8 @@ export default function Diagnostics() {
         title="System Diagnostics"
         description="Check health of routes, data, integrations, AI, billing, files, and missing setup."
         whenToUse="Use this page to troubleshoot system issues, verify integrations, or check overall platform health."
-        whatToDoNext="Review any errors or warnings and create tasks to resolve them."
-        relatedRecords={[{ label: "Settings", href: "/app/settings" }]}
+        whatToDoNext={["Review any errors or warnings and create tasks to resolve them."]}
+        relatedRecords={[{ label: "Settings", path: "/app/settings" }]}
       />
 
       <div className="space-y-6 mt-6">

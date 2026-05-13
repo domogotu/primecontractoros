@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { ChevronDown, ChevronUp, Info, ArrowRight, AlertTriangle, Link2 } from "lucide-react";
 
 interface PageGuideProps {
   title: string;
   description: string;
   whenToUse: string;
-  whatToDoNext: string[];
+  whatToDoNext: string | string[];
   relatedRecords?: { label: string; path: string }[];
   alerts?: { message: string; type: "warning" | "info" | "action" }[];
 }
@@ -19,6 +20,19 @@ export default function PageGuide({
   alerts = [],
 }: PageGuideProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Normalize whatToDoNext to always be an array
+  const nextItems: string[] = Array.isArray(whatToDoNext)
+    ? whatToDoNext
+    : typeof whatToDoNext === "string"
+    ? [whatToDoNext]
+    : [];
+
+  // Normalize relatedRecords to always be array of {label, path}
+  const records = (relatedRecords || []).filter(
+    (r): r is { label: string; path: string } =>
+      typeof r === "object" && r !== null && "label" in r && "path" in r
+  );
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg mb-6">
@@ -51,13 +65,13 @@ export default function PageGuide({
           </div>
 
           {/* What to do next */}
-          {whatToDoNext.length > 0 && (
+          {nextItems.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
                 What to Do Next
               </h4>
               <ul className="space-y-1">
-                {whatToDoNext.map((item, idx) => (
+                {nextItems.map((item, idx) => (
                   <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
                     <ArrowRight className="w-3 h-3 text-blue-500 flex-shrink-0" />
                     {item}
@@ -68,21 +82,21 @@ export default function PageGuide({
           )}
 
           {/* Related records */}
-          {relatedRecords.length > 0 && (
+          {records.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1">
                 Related Records
               </h4>
               <div className="flex flex-wrap gap-2">
-                {relatedRecords.map((record, idx) => (
-                  <a
+                {records.map((record, idx) => (
+                  <Link
                     key={idx}
                     href={record.path}
                     className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-blue-200 rounded text-xs text-blue-700 hover:bg-blue-50"
                   >
                     <Link2 className="w-3 h-3" />
                     {record.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>

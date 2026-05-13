@@ -93,8 +93,8 @@ export default function EmailTemplates() {
   });
 
   const filteredTemplates = templates.filter(t => {
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (t.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (t.subject || "").toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === "All" || t.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -168,7 +168,7 @@ export default function EmailTemplates() {
           title="Email Templates"
           description="Manage and customize reusable email templates for consistent communication across your workspace."
           whenToUse="Use this page to create standard responses, automated notifications, and formal communications."
-          whatToDoNext="Create a new template or edit an existing one to match your brand voice."
+          whatToDoNext={["Create a new template or edit an existing one to match your brand voice."]}
           relatedRecords={[
             { title: "Communications", url: "/app/communications" },
             { title: "Settings", url: "/app/settings" }
