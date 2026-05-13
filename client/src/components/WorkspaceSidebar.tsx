@@ -86,6 +86,8 @@ export default function WorkspaceSidebar() {
       label: "Administration",
       items: [
         { icon: Settings, label: "Settings", path: "/app/settings" },
+        { icon: Users, label: "Team Members", path: "/app/team" },
+        { icon: Bell, label: "Notification Preferences", path: "/app/notification-preferences" },
         { icon: Users, label: "Users", path: "/app/users" },
         { icon: UserPlus, label: "Invites", path: "/app/invites" },
         { icon: Crown, label: "Plan Features", path: "/app/plan-features" },

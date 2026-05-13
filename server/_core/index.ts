@@ -11,7 +11,7 @@ import { exportRouter } from "../exportRouter";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { emailScanHandler } from "../scheduledHandlers";
+import { emailScanHandler, webhookRetryHandler } from "../scheduledHandlers";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -52,6 +52,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Scheduled endpoints (heartbeat cron callbacks)
   app.post("/api/scheduled/email-scan", emailScanHandler);
+  app.post("/api/scheduled/webhook-retry", webhookRetryHandler);
   // tRPC API
   app.use(
     "/api/trpc",

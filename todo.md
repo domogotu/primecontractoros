@@ -1368,3 +1368,10 @@
 - [x] 4. Expand audit log coverage — consolidate on audit_logs table, log all CRUD across all entity routers
 - [x] 5. Wire outbound webhooks — webhooks/webhook_deliveries tables, registration UI at /app/webhooks, dispatch on key events
 - [x] Deploy and push to GitHub
+
+## Phase 33: Webhook Retries, RBAC UI, Email Preferences
+
+- [x] 1. Webhook retry logic — heartbeat job retries failed deliveries up to 3 times with exponential backoff
+- [x] 2. RBAC management UI — workspace owners can assign/change/remove member roles at /app/team
+- [x] 3. Email notification preferences — user settings page at /app/notification-preferences
+- [x] Deploy and push to GitHub

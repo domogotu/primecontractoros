@@ -62,6 +62,8 @@ import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRou
 import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
 import { webhookRouter } from "./webhookRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
+import { emailPreferences } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -140,6 +142,43 @@ export const appRouter = router({
   financeNotes: financeNotesRouter,
   fileVersions: fileVersionsRouter,
   webhooks: webhookRouter,
+  emailPrefs: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const [prefs] = await db.select().from(emailPreferences).where(eq(emailPreferences.userId, ctx.user.id)).limit(1);
+      if (prefs) return prefs;
+      // Return defaults if not set
+      return {
+        id: null,
+        userId: ctx.user.id,
+        deadlineReminders: true,
+        invoiceAlerts: true,
+        contractStatusChanges: true,
+        proposalUpdates: true,
+        weeklyDigest: false,
+      };
+    }),
+    update: protectedProcedure
+      .input(z.object({
+        deadlineReminders: z.boolean().optional(),
+        invoiceAlerts: z.boolean().optional(),
+        contractStatusChanges: z.boolean().optional(),
+        proposalUpdates: z.boolean().optional(),
+        weeklyDigest: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const [existing] = await db.select({ id: emailPreferences.id }).from(emailPreferences).where(eq(emailPreferences.userId, ctx.user.id)).limit(1);
+        if (existing) {
+          await db.update(emailPreferences).set(input).where(eq(emailPreferences.userId, ctx.user.id));
+        } else {
+          await db.insert(emailPreferences).values({ userId: ctx.user.id, ...input });
+        }
+        return { success: true };
+      }),
+  }),
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

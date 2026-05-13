@@ -96,6 +96,109 @@ export const workspaceRouter = router({
     return { role };
   }),
 
+  // ==================== MEMBER MANAGEMENT ====================
+  // List all members in the current user's workspace
+  listMembers: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    const userId = ctx.user.id;
+    const wsId = await requireWsId(userId);
+    const members = await db
+      .select({
+        id: workspaceMembers.id,
+        userId: workspaceMembers.userId,
+        role: workspaceMembers.role,
+        joinedAt: workspaceMembers.joinedAt,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(workspaceMembers)
+      .leftJoin(users, eq(workspaceMembers.userId, users.id))
+      .where(eq(workspaceMembers.workspaceId, wsId));
+    // Also include the workspace owner
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, wsId)).limit(1);
+    if (ws) {
+      const [ownerUser] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
+      if (ownerUser && !members.find(m => m.userId === ownerUser.id)) {
+        members.unshift({
+          id: 0,
+          userId: ownerUser.id,
+          role: "owner" as const,
+          joinedAt: ws.createdAt,
+          userName: ownerUser.name,
+          userEmail: ownerUser.email,
+        });
+      }
+    }
+    return members;
+  }),
+
+  // Invite a member by email (creates a pending membership)
+  inviteMember: protectedProcedure
+    .input(z.object({
+      email: z.string().email(),
+      role: z.enum(["admin", "member", "viewer"]).default("member"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const userId = ctx.user.id;
+      // Only owner can invite
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+      if (!ws) throw new Error("Only the workspace owner can invite members.");
+      // Find user by email
+      const [invitee] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
+      if (!invitee) throw new Error("No user found with that email address. They must sign up first.");
+      if (invitee.id === userId) throw new Error("You cannot invite yourself.");
+      // Check if already a member
+      const [existing] = await db.select().from(workspaceMembers)
+        .where(and(eq(workspaceMembers.workspaceId, ws.id), eq(workspaceMembers.userId, invitee.id)))
+        .limit(1);
+      if (existing) throw new Error("This user is already a member of your workspace.");
+      // Add member
+      await db.insert(workspaceMembers).values({
+        workspaceId: ws.id,
+        userId: invitee.id,
+        role: input.role,
+        invitedBy: userId,
+      });
+      return { success: true, userName: invitee.name, email: invitee.email };
+    }),
+
+  // Update a member's role
+  updateMemberRole: protectedProcedure
+    .input(z.object({
+      memberId: z.number(),
+      role: z.enum(["admin", "member", "viewer"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const userId = ctx.user.id;
+      // Only owner can change roles
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+      if (!ws) throw new Error("Only the workspace owner can change member roles.");
+      await db.update(workspaceMembers)
+        .set({ role: input.role })
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+      return { success: true };
+    }),
+
+  // Remove a member from the workspace
+  removeMember: protectedProcedure
+    .input(z.object({ memberId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const userId = ctx.user.id;
+      // Only owner can remove members
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+      if (!ws) throw new Error("Only the workspace owner can remove members.");
+      await db.delete(workspaceMembers)
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+      return { success: true };
+    }),
+
   // Update workspace settings
   update: protectedProcedure
     .input(z.object({

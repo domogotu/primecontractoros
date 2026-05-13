@@ -1662,8 +1662,25 @@ export const webhookDeliveries = mysqlTable("webhook_deliveries", {
   responseBody: text("responseBody"),
   success: boolean("success").default(false).notNull(),
   attemptCount: int("attemptCount").default(1).notNull(),
+  nextRetryAt: timestamp("nextRetryAt"),
   deliveredAt: timestamp("deliveredAt").defaultNow().notNull(),
 });
 
 export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
 export type InsertWebhookDelivery = typeof webhookDeliveries.$inferInsert;
+
+// Email notification preferences per user
+export const emailPreferences = mysqlTable("email_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  deadlineReminders: boolean("deadlineReminders").default(true).notNull(),
+  invoiceAlerts: boolean("invoiceAlerts").default(true).notNull(),
+  contractStatusChanges: boolean("contractStatusChanges").default(true).notNull(),
+  proposalUpdates: boolean("proposalUpdates").default(true).notNull(),
+  weeklyDigest: boolean("weeklyDigest").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailPreference = typeof emailPreferences.$inferSelect;
+export type InsertEmailPreference = typeof emailPreferences.$inferInsert;

@@ -110,7 +110,10 @@ export async function dispatchWebhookEvent(
           success = false;
         }
 
-        // Log delivery
+        // Log delivery — set nextRetryAt if failed so the retry job picks it up
+        const nextRetryAt = !success
+          ? new Date(Date.now() + 5 * 60 * 1000) // first retry after 5 min
+          : null;
         try {
           await db.insert(webhookDeliveries).values({
             webhookId: wh.id,
@@ -121,6 +124,7 @@ export async function dispatchWebhookEvent(
             responseBody: responseBody.substring(0, 4000),
             success,
             attemptCount: 1,
+            nextRetryAt,
           });
         } catch (logErr) {
           console.error("[Webhook] Failed to log delivery:", logErr);
