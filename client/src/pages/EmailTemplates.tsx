@@ -63,50 +63,34 @@ export default function EmailTemplates() {
   });
 
   // tRPC Hooks
-  const { data: templatesData, isLoading, refetch } = trpc.emailTemplates.list.useQuery();
+  const { data: templates = [], isLoading, refetch } = trpc.emailTemplates.list.useQuery();
   const createMutation = trpc.emailTemplates.create.useMutation({
     onSuccess: () => {
       toast({ title: "Template created successfully" });
       setIsCreateDialogOpen(false);
+      setFormData({ name: "", category: "General", subject: "", body: "" });
       refetch();
     },
-    onError: () => {
-      toast({ title: "Failed to create template", variant: "destructive" });
+    onError: (err) => {
+      toast({ title: "Failed to create template", description: err.message, variant: "destructive" });
     }
   });
-
-  // Fallback demo data if tRPC fails or returns empty
-  const demoTemplates = [
-    {
-      id: "1",
-      name: "Welcome to PrimeContractorOS",
-      category: "Onboarding",
-      subject: "Welcome {{name}}! Let's get started",
-      body: "Hi {{name}},\n\nWelcome to PrimeContractorOS. We are excited to have {{company}} on board.\n\nBest,\nThe Team",
-      lastModified: "2023-10-15",
-      usageCount: 142
+  const updateMutation = trpc.emailTemplates.update.useMutation({
+    onSuccess: () => {
+      toast({ title: "Template updated" });
+      setIsEditDialogOpen(false);
+      refetch();
     },
-    {
-      id: "2",
-      name: "Invoice Overdue Notice",
-      category: "Invoicing",
-      subject: "Action Required: Overdue Invoice for {{amount}}",
-      body: "Dear {{name}},\n\nThis is a reminder that your invoice for {{amount}} was due on {{date}}.\n\nPlease remit payment as soon as possible.\n\nThank you,\nBilling Dept",
-      lastModified: "2023-11-02",
-      usageCount: 89
+    onError: (err) => toast({ title: "Update failed", description: err.message, variant: "destructive" }),
+  });
+  const deleteMutation = trpc.emailTemplates.delete.useMutation({
+    onSuccess: () => {
+      toast({ title: "Template deleted" });
+      setIsDeleteDialogOpen(false);
+      refetch();
     },
-    {
-      id: "3",
-      name: "Contract Renewal",
-      category: "Contract",
-      subject: "Contract Renewal for {{company}}",
-      body: "Hello {{name}},\n\nYour contract is up for renewal on {{date}}. Please review the attached terms.\n\nRegards,\nContracts Team",
-      lastModified: "2023-09-20",
-      usageCount: 34
-    }
-  ];
-
-  const templates = templatesData || demoTemplates;
+    onError: (err) => toast({ title: "Delete failed", description: err.message, variant: "destructive" }),
+  });
 
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -117,11 +101,6 @@ export default function EmailTemplates() {
 
   const handleCreate = () => {
     createMutation.mutate(formData);
-    // For demo purposes, if mutation fails/isn't hooked up, just show toast
-    if (!createMutation.isLoading) {
-      toast({ title: "Template created (Demo)" });
-      setIsCreateDialogOpen(false);
-    }
   };
 
   const handleEdit = (template) => {
@@ -136,8 +115,8 @@ export default function EmailTemplates() {
   };
 
   const handleUpdate = () => {
-    toast({ title: "Feature coming soon: Update Template" });
-    setIsEditDialogOpen(false);
+    if (!selectedTemplate) return;
+    updateMutation.mutate({ id: (selectedTemplate as any).id, ...formData });
   };
 
   const handleDeleteClick = (template) => {
@@ -146,12 +125,17 @@ export default function EmailTemplates() {
   };
 
   const confirmDelete = () => {
-    toast({ title: "Feature coming soon: Delete Template" });
-    setIsDeleteDialogOpen(false);
+    if (!selectedTemplate) return;
+    deleteMutation.mutate({ id: (selectedTemplate as any).id });
   };
 
-  const handleDuplicate = (template) => {
-    toast({ title: "Feature coming soon: Duplicate Template" });
+  const handleDuplicate = (template: any) => {
+    createMutation.mutate({
+      name: `${template.name} (Copy)`,
+      subject: template.subject,
+      body: template.body,
+      category: template.category,
+    });
   };
 
   const handlePreview = (template) => {

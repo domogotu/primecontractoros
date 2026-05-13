@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, BookOpen, ExternalLink, Star, StarOff } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const farClauses = [
   { id: "52.204-21", title: "Basic Safeguarding of Covered Contractor Information Systems", part: "FAR", category: "cybersecurity", applicability: "All contracts with CUI", summary: "Requires 15 basic safeguarding requirements for covered contractor information systems." },
@@ -67,7 +68,12 @@ export default function FarReference() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Compliance"
+        title="FAR Reference"
+        subtitle="Browse and search Federal Acquisition Regulation clauses and provisions."
+        summaryCards={[{ label: "Total Clauses", value: filtered.length }, { label: "Bookmarked", value: bookmarked.length, color: "text-amber-600" }]}
+      >
       <PageGuide
         title="FAR/DFARS Clause Reference"
         description="Searchable library of Federal Acquisition Regulation and Defense FAR Supplement clauses relevant to your contracts."
@@ -185,6 +191,7 @@ export default function FarReference() {
           ))
         )}
       </div>
-    </div>
+    
+      </PageLayout>
   );
 }

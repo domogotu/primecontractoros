@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Search, DollarSign, ArrowDownRight, ArrowUpRight, Plus, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import PageLayout from "@/components/PageLayout";
 
 const statusColors: Record<string, string> = {
   cleared: "bg-green-100 text-green-700",
@@ -109,7 +110,12 @@ export default function Payments() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Finance"
+        title="Payments"
+        subtitle="Track all payment records linked to invoices and contracts."
+        summaryCards={[{ label: "Total", value: payments.length }, { label: "Completed", value: (payments as any[]).filter((p:any)=>p.status==="completed").length, color: "text-green-600" }, { label: "Pending", value: (payments as any[]).filter((p:any)=>p.status==="pending").length, color: "text-amber-600" }]}
+      >
       <PageGuide
         title="Payments"
         description="Track all incoming and outgoing payments separately from invoice management. Monitor payment status, methods, and reconciliation."
@@ -365,6 +371,7 @@ export default function Payments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    
+      </PageLayout>
   );
 }

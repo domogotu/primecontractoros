@@ -33,69 +33,6 @@ import {
   Cpu,
 } from "lucide-react";
 
-// Demo data for AI runs
-const DEMO_RUNS = [
-  {
-    id: "run-001",
-    date: "2023-10-25T14:30:00Z",
-    workflowType: "Contract Scan",
-    inputSummary: "Scanned contract DOC-2023-892 for compliance clauses.",
-    status: "Completed",
-    tokensUsed: 4500,
-    cost: 0.09,
-    duration: "12s",
-    fullInput: "Analyze the attached contract DOC-2023-892 and extract all compliance clauses related to FAR 52.204-21.",
-    fullOutput: "Found 3 compliance clauses:\n1. FAR 52.204-21 Basic Safeguarding of Covered Contractor Information Systems.\n2. DFARS 252.204-7012 Safeguarding Covered Defense Information and Cyber Incident Reporting.\n3. DFARS 252.204-7020 NIST SP 800-171 DoD Assessment Requirements.",
-  },
-  {
-    id: "run-002",
-    date: "2023-10-25T11:15:00Z",
-    workflowType: "Proposal Assist",
-    inputSummary: "Generated executive summary for RFP-2023-445.",
-    status: "Completed",
-    tokensUsed: 12500,
-    cost: 0.25,
-    duration: "45s",
-    fullInput: "Generate an executive summary for our proposal responding to RFP-2023-445 (Cloud Migration Services). Emphasize our past performance with the VA.",
-    fullOutput: "Executive Summary:\nOur team brings unparalleled expertise in cloud migration, demonstrated by our successful modernization of the VA's legacy systems. We propose a phased approach to minimize downtime and ensure seamless transition to the new cloud infrastructure...",
-  },
-  {
-    id: "run-003",
-    date: "2023-10-24T16:45:00Z",
-    workflowType: "File Analysis",
-    inputSummary: "Analyzed technical specifications document.",
-    status: "Failed",
-    tokensUsed: 800,
-    cost: 0.02,
-    duration: "5s",
-    fullInput: "Extract key technical requirements from TechSpec_v2.pdf.",
-    fullOutput: "Error: Document exceeds maximum token limit. Please split the document into smaller sections and try again.",
-  },
-  {
-    id: "run-004",
-    date: "2023-10-24T09:20:00Z",
-    workflowType: "Opportunity Review",
-    inputSummary: "Evaluated solicitation SOL-9982 against company capabilities.",
-    status: "Completed",
-    tokensUsed: 8200,
-    cost: 0.16,
-    duration: "28s",
-    fullInput: "Review solicitation SOL-9982 and score it against our core capabilities in cybersecurity and data analytics.",
-    fullOutput: "Opportunity Score: 85/100\n\nStrengths:\n- Strong alignment with our cybersecurity past performance.\n- Requires data analytics expertise which matches our recent hires.\n\nWeaknesses:\n- Requires TS/SCI facility clearance (we currently only have Secret).",
-  },
-  {
-    id: "run-005",
-    date: "2023-10-23T13:10:00Z",
-    workflowType: "Dashboard Summary",
-    inputSummary: "Generated weekly performance summary.",
-    status: "In Progress",
-    tokensUsed: 1200,
-    cost: 0.02,
-    duration: "8s",
-    fullInput: "Summarize key metrics from the dashboard for the week of Oct 16-22.",
-    fullOutput: "Generating summary...",
-  },
-];
 
 export default function AIRuns() {
   const { user } = useAuth();
@@ -105,23 +42,21 @@ export default function AIRuns() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
-  // In a real app, we would use tRPC to fetch data
-  // const { data: usageData, isLoading } = trpc.aiWorkflow.getUsage.useQuery();
-  
-  const runs = DEMO_RUNS;
+  const { data: runs = [], isLoading } = trpc.ai.listRuns.useQuery({ limit: 100 });
 
-  const filteredRuns = runs.filter((run) => {
-    const matchesSearch = run.inputSummary.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          run.workflowType.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || run.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesType = typeFilter === "all" || run.workflowType.toLowerCase() === typeFilter.toLowerCase();
+  const filteredRuns = runs.filter((run: any) => {
+    const matchesSearch = (run.inputSummary || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (run.runType || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (run.purpose || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || (run.status || "").toLowerCase() === statusFilter.toLowerCase();
+    const matchesType = typeFilter === "all" || (run.runType || "").toLowerCase().includes(typeFilter.toLowerCase());
     
     return matchesSearch && matchesStatus && matchesType;
   });
 
-  const toggleRow = (id: string) => {
+  const toggleRow = (id: number) => {
     if (expandedRow === id) {
       setExpandedRow(null);
     } else {
@@ -143,20 +78,27 @@ export default function AIRuns() {
   };
 
   const handleExport = () => {
-    toast({
-      title: "Feature coming soon",
-      description: "Exporting AI run history is not yet implemented.",
-    });
+    const headers = ["ID", "Date", "Type", "Purpose", "Status", "Input Tokens", "Output Tokens"];
+    const rows = filteredRuns.map((r: any) => [
+      r.id, new Date(r.createdAt).toLocaleString(), r.runType || r.aiType, r.purpose || "", r.status,
+      r.inputTokens || 0, r.outputTokens || 0
+    ]);
+    const csv = [headers, ...rows].map((row: any[]) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "ai-runs.csv"; a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Exported", description: "AI run history exported as CSV." });
   };
 
   // Calculate summary metrics
   const totalRuns = runs.length;
-  const totalTokens = runs.reduce((acc, run) => acc + run.tokensUsed, 0);
-  const totalCost = runs.reduce((acc, run) => acc + run.cost, 0);
-  const avgDuration = "20s"; // Mocked for demo
+  const totalTokens = runs.reduce((acc: number, run: any) => acc + (run.inputTokens || 0) + (run.outputTokens || 0), 0);
+  const completedRuns = runs.filter((r: any) => r.status === "completed").length;
 
   return (
-    <PageLayout>
+    <PageLayout title="AI Run History" subtitle="View and manage all AI workflow executions across your organization.">
       <div className="flex flex-col gap-6">
         <PageGuide
           title="AI Run History"
@@ -164,8 +106,8 @@ export default function AIRuns() {
           whenToUse="Use this page to audit AI usage, troubleshoot failed runs, and monitor token consumption and costs."
           whatToDoNext="Review recent runs, filter by workflow type, or expand a run to see the full input and output."
           relatedRecords={[
-            { label: "AI Settings", href: "/app/settings/ai" },
-            { label: "Billing", href: "/app/settings/billing" }
+            { label: "Settings", path: "/app/settings" },
+            { label: "Billing", path: "/app/billing" }
           ]}
         />
 
@@ -200,7 +142,7 @@ export default function AIRuns() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium">Total Cost</p>
-                <h3 className="text-2xl font-bold">${totalCost.toFixed(2)}</h3>
+                <h3 className="text-2xl font-bold">{completedRuns} done</h3>
               </div>
             </CardContent>
           </Card>
@@ -281,7 +223,7 @@ export default function AIRuns() {
                     <div key={run.id} className="flex flex-col">
                       <div 
                         className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => toggleRow(run.id)}
+                        onClick={() => toggleRow((run as any).id)}
                       >
                         <div className="col-span-2 text-sm">
                           {new Date(run.date).toLocaleString(undefined, {
@@ -292,23 +234,23 @@ export default function AIRuns() {
                           })}
                         </div>
                         <div className="col-span-2 text-sm font-medium">
-                          {run.workflowType}
+                          {(run as any).runType || (run as any).aiType || "—"}
                         </div>
                         <div className="col-span-3 text-sm truncate text-muted-foreground">
-                          {run.inputSummary}
+                          {(run as any).inputSummary || (run as any).purpose || "—"}
                         </div>
                         <div className="col-span-2">
-                          {getStatusBadge(run.status)}
+                          {getStatusBadge((run as any).status || "pending")}
                         </div>
                         <div className="col-span-1 text-sm text-right text-muted-foreground">
-                          {run.tokensUsed.toLocaleString()}
+                          {((run as any).inputTokens + (run as any).outputTokens || 0).toLocaleString()}
                         </div>
                         <div className="col-span-1 text-sm text-right text-muted-foreground">
                           ${run.cost.toFixed(2)}
                         </div>
                         <div className="col-span-1 text-sm text-right text-muted-foreground flex items-center justify-end gap-2">
-                          {run.duration}
-                          {expandedRow === run.id ? (
+                          {(run as any).completedAt ? Math.round((new Date((run as any).completedAt).getTime() - new Date((run as any).createdAt).getTime()) / 1000) + "s" : "—"}
+                          {expandedRow === (run as any).id ? (
                             <ChevronUp className="h-4 w-4" />
                           ) : (
                             <ChevronDown className="h-4 w-4" />
@@ -317,18 +259,18 @@ export default function AIRuns() {
                       </div>
                       
                       {/* Expanded Content */}
-                      {expandedRow === run.id && (
+                      {expandedRow === (run as any).id && (
                         <div className="p-4 bg-muted/30 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h4 className="text-sm font-semibold mb-2">Full Input</h4>
                             <div className="p-3 bg-background rounded-md border border-border text-sm whitespace-pre-wrap">
-                              {run.fullInput}
+                              {(run as any).inputSummary || "No input recorded"}
                             </div>
                           </div>
                           <div>
                             <h4 className="text-sm font-semibold mb-2">Full Output</h4>
                             <div className="p-3 bg-background rounded-md border border-border text-sm whitespace-pre-wrap">
-                              {run.fullOutput}
+                              {(run as any).errorMessage || "Output not stored"}
                             </div>
                           </div>
                         </div>

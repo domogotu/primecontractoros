@@ -1,6 +1,7 @@
-// @ts-nocheck
+
 import React, { useState, useMemo } from "react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { 
   Bell, 
   Check, 
@@ -11,151 +12,125 @@ import {
   Info, 
   Sparkles, 
   DollarSign,
-  Filter
+  Filter,
+  Plus
 } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Demo Data
-const DEMO_NOTIFICATIONS = [
-  {
-    id: "1",
-    type: "Alert",
-    title: "Contract Expiring Soon",
-    message: "Contract #CON-2023-001 with Dept of Defense expires in 30 days.",
-    timestamp: "2 hours ago",
-    read: false,
-    link: "/app/contracts/1"
-  },
-  {
-    id: "2",
-    type: "Task",
-    title: "Compliance Review Required",
-    message: "Please review the latest compliance requirements for the upcoming audit.",
-    timestamp: "5 hours ago",
-    read: false,
-    link: "/app/compliance/audit-1"
-  },
-  {
-    id: "3",
-    type: "Finance",
-    title: "Invoice Paid",
-    message: "Invoice #INV-092 for $45,000 has been marked as paid.",
-    timestamp: "1 day ago",
-    read: true,
-    link: "/app/finance/invoices/092"
-  },
-  {
-    id: "4",
-    type: "AI",
-    title: "Proposal Draft Ready",
-    message: "AI has finished drafting the proposal for RFP-2024-Cyber.",
-    timestamp: "2 days ago",
-    read: true,
-    link: "/app/proposals/rfp-2024-cyber"
-  },
-  {
-    id: "5",
-    type: "System",
-    title: "System Maintenance",
-    message: "Scheduled maintenance will occur on Saturday at 2:00 AM EST.",
-    timestamp: "3 days ago",
-    read: true,
-    link: null
-  }
-];
-
 const getTypeIcon = (type: string) => {
   switch (type) {
-    case "Alert": return <AlertTriangle className="h-5 w-5 text-red-500" />;
-    case "Task": return <CheckCircle2 className="h-5 w-5 text-blue-500" />;
-    case "Finance": return <DollarSign className="h-5 w-5 text-green-500" />;
-    case "AI": return <Sparkles className="h-5 w-5 text-purple-500" />;
-    case "System": return <Info className="h-5 w-5 text-gray-500" />;
+    case "warning": return <AlertTriangle className="h-5 w-5 text-red-500" />;
+    case "critical": return <AlertTriangle className="h-5 w-5 text-red-600" />;
+    case "success": return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+    case "info": return <Info className="h-5 w-5 text-blue-500" />;
     default: return <Bell className="h-5 w-5 text-gray-500" />;
   }
 };
 
-const getTypeColor = (type: string) => {
+const getTypeBadgeColor = (type: string) => {
   switch (type) {
-    case "Alert": return "red";
-    case "Task": return "blue";
-    case "Finance": return "green";
-    case "AI": return "purple";
-    case "System": return "gray";
-    default: return "gray";
+    case "critical": return "bg-red-100 text-red-800";
+    case "warning": return "bg-yellow-100 text-yellow-800";
+    case "success": return "bg-green-100 text-green-800";
+    case "info": return "bg-blue-100 text-blue-800";
+    default: return "bg-gray-100 text-gray-800";
   }
 };
 
 export default function NotificationsCenter() {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
-  const [notifications, setNotifications] = useState(DEMO_NOTIFICATIONS);
   const [statusFilter, setStatusFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const utils = trpc.useUtils();
+  const { data: alerts = [], isLoading } = trpc.alerts.list.useQuery();
 
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(n => {
+  const markReadMutation = trpc.alerts.markRead.useMutation({
+    onSuccess: () => utils.alerts.list.invalidate(),
+    onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const markAllReadMutation = trpc.alerts.markAllRead.useMutation({
+    onSuccess: () => {
+      utils.alerts.list.invalidate();
+      toast({ title: "All notifications marked as read" });
+    },
+    onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const dismissMutation = trpc.alerts.dismiss.useMutation({
+    onSuccess: () => utils.alerts.list.invalidate(),
+    onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const unreadCount = alerts.filter((n: any) => !n.isRead).length;
+
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter((n: any) => {
       const matchStatus = 
         statusFilter === "All" ? true : 
-        statusFilter === "Unread" ? !n.read : 
-        n.read;
-      
+        statusFilter === "Unread" ? !n.isRead : 
+        n.isRead;
       const matchType = typeFilter === "All" ? true : n.type === typeFilter;
-      
       return matchStatus && matchType;
     });
-  }, [notifications, statusFilter, typeFilter]);
+  }, [alerts, statusFilter, typeFilter]);
 
-  const handleMarkAsRead = (id: string, e: React.MouseEvent) => {
+  const handleMarkAsRead = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    markReadMutation.mutate({ id });
     toast({ title: "Notification marked as read" });
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    toast({ title: "All notifications marked as read" });
+    markAllReadMutation.mutate();
   };
 
-  const handleDismiss = (id: string, e: React.MouseEvent) => {
+  const handleDismiss = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    dismissMutation.mutate({ id });
     toast({ title: "Notification dismissed" });
   };
 
-  const handleNotificationClick = (link: string | null) => {
-    if (link) {
-      setLocation(link);
-    } else {
-      toast({ title: "No related record for this notification" });
+  const handleNotificationClick = (alert: any) => {
+    if (alert.linkedRecordType && alert.linkedRecordId) {
+      const paths: Record<string, string> = {
+        contract: `/app/contracts/${alert.linkedRecordId}`,
+        invoice: `/app/invoices/${alert.linkedRecordId}`,
+        proposal: `/app/proposals/${alert.linkedRecordId}`,
+        task: `/app/tasks`,
+      };
+      const path = paths[alert.linkedRecordType];
+      if (path) {
+        setLocation(path);
+        return;
+      }
     }
+    toast({ title: "No related record for this notification" });
   };
 
   return (
-    <PageLayout>
+    <PageLayout title="Notifications" subtitle="View and manage all your workspace alerts, tasks, and system updates.">
       <PageGuide
         title="Notifications"
         description="View and manage all your workspace alerts, tasks, and system updates."
         whenToUse="Check this page regularly to stay updated on contract expirations, pending tasks, and system events."
-        whatToDoNext="Review unread notifications and take necessary actions on related records."
+        whatToDoNext={["Review unread notifications", "Take necessary actions on related records", "Dismiss resolved notifications"]}
         relatedRecords={[
-          { title: "Tasks", link: "/app/tasks" },
-          { title: "Contracts", link: "/app/contracts" }
+          { label: "Tasks", path: "/app/tasks" },
+          { label: "Contracts", path: "/app/contracts" }
         ]}
         alerts={
           unreadCount > 0 
-            ? [{ type: "warning", message: `You have ${unreadCount} unread notifications.` }]
+            ? [{ type: "warning", message: `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}.` }]
             : []
         }
       />
@@ -183,11 +158,10 @@ export default function NotificationsCenter() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All Types</SelectItem>
-                <SelectItem value="Alert">Alerts</SelectItem>
-                <SelectItem value="Task">Tasks</SelectItem>
-                <SelectItem value="System">System</SelectItem>
-                <SelectItem value="AI">AI</SelectItem>
-                <SelectItem value="Finance">Finance</SelectItem>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -195,88 +169,87 @@ export default function NotificationsCenter() {
           <Button 
             variant="outline" 
             onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0}
+            disabled={unreadCount === 0 || markAllReadMutation.isPending}
           >
             <CheckCheck className="mr-2 h-4 w-4" />
-            Mark all as read
+            Mark All as Read
           </Button>
         </div>
 
-        <Card className="bg-card text-foreground border-border">
-          <CardHeader className="pb-3 border-b border-border">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Recent Notifications
-                {unreadCount > 0 && (
-                  <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary">
-                    {unreadCount} new
-                  </Badge>
-                )}
-              </CardTitle>
-            </div>
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              Notifications
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2">{unreadCount} unread</Badge>
+              )}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            {filteredNotifications.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                <Bell className="h-12 w-12 mb-4 opacity-20" />
-                <p>No notifications found matching your filters.</p>
+          <CardContent>
+            {isLoading ? (
+              <div className="py-8 text-center text-muted-foreground">Loading notifications...</div>
+            ) : filteredAlerts.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Bell className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
+                <p className="text-lg font-medium">No notifications</p>
+                <p className="text-sm mt-2">
+                  {alerts.length === 0 
+                    ? "Alerts will appear here when contracts expire, tasks are overdue, or other important events occur."
+                    : "No notifications match your current filters."
+                  }
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {filteredNotifications.map((notification) => (
-                  <div 
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification.link)}
-                    className={`p-4 flex items-start gap-4 hover:bg-muted/50 transition-colors cursor-pointer ${!notification.read ? 'bg-muted/20' : ''}`}
+                {filteredAlerts.map((alert: any) => (
+                  <div
+                    key={alert.id}
+                    className={`flex items-start gap-4 p-4 hover:bg-muted/20 transition-colors cursor-pointer ${!alert.isRead ? "bg-primary/5" : ""}`}
+                    onClick={() => handleNotificationClick(alert)}
                   >
-                    <div className="mt-1">
-                      {getTypeIcon(notification.type)}
+                    <div className="mt-0.5 shrink-0">
+                      {getTypeIcon(alert.type || "info")}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <div className="flex items-center gap-2">
-                          <h4 className={`text-sm font-medium truncate ${!notification.read ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {notification.title}
-                          </h4>
-                          {!notification.read && (
-                            <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {notification.timestamp}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-foreground">{alert.title}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getTypeBadgeColor(alert.type || "info")}`}>
+                          {alert.type || "info"}
                         </span>
+                        {!alert.isRead && (
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                        )}
                       </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {notification.message}
+                      {alert.message && (
+                        <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(alert.createdAt).toLocaleString()}
+                        {alert.linkedRecordType && (
+                          <span className="ml-2 capitalize">· {alert.linkedRecordType}</span>
+                        )}
                       </p>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${getTypeColor(notification.type)}-100 text-${getTypeColor(notification.type)}-800 dark:bg-${getTypeColor(notification.type)}-900/30 dark:text-${getTypeColor(notification.type)}-400`}>
-                          {notification.type}
-                        </span>
-                      </div>
                     </div>
-
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100">
-                      {!notification.read && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => handleMarkAsRead(notification.id, e)}
+                    
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!alert.isRead && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => handleMarkAsRead(alert.id, e)}
                           title="Mark as read"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => handleDismiss(notification.id, e)}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => handleDismiss(alert.id, e)}
                         title="Dismiss"
                       >
                         <Trash2 className="h-4 w-4" />

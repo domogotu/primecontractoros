@@ -122,7 +122,7 @@ export default function UserProfile() {
               <Button
                 variant="outline"
                 className="w-full mt-6"
-                onClick={() => alert('Password change functionality coming soon')}
+                onClick={() => { window.open('https://manus.im/settings', '_blank'); }}
               >
                 Change Password
               </Button>

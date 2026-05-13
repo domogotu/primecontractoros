@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   Settings as SettingsIcon, Bell, Lock, Users, CreditCard, ChevronRight, Save, Zap, Eye, EyeOff, Download, ShieldCheck, CheckCircle2, XCircle, Clock
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const [, navigate] = useLocation();
@@ -224,17 +225,7 @@ export default function Settings() {
 
             {/* Team Management */}
             {activeTab === 'team' && (
-              <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-lg p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-slate-900">Team Members</h2>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => toast.info('Team invitations coming soon')}>
-                      Invite Team Member
-                    </Button>
-                  </div>
-                  <p className="text-slate-500 italic">Team management will be available in a future update.</p>
-                </div>
-              </div>
+              <TeamTab />
             )}
 
             {/* Billing */}
@@ -406,6 +397,136 @@ function PrivacyConsentTab() {
           Records are retained for compliance purposes. Showing the most recent 20 entries.
         </p>
       </div>
+    </div>
+  );
+}
+
+function TeamTab() {
+  const { toast } = useToast();
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
+  const { data: invitesList = [], refetch } = trpc.invites.list.useQuery();
+  const createInvite = trpc.invites.create.useMutation({
+    onSuccess: () => {
+      toast({ title: 'Invitation sent', description: `An invite was sent to ${inviteEmail}` });
+      setInviteEmail('');
+      setInviteRole('member');
+      setInviteDialogOpen(false);
+      refetch();
+    },
+    onError: (err) => toast({ title: 'Failed to send invite', description: err.message, variant: 'destructive' }),
+  });
+  const revokeInvite = trpc.invites.revoke.useMutation({
+    onSuccess: () => { toast({ title: 'Invite revoked' }); refetch(); },
+    onError: (err) => toast({ title: 'Failed to revoke', description: err.message, variant: 'destructive' }),
+  });
+
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail) return;
+    createInvite.mutate({ email: inviteEmail, role: inviteRole });
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'pending') return <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">Pending</span>;
+    if (status === 'accepted') return <span className="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">Accepted</span>;
+    if (status === 'revoked') return <span className="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">Revoked</span>;
+    return <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">{status}</span>;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-slate-900">Team Invitations</h2>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setInviteDialogOpen(true)}>
+            Invite Team Member
+          </Button>
+        </div>
+
+        {invitesList.length === 0 ? (
+          <p className="text-slate-500 italic">No invitations sent yet. Invite team members to collaborate on your workspace.</p>
+        ) : (
+          <div className="rounded-md border border-slate-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Email</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Role</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-slate-600">Sent</th>
+                  <th className="text-right px-4 py-3 font-medium text-slate-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {invitesList.map((inv: any) => (
+                  <tr key={inv.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-slate-900">{inv.email}</td>
+                    <td className="px-4 py-3 text-slate-600 capitalize">{inv.role}</td>
+                    <td className="px-4 py-3">{getStatusBadge(inv.status)}</td>
+                    <td className="px-4 py-3 text-slate-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-right">
+                      {inv.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => revokeInvite.mutate({ id: inv.id })}
+                          disabled={revokeInvite.isPending}
+                        >
+                          Revoke
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Invite Dialog */}
+      {inviteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Invite Team Member</h3>
+            <form onSubmit={handleInvite} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={inviteEmail}
+                  onChange={e => setInviteEmail(e.target.value)}
+                  placeholder="colleague@company.com"
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
+                <select
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setInviteDialogOpen(false)} className="px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-slate-50">Cancel</button>
+                <button type="submit" disabled={createInvite.isPending} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+                  {createInvite.isPending ? 'Sending...' : 'Send Invite'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

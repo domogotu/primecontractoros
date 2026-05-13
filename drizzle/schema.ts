@@ -1684,3 +1684,23 @@ export const emailPreferences = mysqlTable("email_preferences", {
 
 export type EmailPreference = typeof emailPreferences.$inferSelect;
 export type InsertEmailPreference = typeof emailPreferences.$inferInsert;
+
+// Change orders / contract modifications
+export const changeOrders = mysqlTable("change_orders", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  contractId: int("contractId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  changeType: varchar("changeType", { length: 64 }).notNull().default("scope"),
+  status: varchar("status", { length: 64 }).notNull().default("draft"),
+  impactCost: varchar("impactCost", { length: 64 }),
+  impactSchedule: varchar("impactSchedule", { length: 128 }),
+  submittedBy: varchar("submittedBy", { length: 255 }),
+  reviewedBy: varchar("reviewedBy", { length: 255 }),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ChangeOrder = typeof changeOrders.$inferSelect;
+export type InsertChangeOrder = typeof changeOrders.$inferInsert;

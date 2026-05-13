@@ -31,74 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Demo data fallback
-const DEMO_AUDIT_LOGS = [
-  {
-    id: "al-001",
-    timestamp: "2023-10-27T14:32:00Z",
-    user: "Jane Doe",
-    userEmail: "jane@example.com",
-    action: "UPDATE",
-    recordType: "Contract",
-    recordName: "C-2023-001 Alpha Project",
-    details: "Updated contract value from $150,000 to $175,000",
-    ip: "192.168.1.45",
-    before: { value: 150000 },
-    after: { value: 175000 }
-  },
-  {
-    id: "al-002",
-    timestamp: "2023-10-27T11:15:00Z",
-    user: "John Smith",
-    userEmail: "john@example.com",
-    action: "CREATE",
-    recordType: "Invoice",
-    recordName: "INV-2023-042",
-    details: "Created new invoice for Alpha Project",
-    ip: "192.168.1.112",
-    before: null,
-    after: { amount: 25000, status: "DRAFT" }
-  },
-  {
-    id: "al-003",
-    timestamp: "2023-10-26T09:45:00Z",
-    user: "System",
-    userEmail: "system@primecontractoros.com",
-    action: "STATUS_CHANGE",
-    recordType: "Compliance",
-    recordName: "Security Clearance - JD",
-    details: "Automated status update: Expiring in 30 days",
-    ip: "127.0.0.1",
-    before: { status: "VALID" },
-    after: { status: "EXPIRING_SOON" }
-  },
-  {
-    id: "al-004",
-    timestamp: "2023-10-25T16:20:00Z",
-    user: "Admin User",
-    userEmail: "admin@example.com",
-    action: "DELETE",
-    recordType: "Document",
-    recordName: "Draft_Proposal_v1.pdf",
-    details: "Deleted obsolete document",
-    ip: "192.168.1.10",
-    before: { fileName: "Draft_Proposal_v1.pdf", size: "2.4MB" },
-    after: null
-  },
-  {
-    id: "al-005",
-    timestamp: "2023-10-25T08:30:00Z",
-    user: "Jane Doe",
-    userEmail: "jane@example.com",
-    action: "LOGIN",
-    recordType: "Session",
-    recordName: "User Login",
-    details: "Successful login from new device",
-    ip: "203.0.113.42",
-    before: null,
-    after: { device: "MacBook Pro", browser: "Chrome" }
-  }
-];
+
 
 export default function AuditLog() {
   const { toast } = useToast();
@@ -108,18 +41,16 @@ export default function AuditLog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("ALL");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [showDateFilter, setShowDateFilter] = useState(false);
 
-  // Try to use tRPC, fallback to demo data
-  const { data: logsData, isLoading } = trpc.audit?.list?.useQuery(undefined, {
-    retry: false,
-  }) || { data: null, isLoading: false };
+  const { data: logs = [], isLoading } = trpc.audit.list.useQuery({ limit: 100 });
 
-  const logs = logsData || DEMO_AUDIT_LOGS;
-
-  const toggleRow = (id: string) => {
+  const toggleRow = (id: number | string) => {
     setExpandedRows(prev => ({
       ...prev,
-      [id]: !prev[id]
+      [String(id)]: !prev[String(id)]
     }));
   };
 
@@ -141,19 +72,23 @@ export default function AuditLog() {
     }
   };
 
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = logs.filter((log: any) => {
     const matchesSearch = 
-      log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.recordName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase());
+      (log.entity || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.action || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (log.changes || "").toLowerCase().includes(searchQuery.toLowerCase());
       
-    const matchesAction = actionFilter === "ALL" || log.action === actionFilter;
+    const matchesAction = actionFilter === "ALL" || log.action.toUpperCase() === actionFilter;
     
-    return matchesSearch && matchesAction;
+    const logDate = new Date(log.timestamp);
+    const matchesDateFrom = !dateFrom || logDate >= new Date(dateFrom);
+    const matchesDateTo = !dateTo || logDate <= new Date(dateTo + "T23:59:59");
+    
+    return matchesSearch && matchesAction && matchesDateFrom && matchesDateTo;
   });
 
   return (
-    <PageLayout>
+    <PageLayout title="Audit Log" subtitle="Track and monitor all activities, changes, and access events across your workspace.">
       <div className="space-y-6">
         <PageGuide
           title="Audit Log"
@@ -165,8 +100,8 @@ export default function AuditLog() {
             "Expand individual records to see exact before/after values"
           ]}
           relatedRecords={[
-            { title: "User Management", url: "/app/users" },
-            { title: "Security Settings", url: "/app/settings/security" }
+            { label: "User Management", path: "/app/users" },
+            { label: "Settings", path: "/app/settings" }
           ]}
           alerts={[
             { type: "info", message: "Audit logs are retained for 7 years to meet DCAA compliance requirements." }
@@ -182,7 +117,7 @@ export default function AuditLog() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Events Today</p>
-                <h3 className="text-2xl font-bold text-foreground">142</h3>
+                <h3 className="text-2xl font-bold text-foreground">{logs.filter((l: any) => new Date(l.timestamp).toDateString() === new Date().toDateString()).length}</h3>
               </div>
             </CardContent>
           </Card>
@@ -193,7 +128,7 @@ export default function AuditLog() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Events This Week</p>
-                <h3 className="text-2xl font-bold text-foreground">856</h3>
+                <h3 className="text-2xl font-bold text-foreground">{logs.filter((l: any) => { const d = new Date(l.timestamp); const now = new Date(); return (now.getTime() - d.getTime()) < 7 * 24 * 60 * 60 * 1000; }).length}</h3>
               </div>
             </CardContent>
           </Card>
@@ -204,7 +139,7 @@ export default function AuditLog() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Security Events (30d)</p>
-                <h3 className="text-2xl font-bold text-foreground">12</h3>
+                <h3 className="text-2xl font-bold text-foreground">{logs.filter((l: any) => { const d = new Date(l.timestamp); const now = new Date(); return (now.getTime() - d.getTime()) < 30 * 24 * 60 * 60 * 1000; }).length}</h3>
               </div>
             </CardContent>
           </Card>
@@ -237,9 +172,9 @@ export default function AuditLog() {
                     <SelectItem value="LOGIN">Login</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" onClick={() => toast({ title: "Date filter", description: "Feature coming soon" })}>
+                <Button variant="outline" onClick={() => setShowDateFilter(!showDateFilter)}>
                   <Filter className="mr-2 h-4 w-4" />
-                  More Filters
+                  Date Filter
                 </Button>
               </div>
               <Button onClick={handleExport}>
@@ -247,6 +182,19 @@ export default function AuditLog() {
                 Export Logs
               </Button>
             </div>
+            {showDateFilter && (
+              <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-4 items-end">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">From Date</label>
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-background text-foreground" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">To Date</label>
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-background text-foreground" />
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => { setDateFrom(""); setDateTo(""); }}>Clear</Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -286,7 +234,7 @@ export default function AuditLog() {
                         </div>
                         <div className="col-span-2 text-sm text-foreground flex items-center">
                           <User className="mr-2 h-3 w-3 text-muted-foreground" />
-                          <span className="truncate" title={log.userEmail}>{log.user}</span>
+                          <span className="truncate">User #{log.userId}</span>
                         </div>
                         <div className="col-span-2">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${getActionColor(log.action)}-100 text-${getActionColor(log.action)}-800 dark:bg-${getActionColor(log.action)}-900/30 dark:text-${getActionColor(log.action)}-400`}>
@@ -294,11 +242,11 @@ export default function AuditLog() {
                           </span>
                         </div>
                         <div className="col-span-2 text-sm text-foreground">
-                          <div className="font-medium">{log.recordType}</div>
-                          <div className="text-xs text-muted-foreground truncate" title={log.recordName}>{log.recordName}</div>
+                          <div className="font-medium">{log.entity}</div>
+                          <div className="text-xs text-muted-foreground">ID: {log.entityId}</div>
                         </div>
-                        <div className="col-span-3 text-sm text-muted-foreground truncate" title={log.details}>
-                          {log.details}
+                        <div className="col-span-3 text-sm text-muted-foreground truncate">
+                          {log.changes ? JSON.stringify(JSON.parse(log.changes)).substring(0, 80) : "—"}
                         </div>
                         <div className="col-span-1 flex justify-end">
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

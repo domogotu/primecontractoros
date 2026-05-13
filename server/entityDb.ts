@@ -219,6 +219,20 @@ export async function dismissAlert(id: number, workspaceId: number) {
   await db.update(alerts).set({ isDismissed: true }).where(and(eq(alerts.id, id), eq(alerts.workspaceId, workspaceId)));
 }
 
+export async function markAlertRead(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(alerts).set({ isRead: true }).where(and(eq(alerts.id, id), eq(alerts.workspaceId, workspaceId)));
+  return { success: true };
+}
+
+export async function markAllAlertsRead(workspaceId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.update(alerts).set({ isRead: true }).where(eq(alerts.workspaceId, workspaceId));
+  return { success: true };
+}
+
 // ==================== DELIVERABLES ====================
 export async function listDeliverables(workspaceId: number, contractId?: number) {
   const db = await getDb();
@@ -596,6 +610,26 @@ export async function listFileVersions(fileId: number) {
   if (!db) return [];
   const { fileVersions } = await import("../drizzle/schema");
   return db.select().from(fileVersions).where(eq(fileVersions.fileId, fileId)).orderBy(fileVersions.versionNumber);
+}
+
+export async function listAllFileVersionsForWorkspace(workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { fileVersions, files } = await import("../drizzle/schema");
+  return db.select({
+    id: fileVersions.id,
+    fileId: fileVersions.fileId,
+    fileName: files.name,
+    fileCategory: files.category,
+    versionNumber: fileVersions.versionNumber,
+    url: fileVersions.url,
+    notes: fileVersions.notes,
+    createdAt: fileVersions.createdAt,
+  })
+    .from(fileVersions)
+    .innerJoin(files, eq(fileVersions.fileId, files.id))
+    .where(eq(files.workspaceId, workspaceId))
+    .orderBy(desc(fileVersions.createdAt));
 }
 
 // ==================== CONTRACT REQUIREMENTS ====================

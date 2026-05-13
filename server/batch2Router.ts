@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { subcontractors, vendors, documentVersions, fileLinks } from "../drizzle/schema";
+import { subcontractors, vendors, documentVersions, fileLinks, changeOrders } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { enforcePermission } from "./rbacMiddleware";
@@ -78,6 +78,54 @@ export const documentVersionsRouter = router({
     await enforcePermission(ctx.user.id, "write");
     await db.insert(documentVersions).values({ ...input, createdBy: ctx.user.id });
     try { await logAudit(wsId, ctx.user.id, "create", "documentVersions", 0, input); } catch {}
+    return { success: true };
+  }),
+});
+
+export const changeOrdersRouter = router({
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    return db.select().from(changeOrders).where(eq(changeOrders.workspaceId, wsId)).orderBy(desc(changeOrders.createdAt));
+  }),
+  create: protectedProcedure.input(z.object({
+    title: z.string(),
+    description: z.string().optional(),
+    changeType: z.string().optional(),
+    status: z.string().optional(),
+    impactCost: z.string().optional(),
+    impactSchedule: z.string().optional(),
+    submittedBy: z.string().optional(),
+    contractId: z.number().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
+    await db.insert(changeOrders).values({ ...input, workspaceId: wsId });
+    try { await logAudit(wsId, ctx.user.id, "create", "changeOrders", 0, input); } catch {}
+    return { success: true };
+  }),
+  update: protectedProcedure.input(z.object({
+    id: z.number(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    changeType: z.string().optional(),
+    status: z.string().optional(),
+    impactCost: z.string().optional(),
+    impactSchedule: z.string().optional(),
+    reviewedBy: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
+    const { id, ...data } = input;
+    await db.update(changeOrders).set(data).where(eq(changeOrders.id, id));
+    try { await logAudit(wsId, ctx.user.id, "update", "changeOrders", id, data); } catch {}
+    return { success: true };
+  }),
+  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    const { wsId } = await enforcePermission(ctx.user.id, "delete");
+    await db.delete(changeOrders).where(eq(changeOrders.id, input.id));
+    try { await logAudit(wsId, ctx.user.id, "delete", "changeOrders", input.id, null); } catch {}
     return { success: true };
   }),
 });

@@ -41,17 +41,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-// Demo data
-const DEMO_USERS = [
-  { id: "1", name: "Alice Johnson", email: "alice@example.com", role: "Admin", status: "Active", lastLogin: "2023-10-25T10:30:00Z", joinedDate: "2023-01-15" },
-  { id: "2", name: "Bob Smith", email: "bob@example.com", role: "Member", status: "Active", lastLogin: "2023-10-24T14:20:00Z", joinedDate: "2023-03-22" },
-  { id: "3", name: "Charlie Davis", email: "charlie@example.com", role: "Viewer", status: "Inactive", lastLogin: "2023-09-10T09:15:00Z", joinedDate: "2023-05-10" },
-];
 
-const DEMO_INVITES = [
-  { id: "1", email: "david@example.com", role: "Member", sentAt: "2023-10-20", status: "Pending" },
-  { id: "2", email: "eve@example.com", role: "Viewer", sentAt: "2023-10-22", status: "Pending" },
-];
 
 export default function Users() {
   const { user } = useAuth();
@@ -62,28 +52,38 @@ export default function Users() {
   const [inviteRole, setInviteRole] = useState("Member");
   const [inviteMessage, setInviteMessage] = useState("");
 
-  // Try to use tRPC, fallback to demo data
-  const { data: invitesData, isLoading: isInvitesLoading } = trpc.invites.list.useQuery(undefined, {
-    retry: false,
-  });
+  const { data: workspaceUsers = [], isLoading: isUsersLoading, refetch: refetchUsers } = trpc.workspace.listMembers.useQuery();
+  const { data: invitesData = [], isLoading: isInvitesLoading, refetch: refetchInvites } = trpc.invites.list.useQuery();
 
-  const users = DEMO_USERS;
-  const invites = invitesData || DEMO_INVITES;
+  const users = workspaceUsers;
+  const invites = invitesData;
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const createInviteMutation = trpc.invites.create.useMutation({
+    onSuccess: () => {
+      toast({ title: "Invitation Sent", description: `Invited ${inviteEmail} as ${inviteRole}` });
+      setIsInviteDialogOpen(false);
+      setInviteEmail("");
+      setInviteMessage("");
+      refetchInvites();
+    },
+    onError: (err) => toast({ title: "Failed to send invite", description: err.message, variant: "destructive" }),
+  });
+  const revokeInviteMutation = trpc.invites.revoke.useMutation({
+    onSuccess: () => { toast({ title: "Invite revoked" }); refetchInvites(); },
+    onError: (err) => toast({ title: "Failed to revoke", description: err.message, variant: "destructive" }),
+  });
+
   const handleInvite = () => {
     if (!inviteEmail) {
       toast({ title: "Error", description: "Please enter an email address", variant: "destructive" });
       return;
     }
-    toast({ title: "Invitation Sent", description: `Invited ${inviteEmail} as ${inviteRole}` });
-    setIsInviteDialogOpen(false);
-    setInviteEmail("");
-    setInviteMessage("");
+    createInviteMutation.mutate({ email: inviteEmail, role: inviteRole.toLowerCase() });
   };
 
   const handleChangeRole = (userId: string, newRole: string) => {
@@ -95,8 +95,8 @@ export default function Users() {
     toast({ title: "Status Updated", description: `User has been ${newStatus.toLowerCase()}` });
   };
 
-  const handleRevokeInvite = (inviteId: string) => {
-    toast({ title: "Invite Revoked", description: "The invitation has been cancelled" });
+  const handleRevokeInvite = (inviteId: number) => {
+    revokeInviteMutation.mutate({ id: inviteId });
   };
 
   const getStatusBadge = (status: string) => {
@@ -114,7 +114,7 @@ export default function Users() {
   };
 
   return (
-    <PageLayout>
+    <PageLayout title="Team Members" subtitle="Manage workspace users, roles, and invitations.">
       <PageGuide
         title="Team Members"
         description="Manage workspace users, roles, and invitations."
@@ -125,8 +125,8 @@ export default function Users() {
           "Audit user roles and permissions"
         ]}
         relatedRecords={[
-          { title: "Roles & Permissions", url: "/app/settings/roles" },
-          { title: "Audit Logs", url: "/app/settings/audit" }
+          { label: "Settings", path: "/app/settings" },
+          { label: "Audit Log", path: "/app/audit-log" }
         ]}
       />
 
@@ -193,9 +193,7 @@ export default function Users() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline" size="icon" onClick={() => toast({ title: "Feature coming soon" })}>
-                <Filter className="h-4 w-4" />
-              </Button>
+
               <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>

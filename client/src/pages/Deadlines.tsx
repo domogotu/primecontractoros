@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, Search, Trash2, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import PageLayout from "@/components/PageLayout";
 
 const statusColors: Record<string, string> = {
   overdue: "bg-red-100 text-red-700",
@@ -132,7 +133,12 @@ export default function Deadlines() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Contract Operations"
+        title="Deadlines & Milestones"
+        subtitle="Track all contract deadlines, submission dates, and compliance milestones."
+        summaryCards={[{ label: "Total", value: deadlines.length }, { label: "Due Soon", value: stats.dueSoon, color: "text-amber-600" }, { label: "Overdue", value: stats.overdue, color: "text-red-600" }, { label: "This Month", value: stats.thisMonth, color: "text-green-600" }]}
+      >
       <PageGuide
         title="Deadlines"
         description="Monitor all upcoming deadlines across contracts, deliverables, compliance, and operations."
@@ -368,6 +374,7 @@ export default function Deadlines() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    
+      </PageLayout>
   );
 }

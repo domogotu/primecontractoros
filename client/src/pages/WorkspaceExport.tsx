@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Download, Database, FileText, HardDrive, RefreshCw, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PageGuide from "@/components/PageGuide";
+import PageLayout from "@/components/PageLayout";
 
 interface WorkspaceInfo {
   workspace: string;
@@ -85,7 +86,11 @@ export default function WorkspaceExport() {
   };
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+        label="Administration"
+        title="Data Export"
+        subtitle="Export your workspace data including contracts, invoices, contacts, and more."
+      >
       <PageGuide
         title="Export My Data"
         description="Download your workspace data for backup, compliance, or migration. All exports are scoped to your workspace only."
@@ -246,6 +251,7 @@ export default function WorkspaceExport() {
           Refresh Data
         </Button>
       </div>
-    </div>
+    
+      </PageLayout>
   );
 }

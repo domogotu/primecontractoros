@@ -57,13 +57,13 @@ import { pdfRouter } from "./pdfRouter";
 import { aiRouter } from "./aiRouter";
 import { systemInfraRouter } from "./systemInfraRouter";
 import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter } from "./batch1Router";
-import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter } from "./batch2Router";
+import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter, changeOrdersRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
 import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
 import { webhookRouter } from "./webhookRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
-import { emailPreferences } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { emailPreferences, aiRuns, aiSuggestions } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -125,6 +125,7 @@ export const appRouter = router({
   vendors: vendorsRouter,
   documentVersions: documentVersionsRouter,
   fileLinks: fileLinksRouter,
+  changeOrders: changeOrdersRouter,
   planFeatures: planFeaturesRouter,
   emailTemplates: emailTemplatesRouter,
   diagnostics: diagnosticsRouter,
@@ -693,6 +694,43 @@ export const appRouter = router({
       }),
   }),
   ai: router({
+    listRuns: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ input, ctx }) => {
+        try {
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const db = await getDb();
+          if (!db) return [];
+          return db.select().from(aiRuns)
+            .where(eq(aiRuns.workspaceId, wsId))
+            .orderBy(desc(aiRuns.createdAt))
+            .limit(input?.limit ?? 100);
+        } catch (error) {
+          console.error("Error fetching AI runs:", error);
+          return [];
+        }
+      }),
+    listSuggestions: protectedProcedure
+      .input(z.object({ status: z.string().optional(), limit: z.number().optional() }).optional())
+      .query(async ({ input, ctx }) => {
+        try {
+          const wsId = await requireWorkspaceId(ctx.user.id);
+          const db = await getDb();
+          if (!db) return [];
+          const { and: andOp } = await import("drizzle-orm");
+          let conditions: any[] = [eq(aiSuggestions.workspaceId, wsId)];
+          if (input?.status && input.status !== "all") {
+            conditions.push(eq(aiSuggestions.status, input.status as any));
+          }
+          return db.select().from(aiSuggestions)
+            .where(conditions.length === 1 ? conditions[0] : andOp(...conditions))
+            .orderBy(desc(aiSuggestions.createdAt))
+            .limit(input?.limit ?? 100);
+        } catch (error) {
+          console.error("Error fetching AI suggestions:", error);
+          return [];
+        }
+      }),
     generateGuidance: protectedProcedure
       .input(z.object({
         recordType: z.string(),

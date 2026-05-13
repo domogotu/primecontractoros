@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Filter, FileText, CheckCircle2, Clock, AlertTriangle, XCircle } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const statusColors: Record<string, string> = {
   identified: "bg-slate-100 text-slate-700",
@@ -57,7 +58,12 @@ export default function Requirements() {
   }, [requirements]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Contract Operations"
+        title="Contract Requirements"
+        subtitle="Track and verify all contract requirements and their compliance status."
+        summaryCards={[{ label: "Total", value: (requirements ?? []).length }, { label: "Verified", value: (requirements ?? []).filter((r:any)=>r.status==="verified").length, color: "text-green-600" }, { label: "Pending", value: (requirements ?? []).filter((r:any)=>r.status!=="verified").length, color: "text-amber-600" }]}
+      >
       <PageGuide
         title="Requirements Tracking"
         description="Track all contract requirements, their sources, verification status, and compliance evidence."
@@ -224,6 +230,7 @@ export default function Requirements() {
           </table>
         </div>
       )}
-    </div>
+    
+      </PageLayout>
   );
 }

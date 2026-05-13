@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Users, UserPlus, Trash2, Shield, Eye, User } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const ROLE_LABELS: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   owner: { label: "Owner", color: "bg-purple-500/20 text-purple-400 border-purple-500/30", icon: Shield },
@@ -100,7 +101,12 @@ export default function WorkspaceTeam() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+        label="Administration"
+        title="Team & Roles"
+        subtitle="Manage workspace members and assign roles to control access levels."
+        summaryCards={[{ label: "Members", value: (members ?? []).length }]}
+      >
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Users className="h-6 w-6 text-primary" />
@@ -279,6 +285,7 @@ export default function WorkspaceTeam() {
           )}
         </CardContent>
       </Card>
-    </div>
+    
+      </PageLayout>
   );
 }

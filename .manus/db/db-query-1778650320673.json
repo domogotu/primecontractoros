@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `change_orders` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `workspaceId` int NOT NULL,\n  `contractId` int,\n  `title` varchar(255) NOT NULL,\n  `description` text,\n  `changeType` varchar(64) NOT NULL DEFAULT 'scope',\n  `status` varchar(64) NOT NULL DEFAULT 'draft',\n  `impactCost` varchar(64),\n  `impactSchedule` varchar(128),\n  `submittedBy` varchar(255),\n  `reviewedBy` varchar(255),\n  `approvedAt` timestamp NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `change_orders_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3mdrx4UqQ4U9N11.root --database bK79T4tArkmFGp4KWjEAoU --execute CREATE TABLE IF NOT EXISTS `change_orders` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `workspaceId` int NOT NULL,\n  `contractId` int,\n  `title` varchar(255) NOT NULL,\n  `description` text,\n  `changeType` varchar(64) NOT NULL DEFAULT 'scope',\n  `status` varchar(64) NOT NULL DEFAULT 'draft',\n  `impactCost` varchar(64),\n  `impactSchedule` varchar(128),\n  `submittedBy` varchar(255),\n  `reviewedBy` varchar(255),\n  `approvedAt` timestamp NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `change_orders_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 361
+}

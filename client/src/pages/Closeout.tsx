@@ -9,6 +9,7 @@ import { CheckCircle2, Circle, Clock, AlertTriangle, Plus, ArrowRight } from "lu
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PageLayout from "@/components/PageLayout";
 
 const statusIcons: Record<string, typeof CheckCircle2> = {
   complete: CheckCircle2,
@@ -55,7 +56,11 @@ export default function Closeout() {
   if (isLoading) return <div className="p-6 text-center text-slate-500">Loading closeout records...</div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Contract Operations"
+        title="Contract Closeout"
+        subtitle="Manage contract closeout processes, final deliverables, and documentation."
+      >
       <PageGuide
         title="Contract Closeout"
         description="Guided workflow for closing out completed contracts. Track each closeout step from final invoicing through archival."
@@ -215,6 +220,7 @@ export default function Closeout() {
           })}
         </div>
       )}
-    </div>
+    
+      </PageLayout>
   );
 }

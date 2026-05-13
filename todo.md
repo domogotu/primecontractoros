@@ -1375,3 +1375,35 @@
 - [x] 2. RBAC management UI — workspace owners can assign/change/remove member roles at /app/team
 - [x] 3. Email notification preferences — user settings page at /app/notification-preferences
 - [x] Deploy and push to GitHub
+
+## Phase 34: Consistent Layout + Page Audit Fixes
+
+- [x] Restyle Contract Hub page — blue header banner, stat cards in 2-col grid, module nav in 2-col compact grid
+- [x] Create reusable PageLayout component for blue gradient banner
+- [x] Apply consistent layout to all workspace pages missing the pattern
+- [x] Fix TS errors from PageLayout wrapping (wrong variable names in summaryCards)
+
+### Stub/Mock Data Fixes
+- [x] AlertsAndTasks — replace mockAlerts/mockTasks with real tRPC data
+- [x] CommunicationLog — replace mockMessages with real Messages tRPC data
+- [x] ChangeManagement — replace mockChanges with real tRPC changeOrders data
+- [x] Vendors — remove mock fallback, wire real tRPC vendors CRUD
+- [x] Subcontractors — remove mock fallback, wire real tRPC subcontractors CRUD
+
+### Stub Navigation Fixes
+- [x] Deliverables — wire the 3 stub action buttons (view detail, link, export)
+- [x] DocumentVersions — wire download/compare/restore actions
+- [x] EmailTemplates — wire update/delete/duplicate template mutations
+- [x] Subcontractors — wire edit/delete row actions
+- [x] Vendors — wire create/edit/delete actions
+- [x] Settings — wire team invite button to /app/team page
+- [x] AuditLog — wire date filter
+- [x] NotificationsCenter — replace demo data with real tRPC alerts
+- [x] MessageDetail — replace demo thread with real tRPC messages
+- [x] AIRuns — replace demo data with real tRPC ai.listRuns
+- [x] AISuggestions — replace demo data with real tRPC ai.listSuggestions
+- [x] ConsistencyCheck — wire real tRPC diagnostics
+- [x] Users — wire real tRPC workspace.listMembers
+- [x] UserProfile — fix password change stub
+
+- [ ] Deploy and push to GitHub

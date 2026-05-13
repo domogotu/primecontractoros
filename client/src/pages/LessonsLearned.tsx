@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/hooks/use-toast";
+import PageLayout from "@/components/PageLayout";
 import {
   Plus, Search, Lightbulb, ThumbsUp, ThumbsDown, BookOpen, ArrowLeft,
   FileText, CheckCircle2, ListTodo, Link2, Eye, Archive, Pencil, Trash2,
@@ -395,7 +396,12 @@ export default function LessonsLearned() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto pb-32">
+    <PageLayout
+        label="Knowledge Base"
+        title="Lessons Learned"
+        subtitle="Capture and review lessons learned from contracts, proposals, and operations."
+        summaryCards={[{ label: "Total", value: lessons.length }, { label: "Positive", value: (lessons as any[]).filter((l:any)=>l.outcome==="positive").length, color: "text-green-600" }, { label: "Negative", value: (lessons as any[]).filter((l:any)=>l.outcome==="negative").length, color: "text-red-600" }]}
+      >
       <PageGuide
         title="Lessons Learned"
         description="Capture and review lessons from past and current contracts to improve future performance. Document what worked, what did not, and what to do differently next time."
@@ -778,6 +784,7 @@ export default function LessonsLearned() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    
+      </PageLayout>
   );
 }

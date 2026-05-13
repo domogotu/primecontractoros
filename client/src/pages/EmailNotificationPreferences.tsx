@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, Clock, DollarSign, FileText, Briefcase, BarChart3 } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const PREF_ITEMS = [
   {
@@ -58,7 +59,11 @@ export default function EmailNotificationPreferences() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+        label="Settings"
+        title="Notification Preferences"
+        subtitle="Choose which email notifications you want to receive."
+      >
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Bell className="h-6 w-6 text-primary" />
@@ -128,6 +133,7 @@ export default function EmailNotificationPreferences() {
       <p className="text-xs text-muted-foreground">
         Note: System-critical emails (password resets, security alerts, billing receipts) are always sent regardless of these settings.
       </p>
-    </div>
+    
+      </PageLayout>
   );
 }

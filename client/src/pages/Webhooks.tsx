@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Send, Eye, EyeOff, RefreshCw, Copy, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { useWorkspaceRole } from "@/hooks/useWorkspaceRole";
+import PageLayout from "@/components/PageLayout";
 
 export default function Webhooks() {
   const { toast } = useToast();
@@ -91,7 +92,12 @@ export default function Webhooks() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageLayout
+        label="Administration"
+        title="Webhooks"
+        subtitle="Register outbound webhook endpoints to receive real-time event notifications."
+        summaryCards={[{ label: "Total", value: (webhooksList ?? []).length }, { label: "Active", value: (webhooksList ?? []).filter((w:any)=>w.active).length, color: "text-green-600" }]}
+      >
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Webhooks</h1>
@@ -281,7 +287,7 @@ export default function Webhooks() {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </PageLayout>
   );
 }
 
@@ -323,6 +329,7 @@ function WebhookDeliveries({ webhookId }: { webhookId: number }) {
           ))}
         </tbody>
       </table>
+    
     </div>
   );
 }

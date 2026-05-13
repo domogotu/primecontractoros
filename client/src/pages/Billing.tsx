@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Check, CreditCard, AlertCircle, Loader2, Crown, Zap, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
+import PageLayout from "@/components/PageLayout";
 
 export default function Billing() {
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
@@ -81,7 +82,11 @@ export default function Billing() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-32">
+    <PageLayout
+        label="Finance"
+        title="Billing & Subscription"
+        subtitle="Manage your subscription plan, billing history, and payment methods."
+      >
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Billing & Subscription</h1>
@@ -290,6 +295,7 @@ export default function Billing() {
           </div>
         </div>
       </Card>
-    </div>
+    
+      </PageLayout>
   );
 }

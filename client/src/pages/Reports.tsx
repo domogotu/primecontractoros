@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import PageLayout from "@/components/PageLayout";
 
 type ReportResult = {
   type: string;
@@ -115,7 +116,11 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto pb-32">
+    <PageLayout
+        label="Analytics"
+        title="Reports"
+        subtitle="Generate and download reports for contracts, proposals, finance, and compliance."
+      >
       <PageGuide
         title="Reports"
         description="Generate reports from your real workspace data and export as CSV."
@@ -339,6 +344,7 @@ export default function Reports() {
           </CardContent>
         </Card>
       )}
-    </div>
+    
+      </PageLayout>
   );
 }

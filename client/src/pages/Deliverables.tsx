@@ -182,11 +182,6 @@ export default function Deliverables() {
   const handleAddSubmit = (e) => {
     e.preventDefault();
     createMutation.mutate(formData);
-    // Fallback for demo
-    if (!createMutation.isLoading) {
-      toast({ title: "Feature coming soon" });
-      setIsAddDialogOpen(false);
-    }
   };
 
   const handleUpdateStatus = () => {
@@ -196,11 +191,6 @@ export default function Deliverables() {
         status: updateAction === "Accept" ? "Accepted" : updateAction === "Reject" ? "Rejected" : "Submitted",
         reason: updateAction === "Reject" ? rejectReason : undefined
       });
-      // Fallback for demo
-      if (!updateMutation.isLoading) {
-        toast({ title: "Feature coming soon" });
-        setIsUpdateDialogOpen(false);
-      }
     }
   };
 
@@ -368,7 +358,7 @@ export default function Deliverables() {
                             </Button>
                           </>
                         )}
-                        <Button variant="ghost" size="icon" onClick={() => toast({ title: "Feature coming soon" })}>
+                        <Button variant="ghost" size="icon" onClick={() => openUpdateDialog(deliverable, "Update")}>
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </div>

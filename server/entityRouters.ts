@@ -12,7 +12,7 @@ import {
   listInvoices, createInvoice, updateInvoice, deleteInvoice, getInvoiceById,
   listPayments, createPayment, deletePayment, getPaymentById,
   listTasks, createTask, updateTask, deleteTask,
-  listAlerts, createAlert, dismissAlert,
+  listAlerts, createAlert, dismissAlert, markAlertRead, markAllAlertsRead,
   listDeliverables, createDeliverable, updateDeliverable, deleteDeliverable,
   listDeadlines, createDeadline, updateDeadline, deleteDeadline,
   listObligations, createObligation, updateObligation, deleteObligation,
@@ -29,7 +29,7 @@ import {
   createFollowup, listFollowups, updateFollowup,
   createCloseoutBlocker, listCloseoutBlockers, updateCloseoutBlocker,
   createFinanceNote, listFinanceNotes,
-  createFileVersion, listFileVersions,
+  createFileVersion, listFileVersions, listAllFileVersionsForWorkspace,
   createContractRequirement, listContractRequirements, updateContractRequirement,
 } from "./entityDb";
 
@@ -305,6 +305,17 @@ export const alertsRouter = router({
       const wsId = await requireWrite(ctx);
       try { await logAudit(wsId, ctx.user.id, "update", "alerts", 0, input); } catch {}
       return dismissAlert(input.id, wsId);
+    }),
+  markRead: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      return markAlertRead(input.id, wsId);
+    }),
+  markAllRead: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      const wsId = await requireWrite(ctx);
+      return markAllAlertsRead(wsId);
     }),
 });
 
@@ -730,6 +741,11 @@ export const financeNotesRouter = router({
 
 // ==================== FILE VERSIONS ====================
 export const fileVersionsRouter = router({
+  listAll: protectedProcedure
+    .query(async ({ ctx }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listAllFileVersionsForWorkspace(wsId);
+    }),
   list: protectedProcedure
     .input(z.object({ fileId: z.number() }))
     .query(async ({ input }) => {
