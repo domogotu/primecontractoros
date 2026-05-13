@@ -1330,3 +1330,14 @@
 - [x] Each row: workspace name, owner, plan, status, created date, action buttons (View, Suspend, Delete)
 - [x] Wire to existing platformAdmin.workspaces tRPC procedures
 - [x] Deploy and push to GitHub
+
+## Phase 29: Workspace Detail Page, Bulk Actions, CSV Export
+
+- [x] Backend: platformAdmin.workspaces.getDetail procedure — returns owner info, members, billing history, support tickets, audit log, onboarding status, usage stats, health flags, internal notes, admin overrides
+- [x] Backend: platformAdmin.workspaces.bulkSuspend procedure — suspend multiple workspaces at once
+- [x] Frontend: /platform/workspaces/:id detail page with 10 sections (owner, members, billing, tickets, audit, onboarding, usage, health, notes, overrides)
+- [x] Frontend: Register /platform/workspaces/:id route in App.tsx and PlatformRouter.tsx
+- [x] Frontend: Add checkboxes to workspace directory table rows
+- [x] Frontend: Bulk action bar appears when rows are selected (suspend selected, clear selection)
+- [x] Frontend: CSV export button above table — exports filtered workspace list
+- [x] Deploy and push to GitHub

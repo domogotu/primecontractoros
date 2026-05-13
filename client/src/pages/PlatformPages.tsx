@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight } from "lucide-react";
+import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square } from "lucide-react";
 import { toast } from "sonner";
 
 // ==================== SHARED COMPONENTS ====================
@@ -802,11 +802,44 @@ export function PlatformWorkspaces() {
   const [suspendReason, setSuspendReason] = React.useState("");
   const [suspendTarget, setSuspendTarget] = React.useState<number | null>(null);
   const [reactivateTarget, setReactivateTarget] = React.useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = React.useState<Set<number>>(new Set());
+  const [showBulkSuspendDialog, setShowBulkSuspendDialog] = React.useState(false);
+  const [bulkSuspendReason, setBulkSuspendReason] = React.useState("");
 
   const { data: workspaces = [], isLoading, refetch } = trpc.platformAdmin.workspaces.list.useQuery();
   const { data: metrics } = trpc.platformAdmin.dashboardMetrics.useQuery();
   const suspendMut = trpc.platformAdmin.workspaces.suspend.useMutation({ onSuccess: () => { refetch(); setSuspendTarget(null); setSuspendReason(""); toast.success("Workspace suspended"); } });
   const reactivateMut = trpc.platformAdmin.workspaces.reactivate.useMutation({ onSuccess: () => { refetch(); setReactivateTarget(null); toast.success("Workspace reactivated"); } });
+  const bulkSuspendMut = trpc.platformAdmin.workspaces.bulkSuspend.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      setSelectedIds(new Set());
+      setShowBulkSuspendDialog(false);
+      setBulkSuspendReason("");
+      toast.success(`${data.count} workspace(s) suspended.`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(ws => ws.id)));
+    }
+  };
+
+  const exportCsv = () => {
+    window.open("/api/export/admin/table/workspaces", "_blank");
+  };
 
   const filtered = workspaces.filter(ws => {
     const matchSearch = !search ||
@@ -858,7 +891,7 @@ export function PlatformWorkspaces() {
         ))}
       </div>
 
-      {/* Search & Filter */}
+      {/* Search, Filter & Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -880,7 +913,38 @@ export function PlatformWorkspaces() {
           <option value="suspended">Suspended</option>
           <option value="deactivated">Deactivated</option>
         </select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={exportCsv}
+          className="border-slate-600 text-slate-300 hover:bg-slate-700 shrink-0"
+        >
+          <Download className="w-4 h-4 mr-1" /> Export CSV
+        </Button>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+          <span className="text-sm text-blue-300 font-medium">{selectedIds.size} workspace{selectedIds.size !== 1 ? 's' : ''} selected</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-red-700 text-red-400 hover:bg-red-900/30 ml-auto"
+            onClick={() => setShowBulkSuspendDialog(true)}
+          >
+            Suspend Selected
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-slate-400"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Clear
+          </Button>
+        </div>
+      )}
 
       {/* Workspace Table */}
       {filtered.length === 0 ? (
@@ -893,6 +957,13 @@ export function PlatformWorkspaces() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-800 border-b border-slate-700">
+                <th className="px-4 py-3 w-8">
+                  <button onClick={toggleSelectAll} className="text-slate-400 hover:text-white transition-colors">
+                    {selectedIds.size === filtered.length && filtered.length > 0
+                      ? <CheckSquare className="w-4 h-4 text-blue-400" />
+                      : <Square className="w-4 h-4" />}
+                  </button>
+                </th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Workspace</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium hidden md:table-cell">Owner</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium hidden lg:table-cell">Plan</th>
@@ -904,7 +975,14 @@ export function PlatformWorkspaces() {
             </thead>
             <tbody className="divide-y divide-slate-700">
               {filtered.map(ws => (
-                <tr key={ws.id} className="bg-slate-900 hover:bg-slate-800/60 transition-colors">
+                <tr key={ws.id} className={`bg-slate-900 hover:bg-slate-800/60 transition-colors ${selectedIds.has(ws.id) ? 'bg-blue-900/20' : ''}`}>
+                  <td className="px-4 py-3">
+                    <button onClick={() => toggleSelect(ws.id)} className="text-slate-400 hover:text-white transition-colors">
+                      {selectedIds.has(ws.id)
+                        ? <CheckSquare className="w-4 h-4 text-blue-400" />
+                        : <Square className="w-4 h-4" />}
+                    </button>
+                  </td>
                   <td className="px-4 py-3">
                     <div>
                       <p className="font-medium text-white">{ws.name}</p>
@@ -1008,6 +1086,32 @@ export function PlatformWorkspaces() {
                 onClick={() => reactivateMut.mutate({ id: reactivateTarget, reason: "Manually reactivated by platform admin" })}
               >
                 {reactivateMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Reactivate"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Suspend Dialog */}
+      {showBulkSuspendDialog && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-semibold text-white">Suspend {selectedIds.size} Workspace{selectedIds.size !== 1 ? 's' : ''}</h3>
+            <p className="text-sm text-slate-400">This will immediately block access for all selected workspaces. Provide a reason for the audit log.</p>
+            <textarea
+              value={bulkSuspendReason}
+              onChange={e => setBulkSuspendReason(e.target.value)}
+              placeholder="Reason for bulk suspension (required)..."
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="ghost" className="text-slate-400" onClick={() => { setShowBulkSuspendDialog(false); setBulkSuspendReason(""); }}>Cancel</Button>
+              <Button
+                className="bg-red-700 hover:bg-red-600 text-white"
+                disabled={!bulkSuspendReason.trim() || bulkSuspendMut.isPending}
+                onClick={() => bulkSuspendMut.mutate({ ids: Array.from(selectedIds), reason: bulkSuspendReason })}
+              >
+                {bulkSuspendMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : `Suspend ${selectedIds.size} Workspace${selectedIds.size !== 1 ? 's' : ''}`}
               </Button>
             </div>
           </div>

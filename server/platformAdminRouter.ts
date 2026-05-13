@@ -24,6 +24,9 @@ import {
   invoices,
   backupExports,
   adminTasks,
+  billingEvents,
+  platformOverrides,
+  onboardingProgress,
 } from "../drizzle/schema";
 import { eq, desc, and, count, sql, gte } from "drizzle-orm";
 
@@ -241,6 +244,127 @@ export const platformAdminRouter = router({
           performedBy: ctx.user.id,
           reason: `Updated: ${Object.keys(updateFields).join(", ")}`,
         });
+        return { success: true };
+      }),
+
+    getDetail: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+        const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, input.id)).limit(1);
+        if (!ws) return null;
+        const [owner] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
+        const members = await db.select().from(workspaceMembers).where(eq(workspaceMembers.workspaceId, ws.id));
+        const memberUsers = members.length > 0
+          ? await Promise.all(members.map(async (m) => {
+              const [u] = await db.select().from(users).where(eq(users.id, m.userId)).limit(1);
+              return { ...m, user: u || null };
+            }))
+          : [];
+        const billingHistory = await db.select().from(platformBilling)
+          .where(eq(platformBilling.workspaceId, ws.id))
+          .orderBy(desc(platformBilling.createdAt)).limit(20);
+        const billingEventsData = await db.select().from(billingEvents)
+          .where(eq(billingEvents.workspaceId, ws.id))
+          .orderBy(desc(billingEvents.createdAt)).limit(20);
+        const [plan] = ws.planId
+          ? await db.select().from(plans).where(eq(plans.id, ws.planId)).limit(1)
+          : [null];
+        const tickets = await db.select().from(supportTickets)
+          .where(eq(supportTickets.workspaceId, ws.id))
+          .orderBy(desc(supportTickets.createdAt)).limit(20);
+        const notes = await db.select().from(platformNotes)
+          .where(eq(platformNotes.workspaceId, ws.id))
+          .orderBy(desc(platformNotes.createdAt)).limit(30);
+        const audit = await db.select().from(platformAuditLog)
+          .where(and(eq(platformAuditLog.targetType, "workspace"), eq(platformAuditLog.targetId, ws.id)))
+          .orderBy(desc(platformAuditLog.createdAt)).limit(50);
+        const healthFlags = await db.select().from(workspaceHealthFlags)
+          .where(eq(workspaceHealthFlags.workspaceId, ws.id))
+          .orderBy(desc(workspaceHealthFlags.createdAt));
+        const overrides = await db.select().from(platformOverrides)
+          .where(and(eq(platformOverrides.workspaceId, ws.id), eq(platformOverrides.isActive, true)))
+          .orderBy(desc(platformOverrides.createdAt));
+        const onboarding = await db.select().from(onboardingProgress)
+          .where(eq(onboardingProgress.workspaceId, ws.id)).limit(1);
+        const lastLogin = await db.select().from(loginEvents)
+          .where(eq(loginEvents.workspaceId, ws.id))
+          .orderBy(desc(loginEvents.createdAt)).limit(1);
+        // Usage stats
+        const [contractCount] = await db.select({ count: count() }).from(contracts).where(eq(contracts.workspaceId, ws.id));
+        const [proposalCount] = await db.select({ count: count() }).from(proposals).where(eq(proposals.workspaceId, ws.id));
+        const [opportunityCount] = await db.select({ count: count() }).from(opportunities).where(eq(opportunities.workspaceId, ws.id));
+        const [invoiceCount] = await db.select({ count: count() }).from(invoices).where(eq(invoices.workspaceId, ws.id));
+        const [taskCount] = await db.select({ count: count() }).from(tasks).where(eq(tasks.workspaceId, ws.id));
+        return {
+          ...ws,
+          owner: owner || null,
+          members: memberUsers,
+          billingHistory,
+          billingEvents: billingEventsData,
+          plan: plan || null,
+          supportTickets: tickets,
+          platformNotes: notes,
+          auditLog: audit,
+          healthFlags,
+          overrides,
+          onboarding: onboarding[0] || null,
+          lastLogin: lastLogin[0] || null,
+          usageStats: {
+            contracts: contractCount?.count ?? 0,
+            proposals: proposalCount?.count ?? 0,
+            opportunities: opportunityCount?.count ?? 0,
+            invoices: invoiceCount?.count ?? 0,
+            tasks: taskCount?.count ?? 0,
+          },
+        };
+      }),
+
+    bulkSuspend: adminProcedure
+      .input(z.object({ ids: z.array(z.number()), reason: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        for (const id of input.ids) {
+          await db.update(workspaces).set({ status: "suspended" }).where(eq(workspaces.id, id));
+          await db.insert(platformAuditLog).values({
+            action: "suspend_workspace",
+            targetType: "workspace",
+            targetId: id,
+            performedBy: ctx.user.id,
+            reason: input.reason,
+          });
+        }
+        return { success: true, count: input.ids.length };
+      }),
+
+    addNote: adminProcedure
+      .input(z.object({ workspaceId: z.number(), note: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.insert(platformNotes).values({
+          workspaceId: input.workspaceId,
+          note: input.note,
+          createdBy: ctx.user.id,
+        });
+        await db.insert(platformAuditLog).values({
+          action: "add_note",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: "Internal note added",
+        });
+        return { success: true };
+      }),
+
+    deleteNote: adminProcedure
+      .input(z.object({ noteId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        await db.delete(platformNotes).where(eq(platformNotes.id, input.noteId));
         return { success: true };
       }),
 
