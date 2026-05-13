@@ -7,6 +7,10 @@ import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact
 import { GuidancePanel } from "@/components/GuidancePanel";
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import PageGuide from "@/components/PageGuide";
+import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
+import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
+import WhatsNext, { NextAction } from "@/components/WhatsNext";
+import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
 import { useMemo } from "react";
 
 export default function Dashboard() {
@@ -20,6 +24,7 @@ export default function Dashboard() {
   const { data: tasks = [] } = trpc.tasks.list.useQuery({});
   const { data: alerts = [] } = trpc.alerts.list.useQuery();
   const { data: deadlines = [] } = trpc.deadlines.list.useQuery();
+  const { data: businessProfile } = trpc.businessProfile.get.useQuery();
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -35,6 +40,17 @@ export default function Dashboard() {
   const activeAlerts = (alerts as any[]).filter((a) => !a.dismissed);
   const overdueTasks = openTasks.filter((t) => t.dueDate && new Date(t.dueDate) < new Date());
   const overdueInvoices = pendingInvoices.filter((i) => i.dueDate && new Date(i.dueDate) < new Date());
+
+  // Determine current lifecycle phase based on pipeline state
+  const getCurrentPhase = (): LifecyclePhase => {
+    if (activeOpps.length > 0 && proposals.length === 0) return "opportunity";
+    if ((proposals as any[]).filter((p) => p.status === "draft" || p.status === "in_progress").length > 0) return "proposal";
+    if (activeContracts.length > 0 && proposals.length > 0) return "contract";
+    if (activeContracts.length > 0) return "performance";
+    return "opportunity";
+  };
+
+  const currentPhase = getCurrentPhase();
 
   // Contract Health Score
   const contractHealthScore = useMemo(() => {
@@ -55,18 +71,218 @@ export default function Dashboard() {
       .slice(0, 5);
   }, [deadlines]);
 
+  // AI Status Checks
+  const aiChecks = useMemo((): AICheck[] => {
+    const checks: AICheck[] = [];
+    
+    // Profile completeness
+    const profileComplete = businessProfile && businessProfile.legalName && businessProfile.uei && businessProfile.cage;
+    checks.push({
+      id: "profile",
+      name: "Business Profile",
+      status: profileComplete ? "verified" : "flagged",
+      message: profileComplete ? "Complete and verified" : "Missing critical fields (UEI, CAGE, legal name)",
+      severity: profileComplete ? "info" : "warning",
+    });
+
+    // SAM registration
+    const samValid = businessProfile?.samStatus === "active" && businessProfile?.samExpirationDate && new Date(businessProfile.samExpirationDate) > new Date();
+    checks.push({
+      id: "sam",
+      name: "SAM.gov Registration",
+      status: samValid ? "verified" : "flagged",
+      message: samValid ? "Active and current" : "Not registered or expired",
+      severity: samValid ? "info" : "error",
+    });
+
+    // NAICS codes
+    const naicsSet = businessProfile?.naicsPrimary || businessProfile?.naicsSecondary;
+    checks.push({
+      id: "naics",
+      name: "NAICS Codes",
+      status: naicsSet ? "verified" : "flagged",
+      message: naicsSet ? "Configured" : "Not configured",
+      severity: naicsSet ? "info" : "warning",
+    });
+
+    // Compliance deadlines
+    const hasUpcomingDeadlines = upcomingDeadlines.length > 0;
+    checks.push({
+      id: "deadlines",
+      name: "Upcoming Deadlines",
+      status: hasUpcomingDeadlines ? "flagged" : "verified",
+      message: hasUpcomingDeadlines ? `${upcomingDeadlines.length} deadline(s) in next 14 days` : "No critical deadlines",
+      severity: hasUpcomingDeadlines ? "warning" : "info",
+    });
+
+    // Overdue items
+    const hasOverdue = overdueTasks.length > 0 || overdueInvoices.length > 0;
+    checks.push({
+      id: "overdue",
+      name: "Overdue Items",
+      status: hasOverdue ? "flagged" : "verified",
+      message: hasOverdue ? `${overdueTasks.length} overdue task(s), ${overdueInvoices.length} overdue invoice(s)` : "All items current",
+      severity: hasOverdue ? "error" : "info",
+    });
+
+    return checks;
+  }, [businessProfile, upcomingDeadlines, overdueTasks, overdueInvoices]);
+
   // Next Best Steps logic
-  const nextSteps = useMemo(() => {
-    const steps: { label: string; action: string; href: string; priority: "high" | "medium" | "low" }[] = [];
-    if (activeAlerts.length > 0) steps.push({ label: `${activeAlerts.length} active alert${activeAlerts.length > 1 ? "s" : ""} need attention`, action: "Review Alerts", href: "/app/alerts", priority: "high" });
-    if (overdueTasks.length > 0) steps.push({ label: `${overdueTasks.length} overdue task${overdueTasks.length > 1 ? "s" : ""}`, action: "View Tasks", href: "/app/tasks", priority: "high" });
-    if (overdueInvoices.length > 0) steps.push({ label: `${overdueInvoices.length} overdue invoice${overdueInvoices.length > 1 ? "s" : ""}`, action: "View Invoices", href: "/app/invoices", priority: "high" });
+  const nextSteps = useMemo((): NextAction[] => {
+    const steps: NextAction[] = [];
+
+    // Setup steps
+    if (!businessProfile?.legalName) {
+      steps.push({
+        id: "profile-setup",
+        title: "Complete Business Profile",
+        description: "Add company information, registrations, and certifications",
+        priority: "high",
+        action: {
+          label: "Complete Profile",
+          onClick: () => navigate("/app/business-profile"),
+        },
+      });
+    }
+
+    // Critical alerts
+    if (activeAlerts.length > 0) {
+      steps.push({
+        id: "alerts",
+        title: `${activeAlerts.length} Active Alert${activeAlerts.length > 1 ? "s" : ""}`,
+        description: "Review and address active alerts",
+        priority: "high",
+        action: {
+          label: "Review Alerts",
+          onClick: () => navigate("/app/alerts"),
+        },
+      });
+    }
+
+    // Overdue items
+    if (overdueTasks.length > 0) {
+      steps.push({
+        id: "overdue-tasks",
+        title: `${overdueTasks.length} Overdue Task${overdueTasks.length > 1 ? "s" : ""}`,
+        description: "Complete overdue tasks immediately",
+        priority: "high",
+        action: {
+          label: "View Tasks",
+          onClick: () => navigate("/app/tasks"),
+        },
+      });
+    }
+
+    if (overdueInvoices.length > 0) {
+      steps.push({
+        id: "overdue-invoices",
+        title: `${overdueInvoices.length} Overdue Invoice${overdueInvoices.length > 1 ? "s" : ""}`,
+        description: "Follow up on unpaid invoices",
+        priority: "high",
+        action: {
+          label: "View Invoices",
+          onClick: () => navigate("/app/invoices"),
+        },
+      });
+    }
+
+    // Medium priority
     const pendingProposals = (proposals as any[]).filter((p) => p.status === "draft" || p.status === "in_progress");
-    if (pendingProposals.length > 0) steps.push({ label: `${pendingProposals.length} proposal${pendingProposals.length > 1 ? "s" : ""} in progress`, action: "Continue", href: "/app/proposals", priority: "medium" });
-    if (upcomingDeadlines.length > 0) steps.push({ label: `${upcomingDeadlines.length} deadline${upcomingDeadlines.length > 1 ? "s" : ""} in the next 14 days`, action: "View Deadlines", href: "/app/deadlines", priority: "medium" });
-    if (activeOpps.length > 0) steps.push({ label: `${activeOpps.length} active opportunit${activeOpps.length > 1 ? "ies" : "y"} to evaluate`, action: "Review", href: "/app/opportunities", priority: "low" });
-    return steps.slice(0, 6);
-  }, [activeAlerts, overdueTasks, overdueInvoices, proposals, upcomingDeadlines, activeOpps]);
+    if (pendingProposals.length > 0) {
+      steps.push({
+        id: "proposals",
+        title: `${pendingProposals.length} Proposal${pendingProposals.length > 1 ? "s" : ""} In Progress`,
+        description: "Continue developing and submitting proposals",
+        priority: "medium",
+        action: {
+          label: "Continue",
+          onClick: () => navigate("/app/proposals"),
+        },
+      });
+    }
+
+    // Upcoming deadlines
+    if (upcomingDeadlines.length > 0) {
+      steps.push({
+        id: "deadlines",
+        title: `${upcomingDeadlines.length} Deadline${upcomingDeadlines.length > 1 ? "s" : ""} in Next 14 Days`,
+        description: "Prepare for upcoming compliance and contract deadlines",
+        priority: "medium",
+        action: {
+          label: "View Deadlines",
+          onClick: () => navigate("/app/deadlines"),
+        },
+      });
+    }
+
+    // Low priority
+    if (activeOpps.length > 0 && proposals.length === 0) {
+      steps.push({
+        id: "opportunities",
+        title: `${activeOpps.length} Active Opportunit${activeOpps.length > 1 ? "ies" : "y"}`,
+        description: "Evaluate and pursue new opportunities",
+        priority: "low",
+        action: {
+          label: "Review",
+          onClick: () => navigate("/app/opportunities"),
+        },
+      });
+    }
+
+    return steps.slice(0, 8);
+  }, [activeAlerts, overdueTasks, overdueInvoices, proposals, upcomingDeadlines, activeOpps, businessProfile, navigate]);
+
+  // Validation Warnings
+  const validationWarnings = useMemo((): ValidationWarning[] => {
+    const warnings: ValidationWarning[] = [];
+
+    if (!businessProfile?.legalName) {
+      warnings.push({
+        id: "profile-incomplete",
+        message: "Business profile is incomplete. Add company information to enable full platform functionality.",
+        type: "warning",
+        action: {
+          label: "Complete Profile",
+          onClick: () => navigate("/app/business-profile"),
+        },
+        dismissible: false,
+      });
+    }
+
+    if (businessProfile?.samExpirationDate && new Date(businessProfile.samExpirationDate) < new Date()) {
+      warnings.push({
+        id: "sam-expired",
+        message: "Your SAM.gov registration has expired. Update it immediately to maintain eligibility.",
+        type: "error",
+        action: {
+          label: "Update SAM",
+          onClick: () => navigate("/app/business-profile"),
+        },
+        dismissible: false,
+      });
+    }
+
+    if (overdueTasks.length > 0) {
+      warnings.push({
+        id: "overdue-tasks",
+        message: `You have ${overdueTasks.length} overdue task(s). Complete them to stay on track.`,
+        type: "error",
+        dismissible: true,
+      });
+    }
+
+    if (overdueInvoices.length > 0) {
+      warnings.push({
+        id: "overdue-invoices",
+        message: `${overdueInvoices.length} invoice(s) are overdue. Follow up with clients for payment.`,
+        type: "warning",
+        dismissible: true,
+      });
+    }
+
+    return warnings;
+  }, [businessProfile, overdueTasks, overdueInvoices, navigate]);
 
   const quickAccessButtons = [
     { label: "Opportunities", icon: Target, color: "bg-purple-500", href: "/app/opportunities" },
@@ -78,9 +294,6 @@ export default function Dashboard() {
     { label: "Messages", icon: MessageSquare, color: "bg-orange-500", href: "/app/messages" },
     { label: "Finance", icon: DollarSign, color: "bg-indigo-500", href: "/app/finance" },
   ];
-
-  const priorityColors = { high: "border-red-400 bg-red-50", medium: "border-amber-400 bg-amber-50", low: "border-blue-400 bg-blue-50" };
-  const priorityTextColors = { high: "text-red-700", medium: "text-amber-700", low: "text-blue-700" };
 
   return (
     <div className="min-h-full bg-gray-100 flex flex-col">
@@ -103,6 +316,20 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="flex-1 px-4 sm:px-6 md:px-8 py-4 md:py-8 pb-32">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+          {/* Validation Warnings */}
+          {validationWarnings.length > 0 && (
+            <ValidationWarnings warnings={validationWarnings} />
+          )}
+
+          {/* Lifecycle Progress */}
+          <LifecycleProgress currentPhase={currentPhase} />
+
+          {/* AI Status Panel */}
+          <AIStatusPanel checks={aiChecks} title="AI MONITORING STATUS" />
+
+          {/* What's Next */}
+          <WhatsNext actions={nextSteps} />
+
           {/* Summary Cards - Real Data */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             <Card className="bg-white border border-gray-200 p-3 md:p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate("/app/opportunities")}>
@@ -136,25 +363,6 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500 mt-1">Active alerts needing attention.</p>
             </Card>
           </div>
-
-          {/* Next Best Steps */}
-          {nextSteps.length > 0 && (
-            <Card className="bg-white border border-gray-200 p-4 md:p-6">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <ArrowRight className="h-5 w-5 text-blue-600" /> Next Best Steps
-              </h3>
-              <div className="space-y-2">
-                {nextSteps.map((step, idx) => (
-                  <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border-l-4 ${priorityColors[step.priority]}`}>
-                    <span className={`text-sm font-medium ${priorityTextColors[step.priority]}`}>{step.label}</span>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(step.href)} className="text-xs">
-                      {step.action} <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
 
           {/* Guidance Panel - Command Center */}
           <AIWorkflowButtons context="dashboard" />
