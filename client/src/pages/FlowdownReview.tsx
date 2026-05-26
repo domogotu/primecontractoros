@@ -146,16 +146,16 @@ export default function FlowdownReview() {
                     <div className="flex gap-2">
                       {status === "pending" && (
                         <>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => updateMutation.mutate({ id: clause.id, status: "approved" })}>
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => updateMutation.mutate({ id: clause.id, reviewStatus: "approved" })}>
                             <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateMutation.mutate({ id: clause.id, status: "flagged" })}>
+                          <Button size="sm" variant="outline" className="text-red-600" onClick={() => updateMutation.mutate({ id: clause.id, reviewStatus: "flagged" })}>
                             <AlertTriangle className="w-3 h-3 mr-1" /> Flag Issue
                           </Button>
                         </>
                       )}
                       {status === "missing" && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => updateMutation.mutate({ id: clause.id, status: "included" })}>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => updateMutation.mutate({ id: clause.id, reviewStatus: "included" })}>
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Mark Included
                         </Button>
                       )}
