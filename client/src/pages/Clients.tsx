@@ -32,7 +32,7 @@ export default function Clients() {
     return !term || (c.firstName + " " + c.lastName + " " + (c.organization || "")).toLowerCase().includes(term);
   });
   const activeClients = filtered.filter((c: any) => !c.deletedAt);
-  const uniqueOrgs = [...new Set(activeClients.map((c: any) => c.organization).filter(Boolean))];
+  const uniqueOrgs = Array.from(new Set(activeClients.map((c: any) => c.organization).filter(Boolean)));
 
   const handleSubmit = () => {
     if (!form.firstName && !form.organization) { toast.error("Name or organization required"); return; }

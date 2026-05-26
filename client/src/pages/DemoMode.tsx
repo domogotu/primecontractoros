@@ -22,11 +22,11 @@ export default function DemoMode() {
       await createOpp.mutateAsync({ title: "IT Modernization Support - DoD", agency: "Department of Defense", solicitation: "W91278-26-R-0042", naics: "541512", setAside: "Small Business", type: "solicitation", summary: "Enterprise IT modernization and cloud migration services." });
       await createOpp.mutateAsync({ title: "Cybersecurity Assessment Services", agency: "DHS", solicitation: "70CDCR26R00000015", naics: "541519", setAside: "8(a)", type: "solicitation", summary: "Continuous cybersecurity monitoring and assessment." });
       // Seed sample contracts
-      await createContract.mutateAsync({ title: "Network Operations Support", contractNumber: "GS-35F-0511T", agency: "GSA", status: "active", type: "firm_fixed_price" });
+      await createContract.mutateAsync({ title: "Network Operations Support", contractNumber: "GS-35F-0511T", agency: "GSA" });
       // Seed sample tasks
-      await createTask.mutateAsync({ title: "Complete SAM.gov registration renewal", priority: "high", status: "pending" });
-      await createTask.mutateAsync({ title: "Submit monthly status report", priority: "medium", status: "pending" });
-      await createTask.mutateAsync({ title: "Review subcontracting plan", priority: "low", status: "pending" });
+      await createTask.mutateAsync({ title: "Complete SAM.gov registration renewal", priority: "high" });
+      await createTask.mutateAsync({ title: "Submit monthly status report", priority: "medium" });
+      await createTask.mutateAsync({ title: "Review subcontracting plan", priority: "low" });
 
       setDemoActive(true);
       toast.success("Demo mode activated! Sample data has been created.");
