@@ -40,7 +40,7 @@ export default function Support() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/trpc/supportTickets.create", {
+      const res = await fetch("/api/trpc/platform.support.create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

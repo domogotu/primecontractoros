@@ -7,7 +7,7 @@ import {
   Folder, History, Wand2, BookOpen, GitBranch, ShieldCheck, Mail, UserPlus,
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
-  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles,
+  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Search, Globe,
 } from "lucide-react";
 
 export default function WorkspaceSidebar() {
@@ -29,6 +29,7 @@ export default function WorkspaceSidebar() {
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
         { icon: Target, label: "Opportunities", path: "/app/opportunities" },
+        { icon: Globe, label: "SAM.gov Search", path: "/app/sam-search" },
         { icon: FileText, label: "Proposals", path: "/app/proposals" },
         { icon: Briefcase, label: "Contracts", path: "/app/contracts" },
         { icon: Briefcase, label: "Contract Hub", path: "/app/contract-hub" },
@@ -47,6 +48,7 @@ export default function WorkspaceSidebar() {
         { icon: Package, label: "Deliverables", path: "/app/deliverables" },
         { icon: Calendar, label: "Deadlines", path: "/app/deadlines" },
         { icon: Scale, label: "FAR/DFARS Reference", path: "/app/far-reference" },
+        { icon: ShieldCheck, label: "Flowdown Review", path: "/app/flowdown-review" },
       ],
     },
     {
@@ -55,6 +57,8 @@ export default function WorkspaceSidebar() {
       items: [
         { icon: Sparkles, label: "AI Findings", path: "/app/ai-findings" },
         { icon: Brain, label: "AI Contract Review", path: "/app/ai-contract-review" },
+        { icon: Sparkles, label: "AI Suggestions", path: "/app/ai-suggestions" },
+        { icon: Activity, label: "AI Runs", path: "/app/ai-runs" },
         { icon: BarChart3, label: "Reports", path: "/app/reports" },
         { icon: AlertTriangle, label: "Alerts", path: "/app/alerts" },
         { icon: CheckSquare, label: "Tasks", path: "/app/tasks" },
@@ -66,6 +70,7 @@ export default function WorkspaceSidebar() {
       items: [
         { icon: Building2, label: "Subcontractors", path: "/app/subcontractors" },
         { icon: Users, label: "Vendors", path: "/app/vendors" },
+        { icon: Building2, label: "Clients", path: "/app/clients" },
         { icon: Users, label: "Contacts", path: "/app/contacts" },
         { icon: MessageSquare, label: "Messages", path: "/app/messages" },
       ],
@@ -85,6 +90,7 @@ export default function WorkspaceSidebar() {
       id: "admin",
       label: "Administration",
       items: [
+        { icon: Building2, label: "Business Profile", path: "/app/business-profile" },
         { icon: Settings, label: "Settings", path: "/app/settings" },
         { icon: Users, label: "Team Members", path: "/app/team" },
         { icon: Bell, label: "Notification Preferences", path: "/app/notification-preferences" },

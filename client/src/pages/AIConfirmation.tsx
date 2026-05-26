@@ -49,13 +49,40 @@ export default function AIConfirmation() {
     toast.success(`Finding ${labels[action]}`);
   };
 
-  const handleRunScan = () => {
-    setIsScanning(true);
-    toast.info("AI contract scan started. This may take a moment...");
-    setTimeout(() => {
+  const scanMutation = trpc.aiWorkflow.runs.contractScan.useMutation({
+    onSuccess: (data: any) => {
+      if (data?.findings) {
+        setFindings(data.findings.map((f: any, idx: number) => ({
+          id: String(idx + 1),
+          category: f.category || f.findingType || "General",
+          title: f.title || "Finding",
+          description: f.summary || f.description || "",
+          severity: (f.severity || "medium") as any,
+          source: "AI Contract Scan",
+          clauseRef: f.sourceLocation || f.clauseReference || "",
+          aiConfidence: (f.confidence || 80) / 100,
+          status: "pending" as const,
+        })));
+      }
       setIsScanning(false);
       toast.success("AI scan complete. Review findings below.");
-    }, 3000);
+    },
+    onError: (err: any) => {
+      setIsScanning(false);
+      toast.error(err.message || "AI scan failed");
+    },
+  });
+  const handleRunScan = () => {
+    if (!contract) { toast.error("No contract loaded"); return; }
+    setIsScanning(true);
+    toast.info("AI contract scan started. This may take a moment...");
+    const workspaceId = (contract as any).workspaceId || 0;
+    scanMutation.mutate({
+      workspaceId,
+      contractId: contractId || 0,
+      documentContent: `Contract: ${(contract as any).title || ""}\nNumber: ${(contract as any).contractNumber || ""}\nStatus: ${(contract as any).status || ""}\nValue: ${(contract as any).value || ""}`,
+      contractTitle: (contract as any).title || "Contract Review",
+    });
   };
 
   const severityColors: Record<string, string> = {

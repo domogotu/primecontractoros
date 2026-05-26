@@ -2,8 +2,8 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { generatedDocuments, flowdownReviews, customerAdoption } from "../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { generatedDocuments, flowdownReviews, customerAdoption, businessProfiles } from "../drizzle/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { enforcePermission } from "./rbacMiddleware";
 import { logAudit } from "./featureRouter";
@@ -14,10 +14,10 @@ export const documentGenerationRouter = router({
     const wsId = await requireWorkspaceId(ctx.user.id);
     return db.select().from(generatedDocuments).where(eq(generatedDocuments.workspaceId, wsId)).orderBy(desc(generatedDocuments.createdAt));
   }),
-  create: protectedProcedure.input(z.object({ templateType: z.string(), title: z.string(), parameters: z.string().optional() })).mutation(async ({ ctx, input }) => {
+  create: protectedProcedure.input(z.object({ documentType: z.string(), title: z.string(), content: z.string().optional(), sourceRecordType: z.string().optional(), sourceRecordId: z.number().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     const { wsId } = await enforcePermission(ctx.user.id, "write");
-    await db.insert(generatedDocuments).values({ workspaceId: wsId, templateType: input.templateType, title: input.title, parameters: input.parameters || "{}", status: "draft", createdBy: ctx.user.id });
+    await db.insert(generatedDocuments).values({ workspaceId: wsId, documentType: input.documentType, title: input.title, content: input.content || "", status: "draft", generatedBy: "ai", sourceRecordType: input.sourceRecordType, sourceRecordId: input.sourceRecordId, createdBy: ctx.user.id });
     try { await logAudit(wsId, ctx.user.id, "create", "documentGeneration", 0, input); } catch {}
     return { success: true };
   }),
@@ -37,16 +37,16 @@ export const flowdownReviewsRouter = router({
   create: protectedProcedure.input(z.object({ contractId: z.number(), clauseReference: z.string(), clauseText: z.string().optional(), flowdownRequired: z.boolean().optional(), notes: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     const { wsId } = await enforcePermission(ctx.user.id, "write");
-    await db.insert(flowdownReviews).values({ ...input, workspaceId: wsId, status: "pending", reviewedBy: ctx.user.id });
+    await db.insert(flowdownReviews).values({ contractId: input.contractId, workspaceId: wsId, clauseReference: input.clauseReference, clauseText: input.clauseText || null, flowdownRequired: input.flowdownRequired || false, notes: input.notes || null, reviewStatus: "pending", reviewedBy: ctx.user.id });
     try { await logAudit(wsId, ctx.user.id, "create", "flowdownReviews", 0, input); } catch {}
     return { success: true };
   }),
-  update: protectedProcedure.input(z.object({ id: z.number(), status: z.string().optional(), notes: z.string().optional(), flowdownRequired: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
+  update: protectedProcedure.input(z.object({ id: z.number(), reviewStatus: z.string().optional(), notes: z.string().optional(), flowdownRequired: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    await enforcePermission(ctx.user.id, "write");
+    const { wsId } = await enforcePermission(ctx.user.id, "write");
     const { id, ...data } = input;
     await db.update(flowdownReviews).set(data).where(eq(flowdownReviews.id, id));
-    try { await logAudit(wsId, ctx.user.id, "update", "flowdownReviews", 0, input); } catch {}
+    try { await logAudit(wsId, ctx.user.id, "update", "flowdownReviews", id, input); } catch {}
     return { success: true };
   }),
 });
@@ -56,27 +56,27 @@ export const customerAdoptionRouter = router({
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
     const rows = await db.select().from(customerAdoption).where(eq(customerAdoption.workspaceId, wsId));
-    if (rows.length === 0) return { loginCount: 0, featuresUsed: "[]", lastActive: null, adoptionScore: 0 };
-    return rows[0];
+    // Aggregate metrics from rows
+    const metrics: Record<string, string> = {};
+    for (const row of rows) {
+      metrics[row.metricKey] = row.metricValue || "";
+    }
+    return { metrics, totalMetrics: rows.length, lastChecked: rows[0]?.lastChecked || null };
   }),
   track: protectedProcedure.input(z.object({ featureName: z.string() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
-    const existing = await db.select().from(customerAdoption).where(eq(customerAdoption.workspaceId, wsId));
+    // Upsert a metric for this feature
+    const existing = await db.select().from(customerAdoption).where(and(eq(customerAdoption.workspaceId, wsId), eq(customerAdoption.metricKey, `feature_${input.featureName}`)));
     if (existing.length === 0) {
-      await db.insert(customerAdoption).values({ workspaceId: wsId, userId: ctx.user.id, loginCount: 1, featuresUsed: JSON.stringify([input.featureName]), lastActive: new Date(), adoptionScore: 10 });
+      await db.insert(customerAdoption).values({ workspaceId: wsId, metricKey: `feature_${input.featureName}`, metricValue: "1", lastChecked: new Date(), status: "active" });
     } else {
-      const features = JSON.parse(existing[0].featuresUsed || "[]");
-      if (!features.includes(input.featureName)) features.push(input.featureName);
-      await db.update(customerAdoption).set({ featuresUsed: JSON.stringify(features), lastActive: new Date(), adoptionScore: Math.min(100, features.length * 10) }).where(eq(customerAdoption.workspaceId, wsId));
+      const count = parseInt(existing[0].metricValue || "0") + 1;
+      await db.update(customerAdoption).set({ metricValue: String(count), lastChecked: new Date() }).where(eq(customerAdoption.id, existing[0].id));
     }
-    try { await logAudit(wsId, ctx.user.id, "update", "customerAdoption", 0, input); } catch {}
     return { success: true };
   }),
 });
-
-import { businessProfiles } from "../drizzle/schema";
-import { and } from "drizzle-orm";
 
 export const businessProfileRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
@@ -88,18 +88,40 @@ export const businessProfileRouter = router({
   upsert: protectedProcedure.input(z.object({
     legalName: z.string().optional(),
     dba: z.string().optional(),
+    businessStructure: z.string().optional(),
+    stateOfIncorporation: z.string().optional(),
+    businessSize: z.string().optional(),
+    yearFounded: z.string().optional(),
+    numberOfEmployees: z.string().optional(),
     website: z.string().optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zip: z.string().optional(),
+    country: z.string().optional(),
     entityType: z.string().optional(),
     uei: z.string().optional(),
     cage: z.string().optional(),
     samStatus: z.enum(["active", "expired", "pending", "not_registered"]).optional(),
-    samRenewalDate: z.string().optional(),
+    samExpirationDate: z.string().optional(),
+    samRegistrationDate: z.string().optional(),
+    gsaScheduleNumber: z.string().optional(),
+    gsaScheduleExpiration: z.string().optional(),
+    naicsPrimary: z.string().optional(),
+    naicsSecondary: z.string().optional(),
     naicsCodes: z.string().optional(),
+    socioeconomicCerts: z.string().optional(),
     certifications: z.string().optional(),
     capabilities: z.string().optional(),
+    coreCompetencies: z.string().optional(),
+    keyPersonnel: z.string().optional(),
+    pastPerformance: z.string().optional(),
+    bankingInfo: z.string().optional(),
+    bondingCapacity: z.string().optional(),
+    insuranceSummary: z.string().optional(),
+    annualRevenue: z.string().optional(),
     contractingModel: z.enum(["prime", "sub", "both"]).optional(),
     usesSubcontractors: z.boolean().optional(),
     defaultContactName: z.string().optional(),
@@ -110,19 +132,23 @@ export const businessProfileRouter = router({
     const { wsId } = await enforcePermission(ctx.user.id, "manage_settings");
     const existing = await db.select().from(businessProfiles).where(eq(businessProfiles.workspaceId, wsId));
     // Calculate completeness
-    const fields = [input.legalName, input.email, input.phone, input.address, input.uei, input.cage, input.naicsCodes, input.certifications, input.capabilities, input.contractingModel, input.defaultContactName, input.defaultContactEmail];
+    const fields = [input.legalName, input.email, input.phone, input.address, input.uei, input.cage, input.naicsPrimary || input.naicsCodes, input.certifications || input.socioeconomicCerts, input.capabilities, input.contractingModel, input.defaultContactName, input.defaultContactEmail];
     const filled = fields.filter(f => f && f.length > 0).length;
     const score = Math.round((filled / fields.length) * 100);
-    const data = {
-      ...input,
-      samRenewalDate: input.samRenewalDate ? new Date(input.samRenewalDate) : undefined,
-      profileCompletenessScore: score,
-    };
+    const data: any = { ...input, profileCompletenessScore: score };
+    // Convert date strings to Date objects
+    if (input.samExpirationDate) data.samExpirationDate = new Date(input.samExpirationDate);
+    else delete data.samExpirationDate;
+    if (input.samRegistrationDate) data.samRegistrationDate = new Date(input.samRegistrationDate);
+    else delete data.samRegistrationDate;
+    if (input.gsaScheduleExpiration) data.gsaScheduleExpiration = new Date(input.gsaScheduleExpiration);
+    else delete data.gsaScheduleExpiration;
     if (existing.length === 0) {
       await db.insert(businessProfiles).values({ workspaceId: wsId, ...data });
     } else {
       await db.update(businessProfiles).set(data).where(eq(businessProfiles.workspaceId, wsId));
     }
+    try { await logAudit(wsId, ctx.user.id, "update", "businessProfile", 0, { completenessScore: score }); } catch {}
     return { success: true, completenessScore: score };
   }),
 });

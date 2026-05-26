@@ -21,20 +21,28 @@ export const planFeaturesRouter = router({
 export const emailTemplatesRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    const wsId = await requireWorkspaceId(ctx.user.id);
-    return db.select().from(emailTemplates).where(eq(emailTemplates.workspaceId, wsId)).orderBy(desc(emailTemplates.createdAt));
+    // emailTemplates is platform-wide (no workspaceId in schema)
+    return db.select().from(emailTemplates).orderBy(desc(emailTemplates.createdAt));
   }),
   create: protectedProcedure.input(z.object({ name: z.string(), subject: z.string(), body: z.string(), category: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
-    await db.insert(emailTemplates).values({ ...input, workspaceId: wsId });
+    await db.insert(emailTemplates).values({
+      templateKey: input.name.toLowerCase().replace(/\s+/g, "_"),
+      subject: input.subject,
+      htmlBody: input.body,
+      isEnabled: true,
+    });
     try { await logAudit(wsId, ctx.user.id, "create", "emailTemplates", 0, input); } catch {}
     return { success: true };
   }),
-  update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), subject: z.string().optional(), body: z.string().optional(), category: z.string().optional() })).mutation(async ({ ctx, input }) => {
+  update: protectedProcedure.input(z.object({ id: z.number(), name: z.string().optional(), subject: z.string().optional(), body: z.string().optional(), isEnabled: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
-    const { id, ...data } = input;
-    await db.update(emailTemplates).set(data).where(eq(emailTemplates.id, id));
+    const { id, name, body, ...rest } = input;
+    const updateData: any = { ...rest };
+    if (name) updateData.templateKey = name.toLowerCase().replace(/\s+/g, "_");
+    if (body) updateData.htmlBody = body;
+    await db.update(emailTemplates).set(updateData).where(eq(emailTemplates.id, id));
     return { success: true };
   }),
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

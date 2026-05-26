@@ -98,6 +98,7 @@ import ContractCloseout from "./pages/ContractCloseout";
 import Webhooks from "./pages/Webhooks";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
 import EmailNotificationPreferences from "./pages/EmailNotificationPreferences";
+import SAMSearch from "./pages/SAMSearch";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -145,6 +146,7 @@ function Router() {
       
       {/* Workflow pages */}
       <Route path={"/app/opportunities"} component={withAppShell(Opportunities)} />
+      <Route path={"/app/sam-search"} component={withAppShell(SAMSearch)} />
       <Route path={"/app/opportunities/:id"} component={withAppShell(OpportunityDetail)} />
       <Route path={"/app/proposals"} component={withAppShell(Proposals)} />
       <Route path={"/app/proposals/:id"} component={withAppShell(ProposalDetail)} />
