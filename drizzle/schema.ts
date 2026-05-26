@@ -1737,3 +1737,194 @@ export const changeOrders = mysqlTable("change_orders", {
 });
 export type ChangeOrder = typeof changeOrders.$inferSelect;
 export type InsertChangeOrder = typeof changeOrders.$inferInsert;
+
+// =============================================
+// PRIORITY 1: Guidance Question Bank System
+// =============================================
+export const guidanceQuestions = mysqlTable("guidance_questions", {
+  id: int("id").autoincrement().primaryKey(),
+  guidanceWord: varchar("guidanceWord", { length: 100 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  who: text("who"),
+  what: text("what"),
+  whenField: text("whenField"),
+  whereField: text("whereField"),
+  why: text("why"),
+  how: text("how"),
+  authorityCheck: text("authorityCheck"),
+  scopeCheck: text("scopeCheck"),
+  fundingCheck: text("fundingCheck"),
+  complianceCheck: text("complianceCheck"),
+  evidenceCheck: text("evidenceCheck"),
+  reviewCheck: text("reviewCheck"),
+  riskCheck: text("riskCheck"),
+  consequenceCheck: text("consequenceCheck"),
+  nextBestAction: text("nextBestAction"),
+  systemAction: varchar("systemAction", { length: 255 }),
+  pageContext: varchar("pageContext", { length: 100 }).notNull(),
+  recordType: varchar("recordType", { length: 100 }),
+  priority: varchar("priority", { length: 20 }).default("medium"),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GuidanceQuestion = typeof guidanceQuestions.$inferSelect;
+export type InsertGuidanceQuestion = typeof guidanceQuestions.$inferInsert;
+
+export const guidanceQuestionDismissals = mysqlTable("guidance_question_dismissals", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  questionId: int("questionId").notNull(),
+  dismissedAt: timestamp("dismissedAt").defaultNow().notNull(),
+});
+export type GuidanceQuestionDismissal = typeof guidanceQuestionDismissals.$inferSelect;
+export type InsertGuidanceQuestionDismissal = typeof guidanceQuestionDismissals.$inferInsert;
+
+// =============================================
+// PRIORITY 2: Smart Intake - Import History
+// =============================================
+export const importHistoryTable = mysqlTable("import_history", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  source: varchar("source", { length: 100 }).notNull(),
+  sourceUrl: text("sourceUrl"),
+  recordType: varchar("recordType", { length: 50 }).notNull(),
+  recordId: int("recordId"),
+  recordCount: int("recordCount").default(1),
+  status: varchar("status", { length: 20 }).default("success"),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ImportHistoryRecord = typeof importHistoryTable.$inferSelect;
+export type InsertImportHistory = typeof importHistoryTable.$inferInsert;
+
+// =============================================
+// PRIORITY 4: Rate Parity Testing
+// =============================================
+export const rateParityChecks = mysqlTable("rate_parity_checks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  source: varchar("source", { length: 100 }).notNull(),
+  sourceId: int("sourceId"),
+  sourceLabel: varchar("sourceLabel", { length: 255 }),
+  target: varchar("target", { length: 100 }).notNull(),
+  targetId: int("targetId"),
+  targetLabel: varchar("targetLabel", { length: 255 }),
+  rateType: varchar("rateType", { length: 100 }),
+  expectedRate: varchar("expectedRate", { length: 50 }),
+  actualRate: varchar("actualRate", { length: 50 }),
+  variance: varchar("variance", { length: 50 }),
+  variancePercent: varchar("variancePercent", { length: 20 }),
+  status: varchar("status", { length: 20 }).default("pass"),
+  notes: text("notes"),
+  checkedAt: timestamp("checkedAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type RateParityCheck = typeof rateParityChecks.$inferSelect;
+export type InsertRateParityCheck = typeof rateParityChecks.$inferInsert;
+
+// =============================================
+// PRIORITY 6: Training/Walkthrough System
+// =============================================
+export const trainingModules = mysqlTable("training_modules", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  steps: text("steps").notNull(),
+  targetPage: varchar("targetPage", { length: 100 }).notNull(),
+  orderIndex: int("orderIndex").default(0),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TrainingModule = typeof trainingModules.$inferSelect;
+export type InsertTrainingModule = typeof trainingModules.$inferInsert;
+
+export const trainingCompletions = mysqlTable("training_completions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  moduleId: int("moduleId").notNull(),
+  completedAt: timestamp("completedAt").defaultNow().notNull(),
+});
+export type TrainingCompletion = typeof trainingCompletions.$inferSelect;
+export type InsertTrainingCompletion = typeof trainingCompletions.$inferInsert;
+
+// =============================================
+// PRIORITY 7: Recent Records + Autosave Drafts
+// =============================================
+export const recentRecords = mysqlTable("recent_records", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 50 }).notNull(),
+  recordId: int("recordId").notNull(),
+  recordTitle: varchar("recordTitle", { length: 255 }),
+  viewedAt: timestamp("viewedAt").defaultNow().notNull(),
+});
+export type RecentRecord = typeof recentRecords.$inferSelect;
+export type InsertRecentRecord = typeof recentRecords.$inferInsert;
+
+export const autosaveDrafts = mysqlTable("autosave_drafts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 50 }).notNull(),
+  recordId: int("recordId"),
+  formData: text("formData").notNull(),
+  savedAt: timestamp("savedAt").defaultNow().notNull(),
+});
+export type AutosaveDraft = typeof autosaveDrafts.$inferSelect;
+export type InsertAutosaveDraft = typeof autosaveDrafts.$inferInsert;
+
+// =============================================
+// PRIORITY 7: Status Automation Rules
+// =============================================
+export const statusAutomationRules = mysqlTable("status_automation_rules", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 50 }).notNull(),
+  triggerCondition: varchar("triggerCondition", { length: 100 }).notNull(),
+  fromStatus: varchar("fromStatus", { length: 50 }).notNull(),
+  toStatus: varchar("toStatus", { length: 50 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type StatusAutomationRule = typeof statusAutomationRules.$inferSelect;
+export type InsertStatusAutomationRule = typeof statusAutomationRules.$inferInsert;
+// =============================================
+// PRIORITY 7: Record Templates
+// =============================================
+export const recordTemplates = mysqlTable("record_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  createdBy: int("createdBy").notNull(),
+  recordType: varchar("recordType", { length: 50 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  templateData: text("templateData").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RecordTemplate = typeof recordTemplates.$inferSelect;
+export type InsertRecordTemplate = typeof recordTemplates.$inferInsert;
+// =============================================
+// PRIORITY 7: Dashboard Widgets
+// =============================================
+export const dashboardWidgets = mysqlTable("dashboard_widgets", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  widgetType: varchar("widgetType", { length: 100 }).notNull(),
+  position: int("position").default(0),
+  width: int("width").default(2),
+  height: int("height").default(1),
+  isVisible: boolean("isVisible").default(true),
+  config: text("config"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type DashboardWidget = typeof dashboardWidgets.$inferSelect;
+export type InsertDashboardWidget = typeof dashboardWidgets.$inferInsert;

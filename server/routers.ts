@@ -62,6 +62,11 @@ import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRou
 import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
 import { webhookRouter } from "./webhookRouter";
 import { samRouter } from "./samRouter";
+import { guidanceQuestionRouter } from "./guidanceQuestionRouter";
+import { searchRouter } from "./searchRouter";
+import { rateParityRouter } from "./rateParityRouter";
+import { trainingRouter } from "./trainingRouter";
+import { efficiencyRouter } from "./efficiencyRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { emailPreferences, aiRuns, aiSuggestions } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -145,6 +150,11 @@ export const appRouter = router({
   fileVersions: fileVersionsRouter,
   webhooks: webhookRouter,
   sam: samRouter,
+  guidanceQuestions: guidanceQuestionRouter,
+  search: searchRouter,
+  rateParity: rateParityRouter,
+  training: trainingRouter,
+  efficiency: efficiencyRouter,
   emailPrefs: router({
     get: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
