@@ -33,6 +33,8 @@ import {
   Briefcase,
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SamStatus = 'active' | 'expired' | 'pending' | 'not_registered';
@@ -572,6 +574,12 @@ export default function BusinessProfile() {
         whatToDoNext={mode === 'view' ? ['Click "Edit Profile" to update your information', 'Review the completeness panel below for missing fields'] : ['Fill in all critical fields marked with *', 'Click "Save Profile" when done — you\'ll return to view mode']}
         alerts={criticalMissing.length > 0 ? [{ message: `${criticalMissing.length} critical field(s) missing. Complete them to unlock full functionality.`, type: 'warning' }] : []}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="business-profile" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="business-profile" />
 
       {/* ── PROFILE COMPLETENESS PANEL ─────────────────────────────────────── */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mb-2">

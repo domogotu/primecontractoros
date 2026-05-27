@@ -15,6 +15,8 @@ import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 const statusColors: Record<string, string> = {
   cleared: "bg-green-100 text-green-700",
@@ -152,6 +154,12 @@ export default function Payments() {
       {stats.pending > 0 && <WhatsNext actions={[
         { id: "reconcile", title: `${stats.pending} Pending Payment${stats.pending > 1 ? "s" : ""}`, description: "Reconcile pending payments with bank records", priority: "medium" as const },
       ] as NextAction[]} />}
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="payments" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="payments" />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>

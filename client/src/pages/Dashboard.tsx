@@ -7,6 +7,8 @@ import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact
 import { GuidancePanel } from "@/components/GuidancePanel";
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
@@ -304,6 +306,12 @@ export default function Dashboard() {
         whatToDoNext={["Review any open alerts or overdue tasks", "Check your opportunity pipeline for new leads", "Follow up on pending proposals", "Review upcoming contract deadlines"]}
         relatedRecords={[{ label: "Opportunities", path: "/app/opportunities" }, { label: "Proposals", path: "/app/proposals" }, { label: "Contracts", path: "/app/contracts" }, { label: "Tasks", path: "/app/tasks" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="dashboard" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="dashboard" />
       {/* Navy Header */}
       <div className="bg-blue-900 text-white px-4 sm:px-6 md:px-8 py-6 md:py-8">
         <div className="max-w-7xl mx-auto">

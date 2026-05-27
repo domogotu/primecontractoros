@@ -10,6 +10,8 @@ import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Invoices() {
   const [showForm, setShowForm] = useState(false);
@@ -185,6 +187,12 @@ export default function Invoices() {
 
       {/* What's Next */}
       {nextSteps.length > 0 && <WhatsNext actions={nextSteps} />}
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="invoices" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="invoices" />
 
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>

@@ -6,17 +6,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, FileCheck, ExternalLink, Loader2 } from "lucide-react";
 import ContractForm from "@/components/ContractForm";
+import SmartIntakeContract from "@/components/SmartIntakeContract";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
 import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Contracts() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSmartIntakeOpen, setIsSmartIntakeOpen] = useState(false);
 
   const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
 
@@ -203,9 +207,14 @@ export default function Contracts() {
         { label: "Ending Soon", value: endingSoon.length, color: "text-red-600" },
       ]}
       actions={
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> New Contract
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsSmartIntakeOpen(true)} variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+            <Plus className="w-4 h-4 mr-2" /> Smart Import
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" /> New Contract
+          </Button>
+        </div>
       }
     >
       <PageGuide
@@ -227,6 +236,12 @@ export default function Contracts() {
 
       {/* What's Next */}
       {nextSteps.length > 0 && <WhatsNext actions={nextSteps} />}
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="contracts" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="contracts" />
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
@@ -324,6 +339,13 @@ export default function Contracts() {
           })}
         </div>
       )}
+
+      {/* Smart Intake Modal */}
+      <SmartIntakeContract
+        open={isSmartIntakeOpen}
+        onClose={() => setIsSmartIntakeOpen(false)}
+        onCreated={() => setIsSmartIntakeOpen(false)}
+      />
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

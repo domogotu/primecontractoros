@@ -12,6 +12,8 @@ import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Proposals() {
   const [, navigate] = useLocation();
@@ -244,6 +246,12 @@ export default function Proposals() {
 
       {/* What's Next */}
       {nextSteps.length > 0 && <WhatsNext actions={nextSteps} />}
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="proposals" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="proposals" />
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">

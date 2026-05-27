@@ -6,18 +6,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Target, ExternalLink, Loader2, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import OpportunityForm from "@/components/OpportunityForm";
+import SmartIntakeOpportunity from "@/components/SmartIntakeOpportunity";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
 import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import { useMemo } from "react";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSmartIntakeOpen, setIsSmartIntakeOpen] = useState(false);
 
   const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery();
 
@@ -222,9 +226,14 @@ export default function Opportunities() {
         { label: "Pursuing", value: pursuingOpps, color: "text-green-600" },
       ]}
       actions={
-        <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
-          <Plus className="w-4 h-4 mr-2" /> New Opportunity
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsSmartIntakeOpen(true)} variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
+            <Search className="w-4 h-4 mr-2" /> Smart Import
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
+            <Plus className="w-4 h-4 mr-2" /> New Opportunity
+          </Button>
+        </div>
       }
     >
       <PageGuide
@@ -248,6 +257,12 @@ export default function Opportunities() {
 
       {/* What's Next */}
       <WhatsNext actions={nextSteps} />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="opportunities" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="opportunities" />
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">
@@ -343,6 +358,13 @@ export default function Opportunities() {
           })}
         </div>
       )}
+
+      {/* Smart Intake Modal */}
+      <SmartIntakeOpportunity
+        open={isSmartIntakeOpen}
+        onClose={() => setIsSmartIntakeOpen(false)}
+        onCreated={() => setIsSmartIntakeOpen(false)}
+      />
 
       {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

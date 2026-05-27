@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { KeyboardShortcutProvider } from "./contexts/KeyboardShortcutContext";
 import Home from "./pages/Home";
 import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
@@ -99,6 +100,8 @@ import Webhooks from "./pages/Webhooks";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
 import EmailNotificationPreferences from "./pages/EmailNotificationPreferences";
 import SAMSearch from "./pages/SAMSearch";
+import RateParityDashboard from "./pages/RateParityDashboard";
+import Training from "./pages/Training";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -174,6 +177,8 @@ function Router() {
       <Route path={"/app/deliverables"} component={withAppShell(Deliverables)} />
       <Route path={"/app/deadlines"} component={withAppShell(Deadlines)} />
       <Route path={"/app/compliance"} component={withAppShell(Compliance)} />
+      <Route path={"/app/rate-parity"} component={withAppShell(RateParityDashboard)} />
+      <Route path={"/app/training"} component={withAppShell(Training)} />
       
       <Route path={"/app/requirements"} component={withAppShell(Requirements)} />
       <Route path={"/app/far-reference"} component={withAppShell(FarReference)} />
@@ -239,10 +244,12 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <AdminBadge />
-          <ConsentBanner />
-          <Router />
+          <KeyboardShortcutProvider>
+            <Toaster />
+            <AdminBadge />
+            <ConsentBanner />
+            <Router />
+          </KeyboardShortcutProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

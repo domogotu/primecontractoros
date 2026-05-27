@@ -49,6 +49,7 @@ export default function WorkspaceSidebar() {
         { icon: Calendar, label: "Deadlines", path: "/app/deadlines" },
         { icon: Scale, label: "FAR/DFARS Reference", path: "/app/far-reference" },
         { icon: ShieldCheck, label: "Flowdown Review", path: "/app/flowdown-review" },
+        { icon: DollarSign, label: "Rate Parity", path: "/app/rate-parity" },
       ],
     },
     {
@@ -100,6 +101,7 @@ export default function WorkspaceSidebar() {
         { icon: Crown, label: "Plan Features", path: "/app/plan-features" },
         { icon: Activity, label: "Diagnostics", path: "/app/diagnostics" },
         { icon: Webhook, label: "Webhooks", path: "/app/webhooks" },
+        { icon: BookOpen, label: "Training", path: "/app/training" },
       ],
     },
   ];

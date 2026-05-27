@@ -14,6 +14,8 @@ import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 const statusIcons: Record<string, typeof CheckCircle2> = {
   complete: CheckCircle2,
@@ -95,6 +97,12 @@ export default function Closeout() {
       {records.filter((r: any) => r.status !== "complete" && r.status !== "closed").length > 0 && <WhatsNext actions={[
         { id: "complete-checklist", title: "Complete Closeout Checklists", description: "Finish remaining checklist items on active closeout records", priority: "high" as const },
       ] as NextAction[]} />}
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="closeout" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="closeout" />
 
       <div className="flex items-center justify-between mb-6">
         <div>
