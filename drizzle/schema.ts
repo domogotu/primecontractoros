@@ -1928,3 +1928,191 @@ export const dashboardWidgets = mysqlTable("dashboard_widgets", {
 });
 export type DashboardWidget = typeof dashboardWidgets.$inferSelect;
 export type InsertDashboardWidget = typeof dashboardWidgets.$inferInsert;
+
+// =============================================
+// FAR/DFARS CLAUSE REFERENCE SYSTEM
+// =============================================
+
+// Main clause library table
+export const farDfarsClauses = mysqlTable("far_dfars_clauses", {
+  id: int("id").autoincrement().primaryKey(),
+  clauseNumber: varchar("clauseNumber", { length: 50 }).notNull(),
+  sourceType: mysqlEnum("sourceType", ["FAR", "DFARS", "Agency Supplement", "Contract-Specific", "Other"]).default("FAR").notNull(),
+  farPart: varchar("farPart", { length: 50 }),
+  title: varchar("title", { length: 500 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  summary: text("summary"),
+  plainLanguageMeaning: text("plainLanguageMeaning"),
+  whyItMatters: text("whyItMatters"),
+  applicabilityNote: text("applicabilityNote"),
+  commonRecordsAffected: text("commonRecordsAffected"),
+  operationalImpact: text("operationalImpact"),
+  evidenceExpectations: text("evidenceExpectations"),
+  flowdownWatch: boolean("flowdownWatch").default(false),
+  subcontractingWatch: boolean("subcontractingWatch").default(false),
+  cybersecurityWatch: boolean("cybersecurityWatch").default(false),
+  paymentWatch: boolean("paymentWatch").default(false),
+  smallBusinessWatch: boolean("smallBusinessWatch").default(false),
+  laborWatch: boolean("laborWatch").default(false),
+  closeoutWatch: boolean("closeoutWatch").default(false),
+  officialSourceUrl: text("officialSourceUrl"),
+  isCustom: boolean("isCustom").default(false),
+  isGlobal: boolean("isGlobal").default(true),
+  workspaceId: int("workspaceId"),
+  tags: text("tags"),
+  effectiveDate: varchar("effectiveDate", { length: 50 }),
+  status: mysqlEnum("clauseStatus", ["active", "inactive", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsClause = typeof farDfarsClauses.$inferSelect;
+export type InsertFarDfarsClause = typeof farDfarsClauses.$inferInsert;
+
+// Bookmarks
+export const farDfarsBookmarks = mysqlTable("far_dfars_bookmarks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FarDfarsBookmark = typeof farDfarsBookmarks.$inferSelect;
+export type InsertFarDfarsBookmark = typeof farDfarsBookmarks.$inferInsert;
+
+// Clause links to other records
+export const farDfarsClauseLinks = mysqlTable("far_dfars_clause_links", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  linkedRecordType: varchar("linkedRecordType", { length: 100 }).notNull(),
+  linkedRecordId: int("linkedRecordId"),
+  contractId: int("contractId"),
+  sourceFileId: int("sourceFileId"),
+  sourceLocation: text("sourceLocation"),
+  relevanceStatus: varchar("relevanceStatus", { length: 50 }).default("reference_only"),
+  reviewStatus: varchar("linkReviewStatus", { length: 50 }).default("pending"),
+  sourceStrength: varchar("sourceStrength", { length: 50 }).default("general_reference"),
+  note: text("note"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsClauseLink = typeof farDfarsClauseLinks.$inferSelect;
+export type InsertFarDfarsClauseLink = typeof farDfarsClauseLinks.$inferInsert;
+
+// Clause notes
+export const farDfarsClauseNotes = mysqlTable("far_dfars_clause_notes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  contractId: int("contractId"),
+  noteType: varchar("noteType", { length: 50 }).default("internal"),
+  noteText: text("noteText").notNull(),
+  reviewStatus: varchar("noteReviewStatus", { length: 50 }).default("draft"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsClauseNote = typeof farDfarsClauseNotes.$inferSelect;
+export type InsertFarDfarsClauseNote = typeof farDfarsClauseNotes.$inferInsert;
+
+// Flowdown reviews
+export const farDfarsFlowdownReviews = mysqlTable("far_dfars_flowdown_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  contractId: int("contractId"),
+  subcontractorContactId: int("subcontractorContactId"),
+  flowdownStatus: varchar("flowdownStatus", { length: 50 }).default("not_started"),
+  limitationWatch: boolean("limitationWatch").default(false),
+  subcontractingPlanWatch: boolean("subcontractingPlanWatch").default(false),
+  consentWatch: boolean("consentWatch").default(false),
+  cybersecurityFlowdownWatch: boolean("cybersecurityFlowdownWatch").default(false),
+  paymentFlowdownWatch: boolean("paymentFlowdownWatch").default(false),
+  laborFlowdownWatch: boolean("laborFlowdownWatch").default(false),
+  notes: text("notes"),
+  reviewedBy: int("reviewedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsFlowdownReview = typeof farDfarsFlowdownReviews.$inferSelect;
+export type InsertFarDfarsFlowdownReview = typeof farDfarsFlowdownReviews.$inferInsert;
+
+// Clause source matches (AI or manual extraction from files)
+export const farDfarsSourceMatches = mysqlTable("far_dfars_source_matches", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  sourceFileId: int("sourceFileId"),
+  linkedRecordType: varchar("linkedRecordType", { length: 100 }),
+  linkedRecordId: int("linkedRecordId"),
+  sourceLocation: text("sourceLocation"),
+  extractedTextSnippet: text("extractedTextSnippet"),
+  extractionMethod: varchar("extractionMethod", { length: 50 }).default("manual"),
+  matchReviewStatus: varchar("matchReviewStatus", { length: 50 }).default("pending"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsSourceMatch = typeof farDfarsSourceMatches.$inferSelect;
+export type InsertFarDfarsSourceMatch = typeof farDfarsSourceMatches.$inferInsert;
+
+// Clause review events (audit trail)
+export const farDfarsReviewEvents = mysqlTable("far_dfars_review_events", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  linkedRecordType: varchar("linkedRecordType", { length: 100 }),
+  linkedRecordId: int("linkedRecordId"),
+  action: varchar("action", { length: 100 }).notNull(),
+  oldStatus: varchar("oldStatus", { length: 100 }),
+  newStatus: varchar("newStatus", { length: 100 }),
+  reviewerUserId: int("reviewerUserId"),
+  reviewNote: text("reviewNote"),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FarDfarsReviewEvent = typeof farDfarsReviewEvents.$inferSelect;
+export type InsertFarDfarsReviewEvent = typeof farDfarsReviewEvents.$inferInsert;
+
+// Saved filter views
+export const farDfarsSavedViews = mysqlTable("far_dfars_saved_views", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  filters: text("filters").notNull(),
+  isDefault: boolean("isDefault").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FarDfarsSavedView = typeof farDfarsSavedViews.$inferSelect;
+export type InsertFarDfarsSavedView = typeof farDfarsSavedViews.$inferInsert;
+
+// Clause lifecycle tracking per workspace
+export const farDfarsClauseLifecycle = mysqlTable("far_dfars_clause_lifecycle", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  clauseId: int("clauseId").notNull(),
+  lifecycleStatus: varchar("lifecycleStatus", { length: 50 }).default("reference_only"),
+  lastReviewedAt: timestamp("lastReviewedAt"),
+  lastReviewedBy: int("lastReviewedBy"),
+  contractSourceLastAnalyzed: timestamp("contractSourceLastAnalyzed"),
+  isStale: boolean("isStale").default(false),
+  staleReason: text("staleReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type FarDfarsClauseLifecycle = typeof farDfarsClauseLifecycle.$inferSelect;
+export type InsertFarDfarsClauseLifecycle = typeof farDfarsClauseLifecycle.$inferInsert;
+
+// Clause exports
+export const farDfarsExports = mysqlTable("far_dfars_exports", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  exportType: varchar("exportType", { length: 100 }).notNull(),
+  filtersUsed: text("filtersUsed"),
+  createdBy: int("createdBy"),
+  fileUrl: text("fileUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FarDfarsExport = typeof farDfarsExports.$inferSelect;
+export type InsertFarDfarsExport = typeof farDfarsExports.$inferInsert;

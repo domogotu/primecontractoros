@@ -67,6 +67,7 @@ import { searchRouter } from "./searchRouter";
 import { rateParityRouter } from "./rateParityRouter";
 import { trainingRouter } from "./trainingRouter";
 import { efficiencyRouter } from "./efficiencyRouter";
+import { farDfarsRouter } from "./farDfarsRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { emailPreferences, aiRuns, aiSuggestions } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -156,6 +157,7 @@ export const appRouter = router({
   rateParity: rateParityRouter,
   training: trainingRouter,
   efficiency: efficiencyRouter,
+  farDfars: farDfarsRouter,
   emailPrefs: router({
     get: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();
