@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useLocation } from "wouter";
+import { useState, useMemo, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
@@ -18,9 +18,18 @@ import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Contracts() {
   const [, navigate] = useLocation();
+  const searchString = useSearch();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSmartIntakeOpen, setIsSmartIntakeOpen] = useState(false);
+
+  // Open create dialog when navigated here with ?create=true (e.g. from CommandPalette)
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("create") === "true") {
+      setIsSmartIntakeOpen(true);
+    }
+  }, [searchString]);
 
   const { data: contracts = [], isLoading } = trpc.contracts.list.useQuery();
 

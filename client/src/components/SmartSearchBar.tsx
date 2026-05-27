@@ -84,7 +84,13 @@ export default function SmartSearchBar({ open, onClose }: SmartSearchBarProps) {
   const handleResultClick = (type: string, id: number) => {
     const route = typeRoutes[type];
     if (route) {
-      navigate(`${route}/${id}`);
+      // For types with list-only pages (no detail route), navigate to the list
+      const listOnlyTypes = ["task"];
+      if (listOnlyTypes.includes(type)) {
+        navigate(route);
+      } else {
+        navigate(`${route}/${id}`);
+      }
       onClose();
     }
   };

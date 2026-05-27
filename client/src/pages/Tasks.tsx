@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, CheckSquare, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,17 @@ import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
 
 export default function Tasks() {
+  const searchString = useSearch();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Open create dialog when navigated here with ?create=true (e.g. from CommandPalette)
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("create") === "true") {
+      setShowForm(true);
+    }
+  }, [searchString]);
   const [form, setForm] = useState({ title: "", description: "", dueDate: "", priority: "medium" as string, status: "open" as string, assignedTo: "", linkedRecordType: "none", linkedRecordId: "" });
 
   const { data: tasks = [], isLoading, refetch } = trpc.tasks.list.useQuery();

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
@@ -19,9 +19,18 @@ import { useMemo } from "react";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
+  const searchString = useSearch();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSmartIntakeOpen, setIsSmartIntakeOpen] = useState(false);
+
+  // Open create dialog when navigated here with ?create=true (e.g. from CommandPalette)
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("create") === "true") {
+      setIsSmartIntakeOpen(true);
+    }
+  }, [searchString]);
 
   const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery();
 

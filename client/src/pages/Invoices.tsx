@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Receipt, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,17 @@ import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Invoices() {
+  const searchString = useSearch();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Open create dialog when navigated here with ?create=true (e.g. from CommandPalette)
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    if (params.get("create") === "true") {
+      setShowForm(true);
+    }
+  }, [searchString]);
   const [form, setForm] = useState({ invoiceNumber: "", amount: "", contractId: "", description: "", dueDate: "" });
 
   const { data: invoices = [], isLoading, refetch } = trpc.invoices.list.useQuery();
