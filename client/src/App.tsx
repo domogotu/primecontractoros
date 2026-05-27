@@ -184,6 +184,7 @@ function Router() {
       {/* User Setup & Profile pages */}
       <Route path={"/app/business-profile"} component={withAppShell(BusinessProfile)} />
       <Route path={"/app/profile"} component={withAppShell(UserProfile)} />
+      <Route path={"/app/account-settings"} component={withAppShell(UserProfile)} />
       <Route path={"/app/settings"} component={withAppShell(Settings)} />
       <Route path={"/app/webhooks"} component={withAppShell(Webhooks)} />
       <Route path={"/app/team"} component={withAppShell(WorkspaceTeam)} />

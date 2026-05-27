@@ -7,7 +7,7 @@ import {
   Folder, History, Wand2, BookOpen, GitBranch, ShieldCheck, Mail, UserPlus,
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
-  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Search, Globe,
+  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Search, Globe, User,
 } from "lucide-react";
 
 export default function WorkspaceSidebar() {
@@ -91,6 +91,7 @@ export default function WorkspaceSidebar() {
       label: "Administration",
       items: [
         { icon: Building2, label: "Business Profile", path: "/app/business-profile" },
+        { icon: User, label: "Account Settings", path: "/app/account-settings" },
         { icon: Settings, label: "Settings", path: "/app/settings" },
         { icon: Users, label: "Team Members", path: "/app/team" },
         { icon: Bell, label: "Notification Preferences", path: "/app/notification-preferences" },

@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { generatedDocuments, flowdownReviews, customerAdoption, businessProfiles } from "../drizzle/schema";
+import { generatedDocuments, flowdownReviews, customerAdoption, businessProfiles, users, workspaceSettings } from "../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { enforcePermission } from "./rbacMiddleware";
@@ -151,4 +151,108 @@ export const businessProfileRouter = router({
     try { await logAudit(wsId, ctx.user.id, "update", "businessProfile", 0, { completenessScore: score }); } catch {}
     return { success: true, completenessScore: score };
   }),
+});
+
+// ==================== USER PROFILE (SELF-UPDATE) ====================
+export const userProfileRouter = router({
+  /**
+   * Get the current user's profile data.
+   * Returns the user row plus any extended profile settings stored in workspaceSettings.
+   */
+  getSelf: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    if (!user) return null;
+    // Fetch extended profile settings (phone, jobTitle, bio, etc.)
+    let wsId: number | null = null;
+    try { wsId = await requireWorkspaceId(ctx.user.id); } catch {}
+    const extSettings: Record<string, string | null> = {};
+    if (wsId) {
+      const settings = await db.select().from(workspaceSettings)
+        .where(eq(workspaceSettings.workspaceId, wsId));
+      for (const s of settings) {
+        if (s.settingKey.startsWith('up.')) {
+          extSettings[s.settingKey] = s.settingValue;
+        }
+      }
+    }
+    return {
+      id: user.id,
+      name: user.name || '',
+      email: user.email || '',
+      role: user.role || 'user',
+      accountStatus: user.accountStatus || 'active',
+      createdAt: user.createdAt,
+      // Extended settings
+      jobTitle: extSettings['up.jobTitle'] || '',
+      phone: extSettings['up.phone'] || '',
+      bio: extSettings['up.bio'] || '',
+      linkedIn: extSettings['up.linkedIn'] || '',
+      guidancePreference: extSettings['up.guidancePreference'] || 'detailed',
+      reminderPreference: extSettings['up.reminderPreference'] || 'daily',
+      timezone: extSettings['up.timezone'] || 'America/New_York',
+      notifyOpportunities: extSettings['up.notifyOpportunities'] !== 'false',
+      notifyDeadlines: extSettings['up.notifyDeadlines'] !== 'false',
+      notifyCompliance: extSettings['up.notifyCompliance'] !== 'false',
+      notifyMarketing: extSettings['up.notifyMarketing'] === 'true',
+    };
+  }),
+
+  /**
+   * Update the current user's personal profile.
+   * Writes name to the users table and extended fields to workspaceSettings.
+   */
+  updateSelf: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1).optional(),
+      jobTitle: z.string().optional(),
+      phone: z.string().optional(),
+      bio: z.string().optional(),
+      linkedIn: z.string().optional(),
+      guidancePreference: z.enum(['minimal', 'standard', 'detailed']).optional(),
+      reminderPreference: z.enum(['never', 'weekly', 'daily', 'realtime']).optional(),
+      timezone: z.string().optional(),
+      notifyOpportunities: z.boolean().optional(),
+      notifyDeadlines: z.boolean().optional(),
+      notifyCompliance: z.boolean().optional(),
+      notifyMarketing: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      // Update name in users table if provided
+      if (input.name !== undefined) {
+        await db.update(users).set({ name: input.name }).where(eq(users.id, ctx.user.id));
+      }
+      // Upsert extended settings in workspaceSettings
+      let wsId: number | null = null;
+      try { wsId = await requireWorkspaceId(ctx.user.id); } catch {}
+      if (wsId) {
+        const settingEntries: [string, string][] = [];
+        if (input.jobTitle !== undefined) settingEntries.push(['up.jobTitle', input.jobTitle]);
+        if (input.phone !== undefined) settingEntries.push(['up.phone', input.phone]);
+        if (input.bio !== undefined) settingEntries.push(['up.bio', input.bio]);
+        if (input.linkedIn !== undefined) settingEntries.push(['up.linkedIn', input.linkedIn]);
+        if (input.guidancePreference !== undefined) settingEntries.push(['up.guidancePreference', input.guidancePreference]);
+        if (input.reminderPreference !== undefined) settingEntries.push(['up.reminderPreference', input.reminderPreference]);
+        if (input.timezone !== undefined) settingEntries.push(['up.timezone', input.timezone]);
+        if (input.notifyOpportunities !== undefined) settingEntries.push(['up.notifyOpportunities', String(input.notifyOpportunities)]);
+        if (input.notifyDeadlines !== undefined) settingEntries.push(['up.notifyDeadlines', String(input.notifyDeadlines)]);
+        if (input.notifyCompliance !== undefined) settingEntries.push(['up.notifyCompliance', String(input.notifyCompliance)]);
+        if (input.notifyMarketing !== undefined) settingEntries.push(['up.notifyMarketing', String(input.notifyMarketing)]);
+
+        for (const [key, value] of settingEntries) {
+          const [existing] = await db.select().from(workspaceSettings)
+            .where(and(eq(workspaceSettings.workspaceId, wsId), eq(workspaceSettings.settingKey, key)));
+          if (existing) {
+            await db.update(workspaceSettings).set({ settingValue: value }).where(eq(workspaceSettings.id, existing.id));
+          } else {
+            await db.insert(workspaceSettings).values({ workspaceId: wsId, settingKey: key, settingValue: value });
+          }
+        }
+      }
+      try {
+        if (wsId) await logAudit(wsId, ctx.user.id, "update", "userProfile", ctx.user.id, { fields: Object.keys(input) });
+      } catch {}
+      return { success: true };
+    }),
 });

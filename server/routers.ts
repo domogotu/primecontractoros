@@ -59,7 +59,7 @@ import { systemInfraRouter } from "./systemInfraRouter";
 import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter } from "./batch1Router";
 import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter, changeOrdersRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
-import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter } from "./batch4Router";
+import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter, userProfileRouter } from "./batch4Router";
 import { webhookRouter } from "./webhookRouter";
 import { samRouter } from "./samRouter";
 import { guidanceQuestionRouter } from "./guidanceQuestionRouter";
@@ -137,6 +137,7 @@ export const appRouter = router({
   diagnostics: diagnosticsRouter,
   invites: invitesRouter,
   businessProfile: businessProfileRouter,
+  userProfile: userProfileRouter,
   documentGeneration: documentGenerationRouter,
   flowdownReviews: flowdownReviewsRouter,
   customerAdoption: customerAdoptionRouter,
