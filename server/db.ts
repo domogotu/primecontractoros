@@ -97,12 +97,31 @@ export async function createOpportunity(data: {
   workspaceId: number;
   title: string;
   agency?: string;
+  subAgency?: string;
+  office?: string;
   solicitation?: string;
+  noticeId?: string;
+  samOpportunityId?: string;
+  samUrl?: string;
+  sourceSystem?: string;
   naics?: string;
+  pscCode?: string;
+  setAside?: string;
+  setAsideDescription?: string;
+  noticeType?: string;
   dueDate?: Date;
+  postedDate?: Date;
+  archiveDate?: Date;
   type?: string;
   sourceLink?: string;
   summary?: string;
+  description?: string;
+  placeOfPerformance?: string;
+  pointOfContact?: string;
+  reviewStatus?: string;
+  pursuitDecision?: string;
+  importStatus?: string;
+  createdBy?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -110,14 +129,33 @@ export async function createOpportunity(data: {
   const result = await db.insert(opportunities).values({
     workspaceId: data.workspaceId,
     title: data.title,
-    agency: data.agency,
-    solicitation: data.solicitation,
-    naics: data.naics,
-    dueDate: data.dueDate,
-    type: data.type,
-    sourceLink: data.sourceLink,
-    summary: data.summary,
+    agency: data.agency || null,
+    subAgency: data.subAgency || null,
+    office: data.office || null,
+    solicitation: data.solicitation || null,
+    noticeId: data.noticeId || null,
+    samOpportunityId: data.samOpportunityId || null,
+    samUrl: data.samUrl || null,
+    sourceSystem: data.sourceSystem || null,
+    naics: data.naics || null,
+    pscCode: data.pscCode || null,
+    setAside: data.setAside || null,
+    setAsideDescription: data.setAsideDescription || null,
+    noticeType: data.noticeType || null,
+    dueDate: data.dueDate || null,
+    postedDate: data.postedDate || null,
+    archiveDate: data.archiveDate || null,
+    type: data.type || null,
+    sourceLink: data.sourceLink || null,
+    summary: data.summary || null,
+    description: data.description || null,
+    placeOfPerformance: data.placeOfPerformance || null,
+    pointOfContact: data.pointOfContact || null,
     status: "new",
+    reviewStatus: (data.reviewStatus as any) || "needs_review",
+    pursuitDecision: (data.pursuitDecision as any) || "undecided",
+    importStatus: (data.importStatus as any) || "manual",
+    createdBy: data.createdBy || null,
   });
 
   return result;
@@ -152,12 +190,30 @@ export async function updateOpportunity(
   data: Partial<{
     title: string;
     agency: string;
+    subAgency: string;
+    office: string;
     solicitation: string;
+    noticeId: string;
+    samOpportunityId: string;
+    samUrl: string;
+    sourceSystem: string;
     naics: string;
+    pscCode: string;
+    setAside: string;
+    setAsideDescription: string;
+    noticeType: string;
     dueDate: Date;
+    postedDate: Date;
+    archiveDate: Date;
     type: string;
     sourceLink: string;
     summary: string;
+    description: string;
+    placeOfPerformance: string;
+    pointOfContact: string;
+    reviewStatus: string;
+    pursuitDecision: string;
+    importStatus: string;
   }>
 ) {
   const db = await getDb();
@@ -165,7 +221,7 @@ export async function updateOpportunity(
 
   await db
     .update(opportunities)
-    .set(data)
+    .set(data as any)
     .where(and(eq(opportunities.id, id), eq(opportunities.workspaceId, workspaceId)));
 }
 

@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Search, Target, ExternalLink, Loader2, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import OpportunityForm from "@/components/OpportunityForm";
 import SmartIntakeOpportunity from "@/components/SmartIntakeOpportunity";
+import SamImportPanel from "@/components/SamImportPanel";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
 import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
@@ -273,6 +274,9 @@ export default function Opportunities() {
 
       {/* Training Walkthrough */}
       <TrainingWalkthrough pageContext="opportunities" />
+
+      {/* SAM.gov Import Panel */}
+      <SamImportPanel onImportSuccess={() => {}} />
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">

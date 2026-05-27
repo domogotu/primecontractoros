@@ -54,14 +54,33 @@ export const opportunities = mysqlTable("opportunities", {
   workspaceId: int("workspaceId").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   agency: varchar("agency", { length: 255 }),
+  subAgency: varchar("subAgency", { length: 255 }),
+  office: varchar("office", { length: 255 }),
   solicitation: varchar("solicitation", { length: 255 }),
+  noticeId: varchar("noticeId", { length: 255 }),
+  samOpportunityId: varchar("samOpportunityId", { length: 255 }),
+  samUrl: text("samUrl"),
+  sourceSystem: varchar("sourceSystem", { length: 100 }),
   naics: varchar("naics", { length: 50 }),
+  pscCode: varchar("pscCode", { length: 50 }),
   setAside: varchar("setAside", { length: 100 }),
+  setAsideDescription: varchar("setAsideDescription", { length: 255 }),
+  noticeType: varchar("noticeType", { length: 100 }),
   dueDate: timestamp("dueDate"),
+  postedDate: timestamp("postedDate"),
+  archiveDate: timestamp("archiveDate"),
   type: varchar("type", { length: 100 }),
   sourceLink: text("sourceLink"),
   summary: text("summary"),
+  description: text("description"),
+  placeOfPerformance: text("placeOfPerformance"),
+  pointOfContact: text("pointOfContact"),
   status: mysqlEnum("status", ["new", "in_review", "pursue", "hold", "no_pursue", "moved_to_proposal", "archived"]).default("new"),
+  reviewStatus: mysqlEnum("reviewStatus", ["needs_review", "in_review", "reviewed", "approved"]).default("needs_review"),
+  pursuitDecision: mysqlEnum("pursuitDecision", ["undecided", "pursue", "hold", "no_pursue"]).default("undecided"),
+  importStatus: mysqlEnum("importStatus", ["manual", "imported", "synced", "sync_failed"]).default("manual"),
+  lastSyncedAt: timestamp("lastSyncedAt"),
+  createdBy: int("createdBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   deletedAt: timestamp("deletedAt"),
@@ -69,6 +88,41 @@ export const opportunities = mysqlTable("opportunities", {
 
 export type Opportunity = typeof opportunities.$inferSelect;
 export type InsertOpportunity = typeof opportunities.$inferInsert;
+
+// SAM.gov Import Logs - Audit trail for every import/sync operation
+export const samImportLogs = mysqlTable("sam_import_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  opportunityId: int("opportunityId"),
+  samUrl: text("samUrl"),
+  samOpportunityId: varchar("samOpportunityId", { length: 255 }),
+  importStatus: varchar("importStatus", { length: 50 }).notNull(),
+  apiStatusCode: int("apiStatusCode"),
+  errorMessage: text("errorMessage"),
+  rawResponseSnapshot: text("rawResponseSnapshot"),
+  importedAt: timestamp("importedAt").defaultNow().notNull(),
+  importedBy: int("importedBy"),
+});
+export type SamImportLog = typeof samImportLogs.$inferSelect;
+export type InsertSamImportLog = typeof samImportLogs.$inferInsert;
+
+// Opportunity Source Files - SAM.gov attachments and source documents
+export const opportunitySourceFiles = mysqlTable("opportunity_source_files", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  opportunityId: int("opportunityId").notNull(),
+  fileName: varchar("fileName", { length: 500 }).notNull(),
+  fileUrl: text("fileUrl"),
+  fileType: varchar("fileType", { length: 100 }),
+  sourceSystem: varchar("sourceSystem", { length: 100 }).default("sam.gov"),
+  sourceCategory: mysqlEnum("sourceCategory", ["source_notice", "solicitation", "amendment", "attachment", "supporting_document", "screenshot", "other"]).default("attachment"),
+  downloadedFilePath: text("downloadedFilePath"),
+  isDownloaded: boolean("isDownloaded").default(false),
+  isSourceDocument: boolean("isSourceDocument").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OpportunitySourceFile = typeof opportunitySourceFiles.$inferSelect;
+export type InsertOpportunitySourceFile = typeof opportunitySourceFiles.$inferInsert;
 
 // Proposals
 export const proposals = mysqlTable("proposals", {

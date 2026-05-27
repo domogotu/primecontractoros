@@ -1,15 +1,28 @@
 /**
  * SAM.gov Router — tRPC procedures for SAM.gov API integration
+ * 
+ * Includes: search, entity lookup, URL import, preview, resync, 
+ * import logs, and source file management.
  */
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { searchOpportunities, searchEntities, getOpportunityByNoticeId } from "./services/samGov";
+import {
+  validateSamGovUrl,
+  extractOpportunityId,
+  fetchOpportunityFromSam,
+  mapSamDataToOpportunity,
+  checkForDuplicate,
+} from "./services/samImport";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { getDb } from "./db";
-import { opportunities } from "../drizzle/schema";
+import { opportunities, samImportLogs, opportunitySourceFiles } from "../drizzle/schema";
 import { logAudit } from "./featureRouter";
+import { eq, and, isNull, desc } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 
 export const samRouter = router({
+  // ─── Existing Search Routes ────────────────────────────────────────────────
   searchOpportunities: protectedProcedure
     .input(z.object({
       keyword: z.string().optional(),
@@ -47,6 +60,389 @@ export const samRouter = router({
       return await getOpportunityByNoticeId(input.noticeId);
     }),
 
+  // ─── Import from SAM.gov URL ───────────────────────────────────────────────
+  importFromUrl: protectedProcedure
+    .input(z.object({
+      samUrl: z.string().min(1, "SAM.gov URL is required"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      // 1. Validate URL
+      const validation = validateSamGovUrl(input.samUrl);
+      if (!validation.valid) {
+        // Log the failed attempt
+        await db.insert(samImportLogs).values({
+          workspaceId: wsId,
+          samUrl: input.samUrl,
+          importStatus: "failed",
+          errorMessage: validation.error || "Invalid URL",
+          importedBy: ctx.user.id,
+        });
+        throw new TRPCError({ code: "BAD_REQUEST", message: validation.error || "Invalid SAM.gov URL" });
+      }
+
+      // 2. Extract opportunity ID
+      const noticeId = extractOpportunityId(input.samUrl);
+      if (!noticeId) {
+        await db.insert(samImportLogs).values({
+          workspaceId: wsId,
+          samUrl: input.samUrl,
+          importStatus: "failed",
+          errorMessage: "Could not extract opportunity ID from URL",
+          importedBy: ctx.user.id,
+        });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Could not extract opportunity ID from this URL." });
+      }
+
+      // 3. Check for duplicates
+      const dupCheck = await checkForDuplicate(db, wsId, noticeId, noticeId, null, input.samUrl);
+      if (dupCheck.isDuplicate) {
+        return {
+          success: false,
+          isDuplicate: true,
+          existingId: dupCheck.existingId,
+          message: "This opportunity already exists in your workspace.",
+        };
+      }
+
+      // 4. Fetch from SAM.gov API
+      const fetchResult = await fetchOpportunityFromSam(noticeId);
+      if (!fetchResult.success || !fetchResult.opportunity) {
+        await db.insert(samImportLogs).values({
+          workspaceId: wsId,
+          samUrl: input.samUrl,
+          samOpportunityId: noticeId,
+          importStatus: "failed",
+          apiStatusCode: fetchResult.apiStatusCode,
+          errorMessage: fetchResult.error,
+          rawResponseSnapshot: fetchResult.rawResponse || null,
+          importedBy: ctx.user.id,
+        });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: fetchResult.error || "Could not import this SAM.gov opportunity. Please confirm the URL is valid or enter the opportunity manually.",
+        });
+      }
+
+      // 5. Map data to local schema
+      const mappedData = mapSamDataToOpportunity(fetchResult.opportunity, input.samUrl, noticeId);
+
+      // 6. Insert opportunity
+      const insertResult = await db.insert(opportunities).values({
+        workspaceId: wsId,
+        ...mappedData,
+        createdBy: ctx.user.id,
+        lastSyncedAt: new Date(),
+      });
+
+      const opportunityId = (insertResult as any)?.[0]?.insertId;
+
+      // 7. Save attachments as source files
+      let attachmentWarning: string | null = null;
+      if (fetchResult.attachments && fetchResult.attachments.length > 0) {
+        let savedCount = 0;
+        for (const att of fetchResult.attachments) {
+          try {
+            await db.insert(opportunitySourceFiles).values({
+              workspaceId: wsId,
+              opportunityId,
+              fileName: att.name || "Unnamed Attachment",
+              fileUrl: att.url || null,
+              fileType: att.type || null,
+              sourceSystem: "sam.gov",
+              sourceCategory: categorizeAttachment(att.name, att.type),
+              isDownloaded: false,
+              isSourceDocument: att.type === "related_notice" || att.name?.toLowerCase().includes("solicitation"),
+            });
+            savedCount++;
+          } catch (err) {
+            console.warn("[SAM Import] Failed to save attachment:", att.name, err);
+          }
+        }
+        if (savedCount < fetchResult.attachments.length) {
+          attachmentWarning = `Opportunity imported, but ${fetchResult.attachments.length - savedCount} of ${fetchResult.attachments.length} source attachments could not be saved. Links were preserved for review.`;
+        }
+      }
+
+      // 8. Log successful import
+      await db.insert(samImportLogs).values({
+        workspaceId: wsId,
+        opportunityId,
+        samUrl: input.samUrl,
+        samOpportunityId: noticeId,
+        importStatus: "success",
+        apiStatusCode: 200,
+        rawResponseSnapshot: JSON.stringify(fetchResult.opportunity).substring(0, 5000),
+        importedBy: ctx.user.id,
+      });
+
+      // 9. Audit log
+      try { await logAudit(wsId, ctx.user.id, "create", "opportunities", opportunityId, { source: "sam.gov", noticeId, samUrl: input.samUrl }); } catch {}
+
+      return {
+        success: true,
+        opportunityId,
+        message: attachmentWarning || "Opportunity imported from SAM.gov successfully.",
+        isArchived: fetchResult.isArchived,
+        isInactive: fetchResult.isInactive,
+        redirectUrl: `/app/opportunities/${opportunityId}`,
+      };
+    }),
+
+  // ─── Preview Before Saving ─────────────────────────────────────────────────
+  previewFromUrl: protectedProcedure
+    .input(z.object({
+      samUrl: z.string().min(1, "SAM.gov URL is required"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+
+      // 1. Validate URL
+      const validation = validateSamGovUrl(input.samUrl);
+      if (!validation.valid) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: validation.error || "Invalid SAM.gov URL" });
+      }
+
+      // 2. Extract ID
+      const noticeId = extractOpportunityId(input.samUrl);
+      if (!noticeId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Could not extract opportunity ID from this URL." });
+      }
+
+      // 3. Check for duplicates
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      const dupCheck = await checkForDuplicate(db, wsId, noticeId, noticeId, null, input.samUrl);
+
+      // 4. Fetch from SAM.gov
+      const fetchResult = await fetchOpportunityFromSam(noticeId);
+      if (!fetchResult.success || !fetchResult.opportunity) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: fetchResult.error || "Could not retrieve opportunity data from SAM.gov.",
+        });
+      }
+
+      // 5. Map data
+      const mappedData = mapSamDataToOpportunity(fetchResult.opportunity, input.samUrl, noticeId);
+
+      return {
+        success: true,
+        data: mappedData,
+        attachments: fetchResult.attachments || [],
+        isDuplicate: dupCheck.isDuplicate,
+        existingId: dupCheck.existingId,
+        isArchived: fetchResult.isArchived,
+        isInactive: fetchResult.isInactive,
+      };
+    }),
+
+  // ─── Re-sync from SAM.gov ─────────────────────────────────────────────────
+  resync: protectedProcedure
+    .input(z.object({
+      opportunityId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      // Get existing opportunity
+      const [existing] = await db
+        .select()
+        .from(opportunities)
+        .where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.workspaceId, wsId)))
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Opportunity not found." });
+      }
+
+      const noticeId = existing.samOpportunityId || existing.noticeId;
+      if (!noticeId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This opportunity was not imported from SAM.gov and cannot be re-synced." });
+      }
+
+      // Fetch fresh data
+      const fetchResult = await fetchOpportunityFromSam(noticeId);
+      if (!fetchResult.success || !fetchResult.opportunity) {
+        await db.insert(samImportLogs).values({
+          workspaceId: wsId,
+          opportunityId: input.opportunityId,
+          samUrl: existing.samUrl,
+          samOpportunityId: noticeId,
+          importStatus: "sync_failed",
+          apiStatusCode: fetchResult.apiStatusCode,
+          errorMessage: fetchResult.error,
+          importedBy: ctx.user.id,
+        });
+
+        // Update opportunity sync status
+        await db.update(opportunities)
+          .set({ importStatus: "sync_failed" })
+          .where(eq(opportunities.id, input.opportunityId));
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: fetchResult.error || "Failed to re-sync from SAM.gov.",
+        });
+      }
+
+      // Map new data
+      const mappedData = mapSamDataToOpportunity(fetchResult.opportunity, existing.samUrl || "", noticeId);
+
+      // Build changes list (only update fields that came from SAM, don't overwrite user edits)
+      const changes: Record<string, { old: any; new: any }> = {};
+      const updateFields: Record<string, any> = {};
+
+      const fieldsToSync = [
+        "title", "agency", "subAgency", "office", "solicitation", "naics", "pscCode",
+        "setAside", "setAsideDescription", "noticeType", "description", "placeOfPerformance",
+        "pointOfContact",
+      ] as const;
+
+      for (const field of fieldsToSync) {
+        const oldVal = (existing as any)[field];
+        const newVal = (mappedData as any)[field];
+        if (newVal && newVal !== oldVal) {
+          changes[field] = { old: oldVal, new: newVal };
+          updateFields[field] = newVal;
+        }
+      }
+
+      // Always update dates if available from SAM
+      if (mappedData.dueDate && mappedData.dueDate.getTime() !== existing.dueDate?.getTime()) {
+        changes["dueDate"] = { old: existing.dueDate, new: mappedData.dueDate };
+        updateFields["dueDate"] = mappedData.dueDate;
+      }
+      if (mappedData.postedDate && mappedData.postedDate.getTime() !== existing.postedDate?.getTime()) {
+        changes["postedDate"] = { old: existing.postedDate, new: mappedData.postedDate };
+        updateFields["postedDate"] = mappedData.postedDate;
+      }
+      if (mappedData.archiveDate && mappedData.archiveDate.getTime() !== existing.archiveDate?.getTime()) {
+        changes["archiveDate"] = { old: existing.archiveDate, new: mappedData.archiveDate };
+        updateFields["archiveDate"] = mappedData.archiveDate;
+      }
+
+      // Apply updates
+      if (Object.keys(updateFields).length > 0) {
+        await db.update(opportunities)
+          .set({
+            ...updateFields,
+            importStatus: "synced",
+            lastSyncedAt: new Date(),
+          })
+          .where(eq(opportunities.id, input.opportunityId));
+      } else {
+        await db.update(opportunities)
+          .set({ importStatus: "synced", lastSyncedAt: new Date() })
+          .where(eq(opportunities.id, input.opportunityId));
+      }
+
+      // Save new attachments if any
+      if (fetchResult.attachments && fetchResult.attachments.length > 0) {
+        for (const att of fetchResult.attachments) {
+          // Check if already exists
+          const [existingFile] = await db
+            .select()
+            .from(opportunitySourceFiles)
+            .where(and(
+              eq(opportunitySourceFiles.opportunityId, input.opportunityId),
+              eq(opportunitySourceFiles.fileName, att.name || "Unnamed")
+            ))
+            .limit(1);
+
+          if (!existingFile) {
+            await db.insert(opportunitySourceFiles).values({
+              workspaceId: wsId,
+              opportunityId: input.opportunityId,
+              fileName: att.name || "Unnamed Attachment",
+              fileUrl: att.url || null,
+              fileType: att.type || null,
+              sourceSystem: "sam.gov",
+              sourceCategory: categorizeAttachment(att.name, att.type),
+              isDownloaded: false,
+              isSourceDocument: false,
+            });
+          }
+        }
+      }
+
+      // Log sync
+      await db.insert(samImportLogs).values({
+        workspaceId: wsId,
+        opportunityId: input.opportunityId,
+        samUrl: existing.samUrl,
+        samOpportunityId: noticeId,
+        importStatus: "synced",
+        apiStatusCode: 200,
+        rawResponseSnapshot: JSON.stringify({ changes, fieldsUpdated: Object.keys(updateFields) }).substring(0, 5000),
+        importedBy: ctx.user.id,
+      });
+
+      try { await logAudit(wsId, ctx.user.id, "update", "opportunities", input.opportunityId, { action: "resync", changes: Object.keys(changes) }); } catch {}
+
+      return {
+        success: true,
+        changes,
+        fieldsUpdated: Object.keys(updateFields),
+        message: Object.keys(updateFields).length > 0
+          ? `Re-synced successfully. ${Object.keys(updateFields).length} field(s) updated.`
+          : "Re-synced successfully. No changes detected from SAM.gov.",
+      };
+    }),
+
+  // ─── Get Import Logs ───────────────────────────────────────────────────────
+  getImportLogs: protectedProcedure
+    .input(z.object({
+      opportunityId: z.number().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) return [];
+
+      if (input.opportunityId) {
+        return await db
+          .select()
+          .from(samImportLogs)
+          .where(and(eq(samImportLogs.workspaceId, wsId), eq(samImportLogs.opportunityId, input.opportunityId)))
+          .orderBy(desc(samImportLogs.importedAt))
+          .limit(20);
+      }
+
+      return await db
+        .select()
+        .from(samImportLogs)
+        .where(eq(samImportLogs.workspaceId, wsId))
+        .orderBy(desc(samImportLogs.importedAt))
+        .limit(50);
+    }),
+
+  // ─── Get Source Files ──────────────────────────────────────────────────────
+  getSourceFiles: protectedProcedure
+    .input(z.object({
+      opportunityId: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) return [];
+
+      return await db
+        .select()
+        .from(opportunitySourceFiles)
+        .where(and(
+          eq(opportunitySourceFiles.workspaceId, wsId),
+          eq(opportunitySourceFiles.opportunityId, input.opportunityId)
+        ));
+    }),
+
+  // ─── Legacy Import (kept for backward compatibility) ───────────────────────
   importOpportunity: protectedProcedure
     .input(z.object({
       noticeId: z.string(),
@@ -75,11 +471,29 @@ export const samRouter = router({
         dueDate: input.responseDeadline ? new Date(input.responseDeadline) : null,
         summary: input.description || null,
         sourceLink: input.sourceLink || null,
+        samOpportunityId: input.noticeId,
+        noticeId: input.noticeId,
+        sourceSystem: "SAM.gov",
         type: input.type || "federal",
         status: "new",
+        importStatus: "imported",
+        reviewStatus: "needs_review",
+        pursuitDecision: "undecided",
+        createdBy: ctx.user.id,
       });
 
       try { await logAudit(wsId, ctx.user.id, "create", "opportunities", 0, { source: "sam.gov", noticeId: input.noticeId }); } catch {}
       return { success: true, id: (result as any)?.[0]?.insertId || 0 };
     }),
 });
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function categorizeAttachment(name?: string, type?: string): "source_notice" | "solicitation" | "amendment" | "attachment" | "supporting_document" | "screenshot" | "other" {
+  const lower = (name || "").toLowerCase();
+  if (lower.includes("solicitation") || lower.includes("rfp") || lower.includes("rfi") || lower.includes("rfq")) return "solicitation";
+  if (lower.includes("amendment") || lower.includes("modification")) return "amendment";
+  if (lower.includes("notice") || type === "related_notice") return "source_notice";
+  if (lower.includes("support") || lower.includes("guide")) return "supporting_document";
+  return "attachment";
+}
