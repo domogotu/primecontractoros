@@ -58,18 +58,46 @@ export default function CustomerAdoption() {
     }
   });
 
+  const createTaskMutation = trpc.tasks.create.useMutation({
+    onSuccess: () => {
+      toast({ title: "Success", description: `Task "${taskName}" created successfully` });
+      setIsTaskDialogOpen(false);
+      setTaskName("");
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create task", variant: "destructive" });
+    },
+  });
   const handleCreateTask = () => {
     if (!taskName) {
       toast({ title: "Error", description: "Please enter a task name", variant: "destructive" });
       return;
     }
-    toast({ title: "Success", description: `Task "${taskName}" created successfully` });
-    setIsTaskDialogOpen(false);
-    setTaskName("");
+    createTaskMutation.mutate({
+      title: taskName,
+      description: "Created from Customer Adoption page",
+      status: "todo",
+      priority: "medium",
+    });
   };
 
+  const moduleRoutes: Record<string, string> = {
+    "Business Profile": "/app/business-profile",
+    "Opportunities": "/app/opportunities",
+    "Proposals": "/app/proposals",
+    "Contracts": "/app/contracts",
+    "Finance": "/app/finance",
+    "Files": "/app/files",
+    "Contacts": "/app/contacts",
+    "AI Assistant": "/app/ai-contract-review",
+  };
   const handleGetStarted = (moduleName: string) => {
-    toast({ title: "Navigation", description: `Navigating to ${moduleName} setup... (Feature coming soon)` });
+    const route = moduleRoutes[moduleName];
+    if (route) {
+      setLocation(route);
+    } else {
+      toast({ title: "Coming soon", description: `${moduleName} setup is not yet available.` });
+    }
   };
 
   if (isLoading) {

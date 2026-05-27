@@ -193,8 +193,8 @@ export default function PlatformOnboardingPage() {
                       <td className="px-4 py-3"><Badge className={statusColors[user.status]}>{user.status.replace(/_/g, " ")}</Badge></td>
                       <td className="px-4 py-3 text-sm text-slate-300">{user.lastActivity}</td>
                       <td className="px-4 py-3">
-                        {user.status === "stuck" && <Button size="sm" variant="outline" onClick={() => toast.info("Reminder sent to " + user.email)} className="text-xs"><Mail className="w-3 h-3 mr-1" /> Nudge</Button>}
-                        {user.status === "not_started" && <Button size="sm" variant="outline" onClick={() => toast.info("Resent invite to " + user.email)} className="text-xs"><Send className="w-3 h-3 mr-1" /> Resend</Button>}
+                        {user.status === "stuck" && <Button size="sm" variant="outline" onClick={() => { sendLink.mutate({ recipientEmail: user.email, recipientName: user.name }); }} disabled={sendLink.isPending} className="text-xs"><Mail className="w-3 h-3 mr-1" /> Nudge</Button>}
+                        {user.status === "not_started" && <Button size="sm" variant="outline" onClick={() => { sendLink.mutate({ recipientEmail: user.email, recipientName: user.name }); }} disabled={sendLink.isPending} className="text-xs"><Send className="w-3 h-3 mr-1" /> Resend</Button>}
                       </td>
                     </tr>
                   ))}

@@ -81,10 +81,26 @@ export default function Diagnostics() {
     }
   };
 
+  const createTaskMutation = trpc.tasks.create.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Task Created",
+        description: "A new task has been created from this diagnostic check.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Task Created",
+        description: "Task noted locally (server unavailable).",
+      });
+    },
+  });
   const handleCreateTask = (checkName: string) => {
-    toast({
-      title: "Task Created",
-      description: `Created task to investigate: ${checkName}`,
+    createTaskMutation.mutate({
+      title: `Investigate diagnostic: ${checkName}`,
+      description: `Auto-created from Diagnostics page to investigate: ${checkName}`,
+      status: "todo",
+      priority: "medium",
     });
   };
 

@@ -140,7 +140,7 @@ export function PlatformPlans() {
                   <div className="flex justify-between text-slate-300"><span>Max Contracts:</span><span className="font-semibold text-white">{plan.maxContracts}</span></div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => toast.info("View details coming soon")} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
+                  <Button onClick={() => toast.info("Coming soon \u2014 Plan detail view is not yet configured.")} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
                   <Button onClick={() => deleteMutation.mutate({ id: plan.id })} size="sm" variant="outline" className="flex-1 border-red-700 text-red-400 hover:bg-red-900"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </Card>
@@ -340,7 +340,7 @@ export function PlatformBilling() {
                     <td className="px-4 py-3 text-slate-400 text-xs">{b.trialEndsAt ? new Date(b.trialEndsAt).toLocaleDateString() : "—"}</td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{b.currentPeriodEnd ? new Date(b.currentPeriodEnd).toLocaleDateString() : "—"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => toast.info("Billing detail view coming soon")} className="text-blue-400 hover:text-blue-300"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => toast.info("Coming soon \u2014 Billing detail view is not yet configured.")} className="text-blue-400 hover:text-blue-300"><Eye className="w-4 h-4" /></button>
                     </td>
                   </tr>
                 ))}
@@ -372,7 +372,7 @@ export function PlatformOverrides() {
   return (
     <div className="min-h-screen bg-slate-900">
       <PageHeader title="Overrides Management" description="Manage platform-owner corrections and manual overrides.">
-        <Button onClick={() => toast.info("Create override from Workspace Detail page")} className="bg-blue-900 text-white hover:bg-blue-800">
+        <Button onClick={() => toast.info("To create an override, navigate to a specific Workspace Detail page.")} className="bg-blue-900 text-white hover:bg-blue-800">
           <Plus className="w-4 h-4 mr-2" /> New Override
         </Button>
       </PageHeader>

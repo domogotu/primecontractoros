@@ -34,7 +34,7 @@ export default function Opportunities() {
     }
   }, [searchString]);
 
-  const { data: opportunities = [], isLoading } = trpc.opportunities.list.useQuery();
+  const { data: opportunities = [], isLoading, refetch: refetchOpportunities } = trpc.opportunities.list.useQuery();
 
   const filteredOpportunities = opportunities.filter((opp) =>
     opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -276,7 +276,7 @@ export default function Opportunities() {
       <TrainingWalkthrough pageContext="opportunities" />
 
       {/* SAM.gov Import Panel */}
-      <SamImportPanel onImportSuccess={() => {}} />
+      <SamImportPanel onImportSuccess={() => { refetchOpportunities(); }} />
 
       {/* Search */}
       <Card className="bg-white border border-gray-200 p-4">

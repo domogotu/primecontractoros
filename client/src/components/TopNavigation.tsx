@@ -34,10 +34,10 @@ export default function TopNavigation() {
     { label: 'Deliverables', href: '/app/deliverables' },
     { label: 'Deadlines', href: '/app/deadlines' },
     { label: 'Compliance', href: '/app/compliance' },
-    { label: 'AI Workspace', href: '/app/ai-confirmation' },
+    { label: 'AI Workspace', href: '/app/ai-contract-review' },
     { label: 'Settings', href: '/app/settings' },
     { label: 'Onboarding', href: '/app/onboarding' },
-    { label: 'Help', href: '/app/help' },
+    { label: 'Help', href: '/help' },
   ];
 
   return (

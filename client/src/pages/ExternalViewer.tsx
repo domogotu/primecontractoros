@@ -4,16 +4,36 @@ import { trpc } from "@/lib/trpc";
 import { Eye, Plus, Copy, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ExternalViewer() {
   const [showForm, setShowForm] = useState(false);
+  const [email, setEmail] = useState("");
   const { toast } = useToast();
   const { data: invites = [], refetch } = trpc.invites.list.useQuery();
-  const createMutation = trpc.invites.create.useMutation({ onSuccess: () => { refetch(); setShowForm(false); } });
+  const createMutation = trpc.invites.create.useMutation({
+    onSuccess: () => {
+      refetch();
+      setShowForm(false);
+      setEmail("");
+      toast({ title: "Viewer invited", description: "An invitation has been sent." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message || "Failed to send invite", variant: "destructive" });
+    },
+  });
 
   const viewerInvites = (invites as any[]).filter((inv) => inv.role === "viewer");
+
+  const handleInvite = () => {
+    if (!email.trim()) {
+      toast({ title: "Email required", description: "Please enter an email address.", variant: "destructive" });
+      return;
+    }
+    createMutation.mutate({ email: email.trim(), role: "viewer" });
+  };
 
   return (
     <PageLayout title="External Viewers" subtitle="Grant read-only access to external stakeholders" label="Access Control"
@@ -45,6 +65,35 @@ export default function ExternalViewer() {
           </div>
         )}
       </div>
+
+      {/* Invite Viewer Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite External Viewer</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="viewer@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button onClick={handleInvite} disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Sending..." : "Send Invite"}
+                </Button>
+              </div>
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
     </PageLayout>
   );
 }

@@ -279,7 +279,7 @@ export default function PlanFeatures() {
           <div className="grid grid-cols-4 border-t border-border bg-muted/20 p-4">
             <div></div>
             <div className="text-center">
-              <Button variant="outline" size="sm" onClick={() => toast({ title: "Feature coming soon" })}>Downgrade</Button>
+              <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming soon", description: "Plan downgrade is not yet configured. Contact support for plan changes." })}>Downgrade</Button>
             </div>
             <div className="text-center">
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Current Plan</span>
