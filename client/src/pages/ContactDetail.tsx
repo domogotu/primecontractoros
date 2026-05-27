@@ -3,6 +3,8 @@ import { useRoute, Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
+import RecordNotes from "@/components/RecordNotes";
+import RecordTimeline from "@/components/RecordTimeline";
 import {
   User, Mail, Phone, Building, ArrowLeft, Clock, Plus,
   AlertCircle, Calendar, CheckCircle2, Circle, Trash2, Edit
@@ -227,6 +229,12 @@ export default function ContactDetail() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Record Notes & Timeline */}
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
+        <RecordNotes recordType="contact" recordId={contactId} />
+        <RecordTimeline recordType="contact" recordId={contactId} />
       </div>
 
       {/* Delete Dialog */}

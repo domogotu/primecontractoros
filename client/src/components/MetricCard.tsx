@@ -28,15 +28,15 @@ export default function MetricCard({
 }: MetricCardProps) {
   return (
     <div
-      className={`metric-card ${onClick ? 'cursor-pointer' : ''}`}
+      className={`bg-white rounded-xl border border-gray-200 p-5 shadow-sm ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
       onClick={onClick}
     >
-      <div className={`icon-lg rounded-lg flex items-center justify-center ${colorClasses[color]} mb-4`}>
-        <Icon className="w-6 h-6" />
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[color]} mb-3`}>
+        <Icon className="w-5 h-5" />
       </div>
-      <div className="metric-card-label">{label}</div>
-      <div className="metric-card-value">{value}</div>
-      {subtext && <div className="metric-card-subtext">{subtext}</div>}
+      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</div>
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      {subtext && <div className="text-xs text-gray-400 mt-1">{subtext}</div>}
     </div>
   );
 }

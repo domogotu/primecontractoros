@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -164,6 +166,12 @@ export default function Deadlines() {
             : []),
         ]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="deadlines" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="deadlines" />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>

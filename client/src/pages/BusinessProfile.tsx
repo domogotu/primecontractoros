@@ -35,6 +35,7 @@ import {
 import PageGuide from "@/components/PageGuide";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
+import AutosaveIndicator from "@/components/AutosaveIndicator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SamStatus = 'active' | 'expired' | 'pending' | 'not_registered';
@@ -450,6 +451,8 @@ export default function BusinessProfile() {
   const upsertMutation = trpc.businessProfile.upsert.useMutation();
   const utils = trpc.useUtils();
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [showCompleteness, setShowCompleteness] = useState(true);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -503,13 +506,16 @@ export default function BusinessProfile() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setHasUnsavedChanges(false);
     try {
       await upsertMutation.mutateAsync(formData as any);
       await utils.businessProfile.get.invalidate();
+      setLastSaved(new Date());
       toast.success('Business profile saved successfully');
       setMode('view');
     } catch (err) {
       toast.error('Failed to save profile');
+      setHasUnsavedChanges(true);
     } finally {
       setIsSaving(false);
     }
@@ -553,10 +559,13 @@ export default function BusinessProfile() {
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Profile'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <AutosaveIndicator isSaving={isSaving} hasUnsavedChanges={hasUnsavedChanges} lastSaved={lastSaved} />
+              <Button onClick={handleSave} disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Profile'}
+              </Button>
+            </div>
           </div>
         )
       }

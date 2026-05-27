@@ -6,6 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { NAICS_CODES, OPPORTUNITY_SOURCES, CONTRACT_TYPES } from "@shared/govContracting";
+import FieldHelp from "@/components/FieldHelp";
 
 interface OpportunityFormProps {
   opportunityId?: number;
@@ -145,8 +146,8 @@ export default function OpportunityForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          Opportunity Title *
+        <label className="block text-sm font-medium text-gray-900 mb-2 flex items-center">
+          Opportunity Title * <FieldHelp field="title" />
         </label>
         <Input
           name="title"
@@ -163,8 +164,8 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          Agency
+        <label className="block text-sm font-medium text-gray-900 mb-2 flex items-center">
+          Agency <FieldHelp field="agency" />
         </label>
         <Input
           name="agency"
@@ -175,8 +176,8 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          Solicitation Number
+        <label className="block text-sm font-medium text-gray-900 mb-2 flex items-center">
+          Solicitation Number <FieldHelp field="solicitation" />
         </label>
         <Input
           name="solicitation"
@@ -187,8 +188,8 @@ export default function OpportunityForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-900 mb-2">
-          NAICS (North American Industry Classification System) Code
+        <label className="block text-sm font-medium text-gray-900 mb-2 flex items-center">
+          NAICS Code <FieldHelp field="naics" />
         </label>
         <select
           name="naics"

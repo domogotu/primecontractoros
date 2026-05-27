@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import { useWorkspaceRole } from "@/hooks/useWorkspaceRole";
 import { Search, Plus, Edit, Trash2, ChevronDown, ChevronUp, Star, Building2, Users, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -90,6 +92,12 @@ export default function Vendors() {
         relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Subcontractors", path: "/app/subcontractors" }]}
         alerts={pendingVendors > 0 ? [{ type: "warning", message: `${pendingVendors} vendor(s) pending review.` }] : []}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="vendors" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="vendors" />
 
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex flex-1 gap-3 flex-wrap">

@@ -7,6 +7,8 @@ import { trpc } from "@/lib/trpc";
 import { useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -132,6 +134,12 @@ export default function Files() {
         whatToDoNext={["Upload new documents and link to records", "Review unlinked files", "Run AI analysis on contract documents", "Check file version history"]}
         relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Proposals", path: "/app/proposals" }, { label: "Document Versions", path: "/app/document-versions" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="files" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="files" />
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>

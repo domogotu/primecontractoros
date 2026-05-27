@@ -15,6 +15,7 @@ import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
+import FieldHelp from "@/components/FieldHelp";
 import { useMemo } from "react";
 
 export default function Opportunities() {

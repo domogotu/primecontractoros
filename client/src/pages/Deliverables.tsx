@@ -5,6 +5,8 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search,
@@ -158,6 +160,12 @@ export default function Deliverables() {
           relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Requirements", path: "/app/requirements" }, { label: "Files", path: "/app/files" }]}
           alerts={stats.overdue > 0 ? [{ type: "warning", message: `You have ${stats.overdue} overdue deliverables requiring immediate attention.` }] : []}
         />
+
+        {/* Guidance Question Panel */}
+        <GuidanceQuestionPanel pageContext="deliverables" />
+
+        {/* Training Walkthrough */}
+        <TrainingWalkthrough pageContext="deliverables" />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

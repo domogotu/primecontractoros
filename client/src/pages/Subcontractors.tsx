@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import PageLayout from "@/components/PageLayout";
 import { useWorkspaceRole } from "@/hooks/useWorkspaceRole";
 import { Search, Plus, Edit, Trash2, ChevronDown, ChevronUp, Building2, Users, Clock, Loader2 } from "lucide-react";
@@ -92,6 +94,12 @@ export default function Subcontractors() {
         ]}
         alerts={pendingSubs > 0 ? [{ type: "warning", message: `${pendingSubs} subcontractor(s) pending review.` }] : []}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="subcontractors" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="subcontractors" />
 
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex flex-1 gap-3 flex-wrap">

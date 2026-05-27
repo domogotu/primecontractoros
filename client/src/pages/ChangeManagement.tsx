@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Plus, Search, GitBranch, Loader2, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import FieldHelp from "@/components/FieldHelp";
 
 const statusConfig: Record<string, string> = {
   draft: "bg-slate-100 text-slate-700",
@@ -227,7 +228,7 @@ export default function ChangeManagement() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-1">
-              <Label>Title *</Label>
+              <Label className="flex items-center">Title * <FieldHelp field="title" /></Label>
               <Input value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Extend Period of Performance by 90 days" />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -245,7 +246,7 @@ export default function ChangeManagement() {
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label>Status</Label>
+                <Label className="flex items-center">Status <FieldHelp field="status" /></Label>
                 <Select value={form.status} onValueChange={(v) => setForm(f => ({ ...f, status: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -274,7 +275,7 @@ export default function ChangeManagement() {
               <Input value={form.submittedBy} onChange={(e) => setForm(f => ({ ...f, submittedBy: e.target.value }))} placeholder="Name of person submitting" />
             </div>
             <div className="space-y-1">
-              <Label>Description</Label>
+              <Label className="flex items-center">Description <FieldHelp field="description" /></Label>
               <Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the change and its rationale..." className="min-h-[80px]" />
             </div>
           </div>

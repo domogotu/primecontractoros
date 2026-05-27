@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import MetricCard from "@/components/MetricCard";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Finance() {
   const [, navigate] = useLocation();
@@ -41,6 +44,12 @@ export default function Finance() {
         whatToDoNext={["Review outstanding invoices", "Match unmatched payments to invoices", "Check overdue balances", "Create new invoices for delivered work"]}
         relatedRecords={[{ label: "Invoices", path: "/app/invoices" }, { label: "Payments", path: "/app/payments" }, { label: "Contracts", path: "/app/contracts" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="finance" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="finance" />
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Loading financial data...</div>
       ) : (invoices as any[]).length === 0 && (payments as any[]).length === 0 ? (
@@ -64,43 +73,10 @@ export default function Finance() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Receipt className="h-5 w-5 text-blue-500" />
-                <span className="text-sm text-gray-500">Total Billed</span>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalBilled)}</p>
-              <p className="text-xs text-gray-500 mt-1">{(invoices as any[]).length} invoices</p>
-            </Card>
-
-            <Card className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <CreditCard className="h-5 w-5 text-green-500" />
-                <span className="text-sm text-gray-500">Total Paid</span>
-              </div>
-              <p className="text-2xl font-bold text-green-700">{formatCurrency(totalPaid)}</p>
-              <p className="text-xs text-gray-500 mt-1">{(payments as any[]).length} payments</p>
-            </Card>
-
-            <Card className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="h-5 w-5 text-amber-500" />
-                <span className="text-sm text-gray-500">Outstanding Balance</span>
-              </div>
-              <p className={`text-2xl font-bold ${outstanding > 0 ? "text-amber-700" : "text-green-700"}`}>
-                {formatCurrency(outstanding)}
-              </p>
-            </Card>
-
-            <Card className="bg-white border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-                <span className="text-sm text-gray-500">Overdue Invoices</span>
-              </div>
-              <p className={`text-2xl font-bold ${overdueInvoices.length > 0 ? "text-red-700" : "text-gray-900"}`}>
-                {overdueInvoices.length}
-              </p>
-            </Card>
+            <MetricCard icon={Receipt} label="Total Billed" value={formatCurrency(totalBilled)} subtext={`${(invoices as any[]).length} invoices`} color="blue" />
+            <MetricCard icon={CreditCard} label="Total Paid" value={formatCurrency(totalPaid)} subtext={`${(payments as any[]).length} payments`} color="green" />
+            <MetricCard icon={TrendingUp} label="Outstanding Balance" value={formatCurrency(outstanding)} color={outstanding > 0 ? "orange" : "green"} />
+            <MetricCard icon={AlertTriangle} label="Overdue Invoices" value={overdueInvoices.length} color={overdueInvoices.length > 0 ? "red" : "blue"} />
           </div>
 
           {/* Overdue Invoices */}

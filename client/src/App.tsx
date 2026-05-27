@@ -102,6 +102,7 @@ import EmailNotificationPreferences from "./pages/EmailNotificationPreferences";
 import SAMSearch from "./pages/SAMSearch";
 import RateParityDashboard from "./pages/RateParityDashboard";
 import Training from "./pages/Training";
+import Subscription from "./pages/Subscription";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -226,6 +227,8 @@ function Router() {
       <Route path={"/app/external-viewers"} component={withAppShell(ExternalViewer)} />
       <Route path={"/app/document-versions"} component={withAppShell(DocumentVersions)} />
       <Route path={"/app/demo-mode"} component={withAppShell(DemoMode)} />
+      <Route path={"/app/subscription"} component={withAppShell(Subscription)} />
+      <Route path={"/app/user-profile"} component={withAppShell(UserProfile)} />
       <Route path={"/legal"} component={LegalPages} />
       <Route path={"/app/ai-suggestions"} component={withAppShell(AISuggestions)} />
       <Route path={"/app/ai-runs"} component={withAppShell(AIRuns)} />

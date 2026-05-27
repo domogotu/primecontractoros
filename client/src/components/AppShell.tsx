@@ -5,6 +5,7 @@ import { getLoginUrl } from "@/const";
 import WorkspaceSidebar from "./WorkspaceSidebar";
 import MobileNav from "./MobileNav";
 import { WorkspaceContext, useWorkspaceQuery } from "@/hooks/useWorkspace";
+import HelpPanel from "./HelpPanel";
 
 interface AppShellProps {
   children: ReactNode;
@@ -59,6 +60,8 @@ export default function AppShell({ children }: AppShellProps) {
       <MobileNav sidebarContent={<WorkspaceSidebar />}>
         {children}
       </MobileNav>
+      {/* Global floating help panel — available on all app pages */}
+      <HelpPanel />
     </WorkspaceContext.Provider>
   );
 }

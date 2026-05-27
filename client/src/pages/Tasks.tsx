@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFoo
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Tasks() {
   const searchString = useSearch();
@@ -103,6 +105,12 @@ export default function Tasks() {
         whatToDoNext={["Complete overdue tasks first", "Assign unassigned tasks", "Create tasks from alerts or reports", "Review completed tasks for follow-ups"]}
         relatedRecords={[{ label: "Alerts", path: "/app/alerts" }, { label: "Contracts", path: "/app/contracts" }, { label: "Dashboard", path: "/app/dashboard" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="tasks" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="tasks" />
       {/* Add Form */}
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>

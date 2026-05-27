@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,9 @@ import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import PageGuide from "@/components/PageGuide";
+import RecordNotes from "@/components/RecordNotes";
+import RecordTimeline from "@/components/RecordTimeline";
+import { useRecentRecords } from "@/hooks/useRecentRecords";
 
 // ===== Proposal Sections Editor =====
 function ProposalSectionsEditor({ proposalId, proposalTitle, framework }: { proposalId: number; proposalTitle: string; framework?: string }) {
@@ -354,6 +357,7 @@ export default function ProposalDetail() {
   const [contractCarryForward, setContractCarryForward] = useState({ contacts: true, files: true, notes: true, tasks: true, deliverables: true });
 
   const proposalId = params?.id ? parseInt(params.id) : undefined;
+  const { addRecord } = useRecentRecords();
 
   const { data: proposal, isLoading, error } = trpc.proposals.get.useQuery(
     { id: proposalId! },
@@ -396,6 +400,13 @@ export default function ProposalDetail() {
       </PageLayout>
     );
   }
+
+  // Track this record as recently viewed
+  useEffect(() => {
+    if (proposal && proposalId) {
+      addRecord({ type: 'proposal', id: proposalId, title: proposal.title, route: `/app/proposals/${proposalId}` });
+    }
+  }, [proposal?.id]);
 
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',
@@ -537,6 +548,12 @@ export default function ProposalDetail() {
             {/* Guidance & AI */}
             <GuidancePanel compact={true} showPreferences={false} />
             <AIWorkflowButtons context="proposal" recordId={proposalId} recordTitle={proposal.title} />
+            {/* Record Notes */}
+            <RecordNotes recordType="proposal" recordId={proposalId!} />
+
+            {/* Record Timeline */}
+            <RecordTimeline recordType="proposal" recordId={proposalId!} />
+
             <AIGuidancePanel recordType="proposal" recordId={proposalId} context={`Reviewing proposal: ${proposal.title}`} title="AI Proposal Assistance" />
 
             <Button variant="outline" className="w-full" onClick={() => setIsEditDialogOpen(true)}>Edit Proposal</Button>

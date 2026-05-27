@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Contacts() {
   const [showForm, setShowForm] = useState(false);
@@ -99,6 +101,12 @@ export default function Contacts() {
         whatToDoNext={["Add contacts for new opportunities", "Link contacts to contracts and proposals", "Update contact information", "Review communication history"]}
         relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Subcontractors", path: "/app/subcontractors" }, { label: "Messages", path: "/app/messages" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="contacts" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="contacts" />
       {/* Add Contact Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

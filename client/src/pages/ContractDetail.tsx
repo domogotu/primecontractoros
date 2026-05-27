@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,9 @@ import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { GuidancePanel } from '@/components/GuidancePanel';
 import { toast } from 'sonner';
 import PageGuide from "@/components/PageGuide";
+import RecordNotes from "@/components/RecordNotes";
+import RecordTimeline from "@/components/RecordTimeline";
+import { useRecentRecords } from "@/hooks/useRecentRecords";
 
 export default function ContractDetail() {
   const [, params] = useRoute('/app/contracts/:id');
@@ -26,6 +29,7 @@ export default function ContractDetail() {
   const [showAddPersonnel, setShowAddPersonnel] = useState(false);
 
   const contractId = params?.id ? parseInt(params.id) : undefined;
+  const { addRecord } = useRecentRecords();
 
   const { data: contract, isLoading, error } = trpc.contracts.get.useQuery(
     { id: contractId! },
@@ -88,6 +92,13 @@ export default function ContractDetail() {
   const updateCloseoutStatus = trpc.intCloseout.updateStatus.useMutation({
     onSuccess: () => { utils.intCloseout.getByContract.invalidate(); toast.success('Closeout status updated'); },
   });
+
+  // Track this record as recently viewed
+  useEffect(() => {
+    if (contract && contractId) {
+      addRecord({ type: 'contract', id: contractId, title: contract.title, route: `/app/contracts/${contractId}` });
+    }
+  }, [contract?.id]);
 
   if (!contractId) {
     return (
@@ -432,6 +443,13 @@ export default function ContractDetail() {
 
             {/* AI Workflow Buttons */}
             <AIWorkflowButtons context="contract" recordId={contractId} recordTitle={contract.title} />
+
+            {/* Record Notes */}
+            <RecordNotes recordType="contract" recordId={contractId!} />
+
+            {/* Record Timeline */}
+            <RecordTimeline recordType="contract" recordId={contractId!} />
+
             {/* AI Panel */}
             <AIGuidancePanel recordType="contract" recordId={contractId} context={`Managing contract: ${contract.title}`} title="AI Contract Assistance" />
 

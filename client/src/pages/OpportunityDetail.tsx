@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import PageLayout from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,9 @@ import { AIGuidancePanel } from '@/components/AIGuidancePanel';
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import { GuidancePanel } from '@/components/GuidancePanel';
 import PageGuide from "@/components/PageGuide";
+import RecordNotes from "@/components/RecordNotes";
+import RecordTimeline from "@/components/RecordTimeline";
+import { useRecentRecords } from "@/hooks/useRecentRecords";
 
 export default function OpportunityDetail() {
   const [, params] = useRoute('/app/opportunities/:id');
@@ -31,6 +34,7 @@ export default function OpportunityDetail() {
   const [carryForward, setCarryForward] = useState({ contacts: true, files: true, notes: true, tasks: false });
 
   const opportunityId = params?.id ? parseInt(params.id) : undefined;
+  const { addRecord } = useRecentRecords();
 
   const { data: opportunity, isLoading, error } = trpc.opportunities.get.useQuery(
     { id: opportunityId! },
@@ -92,6 +96,13 @@ export default function OpportunityDetail() {
       </PageLayout>
     );
   }
+
+  // Track this record as recently viewed
+  useEffect(() => {
+    if (opportunity && opportunityId) {
+      addRecord({ type: 'opportunity', id: opportunityId, title: opportunity.title, route: `/app/opportunities/${opportunityId}` });
+    }
+  }, [opportunity?.id]);
 
   const statusColors: Record<string, string> = {
     new: 'bg-blue-100 text-blue-800',
@@ -337,6 +348,12 @@ export default function OpportunityDetail() {
             {/* Rule-based Guidance Panel */}
             <AIWorkflowButtons context="opportunity" recordId={opportunityId} recordTitle={opportunity.title} />
             <GuidancePanel compact={true} showPreferences={false} />
+
+            {/* Record Notes */}
+            <RecordNotes recordType="opportunity" recordId={opportunityId} />
+
+            {/* Record Timeline */}
+            <RecordTimeline recordType="opportunity" recordId={opportunityId} />
 
             {/* AI Assistance Panel */}
             <AIGuidancePanel

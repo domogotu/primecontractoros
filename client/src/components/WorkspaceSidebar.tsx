@@ -8,7 +8,9 @@ import {
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
   Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Search, Globe, User,
+  CreditCard, FileCheck, Clock, Send, Zap, Download, AlertCircle, BarChart2,
 } from "lucide-react";
+import RecentRecordsSidebar from "./RecentRecordsSidebar";
 
 export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
@@ -35,6 +37,8 @@ export default function WorkspaceSidebar() {
         { icon: Briefcase, label: "Contract Hub", path: "/app/contract-hub" },
         { icon: GitBranch, label: "Operations", path: "/app/change-management" },
         { icon: DollarSign, label: "Finance", path: "/app/finance" },
+        { icon: DollarSign, label: "Invoices", path: "/app/invoices" },
+        { icon: DollarSign, label: "Payments", path: "/app/payments" },
         { icon: Archive, label: "Closeout", path: "/app/closeout" },
         { icon: Lightbulb, label: "Lessons Learned", path: "/app/lessons-learned" },
       ],
@@ -50,6 +54,8 @@ export default function WorkspaceSidebar() {
         { icon: Scale, label: "FAR/DFARS Reference", path: "/app/far-reference" },
         { icon: ShieldCheck, label: "Flowdown Review", path: "/app/flowdown-review" },
         { icon: DollarSign, label: "Rate Parity", path: "/app/rate-parity" },
+        { icon: FileCheck, label: "Obligations", path: "/app/obligations" },
+        { icon: FileCheck, label: "Consistency Check", path: "/app/consistency-check" },
       ],
     },
     {
@@ -63,6 +69,8 @@ export default function WorkspaceSidebar() {
         { icon: BarChart3, label: "Reports", path: "/app/reports" },
         { icon: AlertTriangle, label: "Alerts", path: "/app/alerts" },
         { icon: CheckSquare, label: "Tasks", path: "/app/tasks" },
+        { icon: AlertCircle, label: "Alerts & Tasks", path: "/app/alerts-tasks" },
+        { icon: MessageSquare, label: "Communication Log", path: "/app/communication-log" },
       ],
     },
     {
@@ -102,6 +110,14 @@ export default function WorkspaceSidebar() {
         { icon: Activity, label: "Diagnostics", path: "/app/diagnostics" },
         { icon: Webhook, label: "Webhooks", path: "/app/webhooks" },
         { icon: BookOpen, label: "Training", path: "/app/training" },
+        { icon: CreditCard, label: "Subscription", path: "/app/subscription" },
+        { icon: Bell, label: "Notifications", path: "/app/notifications" },
+        { icon: BarChart2, label: "Audit Log", path: "/app/audit-log" },
+        { icon: Download, label: "Export Data", path: "/app/export" },
+        { icon: Send, label: "Email Templates", path: "/app/email-templates" },
+        { icon: Globe, label: "External Viewers", path: "/app/external-viewers" },
+        { icon: Target, label: "Capability Statements", path: "/app/capability-statements" },
+        { icon: Zap, label: "Onboarding", path: "/app/onboarding" },
       ],
     },
   ];
@@ -155,6 +171,9 @@ export default function WorkspaceSidebar() {
             )}
           </div>
         ))}
+
+        {/* Recently Viewed Records */}
+        <RecentRecordsSidebar />
 
         {/* Bottom actions inside the scroll container so they are always reachable */}
         <div className="mt-4 mx-4 pt-4 border-t border-slate-800 space-y-1">

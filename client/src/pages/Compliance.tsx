@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFoo
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Compliance() {
   const [showForm, setShowForm] = useState(false);
@@ -80,6 +82,12 @@ export default function Compliance() {
         whatToDoNext={["Review open compliance items", "Update compliance status for active contracts", "Check FAR/DFARS requirements", "Run AI compliance review"]}
         relatedRecords={[{ label: "Contracts", path: "/app/contracts" }, { label: "Requirements", path: "/app/requirements" }, { label: "FAR Reference", path: "/app/far-reference" }]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="compliance" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="compliance" />
       {/* Create Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg">

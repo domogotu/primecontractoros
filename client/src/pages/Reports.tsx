@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import PageLayout from "@/components/PageLayout";
+import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
+import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 type ReportResult = {
   type: string;
@@ -132,6 +134,12 @@ export default function Reports() {
           { label: "Contracts", path: "/app/contracts" },
         ]}
       />
+
+      {/* Guidance Question Panel */}
+      <GuidanceQuestionPanel pageContext="reports" />
+
+      {/* Training Walkthrough */}
+      <TrainingWalkthrough pageContext="reports" />
 
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Reports</h1>

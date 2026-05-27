@@ -14,6 +14,7 @@ import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
 import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
 import { useMemo } from "react";
+import DashboardWidgets from "@/components/DashboardWidgets";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -371,6 +372,9 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500 mt-1">Active alerts needing attention.</p>
             </Card>
           </div>
+
+          {/* Efficiency & Pipeline Widgets */}
+          <DashboardWidgets />
 
           {/* Guidance Panel - Command Center */}
           <AIWorkflowButtons context="dashboard" />
