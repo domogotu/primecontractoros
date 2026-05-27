@@ -381,7 +381,7 @@ function WorkspaceTab() {
 function TeamTab() {
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member');
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const { data: myRole } = trpc.workspace.getMyRole.useQuery();
@@ -403,12 +403,12 @@ function TeamTab() {
     onSuccess: () => { toast({ title: 'Invite revoked' }); refetchInvites(); },
   });
 
-  const isOwner = myRole === 'owner';
+  const isOwner = myRole?.role === 'owner';
 
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail) return;
-    inviteMember.mutate({ email: inviteEmail, role: inviteRole });
+    inviteMember.mutate({ email: inviteEmail, role: inviteRole as 'admin' | 'member' | 'viewer' });
   };
 
   return (
@@ -443,7 +443,7 @@ function TeamTab() {
                   {isOwner && m.role !== 'owner' ? (
                     <select
                       value={m.role}
-                      onChange={e => updateRole.mutate({ userId: m.userId, role: e.target.value })}
+                      onChange={e => updateRole.mutate({ memberId: m.id, role: e.target.value as 'admin' | 'member' | 'viewer' })}
                       className="text-xs border border-slate-200 rounded px-2 py-1"
                     >
                       <option value="admin">Admin</option>
@@ -454,7 +454,7 @@ function TeamTab() {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 capitalize">{m.role}</span>
                   )}
                   {isOwner && m.role !== 'owner' && (
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 text-xs" onClick={() => removeMember.mutate({ userId: m.userId })}>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 text-xs" onClick={() => removeMember.mutate({ memberId: m.id })}>
                       Remove
                     </Button>
                   )}
@@ -531,7 +531,7 @@ function TeamTab() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Role</label>
-                <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select value={inviteRole} onChange={e => setInviteRole(e.target.value as 'admin' | 'member' | 'viewer')} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="member">Member</option>
                   <option value="admin">Admin</option>
                   <option value="viewer">Viewer</option>
@@ -647,12 +647,19 @@ function BillingTab() {
 
   if (statusLoading || plansLoading) return <div className="text-center py-12 text-slate-500">Loading billing...</div>;
 
-  const currentPlan = status?.plan || 'free';
-  const isActive = status?.status === 'active';
+  const sub = status?.subscription;
+  const currentPlan = sub?.plan?.name || 'free';
+  const currentPlanId = sub?.planId || null;
+  const isActive = sub?.status === 'active';
 
-  const handleUpgrade = async (planId: string) => {
+  const handleUpgrade = async (planId: number) => {
     try {
-      const result = await createCheckout.mutateAsync({ planId, billingCycle });
+      const result = await createCheckout.mutateAsync({
+        planId,
+        successUrl: window.location.origin + '/app/settings?tab=billing&success=1',
+        cancelUrl: window.location.origin + '/app/settings?tab=billing',
+        billingInterval: billingCycle === 'annual' ? 'year' : 'month',
+      });
       if (result?.url) window.location.href = result.url;
       else toast.info('Checkout session created. Check for redirect.');
     } catch {
@@ -690,13 +697,13 @@ function BillingTab() {
           <div>
             <p className="text-base font-semibold text-slate-900 capitalize">{currentPlan} Plan</p>
             <p className="text-sm text-slate-500 mt-0.5">
-              Status: <span className={`font-medium ${isActive ? 'text-green-600' : 'text-amber-600'}`}>{status?.status || 'Free'}</span>
-              {status?.currentPeriodEnd && ` — Renews ${new Date(status.currentPeriodEnd).toLocaleDateString()}`}
+              Status: <span className={`font-medium ${isActive ? 'text-green-600' : 'text-amber-600'}`}>{sub?.status || 'Free'}</span>
+              {sub?.currentPeriodEnd && ` — Renews ${new Date(sub.currentPeriodEnd).toLocaleDateString()}`}
             </p>
           </div>
           {isActive && currentPlan !== 'free' && (
             <div className="flex gap-2">
-              {status?.cancelAtPeriodEnd ? (
+              {sub?.cancelAtPeriodEnd ? (
                 <Button variant="outline" onClick={handleReactivate} disabled={reactivateSub.isPending}>Reactivate</Button>
               ) : (
                 <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleCancel} disabled={cancelSub.isPending}>Cancel Plan</Button>
@@ -718,7 +725,7 @@ function BillingTab() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {plans.map((plan: any) => (
-              <div key={plan.id} className={`border rounded-lg p-5 ${plan.id === currentPlan ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}>
+              <div key={plan.id} className={`border rounded-lg p-5 ${plan.id === currentPlanId ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}>
                 <h3 className="text-base font-semibold text-slate-900 capitalize">{plan.name || plan.id}</h3>
                 <p className="text-2xl font-bold text-slate-900 mt-2">
                   ${billingCycle === 'annual' ? Math.round((plan.priceMonthly || 0) * 0.8) : plan.priceMonthly || 0}
@@ -735,11 +742,11 @@ function BillingTab() {
                 )}
                 <Button
                   className="w-full mt-4"
-                  variant={plan.id === currentPlan ? 'outline' : 'default'}
-                  disabled={plan.id === currentPlan || createCheckout.isPending}
+                  variant={plan.id === currentPlanId ? 'outline' : 'default'}
+                  disabled={plan.id === currentPlanId || createCheckout.isPending}
                   onClick={() => handleUpgrade(plan.id)}
                 >
-                  {plan.id === currentPlan ? 'Current Plan' : 'Upgrade'}
+                  {plan.id === currentPlanId ? 'Current Plan' : 'Upgrade'}
                 </Button>
               </div>
             ))}
