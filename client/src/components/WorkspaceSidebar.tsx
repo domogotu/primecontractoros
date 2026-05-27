@@ -4,11 +4,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Target, FileText, Briefcase, DollarSign, Building2, Users,
-  Folder, History, Wand2, BookOpen, GitBranch, ShieldCheck, Mail, UserPlus,
+  Folder, History, Wand2, BookOpen, ShieldCheck, UserPlus,
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
   Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
-  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Search, Globe, User,
-  CreditCard, FileCheck, Clock, Send, Zap, Download, AlertCircle, BarChart2,
+  Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Globe, User,
+  CreditCard, FileCheck, Send, Download, AlertCircle, BarChart2, Search,
+  GitBranch, Zap, Clock,
 } from "lucide-react";
 import RecentRecordsSidebar from "./RecentRecordsSidebar";
 
@@ -16,7 +17,7 @@ export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [expandedSections, setExpandedSections] = useState<string[]>(["setup", "workflow"]);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["setup", "lifecycle"]);
 
   const toggleSection = (id: string) => {
     setExpandedSections((prev) =>
@@ -25,105 +26,137 @@ export default function WorkspaceSidebar() {
   };
 
   const sections = [
+    // ── Setup ──────────────────────────────────────────────────────────────
     {
       id: "setup",
       label: "Setup",
       items: [
-        { icon: Building2, label: "Business Profile", path: "/app/business-profile" },
-        { icon: User, label: "Account Settings", path: "/app/account-settings" },
+        { icon: Building2,  label: "Business Profile",  path: "/app/business-profile" },
+        { icon: User,       label: "Account Settings",  path: "/app/account-settings" },
       ],
     },
+
+    // ── Core Workflow / Lifecycle ───────────────────────────────────────────
     {
-      id: "workflow",
-      label: "Workflow",
+      id: "lifecycle",
+      label: "Core Workflow",
       items: [
-        { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
-        { icon: Target, label: "Opportunities", path: "/app/opportunities" },
-        { icon: Globe, label: "SAM.gov Search", path: "/app/sam-search" },
-        { icon: FileText, label: "Proposals", path: "/app/proposals" },
-        { icon: Briefcase, label: "Contracts", path: "/app/contracts" },
-        { icon: Briefcase, label: "Contract Hub", path: "/app/contract-hub" },
-        { icon: GitBranch, label: "Operations", path: "/app/change-management" },
-        { icon: DollarSign, label: "Finance", path: "/app/finance" },
-        { icon: DollarSign, label: "Invoices", path: "/app/invoices" },
-        { icon: DollarSign, label: "Payments", path: "/app/payments" },
-        { icon: Archive, label: "Closeout", path: "/app/closeout" },
-        { icon: Lightbulb, label: "Lessons Learned", path: "/app/lessons-learned" },
+        { icon: LayoutDashboard, label: "Dashboard",       path: "/app/dashboard" },
+        { icon: Target,          label: "Opportunities",   path: "/app/opportunities" },
+        { icon: FileText,        label: "Proposals",       path: "/app/proposals" },
+        { icon: Briefcase,       label: "Contracts",       path: "/app/contracts" },
+        { icon: DollarSign,      label: "Invoices",        path: "/app/invoices" },
+        { icon: CreditCard,      label: "Payments",        path: "/app/payments" },
+        { icon: Archive,         label: "Closeout",        path: "/app/closeout" },
+        { icon: Lightbulb,       label: "Lessons Learned", path: "/app/lessons-learned" },
       ],
     },
+
+    // ── Operations ─────────────────────────────────────────────────────────
+    {
+      id: "operations",
+      label: "Operations",
+      items: [
+        { icon: CheckSquare,  label: "Tasks",           path: "/app/tasks" },
+        { icon: Calendar,     label: "Deadlines",       path: "/app/deadlines" },
+        { icon: Package,      label: "Deliverables",    path: "/app/deliverables" },
+        { icon: Users,        label: "Contacts",        path: "/app/contacts" },
+        { icon: Folder,       label: "Files",           path: "/app/files" },
+        { icon: Building2,    label: "Subcontractors",  path: "/app/subcontractors" },
+        { icon: Users,        label: "Vendors",         path: "/app/vendors" },
+        { icon: Building2,    label: "Clients",         path: "/app/clients" },
+        { icon: MessageSquare,label: "Messages",        path: "/app/messages" },
+        { icon: GitBranch,    label: "Change Management", path: "/app/change-management" },
+      ],
+    },
+
+    // ── Compliance ─────────────────────────────────────────────────────────
     {
       id: "compliance",
       label: "Compliance",
       items: [
-        { icon: ShieldCheck, label: "Compliance Matrix", path: "/app/compliance" },
-        { icon: ClipboardList, label: "Requirements", path: "/app/requirements" },
-        { icon: Package, label: "Deliverables", path: "/app/deliverables" },
-        { icon: Calendar, label: "Deadlines", path: "/app/deadlines" },
-        { icon: Scale, label: "FAR/DFARS Reference", path: "/app/far-reference" },
-        { icon: ShieldCheck, label: "Flowdown Review", path: "/app/flowdown-review" },
-        { icon: DollarSign, label: "Rate Parity", path: "/app/rate-parity" },
-        { icon: FileCheck, label: "Obligations", path: "/app/obligations" },
-        { icon: FileCheck, label: "Consistency Check", path: "/app/consistency-check" },
+        { icon: ShieldCheck,  label: "Compliance Matrix",   path: "/app/compliance" },
+        { icon: DollarSign,   label: "Rate Parity",         path: "/app/rate-parity" },
+        { icon: FileCheck,    label: "Obligations",         path: "/app/obligations" },
+        { icon: Scale,        label: "FAR/DFARS Reference", path: "/app/far-reference" },
+        { icon: ShieldCheck,  label: "Flowdown Review",     path: "/app/flowdown-review" },
+        { icon: ClipboardList,label: "Requirements",        path: "/app/requirements" },
+        { icon: FileCheck,    label: "Consistency Check",   path: "/app/consistency-check" },
       ],
     },
+
+    // ── Finance ────────────────────────────────────────────────────────────
     {
-      id: "ai-insights",
-      label: "AI & Insights",
+      id: "finance",
+      label: "Finance",
       items: [
-        { icon: Sparkles, label: "AI Findings", path: "/app/ai-findings" },
-        { icon: Brain, label: "AI Contract Review", path: "/app/ai-contract-review" },
-        { icon: Sparkles, label: "AI Suggestions", path: "/app/ai-suggestions" },
-        { icon: Activity, label: "AI Runs", path: "/app/ai-runs" },
-        { icon: BarChart3, label: "Reports", path: "/app/reports" },
-        { icon: AlertTriangle, label: "Alerts", path: "/app/alerts" },
-        { icon: CheckSquare, label: "Tasks", path: "/app/tasks" },
-        { icon: AlertCircle, label: "Alerts & Tasks", path: "/app/alerts-tasks" },
-        { icon: MessageSquare, label: "Communication Log", path: "/app/communication-log" },
+        { icon: BarChart3,  label: "Finance Overview", path: "/app/finance" },
+        { icon: DollarSign, label: "Billing",          path: "/app/billing" },
+        { icon: CreditCard, label: "Subscription",     path: "/app/subscription" },
       ],
     },
+
+    // ── Intelligence ───────────────────────────────────────────────────────
     {
-      id: "partners",
-      label: "Partners",
+      id: "intelligence",
+      label: "Intelligence",
       items: [
-        { icon: Building2, label: "Subcontractors", path: "/app/subcontractors" },
-        { icon: Users, label: "Vendors", path: "/app/vendors" },
-        { icon: Building2, label: "Clients", path: "/app/clients" },
-        { icon: Users, label: "Contacts", path: "/app/contacts" },
-        { icon: MessageSquare, label: "Messages", path: "/app/messages" },
+        { icon: Search,    label: "SAM.gov Search",     path: "/app/sam-search" },
+        { icon: Brain,     label: "AI Contract Review", path: "/app/ai-contract-review" },
+        { icon: Sparkles,  label: "AI Findings",        path: "/app/ai-findings" },
+        { icon: Sparkles,  label: "AI Suggestions",     path: "/app/ai-suggestions" },
+        { icon: Activity,  label: "AI Runs",            path: "/app/ai-runs" },
+        { icon: Wand2,     label: "Doc Generator",      path: "/app/document-generation" },
+        { icon: BarChart3, label: "Reports",            path: "/app/reports" },
+        { icon: Target,    label: "Capability Statements", path: "/app/capability-statements" },
+        { icon: FileText,  label: "Proposal Frameworks", path: "/app/proposal-frameworks" },
+        { icon: Briefcase, label: "Contract Hub",       path: "/app/contract-hub" },
       ],
     },
+
+    // ── Communication ──────────────────────────────────────────────────────
+    {
+      id: "communication",
+      label: "Communication",
+      items: [
+        { icon: AlertCircle,  label: "Alerts & Tasks",     path: "/app/alerts-tasks" },
+        { icon: AlertTriangle,label: "Alerts",             path: "/app/alerts" },
+        { icon: MessageSquare,label: "Communication Log",  path: "/app/communication-log" },
+        { icon: Send,         label: "Email Templates",    path: "/app/email-templates" },
+        { icon: Bell,         label: "Notifications",      path: "/app/notifications" },
+        { icon: Globe,        label: "External Viewers",   path: "/app/external-viewers" },
+      ],
+    },
+
+    // ── Documents ──────────────────────────────────────────────────────────
     {
       id: "documents",
       label: "Documents",
       items: [
-        { icon: Folder, label: "Files", path: "/app/files" },
-        { icon: History, label: "Versions", path: "/app/document-versions" },
-        { icon: Wand2, label: "Doc Generator", path: "/app/document-generation" },
-        { icon: FileText, label: "Templates", path: "/app/templates" },
-        { icon: BookOpen, label: "Handbook", path: "/app/handbook" },
+        { icon: History,  label: "Document Versions", path: "/app/document-versions" },
+        { icon: FileText, label: "Templates",         path: "/app/templates" },
+        { icon: BookOpen, label: "Handbook",          path: "/app/handbook" },
       ],
     },
+
+    // ── Administration ─────────────────────────────────────────────────────
     {
       id: "admin",
       label: "Administration",
       items: [
-        { icon: Settings, label: "Settings", path: "/app/settings" },
-        { icon: Users, label: "Team Members", path: "/app/team" },
-        { icon: Bell, label: "Notification Preferences", path: "/app/notification-preferences" },
-        { icon: Users, label: "Users", path: "/app/users" },
-        { icon: UserPlus, label: "Invites", path: "/app/invites" },
-        { icon: Crown, label: "Plan Features", path: "/app/plan-features" },
-        { icon: Activity, label: "Diagnostics", path: "/app/diagnostics" },
-        { icon: Webhook, label: "Webhooks", path: "/app/webhooks" },
-        { icon: BookOpen, label: "Training", path: "/app/training" },
-        { icon: CreditCard, label: "Subscription", path: "/app/subscription" },
-        { icon: Bell, label: "Notifications", path: "/app/notifications" },
-        { icon: BarChart2, label: "Audit Log", path: "/app/audit-log" },
-        { icon: Download, label: "Export Data", path: "/app/export" },
-        { icon: Send, label: "Email Templates", path: "/app/email-templates" },
-        { icon: Globe, label: "External Viewers", path: "/app/external-viewers" },
-        { icon: Target, label: "Capability Statements", path: "/app/capability-statements" },
-        { icon: Zap, label: "Onboarding", path: "/app/onboarding" },
+        { icon: Settings,  label: "Settings",               path: "/app/settings" },
+        { icon: BookOpen,  label: "Training",               path: "/app/training" },
+        { icon: Users,     label: "Team Members",           path: "/app/team" },
+        { icon: Users,     label: "Users",                  path: "/app/users" },
+        { icon: UserPlus,  label: "Invites",                path: "/app/invites" },
+        { icon: BarChart2, label: "Audit Log",              path: "/app/audit-log" },
+        { icon: Webhook,   label: "Webhooks",               path: "/app/webhooks" },
+        { icon: Download,  label: "Export Data",            path: "/app/export" },
+        { icon: Bell,      label: "Notification Preferences", path: "/app/notification-preferences" },
+        { icon: Crown,     label: "Plan Features",          path: "/app/plan-features" },
+        { icon: Activity,  label: "Diagnostics",            path: "/app/diagnostics" },
+        { icon: Zap,       label: "Onboarding",             path: "/app/onboarding" },
+        { icon: Clock,     label: "Demo Mode",              path: "/app/demo-mode" },
       ],
     },
   ];
