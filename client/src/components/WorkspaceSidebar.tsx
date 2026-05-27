@@ -16,7 +16,7 @@ export default function WorkspaceSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
-  const [expandedSections, setExpandedSections] = useState<string[]>(["workflow"]);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["setup", "workflow"]);
 
   const toggleSection = (id: string) => {
     setExpandedSections((prev) =>
@@ -25,6 +25,14 @@ export default function WorkspaceSidebar() {
   };
 
   const sections = [
+    {
+      id: "setup",
+      label: "Setup",
+      items: [
+        { icon: Building2, label: "Business Profile", path: "/app/business-profile" },
+        { icon: User, label: "Account Settings", path: "/app/account-settings" },
+      ],
+    },
     {
       id: "workflow",
       label: "Workflow",
@@ -99,8 +107,6 @@ export default function WorkspaceSidebar() {
       id: "admin",
       label: "Administration",
       items: [
-        { icon: Building2, label: "Business Profile", path: "/app/business-profile" },
-        { icon: User, label: "Account Settings", path: "/app/account-settings" },
         { icon: Settings, label: "Settings", path: "/app/settings" },
         { icon: Users, label: "Team Members", path: "/app/team" },
         { icon: Bell, label: "Notification Preferences", path: "/app/notification-preferences" },
