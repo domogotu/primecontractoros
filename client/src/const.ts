@@ -7,11 +7,22 @@ export const getLoginUrl = () => {
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
-  const url = new URL(`${oauthPortalUrl}/app-auth`);
-  url.searchParams.set("appId", appId);
-  url.searchParams.set("redirectUri", redirectUri);
-  url.searchParams.set("state", state);
-  url.searchParams.set("type", "signIn");
+  // If VITE_OAUTH_PORTAL_URL is not configured (e.g. running outside the Manus
+  // WebDev platform), fall back to the current origin so the app can still load
+  // and show the login page without crashing.
+  const baseUrl = oauthPortalUrl || window.location.origin;
 
-  return url.toString();
+  try {
+    const url = new URL(`${baseUrl}/app-auth`);
+    if (appId) {
+      url.searchParams.set("appId", appId);
+    }
+    url.searchParams.set("redirectUri", redirectUri);
+    url.searchParams.set("state", state);
+    url.searchParams.set("type", "signIn");
+    return url.toString();
+  } catch {
+    // Last-resort fallback: return a relative login path
+    return `/login`;
+  }
 };
