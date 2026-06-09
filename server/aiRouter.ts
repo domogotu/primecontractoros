@@ -12,9 +12,149 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { aiRuns, aiFindings, aiSuggestions, aiExtractedObligations, aiUsageLogs, aiFindingHistory } from "../drizzle/schema";
+import {
+  aiRuns, aiFindings, aiSuggestions, aiExtractedObligations, aiUsageLogs, aiFindingHistory,
+  type AiFinding, type AiExtractedObligation,
+} from "../drizzle/schema";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import { runContractScan, runOpportunityReview, runProposalReview, runFileAnalysis, runInvoiceReview, runWorkspaceSummary } from "./aiEngine";
+import {
+  createTask,
+  createDeliverable,
+  createDeadline,
+  createObligation,
+  createComplianceItem,
+  createContractRequirement,
+  createAlert,
+} from "./entityDb";
+import { logAudit } from "./featureRouter";
+
+// ============================================================
+// Conversion helpers — Phase 1
+// ============================================================
+
+/**
+ * Convert an approved AI finding into the correct live downstream record.
+ * Returns { recordType, recordId } or null on failure.
+ */
+async function convertFindingToLiveRecord(
+  finding: AiFinding,
+  approvedBy: number
+): Promise<{ recordType: string; recordId: number } | null> {
+  const workspaceId = finding.workspaceId;
+  const contractId = finding.contractId ?? undefined;
+  const title = finding.title;
+  const description = finding.summary || finding.practicalMeaning || undefined;
+
+  try {
+    switch (finding.findingType) {
+      case "requirement": {
+        if (contractId) {
+          const { id } = await createContractRequirement({ contractId, workspaceId, title, description, source: finding.sourceLocation ?? undefined });
+          return { recordType: "contractRequirement", recordId: id };
+        }
+        const { id } = await createTask({ workspaceId, title: `[Requirement] ${title}`, description, priority: "high", linkedRecordType: "aiFinding", linkedRecordId: finding.id });
+        return { recordType: "task", recordId: id };
+      }
+      case "deliverable": {
+        if (contractId) {
+          const { id } = await createDeliverable({ workspaceId, contractId, title, description, status: "not_started" });
+          return { recordType: "deliverable", recordId: id };
+        }
+        const { id } = await createTask({ workspaceId, title: `[Deliverable] ${title}`, description, priority: "high", linkedRecordType: "aiFinding", linkedRecordId: finding.id });
+        return { recordType: "task", recordId: id };
+      }
+      case "deadline": {
+        const { id } = await createDeadline({ workspaceId, title, description, dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), linkedRecordType: "aiFinding", linkedRecordId: finding.id, priority: "medium" });
+        return { recordType: "deadline", recordId: id };
+      }
+      case "compliance":
+      case "flowdown": {
+        const { id } = await createComplianceItem({ workspaceId, contractId, title, description, category: finding.findingType === "flowdown" ? "flowdown" : "compliance" });
+        return { recordType: "complianceItem", recordId: id };
+      }
+      case "billing_term": {
+        if (contractId) {
+          const { id } = await createObligation({ workspaceId, contractId, title, description, obligationType: "financial" });
+          return { recordType: "obligation", recordId: id };
+        }
+        const { id } = await createTask({ workspaceId, title: `[Billing Term] ${title}`, description, priority: "medium", linkedRecordType: "aiFinding", linkedRecordId: finding.id });
+        return { recordType: "task", recordId: id };
+      }
+      default: {
+        const { id } = await createTask({ workspaceId, title: `[AI Finding] ${title}`, description, priority: "medium", linkedRecordType: "aiFinding", linkedRecordId: finding.id });
+        return { recordType: "task", recordId: id };
+      }
+    }
+  } catch (err) {
+    console.error("convertFindingToLiveRecord error:", err);
+    return null;
+  }
+}
+
+/**
+ * Convert an approved AI extracted obligation into the correct live downstream record.
+ * Returns { recordType, recordId } or null on failure.
+ */
+async function convertObligationToLiveRecord(
+  obligation: AiExtractedObligation,
+  approvedBy: number
+): Promise<{ recordType: string; recordId: number } | null> {
+  const workspaceId = obligation.workspaceId;
+  const title = obligation.title;
+  const description = obligation.description ?? undefined;
+  const dueDate = obligation.dueDate ? new Date(obligation.dueDate) : undefined;
+
+  // Resolve contractId from the parent finding
+  let contractId: number | undefined;
+  try {
+    const db = await getDb();
+    if (db) {
+      const [parentFinding] = await db.select().from(aiFindings).where(eq(aiFindings.id, obligation.findingId));
+      contractId = parentFinding?.contractId ?? undefined;
+    }
+  } catch { /* contractId stays undefined */ }
+
+  try {
+    switch (obligation.obligationType) {
+      case "requirement": {
+        if (contractId) {
+          const { id } = await createContractRequirement({ contractId, workspaceId, title, description });
+          return { recordType: "contractRequirement", recordId: id };
+        }
+        const { id } = await createTask({ workspaceId, title: `[Requirement] ${title}`, description, dueDate, priority: "high", linkedRecordType: "aiObligation", linkedRecordId: obligation.id });
+        return { recordType: "task", recordId: id };
+      }
+      case "deliverable": {
+        if (contractId) {
+          const { id } = await createDeliverable({ workspaceId, contractId, title, description, dueDate, status: "not_started" });
+          return { recordType: "deliverable", recordId: id };
+        }
+        const { id } = await createTask({ workspaceId, title: `[Deliverable] ${title}`, description, dueDate, priority: "high", linkedRecordType: "aiObligation", linkedRecordId: obligation.id });
+        return { recordType: "task", recordId: id };
+      }
+      case "deadline": {
+        const { id } = await createDeadline({ workspaceId, title, description, dueDate: dueDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), linkedRecordType: "aiObligation", linkedRecordId: obligation.id, priority: "medium" });
+        return { recordType: "deadline", recordId: id };
+      }
+      case "compliance_item": {
+        const { id } = await createComplianceItem({ workspaceId, contractId, title, description, dueDate });
+        return { recordType: "complianceItem", recordId: id };
+      }
+      case "alert": {
+        const { id } = await createAlert({ workspaceId, title, message: description, type: "warning", linkedRecordType: "aiObligation", linkedRecordId: obligation.id });
+        return { recordType: "alert", recordId: id };
+      }
+      default: {
+        const { id } = await createTask({ workspaceId, title, description, dueDate, priority: "medium", linkedRecordType: "aiObligation", linkedRecordId: obligation.id });
+        return { recordType: "task", recordId: id };
+      }
+    }
+  } catch (err) {
+    console.error("convertObligationToLiveRecord error:", err);
+    return null;
+  }
+}
 
 export const aiRouter = router({
   // ============================================================
@@ -144,13 +284,14 @@ export const aiRouter = router({
         reason: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const [finding] = await (await getDb())!.select().from(aiFindings).where(eq(aiFindings.id, input.findingId));
+        const db = await getDb();
+        const [finding] = await db!.select().from(aiFindings).where(eq(aiFindings.id, input.findingId));
         if (!finding) throw new Error("Finding not found");
 
         const oldState = finding.reviewState;
 
         // Log history
-        await (await getDb())!.insert(aiFindingHistory).values({
+        await db!.insert(aiFindingHistory).values({
           findingId: input.findingId,
           oldState,
           newState: input.newState,
@@ -158,37 +299,77 @@ export const aiRouter = router({
           reason: input.reason,
         });
 
-        // Update the finding
-        const updateData: any = {
-          reviewState: input.newState,
-        };
+        const updateData: any = { reviewState: input.newState };
+        let createdRecordType: string | null = null;
+        let createdRecordId: number | null = null;
+
         if (input.newState === "approved") {
           updateData.reviewedBy = ctx.user.id;
           updateData.reviewedAt = new Date();
+
+          // Phase 1: Create the live downstream record
+          const result = await convertFindingToLiveRecord(finding, ctx.user.id);
+          if (result) {
+            createdRecordType = result.recordType;
+            createdRecordId = result.recordId;
+            updateData.approvedLiveObjectType = result.recordType;
+            updateData.approvedLiveObjectId = result.recordId;
+          }
+
+          try {
+            await logAudit(finding.workspaceId, ctx.user.id, "update", "aiFinding", input.findingId, {
+              action: "approved", reason: input.reason, createdRecordType, createdRecordId,
+            });
+          } catch {}
         }
 
-        await (await getDb())!.update(aiFindings).set(updateData).where(eq(aiFindings.id, input.findingId));
-        return { success: true, oldState, newState: input.newState };
+        await db!.update(aiFindings).set(updateData).where(eq(aiFindings.id, input.findingId));
+        return { success: true, oldState, newState: input.newState, createdRecordType, createdRecordId };
       }),
 
     bulkApprove: protectedProcedure
       .input(z.object({ findingIds: z.array(z.number()) }))
       .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        const results: Array<{ findingId: number; recordType: string | null; recordId: number | null }> = [];
+
         for (const id of input.findingIds) {
-          await (await getDb())!.insert(aiFindingHistory).values({
+          const [finding] = await db!.select().from(aiFindings).where(eq(aiFindings.id, id));
+          if (!finding) continue;
+
+          await db!.insert(aiFindingHistory).values({
             findingId: id,
-            oldState: "unreviewed",
+            oldState: finding.reviewState ?? "unreviewed",
             newState: "approved",
             changedBy: ctx.user.id,
             reason: "Bulk approved",
           });
-          await (await getDb())!.update(aiFindings).set({
-            reviewState: "approved",
-            reviewedBy: ctx.user.id,
-            reviewedAt: new Date(),
-          }).where(eq(aiFindings.id, id));
+
+          const updateData: any = { reviewState: "approved", reviewedBy: ctx.user.id, reviewedAt: new Date() };
+          let createdRecordType: string | null = null;
+          let createdRecordId: number | null = null;
+
+          // Phase 1: Create the live downstream record
+          const result = await convertFindingToLiveRecord(finding, ctx.user.id);
+          if (result) {
+            createdRecordType = result.recordType;
+            createdRecordId = result.recordId;
+            updateData.approvedLiveObjectType = result.recordType;
+            updateData.approvedLiveObjectId = result.recordId;
+          }
+
+          await db!.update(aiFindings).set(updateData).where(eq(aiFindings.id, id));
+
+          try {
+            await logAudit(finding.workspaceId, ctx.user.id, "update", "aiFinding", id, {
+              action: "bulk_approved", createdRecordType, createdRecordId,
+            });
+          } catch {}
+
+          results.push({ findingId: id, recordType: createdRecordType, recordId: createdRecordId });
         }
-        return { success: true, count: input.findingIds.length };
+
+        return { success: true, count: input.findingIds.length, results };
       }),
 
     markStale: protectedProcedure
@@ -266,13 +447,32 @@ export const aiRouter = router({
     approve: protectedProcedure
       .input(z.object({ obligationId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        await (await getDb())!.update(aiExtractedObligations).set({
+        const db = await getDb();
+        const [obligation] = await db!.select().from(aiExtractedObligations).where(eq(aiExtractedObligations.id, input.obligationId));
+        if (!obligation) throw new Error("Obligation not found");
+
+        // Phase 1: Create the live downstream record
+        const result = await convertObligationToLiveRecord(obligation, ctx.user.id);
+
+        const updateData: any = {
           approvalState: "approved",
           approvedBy: ctx.user.id,
           approvedAt: new Date(),
-        }).where(eq(aiExtractedObligations.id, input.obligationId));
-        // TODO: Create the actual live record (task, deadline, requirement, etc.) based on obligationType
-        return { success: true };
+        };
+        if (result) {
+          updateData.createdRecordType = result.recordType;
+          updateData.createdRecordId = result.recordId;
+        }
+
+        await db!.update(aiExtractedObligations).set(updateData).where(eq(aiExtractedObligations.id, input.obligationId));
+
+        try {
+          await logAudit(obligation.workspaceId, ctx.user.id, "update", "aiObligation", input.obligationId, {
+            action: "approved", createdRecordType: result?.recordType ?? null, createdRecordId: result?.recordId ?? null,
+          });
+        } catch {}
+
+        return { success: true, createdRecordType: result?.recordType ?? null, createdRecordId: result?.recordId ?? null };
       }),
 
     reject: protectedProcedure
@@ -287,14 +487,34 @@ export const aiRouter = router({
     bulkApprove: protectedProcedure
       .input(z.object({ obligationIds: z.array(z.number()) }))
       .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        const results: Array<{ obligationId: number; recordType: string | null; recordId: number | null }> = [];
+
         for (const id of input.obligationIds) {
-          await (await getDb())!.update(aiExtractedObligations).set({
-            approvalState: "approved",
-            approvedBy: ctx.user.id,
-            approvedAt: new Date(),
-          }).where(eq(aiExtractedObligations.id, id));
+          const [obligation] = await db!.select().from(aiExtractedObligations).where(eq(aiExtractedObligations.id, id));
+          if (!obligation) continue;
+
+          // Phase 1: Create the live downstream record
+          const result = await convertObligationToLiveRecord(obligation, ctx.user.id);
+
+          const updateData: any = { approvalState: "approved", approvedBy: ctx.user.id, approvedAt: new Date() };
+          if (result) {
+            updateData.createdRecordType = result.recordType;
+            updateData.createdRecordId = result.recordId;
+          }
+
+          await db!.update(aiExtractedObligations).set(updateData).where(eq(aiExtractedObligations.id, id));
+
+          try {
+            await logAudit(obligation.workspaceId, ctx.user.id, "update", "aiObligation", id, {
+              action: "bulk_approved", createdRecordType: result?.recordType ?? null, createdRecordId: result?.recordId ?? null,
+            });
+          } catch {}
+
+          results.push({ obligationId: id, recordType: result?.recordType ?? null, recordId: result?.recordId ?? null });
         }
-        return { success: true, count: input.obligationIds.length };
+
+        return { success: true, count: input.obligationIds.length, results };
       }),
   }),
 
