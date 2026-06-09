@@ -77,7 +77,7 @@ export default function ContractHubDetail() {
 
       {/* Contract Files Section */}
       <Card className="mb-6">
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Folder className="w-4 h-4" /> Contract Files & Governing Documents</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FolderOpen className="w-4 h-4" /> Contract Files & Governing Documents</CardTitle></CardHeader>
         <CardContent>
           {contractId && <ContractFiles contractId={contractId} />}
         </CardContent>
