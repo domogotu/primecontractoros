@@ -11,6 +11,8 @@ import {
   templates,
   closeoutRecords,
   closeoutChecklistItems,
+  closeoutBlockingItems,
+  closeoutEvidence,
   lessonsLearned,
   capabilityStatements,
   contracts,
@@ -705,11 +707,26 @@ export const closeoutRouter = router({
         .where(eq(closeoutChecklistItems.closeoutId, record.id))
         .orderBy(closeoutChecklistItems.sortOrder);
 
+      const blockers = await db
+        .select()
+        .from(closeoutBlockingItems)
+        .where(and(eq(closeoutBlockingItems.closeoutId, record.id), eq(closeoutBlockingItems.workspaceId, workspaceId)))
+        .orderBy(desc(closeoutBlockingItems.createdAt));
+
+      const evidence = await db
+        .select()
+        .from(closeoutEvidence)
+        .where(and(eq(closeoutEvidence.closeoutId, record.id), eq(closeoutEvidence.workspaceId, workspaceId)));
+
       const completedCount = items.filter((i) => i.completed).length;
       const totalCount = items.length;
       const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+      const requiredItems = items.filter((i) => i.required);
+      const requiredCompleted = requiredItems.filter((i) => i.completed).length;
+      const unresolvedBlockers = blockers.filter((b) => b.status === "open");
+      const canComplete = requiredCompleted === requiredItems.length && unresolvedBlockers.length === 0;
 
-      return { ...record, items, completedCount, totalCount, completionPercentage };
+      return { ...record, items, blockers, evidence, completedCount, totalCount, completionPercentage, requiredCompleted, requiredTotal: requiredItems.length, unresolvedBlockers: unresolvedBlockers.length, canComplete };
     }),
 
   initiate: protectedProcedure
@@ -732,22 +749,23 @@ export const closeoutRouter = router({
         workspaceId,
         contractId: input.contractId,
         status: "in_progress",
+        initiatedBy: ctx.user?.id || null,
       });
 
       const closeoutId = Number(record.insertId);
 
-      // Create default checklist items
+      // Create default checklist items (FAR 4.804 compliant)
       const defaultItems = [
-        { label: "Final invoice submitted", description: "Submit the final invoice for all remaining work performed" },
-        { label: "All deliverables accepted", description: "Confirm all contract deliverables have been submitted and accepted by the government" },
-        { label: "Government property returned", description: "Return all government-furnished property and equipment" },
-        { label: "Subcontractor payments complete", description: "Verify all subcontractor invoices are paid in full" },
-        { label: "Final report submitted", description: "Submit the final technical/performance report" },
-        { label: "Security clearances terminated", description: "Process termination of any security clearances associated with the contract" },
-        { label: "Contract files archived", description: "Archive all contract documentation per retention requirements" },
-        { label: "Lessons learned documented", description: "Complete post-contract lessons learned review" },
-        { label: "Release of claims signed", description: "Execute the release of claims document" },
-        { label: "Final modification processed", description: "Process any final contract modifications (de-obligation of funds, etc.)" },
+        { label: "Final Deliverable Verification", description: "Verify all contract deliverables have been submitted and accepted by the government.", category: "Deliverables", required: true },
+        { label: "Final Invoice Submission", description: "Submit the final invoice including all remaining billable work and any outstanding costs.", category: "Financial", required: true },
+        { label: "Government Property Disposition", description: "Account for and return or dispose of all government-furnished property (GFP) and equipment.", category: "Property", required: true },
+        { label: "Subcontractor Closeout", description: "Ensure all subcontractors have completed their work, submitted final invoices, and released claims.", category: "Subcontracts", required: true },
+        { label: "Patent and Royalty Clearance", description: "File required patent reports and resolve any royalty obligations under the contract.", category: "IP/Legal", required: false },
+        { label: "Final Compliance Review", description: "Conduct final review of all compliance requirements including FAR/DFARS clauses.", category: "Compliance", required: true },
+        { label: "Release of Claims", description: "Prepare and submit the contractor release of claims document to the Contracting Officer.", category: "Legal", required: true },
+        { label: "Final Audit Preparation", description: "Prepare documentation for potential DCAA audit of contract costs and billing.", category: "Audit", required: false },
+        { label: "Record Retention Plan", description: "Establish record retention schedule per FAR 4.703 (minimum 3 years after final payment).", category: "Records", required: true },
+        { label: "Lessons Learned Documentation", description: "Document lessons learned, performance metrics, and recommendations for future contracts.", category: "Knowledge", required: false },
       ];
 
       for (let i = 0; i < defaultItems.length; i++) {
@@ -755,11 +773,13 @@ export const closeoutRouter = router({
           closeoutId,
           label: defaultItems[i].label,
           description: defaultItems[i].description,
+          category: defaultItems[i].category,
+          required: defaultItems[i].required,
           sortOrder: i + 1,
         });
       }
 
-      try { await logAudit(workspaceId, ctx.user.id, "delete", "closeout", 0, null); } catch {}
+      try { await logAudit(workspaceId, ctx.user.id, "create", "closeout", closeoutId, { contractId: input.contractId }); } catch {}
       return { id: closeoutId, alreadyExists: false };
     }),
 
@@ -773,6 +793,7 @@ export const closeoutRouter = router({
         .update(closeoutChecklistItems)
         .set({
           completed: input.completed,
+          status: input.completed ? "completed" : "not_started",
           completedAt: input.completed ? new Date() : null,
           completedBy: input.completed ? ctx.user?.id || null : null,
         })
@@ -781,8 +802,42 @@ export const closeoutRouter = router({
       return { success: true };
     }),
 
+  updateItem: protectedProcedure
+    .input(z.object({
+      itemId: z.number(),
+      status: z.enum(["not_started", "in_progress", "completed", "blocked"]).optional(),
+      owner: z.string().optional(),
+      dueDate: z.string().optional(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const { itemId, dueDate, status, ...rest } = input;
+      const setData: any = { ...rest };
+      if (status) {
+        setData.status = status;
+        setData.completed = status === "completed";
+        setData.completedAt = status === "completed" ? new Date() : null;
+        setData.completedBy = status === "completed" ? ctx.user?.id || null : null;
+      }
+      if (dueDate !== undefined) {
+        setData.dueDate = dueDate ? new Date(dueDate) : null;
+      }
+      await db.update(closeoutChecklistItems).set(setData).where(eq(closeoutChecklistItems.id, itemId));
+      return { success: true };
+    }),
+
   addItem: protectedProcedure
-    .input(z.object({ closeoutId: z.number(), label: z.string(), description: z.string().optional() }))
+    .input(z.object({
+      closeoutId: z.number(),
+      label: z.string(),
+      description: z.string().optional(),
+      required: z.boolean().optional(),
+      category: z.string().optional(),
+      owner: z.string().optional(),
+      dueDate: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -790,20 +845,231 @@ export const closeoutRouter = router({
         closeoutId: input.closeoutId,
         label: input.label,
         description: input.description || null,
+        required: input.required ?? true,
+        category: input.category || null,
+        owner: input.owner || null,
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
         sortOrder: 99,
       });
       return { id: result.insertId };
     }),
 
+  // ===== BLOCKERS =====
+  addBlocker: protectedProcedure
+    .input(z.object({
+      closeoutId: z.number(),
+      title: z.string(),
+      description: z.string().optional(),
+      severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+      blockerType: z.string().optional(),
+      owner: z.string().optional(),
+      dueDate: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const [result] = await db.insert(closeoutBlockingItems).values({
+        closeoutId: input.closeoutId,
+        workspaceId,
+        title: input.title,
+        blockerType: input.blockerType || "general",
+        description: input.description || null,
+        severity: input.severity || "medium",
+        owner: input.owner || null,
+        dueDate: input.dueDate ? new Date(input.dueDate) : null,
+      });
+      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutBlocker", Number(result.insertId), { title: input.title }); } catch {}
+      return { id: result.insertId };
+    }),
+
+  resolveBlocker: protectedProcedure
+    .input(z.object({ blockerId: z.number(), resolutionNotes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(closeoutBlockingItems).set({
+        status: "resolved",
+        resolutionNotes: input.resolutionNotes || null,
+        resolvedAt: new Date(),
+        resolvedBy: ctx.user?.id || null,
+      }).where(and(eq(closeoutBlockingItems.id, input.blockerId), eq(closeoutBlockingItems.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "closeoutBlocker", input.blockerId, { action: "resolved" }); } catch {}
+      return { success: true };
+    }),
+
+  waiveBlocker: protectedProcedure
+    .input(z.object({ blockerId: z.number(), resolutionNotes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(closeoutBlockingItems).set({
+        status: "waived",
+        resolutionNotes: input.resolutionNotes || null,
+        resolvedAt: new Date(),
+        resolvedBy: ctx.user?.id || null,
+      }).where(and(eq(closeoutBlockingItems.id, input.blockerId), eq(closeoutBlockingItems.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "closeoutBlocker", input.blockerId, { action: "waived" }); } catch {}
+      return { success: true };
+    }),
+
+  // ===== EVIDENCE =====
+  addEvidence: protectedProcedure
+    .input(z.object({
+      closeoutId: z.number(),
+      linkedItemType: z.enum(["checklist_item", "blocker"]),
+      linkedItemId: z.number(),
+      title: z.string(),
+      url: z.string().optional(),
+      fileId: z.number().optional(),
+      description: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const [result] = await db.insert(closeoutEvidence).values({
+        workspaceId,
+        closeoutId: input.closeoutId,
+        linkedItemType: input.linkedItemType,
+        linkedItemId: input.linkedItemId,
+        title: input.title,
+        url: input.url || null,
+        fileId: input.fileId || null,
+        description: input.description || null,
+        uploadedBy: ctx.user?.id || null,
+      });
+      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutEvidence", Number(result.insertId), { title: input.title }); } catch {}
+      return { id: result.insertId };
+    }),
+
+  removeEvidence: protectedProcedure
+    .input(z.object({ evidenceId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.delete(closeoutEvidence).where(and(eq(closeoutEvidence.id, input.evidenceId), eq(closeoutEvidence.workspaceId, workspaceId)));
+      return { success: true };
+    }),
+
+  // ===== SUMMARY =====
+  generateSummary: protectedProcedure
+    .input(z.object({ closeoutId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      // Fetch closeout data to generate summary
+      const [record] = await db.select().from(closeoutRecords).where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)));
+      if (!record) throw new Error("Closeout record not found");
+
+      const items = await db.select().from(closeoutChecklistItems).where(eq(closeoutChecklistItems.closeoutId, record.id));
+      const blockers = await db.select().from(closeoutBlockingItems).where(and(eq(closeoutBlockingItems.closeoutId, record.id), eq(closeoutBlockingItems.workspaceId, workspaceId)));
+
+      const totalItems = items.length;
+      const completedItems = items.filter(i => i.completed).length;
+      const requiredItems = items.filter(i => i.required);
+      const requiredCompleted = requiredItems.filter(i => i.completed).length;
+      const openBlockers = blockers.filter(b => b.status === "open");
+      const resolvedBlockers = blockers.filter(b => b.status === "resolved");
+      const waivedBlockers = blockers.filter(b => b.status === "waived");
+      const blockedItems = items.filter(i => i.status === "blocked");
+
+      const summaryLines: string[] = [
+        `## Closeout Summary`,
+        ``,
+        `**Status:** ${(record.status || "in_progress").replace(/_/g, " ")}`,
+        `**Progress:** ${completedItems}/${totalItems} items completed (${totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0}%)`,
+        `**Required Items:** ${requiredCompleted}/${requiredItems.length} completed`,
+        ``,
+        `### Blockers`,
+        `- Open: ${openBlockers.length}`,
+        `- Resolved: ${resolvedBlockers.length}`,
+        `- Waived: ${waivedBlockers.length}`,
+        ``,
+      ];
+
+      if (openBlockers.length > 0) {
+        summaryLines.push(`### Open Blockers`);
+        openBlockers.forEach(b => summaryLines.push(`- **${b.title}** (${b.severity}) — ${b.description || "No description"}`));
+        summaryLines.push(``);
+      }
+
+      if (blockedItems.length > 0) {
+        summaryLines.push(`### Blocked Items`);
+        blockedItems.forEach(i => summaryLines.push(`- ${i.label}`));
+        summaryLines.push(``);
+      }
+
+      const incompleteRequired = requiredItems.filter(i => !i.completed);
+      if (incompleteRequired.length > 0) {
+        summaryLines.push(`### Remaining Required Items`);
+        incompleteRequired.forEach(i => summaryLines.push(`- ${i.label} (${(i.status || "not_started").replace(/_/g, " ")})`));
+        summaryLines.push(``);
+      }
+
+      if (requiredCompleted === requiredItems.length && openBlockers.length === 0) {
+        summaryLines.push(`### \u2705 Ready for Completion`);
+        summaryLines.push(`All required items are complete and no open blockers remain.`);
+      } else {
+        summaryLines.push(`### \u26a0\ufe0f Not Ready for Completion`);
+        if (requiredCompleted < requiredItems.length) summaryLines.push(`- ${requiredItems.length - requiredCompleted} required item(s) still incomplete`);
+        if (openBlockers.length > 0) summaryLines.push(`- ${openBlockers.length} open blocker(s) must be resolved or waived`);
+      }
+
+      const summary = summaryLines.join("\n");
+      await db.update(closeoutRecords).set({ summary }).where(eq(closeoutRecords.id, input.closeoutId));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "closeout", input.closeoutId, { action: "generateSummary" }); } catch {}
+      return { summary };
+    }),
+
+  // ===== STATUS + COMPLETION =====
   updateStatus: protectedProcedure
     .input(z.object({ closeoutId: z.number(), status: z.enum(["not_started", "in_progress", "pending_review", "completed"]) }))
     .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+
+      // If trying to complete, enforce blocker check
+      if (input.status === "completed") {
+        const items = await db.select().from(closeoutChecklistItems).where(eq(closeoutChecklistItems.closeoutId, input.closeoutId));
+        const requiredItems = items.filter(i => i.required);
+        const requiredIncomplete = requiredItems.filter(i => !i.completed);
+        if (requiredIncomplete.length > 0) {
+          throw new Error(`Cannot complete closeout: ${requiredIncomplete.length} required item(s) are still incomplete.`);
+        }
+
+        const blockers = await db.select().from(closeoutBlockingItems).where(and(eq(closeoutBlockingItems.closeoutId, input.closeoutId), eq(closeoutBlockingItems.workspaceId, workspaceId)));
+        const openBlockers = blockers.filter(b => b.status === "open");
+        if (openBlockers.length > 0) {
+          throw new Error(`Cannot complete closeout: ${openBlockers.length} unresolved blocker(s) remain. Resolve or waive them first.`);
+        }
+      }
+
       await db
         .update(closeoutRecords)
-        .set({ status: input.status, completedAt: input.status === "completed" ? new Date() : null })
-        .where(eq(closeoutRecords.id, input.closeoutId));
+        .set({
+          status: input.status,
+          completedAt: input.status === "completed" ? new Date() : null,
+          completedBy: input.status === "completed" ? ctx.user?.id || null : null,
+        })
+        .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)));
+      try { await logAudit(workspaceId, ctx.user.id, "update", "closeout", input.closeoutId, { status: input.status }); } catch {}
+      return { success: true };
+    }),
+
+  updateNotes: protectedProcedure
+    .input(z.object({ closeoutId: z.number(), notes: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      await db.update(closeoutRecords).set({ notes: input.notes }).where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)));
       return { success: true };
     }),
 });

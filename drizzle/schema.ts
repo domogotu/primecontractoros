@@ -434,6 +434,9 @@ export const closeoutRecords = mysqlTable("closeoutRecords", {
   governmentPropertyReturned: boolean("governmentPropertyReturned").default(false),
   finalReportSubmitted: boolean("finalReportSubmitted").default(false),
   notes: text("notes"),
+  summary: text("summary"),
+  initiatedBy: int("initiatedBy"),
+  completedBy: int("completedBy"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -817,11 +820,18 @@ export const closeoutChecklistItems = mysqlTable("closeoutChecklistItems", {
   closeoutId: int("closeoutId").notNull(),
   label: varchar("label", { length: 255 }).notNull(),
   description: text("description"),
+  required: boolean("required").default(true).notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "completed", "blocked"]).default("not_started"),
   completed: boolean("completed").default(false).notNull(),
   completedAt: timestamp("completedAt"),
   completedBy: int("completedBy"),
+  owner: varchar("owner", { length: 255 }),
+  dueDate: timestamp("dueDate"),
+  category: varchar("category", { length: 100 }),
+  sourceAiFindingId: int("sourceAiFindingId"),
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type CloseoutChecklistItem = typeof closeoutChecklistItems.$inferSelect;
 export type InsertCloseoutChecklistItem = typeof closeoutChecklistItems.$inferInsert;
@@ -1525,13 +1535,20 @@ export const closeoutBlockingItems = mysqlTable("closeout_blocking_items", {
   id: int("id").primaryKey().autoincrement(),
   closeoutId: int("closeoutId").notNull(),
   workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
   blockerType: varchar("blockerType", { length: 100 }).notNull(),
   description: text("description"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
   recordType: varchar("recordType", { length: 64 }),
   recordId: int("recordId"),
-  status: mysqlEnum("status", ["open", "resolved"]).default("open"),
+  status: mysqlEnum("status", ["open", "resolved", "waived"]).default("open"),
+  resolutionNotes: text("resolutionNotes"),
+  owner: varchar("owner", { length: 255 }),
+  dueDate: timestamp("dueDate"),
   resolvedAt: timestamp("resolvedAt"),
+  resolvedBy: int("resolvedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type CloseoutBlockingItem = typeof closeoutBlockingItems.$inferSelect;
 
@@ -2257,3 +2274,20 @@ export const paymentApplications = mysqlTable("payment_applications", {
 });
 export type PaymentApplication = typeof paymentApplications.$inferSelect;
 export type InsertPaymentApplication = typeof paymentApplications.$inferInsert;
+
+// Closeout Evidence — links files/documents to closeout items or blockers
+export const closeoutEvidence = mysqlTable("closeout_evidence", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  closeoutId: int("closeoutId").notNull(),
+  linkedItemType: varchar("linkedItemType", { length: 50 }).notNull(), // "checklist_item" or "blocker"
+  linkedItemId: int("linkedItemId").notNull(),
+  fileId: int("fileId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  url: text("url"),
+  description: text("description"),
+  uploadedBy: int("uploadedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CloseoutEvidence = typeof closeoutEvidence.$inferSelect;
+export type InsertCloseoutEvidence = typeof closeoutEvidence.$inferInsert;
