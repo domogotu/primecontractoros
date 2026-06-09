@@ -4,6 +4,8 @@ import { getDb } from "./db";
 import { workspaces, workspaceMembers } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
+export type WorkspaceRoleType = "owner" | "admin" | "contract_manager" | "finance_user" | "member" | "viewer";
+
 /**
  * Gets the workspace ID for a user.
  * First checks if user owns a workspace, then checks workspace membership.
@@ -36,25 +38,25 @@ export async function requireWorkspaceId(userId: number): Promise<number> {
 }
 
 // Role-based access helpers
-export async function getUserWorkspaceRole(userId: number, workspaceId: number): Promise<"owner" | "admin" | "member" | "viewer"> {
+export async function getUserWorkspaceRole(userId: number, workspaceId: number): Promise<WorkspaceRoleType> {
   const db = await getDb();
   if (!db) return "member";
-  
+
   // Check if user is workspace owner
   const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId));
   if (ws && ws.ownerId === userId) return "owner";
-  
+
   // Check workspace members table
   const [member] = await db.select().from(workspaceMembers).where(
     and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId))
   );
-  if (member) return member.role;
-  
+  if (member) return member.role as WorkspaceRoleType;
+
   return "member"; // default for workspace owner who isn't in members table
 }
 
 export function canWrite(role: string): boolean {
-  return ["owner", "admin", "member"].includes(role);
+  return ["owner", "admin", "contract_manager", "finance_user", "member"].includes(role);
 }
 
 export function canDelete(role: string): boolean {
@@ -62,5 +64,5 @@ export function canDelete(role: string): boolean {
 }
 
 export function canManageUsers(role: string): boolean {
-  return role === "owner";
+  return role === "owner" || role === "admin";
 }

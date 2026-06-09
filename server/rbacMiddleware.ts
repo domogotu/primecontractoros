@@ -8,6 +8,7 @@
 import { TRPCError } from "@trpc/server";
 import { getUserWorkspaceRole, canWrite, canDelete, canManageUsers } from "./workspaceMiddleware";
 import { requireWorkspaceId } from "./workspaceMiddleware";
+import { hasPermission as hasRolePermission, type PermissionAction } from "./permissions";
 
 export type WorkspacePermission = "read" | "write" | "delete" | "manage_users" | "manage_settings";
 
@@ -47,7 +48,7 @@ export async function enforcePermission(
       read: "You do not have permission to view this resource.",
       write: "You do not have permission to create or edit records. Contact your workspace admin.",
       delete: "You do not have permission to delete records. Only owners and admins can delete.",
-      manage_users: "Only the workspace owner can manage users.",
+      manage_users: "Only workspace owners and admins can manage users.",
       manage_settings: "Only owners and admins can manage workspace settings.",
     };
     throw new TRPCError({
@@ -56,5 +57,25 @@ export async function enforcePermission(
     });
   }
   
+  return { wsId, role };
+}
+
+/**
+ * Enforce a domain-specific permission action.
+ * Uses the fine-grained permissions map from permissions.ts.
+ * Example: enforceAction(userId, "manage_contracts") — only owner, admin, contract_manager
+ */
+export async function enforceAction(
+  userId: number,
+  action: PermissionAction
+): Promise<{ wsId: number; role: string }> {
+  const wsId = await requireWorkspaceId(userId);
+  const role = await getUserWorkspaceRole(userId, wsId);
+  if (!hasRolePermission(role, action)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: `You do not have permission to perform this action: ${action.replace(/_/g, " ")}.`,
+    });
+  }
   return { wsId, role };
 }

@@ -1,10 +1,11 @@
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords } from "../drizzle/schema";
+import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords, auditLogs } from "../drizzle/schema";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import { sendWelcomeEmail } from "./services/email";
 import { getUserWorkspaceRole, requireWorkspaceId as requireWsId } from "./workspaceMiddleware";
+import { canManageTeam, getAssignableRoles } from "./permissions";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({
@@ -133,35 +134,49 @@ export const workspaceRouter = router({
     return members;
   }),
 
-  // Invite a member by email (creates a pending membership)
+  // Invite a member by email (creates a pending membership — direct add for existing users)
   inviteMember: protectedProcedure
     .input(z.object({
       email: z.string().email(),
-      role: z.enum(["admin", "member", "viewer"]).default("member"),
+      role: z.enum(["admin", "contract_manager", "finance_user", "member", "viewer"]).default("member"),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can invite
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can invite members.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can invite
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can invite members.");
+      }
       // Find user by email
       const [invitee] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
       if (!invitee) throw new Error("No user found with that email address. They must sign up first.");
       if (invitee.id === userId) throw new Error("You cannot invite yourself.");
       // Check if already a member
       const [existing] = await db.select().from(workspaceMembers)
-        .where(and(eq(workspaceMembers.workspaceId, ws.id), eq(workspaceMembers.userId, invitee.id)))
+        .where(and(eq(workspaceMembers.workspaceId, wsId), eq(workspaceMembers.userId, invitee.id)))
         .limit(1);
       if (existing) throw new Error("This user is already a member of your workspace.");
       // Add member
       await db.insert(workspaceMembers).values({
-        workspaceId: ws.id,
+        workspaceId: wsId,
         userId: invitee.id,
         role: input.role,
         invitedBy: userId,
       });
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "member_added",
+          targetType: "workspace_member",
+          targetId: invitee.id,
+          newValue: JSON.stringify({ email: input.email, role: input.role }),
+        });
+      } catch (e) { console.error("[Audit] member_added log failed:", e); }
       return { success: true, userName: invitee.name, email: invitee.email };
     }),
 
@@ -169,18 +184,44 @@ export const workspaceRouter = router({
   updateMemberRole: protectedProcedure
     .input(z.object({
       memberId: z.number(),
-      role: z.enum(["admin", "member", "viewer"]),
+      role: z.enum(["admin", "contract_manager", "finance_user", "member", "viewer"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can change roles
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can change member roles.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can change roles
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can change member roles.");
+      }
+      // Admins cannot promote to admin
+      const assignable = getAssignableRoles(userRole);
+      if (!assignable.includes(input.role as any)) {
+        throw new Error(`You cannot assign the role: ${input.role}`);
+      }
+      // Get old role for audit
+      const [member] = await db.select().from(workspaceMembers)
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)))
+        .limit(1);
+      if (!member) throw new Error("Member not found.");
+      const oldRole = member.role;
       await db.update(workspaceMembers)
         .set({ role: input.role })
-        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)));
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "role_changed",
+          targetType: "workspace_member",
+          targetId: member.userId,
+          oldValue: oldRole,
+          newValue: input.role,
+        });
+      } catch (e) { console.error("[Audit] role_changed log failed:", e); }
       return { success: true };
     }),
 
@@ -191,11 +232,39 @@ export const workspaceRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can remove members
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can remove members.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can remove members
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can remove members.");
+      }
+      // Get member info for audit
+      const [member] = await db.select().from(workspaceMembers)
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)))
+        .limit(1);
+      if (!member) throw new Error("Member not found.");
+      // Cannot remove owner
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, wsId)).limit(1);
+      if (ws && member.userId === ws.ownerId) {
+        throw new Error("Cannot remove the workspace owner.");
+      }
+      // Admins cannot remove other admins
+      if (userRole === "admin" && member.role === "admin") {
+        throw new Error("Admins cannot remove other admins. Only the owner can.");
+      }
       await db.delete(workspaceMembers)
-        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)));
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "member_removed",
+          targetType: "workspace_member",
+          targetId: member.userId,
+          newValue: JSON.stringify({ role: member.role }),
+        });
+      } catch (e) { console.error("[Audit] member_removed log failed:", e); }
       return { success: true };
     }),
 

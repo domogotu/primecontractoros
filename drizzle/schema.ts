@@ -787,7 +787,7 @@ export const workspaceMembers = mysqlTable("workspaceMembers", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull(),
   userId: int("userId").notNull(),
-  role: mysqlEnum("role", ["owner", "admin", "member", "viewer"]).default("member").notNull(),
+  role: mysqlEnum("role", ["owner", "admin", "contract_manager", "finance_user", "member", "viewer"]).default("member").notNull(),
   invitedBy: int("invitedBy"),
   joinedAt: timestamp("joinedAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1161,7 +1161,7 @@ export const invites = mysqlTable("invites", {
   id: int("id").primaryKey().autoincrement(),
   workspaceId: int("workspace_id").notNull(),
   email: varchar("email", { length: 255 }).notNull(),
-  role: varchar("role", { length: 64 }).notNull().default("standard_user"),
+  role: varchar("role", { length: 64 }).notNull().default("member"),
   invitedBy: int("invited_by").notNull(),
   token: varchar("token", { length: 255 }).notNull(),
   status: varchar("status", { length: 32 }).notNull().default("pending"),
@@ -1170,6 +1170,8 @@ export const invites = mysqlTable("invites", {
   cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+export type Invite = typeof invites.$inferSelect;
+export type InsertInvite = typeof invites.$inferInsert;
 
 export const documentVersions = mysqlTable("document_versions", {
   id: int("id").primaryKey().autoincrement(),
