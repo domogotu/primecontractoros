@@ -423,12 +423,23 @@ export function PlatformSupport() {
   const [search, setSearch] = useState("");
   const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
   const [resolution, setResolution] = useState("");
+  const [replyContent, setReplyContent] = useState("");
+  const [isInternalNote, setIsInternalNote] = useState(false);
 
-  const ticketsQuery = trpc.platform.support.list.useQuery();
-  const updateMutation = trpc.platform.support.update.useMutation({
-    onSuccess: () => { ticketsQuery.refetch(); setSelectedTicket(null); setResolution(""); toast.success("Ticket updated."); },
+  const ticketsQuery = trpc.customerSupport.adminList.useQuery({});
+  const updateMutation = trpc.customerSupport.adminUpdate.useMutation({
+    onSuccess: () => { ticketsQuery.refetch(); messagesQuery.refetch(); setResolution(""); toast.success("Ticket updated."); },
     onError: (err: any) => toast.error(err.message),
   });
+  const replyMutation = trpc.customerSupport.adminReply.useMutation({
+    onSuccess: () => { messagesQuery.refetch(); setReplyContent(""); setIsInternalNote(false); toast.success("Reply sent."); },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const messagesQuery = trpc.customerSupport.adminGetMessages.useQuery(
+    { ticketId: selectedTicket! },
+    { enabled: !!selectedTicket }
+  );
 
   const tickets = ticketsQuery.data || [];
   const filtered = tickets.filter((t: any) => {
@@ -439,9 +450,11 @@ export function PlatformSupport() {
 
   if (ticketsQuery.isLoading) return <LoadingState />;
 
+  const messages = messagesQuery.data || [];
+
   return (
     <div className="min-h-screen bg-slate-900">
-      <PageHeader title="Support Tickets" description="Manage customer support requests and resolutions." />
+      <PageHeader title="Support Tickets" description="Manage customer support requests and resolutions across all workspaces." />
 
       <div className="p-4 sm:p-8">
         {/* Stats */}
@@ -449,8 +462,8 @@ export function PlatformSupport() {
           <StatCard label="Total" value={tickets.length} />
           <StatCard label="Open" value={tickets.filter((t: any) => t.status === "open").length} color="text-amber-400" />
           <StatCard label="In Progress" value={tickets.filter((t: any) => t.status === "in_progress").length} color="text-blue-400" />
+          <StatCard label="Waiting" value={tickets.filter((t: any) => t.status === "waiting_on_customer").length} color="text-purple-400" />
           <StatCard label="Resolved" value={tickets.filter((t: any) => t.status === "resolved").length} color="text-green-400" />
-          <StatCard label="Closed" value={tickets.filter((t: any) => t.status === "closed").length} color="text-slate-400" />
         </div>
 
         {/* Filters */}
@@ -466,44 +479,102 @@ export function PlatformSupport() {
           <Input placeholder="Search tickets..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
         </div>
 
-        {/* Ticket Detail Modal */}
+        {/* Ticket Detail Modal with Messages */}
         {selectedTicket && (() => {
           const ticket = tickets.find((t: any) => t.id === selectedTicket);
           if (!ticket) return null;
           return (
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-              <Card className="bg-slate-800 border-slate-700 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold text-white mb-2">{ticket.subject}</h3>
-                <div className="flex gap-2 mb-4">
-                  <Badge variant={ticket.status === "open" ? "default" : "secondary"}>{ticket.status}</Badge>
-                  <Badge variant={ticket.priority === "critical" ? "destructive" : "secondary"}>{ticket.priority}</Badge>
-                </div>
-                <p className="text-slate-300 text-sm mb-4 whitespace-pre-wrap">{ticket.body}</p>
-                <div className="text-xs text-slate-500 mb-4">
-                  <p>User #{ticket.userId} | WS #{ticket.workspaceId || "N/A"}</p>
-                  <p>Created: {new Date(ticket.createdAt).toLocaleString()}</p>
-                </div>
-
-                <div className="space-y-3">
+              <Card className="bg-slate-800 border-slate-700 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">Update Status</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {(["in_progress", "waiting_on_customer", "resolved", "closed"] as const).map((s) => (
-                        <Button key={s} size="sm" variant="outline" className="border-slate-700 text-slate-300 text-xs"
-                          onClick={() => updateMutation.mutate({ id: ticket.id, status: s, resolution: resolution || undefined })}>
-                          {s.replace(/_/g, " ")}
-                        </Button>
-                      ))}
+                    <h3 className="text-lg font-semibold text-white mb-1">{ticket.subject}</h3>
+                    <div className="flex gap-2 mb-2">
+                      <Badge variant={ticket.status === "open" ? "default" : "secondary"}>{ticket.status?.replace(/_/g, " ")}</Badge>
+                      <Badge variant={ticket.priority === "critical" ? "destructive" : "secondary"}>{ticket.priority}</Badge>
+                      {ticket.category && <Badge variant="outline" className="border-slate-600 text-slate-300">{ticket.category}</Badge>}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      <p>User #{ticket.userId} | Workspace #{ticket.workspaceId || "N/A"} | Created: {new Date(ticket.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Resolution Note</label>
-                    <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Add resolution note..." className="bg-slate-900 border-slate-700 text-white" />
+                  <Button onClick={() => { setSelectedTicket(null); setResolution(""); setReplyContent(""); }} variant="outline" size="sm" className="border-slate-700 text-slate-300">✕</Button>
+                </div>
+
+                {/* Status Actions */}
+                <div className="mb-4 p-3 rounded-lg bg-slate-900 border border-slate-700">
+                  <label className="text-xs text-slate-400 block mb-2">Update Status</label>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {(["open", "in_progress", "waiting_on_customer", "resolved", "closed"] as const).map((s) => (
+                      <Button key={s} size="sm" variant={ticket.status === s ? "default" : "outline"}
+                        className={ticket.status === s ? "bg-blue-600" : "border-slate-700 text-slate-300 text-xs"}
+                        onClick={() => updateMutation.mutate({ id: ticket.id, status: s, resolution: resolution || undefined })}>
+                        {s.replace(/_/g, " ")}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Resolution note (optional)..." className="bg-slate-800 border-slate-700 text-white flex-1" />
+                    <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" onClick={() => updateMutation.mutate({ id: ticket.id, resolution })} disabled={!resolution.trim()}>Save Note</Button>
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={() => { setSelectedTicket(null); setResolution(""); }} variant="outline" className="border-slate-700 text-slate-300">Close</Button>
+                {/* Message Thread */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-slate-400 mb-2 flex items-center gap-1">
+                    <MessageSquare className="w-4 h-4" /> Messages ({messages.length})
+                  </h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {messages.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-4">No messages yet.</p>
+                    ) : (
+                      messages.map((msg: any) => (
+                        <div key={msg.id} className={`p-3 rounded-lg text-sm ${
+                          msg.isInternalNote
+                            ? "bg-amber-900/20 border border-amber-800"
+                            : msg.senderType === "admin"
+                            ? "bg-blue-900/20 border border-blue-800"
+                            : "bg-slate-900 border border-slate-700"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs font-medium ${
+                              msg.isInternalNote ? "text-amber-400" : msg.senderType === "admin" ? "text-blue-400" : "text-slate-300"
+                            }`}>
+                              {msg.isInternalNote ? "🔒 Internal Note" : msg.senderType === "admin" ? "Support Team" : msg.senderName || "Customer"}
+                            </span>
+                            <span className="text-xs text-slate-500 ml-auto">{new Date(msg.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-300 whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Reply Form */}
+                <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
+                  <div className="flex items-center gap-3 mb-2">
+                    <label className="text-xs text-slate-400">Reply</label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="checkbox" checked={isInternalNote} onChange={(e) => setIsInternalNote(e.target.checked)} className="rounded border-slate-600" />
+                      <span className={isInternalNote ? "text-amber-400 font-medium" : "text-slate-400"}>Internal Note (hidden from customer)</span>
+                    </label>
+                  </div>
+                  <textarea
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    rows={3}
+                    placeholder={isInternalNote ? "Add internal note (not visible to customer)..." : "Reply to customer..."}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y text-sm mb-2"
+                  />
+                  <div className="flex justify-end">
+                    <Button size="sm" disabled={!replyContent.trim() || replyMutation.isPending}
+                      className={isInternalNote ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+                      onClick={() => replyMutation.mutate({ ticketId: selectedTicket!, content: replyContent.trim(), isInternalNote })}>
+                      {replyMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                      {isInternalNote ? "Add Internal Note" : "Send Reply"}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </div>
@@ -520,7 +591,7 @@ export function PlatformSupport() {
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Subject</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Priority</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">User</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Workspace</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Created</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-400">Actions</th>
                 </tr>
@@ -539,7 +610,7 @@ export function PlatformSupport() {
                         {t.status?.replace(/_/g, " ")}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-slate-300">User #{t.userId}</td>
+                    <td className="px-4 py-3 text-slate-300 text-xs">WS #{t.workspaceId || "N/A"}</td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{new Date(t.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
                       <button className="text-blue-400 hover:text-blue-300"><MessageSquare className="w-4 h-4" /></button>
