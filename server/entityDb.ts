@@ -704,3 +704,126 @@ export async function deleteProposalSection(id: number, workspaceId: number) {
   const { and, eq } = await import("drizzle-orm");
   await db.delete(proposalSections).where(and(eq(proposalSections.id, id), eq(proposalSections.workspaceId, workspaceId)));
 }
+
+// ==================== INVOICE LINE ITEMS ====================
+export async function listInvoiceLineItems(invoiceId: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { invoiceLineItems } = await import("../drizzle/schema");
+  return db.select().from(invoiceLineItems).where(and(eq(invoiceLineItems.invoiceId, invoiceId), eq(invoiceLineItems.workspaceId, workspaceId))).orderBy(invoiceLineItems.sortOrder);
+}
+
+export async function createInvoiceLineItem(data: { invoiceId: number; workspaceId: number; description: string; quantity: string; unitPrice: string; amount: string; category?: string; sortOrder?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceLineItems } = await import("../drizzle/schema");
+  const result = await db.insert(invoiceLineItems).values(data as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateInvoiceLineItem(id: number, workspaceId: number, data: Record<string, any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceLineItems } = await import("../drizzle/schema");
+  await db.update(invoiceLineItems).set(data as any).where(and(eq(invoiceLineItems.id, id), eq(invoiceLineItems.workspaceId, workspaceId)));
+}
+
+export async function deleteInvoiceLineItem(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceLineItems } = await import("../drizzle/schema");
+  await db.delete(invoiceLineItems).where(and(eq(invoiceLineItems.id, id), eq(invoiceLineItems.workspaceId, workspaceId)));
+}
+
+// ==================== INVOICE CHECKLIST ITEMS ====================
+export async function listInvoiceChecklistItems(invoiceId: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { invoiceChecklistItems } = await import("../drizzle/schema");
+  return db.select().from(invoiceChecklistItems).where(and(eq(invoiceChecklistItems.invoiceId, invoiceId), eq(invoiceChecklistItems.workspaceId, workspaceId))).orderBy(invoiceChecklistItems.sortOrder);
+}
+
+export async function createInvoiceChecklistItem(data: { invoiceId: number; workspaceId: number; title: string; description?: string; required?: boolean; sortOrder?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceChecklistItems } = await import("../drizzle/schema");
+  const result = await db.insert(invoiceChecklistItems).values(data as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateInvoiceChecklistItem(id: number, workspaceId: number, data: Record<string, any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceChecklistItems } = await import("../drizzle/schema");
+  await db.update(invoiceChecklistItems).set(data as any).where(and(eq(invoiceChecklistItems.id, id), eq(invoiceChecklistItems.workspaceId, workspaceId)));
+}
+
+export async function deleteInvoiceChecklistItem(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceChecklistItems } = await import("../drizzle/schema");
+  await db.delete(invoiceChecklistItems).where(and(eq(invoiceChecklistItems.id, id), eq(invoiceChecklistItems.workspaceId, workspaceId)));
+}
+
+// ==================== INVOICE ISSUES ====================
+export async function listInvoiceIssues(invoiceId: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { invoiceIssues } = await import("../drizzle/schema");
+  return db.select().from(invoiceIssues).where(and(eq(invoiceIssues.invoiceId, invoiceId), eq(invoiceIssues.workspaceId, workspaceId))).orderBy(desc(invoiceIssues.createdAt));
+}
+
+export async function createInvoiceIssue(data: { invoiceId: number; workspaceId: number; title: string; description?: string; severity?: string; raisedBy?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceIssues } = await import("../drizzle/schema");
+  const result = await db.insert(invoiceIssues).values(data as any);
+  return { id: result[0].insertId };
+}
+
+export async function updateInvoiceIssue(id: number, workspaceId: number, data: Record<string, any>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceIssues } = await import("../drizzle/schema");
+  await db.update(invoiceIssues).set(data as any).where(and(eq(invoiceIssues.id, id), eq(invoiceIssues.workspaceId, workspaceId)));
+}
+
+export async function deleteInvoiceIssue(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { invoiceIssues } = await import("../drizzle/schema");
+  await db.delete(invoiceIssues).where(and(eq(invoiceIssues.id, id), eq(invoiceIssues.workspaceId, workspaceId)));
+}
+
+// ==================== PAYMENT APPLICATIONS ====================
+export async function listPaymentApplications(workspaceId: number, paymentId?: number, invoiceId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { paymentApplications } = await import("../drizzle/schema");
+  const conditions = [eq(paymentApplications.workspaceId, workspaceId)];
+  if (paymentId) conditions.push(eq(paymentApplications.paymentId, paymentId));
+  if (invoiceId) conditions.push(eq(paymentApplications.invoiceId, invoiceId));
+  return db.select().from(paymentApplications).where(and(...conditions)).orderBy(desc(paymentApplications.createdAt));
+}
+
+export async function createPaymentApplication(data: { paymentId: number; invoiceId: number; workspaceId: number; amount: string; notes?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { paymentApplications } = await import("../drizzle/schema");
+  const result = await db.insert(paymentApplications).values({ ...data, appliedAt: new Date() } as any);
+  return { id: result[0].insertId };
+}
+
+export async function deletePaymentApplication(id: number, workspaceId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { paymentApplications } = await import("../drizzle/schema");
+  await db.delete(paymentApplications).where(and(eq(paymentApplications.id, id), eq(paymentApplications.workspaceId, workspaceId)));
+}
+
+export async function listAllPaymentApplications(workspaceId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { paymentApplications } = await import("../drizzle/schema");
+  return db.select().from(paymentApplications).where(eq(paymentApplications.workspaceId, workspaceId)).orderBy(desc(paymentApplications.createdAt));
+}

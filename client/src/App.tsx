@@ -104,6 +104,7 @@ import RateParityDashboard from "./pages/RateParityDashboard";
 import Training from "./pages/Training";
 import Subscription from "./pages/Subscription";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Reconciliation from "./pages/Reconciliation";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -176,6 +177,7 @@ function Router() {
       <Route path={"/app/payments"} component={withAppShell(Payments)} />
       <Route path={"/app/payments/:id"} component={withAppShell(PaymentDetail)} />
       <Route path={"/app/finance"} component={withAppShell(Finance)} />
+      <Route path={"/app/reconciliation"} component={withAppShell(Reconciliation)} />
       <Route path={"/app/obligations"} component={withAppShell(Obligations)} />
       <Route path={"/app/deliverables"} component={withAppShell(Deliverables)} />
       <Route path={"/app/deadlines"} component={withAppShell(Deadlines)} />
