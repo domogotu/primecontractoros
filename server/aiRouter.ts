@@ -28,6 +28,7 @@ import {
   createAlert,
 } from "./entityDb";
 import { logAudit } from "./featureRouter";
+import { invokeLLM } from "./_core/llm";
 
 // ============================================================
 // Conversion helpers — Phase 1
@@ -540,4 +541,36 @@ export const aiRouter = router({
         };
       }),
   }),
+
+  getFieldGuidance: protectedProcedure
+    .input(z.object({
+      fieldName: z.string(),
+      fieldDescription: z.string(),
+      currentValue: z.string().optional(),
+      companyName: z.string().optional(),
+      companyContext: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const prompt = `You are a government contracting expert helping a small business fill out their business profile for federal contracting.
+
+Field: ${input.fieldName}
+Description: ${input.fieldDescription}
+${input.companyName ? `Company: ${input.companyName}` : ''}
+${input.companyContext ? `Context: ${input.companyContext}` : ''}
+${input.currentValue ? `Current value: ${input.currentValue}` : ''}
+
+Provide a helpful, concise explanation of:
+1. What this field is and why it matters for government contracting
+2. What format/content is expected
+3. A specific example or suggestion they could use
+
+Keep it under 150 words. Be practical and actionable.`;
+
+      const result = await invokeLLM({ 
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 300 
+      });
+      const content = result.choices[0]?.message?.content;
+      return { guidance: typeof content === 'string' ? content : JSON.stringify(content) };
+    }),
 });
