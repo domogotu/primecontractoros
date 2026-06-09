@@ -44,7 +44,7 @@ import {
 import { workspaceRouter, platformRouter } from "./platformRouter";
 import { planVersionsRouter, discountUsageRouter, billingEventsRouter, consentRecordsRouter, backupExportsRouter, platformTasksRouter, policyVersionsRouter } from "./platformBusinessRouter";
 import { requireWorkspaceId } from "./workspaceMiddleware";
-import { enforcePermission } from "./rbacMiddleware";
+import { enforcePermission, enforceAction } from "./rbacMiddleware";
 import { logAudit } from "./featureRouter";
 import { checkPlanLimit } from "./services/billing";
 import { sendContractStatusChangeNotification } from "./services/email";
@@ -59,6 +59,7 @@ import { systemInfraRouter } from "./systemInfraRouter";
 import { onboardingRouter, recordNotesRouter, recordTimelineRouter, helpRouter } from "./batch1Router";
 import { subcontractorsRouter, vendorsRouter, documentVersionsRouter, fileLinksRouter, changeOrdersRouter } from "./batch2Router";
 import { planFeaturesRouter, emailTemplatesRouter, diagnosticsRouter, invitesRouter } from "./batch3Router";
+import { inviteRouter } from "./inviteRouter";
 import { documentGenerationRouter, flowdownReviewsRouter, customerAdoptionRouter, businessProfileRouter, userProfileRouter } from "./batch4Router";
 import { webhookRouter } from "./webhookRouter";
 import { samRouter } from "./samRouter";
@@ -139,6 +140,7 @@ export const appRouter = router({
   emailTemplates: emailTemplatesRouter,
   diagnostics: diagnosticsRouter,
   invites: invitesRouter,
+  inviteWorkflow: inviteRouter,
   businessProfile: businessProfileRouter,
   userProfile: userProfileRouter,
   documentGeneration: documentGenerationRouter,
@@ -592,7 +594,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const { wsId } = await enforcePermission(ctx.user.id, "write");
+          const { wsId } = await enforceAction(ctx.user.id, "manage_contracts");
           const existing = await listContracts(wsId);
           const limitCheck = await checkPlanLimit(wsId, "contracts", existing.length);
           if (!limitCheck.allowed) {
@@ -623,7 +625,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const { wsId } = await enforcePermission(ctx.user.id, "write");
+          const { wsId } = await enforceAction(ctx.user.id, "manage_contracts");
           const { id, ...data } = input;
           await updateContract(id, wsId, data);
           try { await logAudit(wsId, ctx.user.id, "update", "contracts", 0, input); } catch {}
@@ -637,7 +639,7 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         try {
-          const { wsId } = await enforcePermission(ctx.user.id, "delete");
+          const { wsId } = await enforceAction(ctx.user.id, "manage_contracts");
           await deleteContract(input.id, wsId);
           try { await logAudit(wsId, ctx.user.id, "delete", "contracts", input.id, null); } catch {}
           return { success: true };

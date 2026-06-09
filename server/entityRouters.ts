@@ -1,7 +1,7 @@
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
-import { enforcePermission } from "./rbacMiddleware";
+import { enforcePermission, enforceAction } from "./rbacMiddleware";
 import { logAudit } from "./featureRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
@@ -53,6 +53,19 @@ async function requireWrite(ctx: any): Promise<number> {
 async function requireDelete(ctx: any): Promise<number> {
   if (!ctx.user?.id) throw new Error("Not authenticated");
   const { wsId } = await enforcePermission(ctx.user.id, "delete");
+  return wsId;
+}
+
+// Domain-specific RBAC helpers
+async function requireFinanceWrite(ctx: any): Promise<number> {
+  if (!ctx.user?.id) throw new Error("Not authenticated");
+  const { wsId } = await enforceAction(ctx.user.id, "manage_invoices");
+  return wsId;
+}
+
+async function requireFinanceDelete(ctx: any): Promise<number> {
+  if (!ctx.user?.id) throw new Error("Not authenticated");
+  const { wsId } = await enforceAction(ctx.user.id, "manage_invoices");
   return wsId;
 }
 
@@ -159,7 +172,7 @@ export const invoicesRouter = router({
   create: protectedProcedure
     .input(z.object({ contractId: z.number().optional(), invoiceNumber: z.string(), amount: z.string(), status: z.string().optional(), issuedDate: z.string().optional(), dueDate: z.string().optional(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireWrite(ctx);
+      const wsId = await requireFinanceWrite(ctx);
       const { issuedDate, dueDate, ...rest } = input;
       const result = await createInvoice({
         ...rest,
@@ -181,7 +194,7 @@ export const invoicesRouter = router({
   update: protectedProcedure
     .input(z.object({ id: z.number(), invoiceNumber: z.string().optional(), amount: z.string().optional(), status: z.string().optional(), description: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireWrite(ctx);
+      const wsId = await requireFinanceWrite(ctx);
       const { id, ...data } = input;
       try { await logAudit(wsId, ctx.user.id, "update", "invoices", 0, input); } catch {}
       return updateInvoice(id, wsId, data);
@@ -189,14 +202,14 @@ export const invoicesRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireDelete(ctx);
+      const wsId = await requireFinanceDelete(ctx);
       try { await logAudit(wsId, ctx.user.id, "delete", "invoices", 0, null); } catch {}
       return deleteInvoice(input.id, wsId);
     }),
   updateStatus: protectedProcedure
     .input(z.object({ id: z.number(), oldStatus: z.string(), newStatus: z.string(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireDelete(ctx);
+      const wsId = await requireFinanceWrite(ctx);
       await updateInvoice(input.id, wsId, { status: input.newStatus } as any);
       await addInvoiceStatusHistory({ invoiceId: input.id, oldStatus: input.oldStatus, newStatus: input.newStatus, changedBy: ctx.user.id, notes: input.notes });
       try { await logAudit(wsId, ctx.user.id, "delete", "invoices", input.id, null); } catch {}
@@ -344,7 +357,7 @@ export const paymentsRouter = router({
   create: protectedProcedure
     .input(z.object({ invoiceId: z.number().optional(), contractId: z.number().optional(), amount: z.string(), paymentDate: z.string().optional(), method: z.string().optional(), reference: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireWrite(ctx);
+      const wsId = await requireFinanceWrite(ctx);
       const { paymentDate, ...rest } = input;
       try { await logAudit(wsId, ctx.user.id, "create", "payments", 0, input); } catch {}
       return createPayment({
@@ -356,7 +369,7 @@ export const paymentsRouter = router({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const wsId = await requireDelete(ctx);
+      const wsId = await requireFinanceDelete(ctx);
       try { await logAudit(wsId, ctx.user.id, "delete", "payments", 0, null); } catch {}
       return deletePayment(input.id, wsId);
     }),

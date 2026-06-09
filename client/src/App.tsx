@@ -107,6 +107,7 @@ import Training from "./pages/Training";
 import Subscription from "./pages/Subscription";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Reconciliation from "./pages/Reconciliation";
+import InviteAccept from "./pages/InviteAccept";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -143,6 +144,9 @@ function Router() {
       <Route path={"/platform-compliance"} component={PlatformCompliance} />
       <Route path={"/security"} component={Security} />
       
+      {/* Invite accept - public-ish route (needs auth to accept) */}
+      <Route path="/invite/accept/:token" component={InviteAccept} />
+
       {/* Platform Owner pages - has its own sidebar via PlatformRouter */}
       <Route path={"/platform/login"} component={PlatformLogin} />
       <Route path={"/platform"} component={PlatformRouter} />
