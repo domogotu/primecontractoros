@@ -2350,3 +2350,26 @@ export const integrationTestResults = mysqlTable("integration_test_results", {
 });
 export type IntegrationTestResult = typeof integrationTestResults.$inferSelect;
 export type InsertIntegrationTestResult = typeof integrationTestResults.$inferInsert;
+
+// Opportunity Import Runs - Tracks bulk and individual import operations
+export const opportunityImportRuns = mysqlTable("opportunity_import_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  runType: varchar("runType", { length: 50 }).notNull().default("single"), // single, bulk, url
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, running, completed, failed
+  totalItems: int("totalItems").default(0),
+  importedCount: int("importedCount").default(0),
+  skippedCount: int("skippedCount").default(0),
+  failedCount: int("failedCount").default(0),
+  duplicateCount: int("duplicateCount").default(0),
+  searchQuery: text("searchQuery"),
+  sourceUrl: text("sourceUrl"),
+  errorSummary: text("errorSummary"),
+  importedOpportunityIds: json("importedOpportunityIds"),
+  triggeredAiReview: boolean("triggeredAiReview").default(false),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  importedBy: int("importedBy"),
+});
+export type OpportunityImportRun = typeof opportunityImportRuns.$inferSelect;
+export type InsertOpportunityImportRun = typeof opportunityImportRuns.$inferInsert;

@@ -5,6 +5,7 @@ import { Upload, FileText, Loader2, Trash2, Download, FolderOpen, Image, FileSpr
 import PageLayout from "@/components/PageLayout";
 import { trpc } from "@/lib/trpc";
 import { useState, useRef, useMemo } from "react";
+import { useSearch } from "wouter";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,9 @@ const RECORD_TYPES = [
 ];
 
 export default function Files() {
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,7 +73,9 @@ export default function Files() {
   const [showGoverningOnly, setShowGoverningOnly] = useState(false);
   const [, setLocation] = useLocation();
 
-  const { data: files = [], isLoading, refetch } = trpc.fileStorage.list.useQuery();
+  const { data: files = [], isLoading, refetch } = trpc.fileStorage.list.useQuery(
+    contractIdParam ? { linkedRecordType: "contract", linkedRecordId: contractIdParam } : undefined
+  );
   const { data: opportunities = [] } = trpc.opportunities.list.useQuery();
   const { data: proposals = [] } = trpc.proposals.list.useQuery();
   const { data: contracts = [] } = trpc.contracts.list.useQuery();

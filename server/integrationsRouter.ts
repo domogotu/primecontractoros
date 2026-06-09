@@ -134,13 +134,15 @@ export const fileStorageRouter = router({
       const db = await getDb();
       if (!db) return [];
 
-      let query = db
+      const conditions: any[] = [eq(files.workspaceId, workspaceId), isNull(files.deletedAt)];
+      if (input?.linkedRecordType) conditions.push(eq(files.linkedRecordType, input.linkedRecordType));
+      if (input?.linkedRecordId) conditions.push(eq(files.linkedRecordId, input.linkedRecordId));
+
+      return db
         .select()
         .from(files)
-        .where(and(eq(files.workspaceId, workspaceId), isNull(files.deletedAt)))
+        .where(and(...conditions))
         .orderBy(desc(files.createdAt));
-
-      return query;
     }),
 
   bulkUpload: protectedProcedure

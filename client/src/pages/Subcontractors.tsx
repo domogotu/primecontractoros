@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
@@ -25,6 +26,9 @@ const statusColors: Record<string, string> = {
 
 export default function Subcontractors() {
   const { canWrite, canDelete } = useWorkspaceRole();
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const utils = trpc.useUtils();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -34,7 +38,9 @@ export default function Subcontractors() {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [form, setForm] = useState({ companyName: "", contactName: "", email: "", phone: "", specialty: "", status: "active" });
 
-  const { data: subs = [], isLoading } = trpc.subcontractors.list.useQuery();
+  const { data: subs = [], isLoading } = trpc.subcontractors.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
 
   const createSub = trpc.subcontractors.create.useMutation({
     onSuccess: () => { utils.subcontractors.list.invalidate(); setIsAddOpen(false); setForm({ companyName: "", contactName: "", email: "", phone: "", specialty: "", status: "active" }); toast.success("Subcontractor added"); },

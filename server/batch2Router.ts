@@ -3,16 +3,20 @@ import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
 import { subcontractors, vendors, documentVersions, fileLinks, changeOrders } from "../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { enforcePermission } from "./rbacMiddleware";
 import { logAudit } from "./featureRouter";
 
 export const subcontractorsRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure
+    .input(z.object({ contractId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
-    return db.select().from(subcontractors).where(eq(subcontractors.workspaceId, wsId)).orderBy(desc(subcontractors.createdAt));
+    const conditions: any[] = [eq(subcontractors.workspaceId, wsId)];
+    if (input?.contractId) conditions.push(eq(subcontractors.linkedContractId, input.contractId));
+    return db.select().from(subcontractors).where(and(...conditions)).orderBy(desc(subcontractors.createdAt));
   }),
   create: protectedProcedure.input(z.object({ companyName: z.string(), contactName: z.string().optional(), email: z.string().optional(), phone: z.string().optional(), specialty: z.string().optional(), status: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
@@ -83,10 +87,14 @@ export const documentVersionsRouter = router({
 });
 
 export const changeOrdersRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure
+    .input(z.object({ contractId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
     const db = await getDb();
     const wsId = await requireWorkspaceId(ctx.user.id);
-    return db.select().from(changeOrders).where(eq(changeOrders.workspaceId, wsId)).orderBy(desc(changeOrders.createdAt));
+    const conditions: any[] = [eq(changeOrders.workspaceId, wsId)];
+    if (input?.contractId) conditions.push(eq(changeOrders.contractId, input.contractId));
+    return db.select().from(changeOrders).where(and(...conditions)).orderBy(desc(changeOrders.createdAt));
   }),
   create: protectedProcedure.input(z.object({
     title: z.string(),

@@ -544,9 +544,11 @@ export const deliverablesRouter = router({
 });
 
 export const deadlinesRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure
+    .input(z.object({ contractId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
     const wsId = await getWorkspaceId(ctx);
-    return listDeadlines(wsId);
+    return listDeadlines(wsId, input?.contractId);
   }),
   create: protectedProcedure
     .input(z.object({ title: z.string(), description: z.string().optional(), dueDate: z.string(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), priority: z.string().optional() }))
