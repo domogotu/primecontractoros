@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Target, FileText, Briefcase, DollarSign, Building2, Users,
   Folder, History, Wand2, BookOpen, ShieldCheck, UserPlus,
   Crown, Activity, BarChart3, Settings, LogOut, ChevronDown, ChevronRight, Webhook,
-  Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain,
+  Shield, Package, Calendar, Bell, MessageSquare, Lightbulb, Archive, Brain, LifeBuoy,
   Scale, ClipboardList, CheckSquare, AlertTriangle, Sparkles, Globe, User,
   CreditCard, FileCheck, Send, Download, AlertCircle, BarChart2, Search,
   GitBranch, Zap, Clock,
@@ -125,6 +125,7 @@ export default function WorkspaceSidebar() {
         { icon: Send,         label: "Email Templates",    path: "/app/email-templates" },
         { icon: Bell,         label: "Notifications",      path: "/app/notifications" },
         { icon: Globe,        label: "External Viewers",   path: "/app/external-viewers" },
+        { icon: LifeBuoy,      label: "Support",            path: "/app/support" },
       ],
     },
 

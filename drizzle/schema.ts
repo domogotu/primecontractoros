@@ -658,11 +658,13 @@ export const supportTickets = mysqlTable("supportTickets", {
   userId: int("userId"),
   subject: varchar("subject", { length: 255 }).notNull(),
   body: text("body").notNull(),
+  category: varchar("category", { length: 100 }),
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
   status: mysqlEnum("status", ["open", "in_progress", "waiting_on_customer", "resolved", "closed"]).default("open"),
   assignedTo: varchar("assignedTo", { length: 255 }),
   resolution: text("resolution"),
   resolvedAt: timestamp("resolvedAt"),
+  closedAt: timestamp("closedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1419,11 +1421,14 @@ export const supportMessages = mysqlTable("support_messages", {
   ticketId: int("ticketId").notNull(),
   senderType: mysqlEnum("senderType", ["customer", "admin"]).notNull(),
   senderId: int("senderId"),
+  senderName: varchar("senderName", { length: 255 }),
   content: text("content").notNull(),
   isInternalNote: boolean("isInternalNote").default(false).notNull(),
+  attachmentFileId: int("attachmentFileId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type SupportMessage = typeof supportMessages.$inferSelect;
+export type InsertSupportMessage = typeof supportMessages.$inferInsert;
 
 // Proposal Frameworks — reusable proposal structure templates
 export const proposalFrameworks = mysqlTable("proposal_frameworks", {

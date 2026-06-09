@@ -53,6 +53,8 @@ import Deadlines from "./pages/Deadlines";
 import Compliance from "./pages/Compliance";
 import Glossary from "./pages/Glossary";
 import Support from "./pages/Support";
+import CustomerSupport from "./pages/CustomerSupport";
+import CustomerSupportDetail from "./pages/CustomerSupportDetail";
 import Users from "./pages/Users";
 import Alerts from "./pages/Alerts";
 import Tasks from "./pages/Tasks";
@@ -201,6 +203,8 @@ function Router() {
       <Route path={"/app/notification-preferences"} component={withAppShell(EmailNotificationPreferences)} />
       <Route path={"/app/export"} component={withAppShell(WorkspaceExport)} />
       <Route path={"/app/billing"} component={withAppShell(Billing)} />
+      <Route path={"/app/support/:id"} component={withAppShell(CustomerSupportDetail)} />
+      <Route path={"/app/support"} component={withAppShell(CustomerSupport)} />
       <Route path={"/app/users"} component={withAppShell(Users)} />
       <Route path={"/app/alerts"} component={withAppShell(Alerts)} />
       <Route path={"/app/tasks"} component={withAppShell(Tasks)} />
