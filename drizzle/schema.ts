@@ -260,10 +260,15 @@ export const files = mysqlTable("files", {
   url: text("url").notNull(),
   mimeType: varchar("mimeType", { length: 100 }),
   size: int("size"),
-  linkedRecordType: varchar("linkedRecordType", { length: 50 }), // "opportunity", "proposal", "contract"
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }), // "opportunity", "proposal", "contract", "invoice", "payment", "closeout", "support", "business_profile", "capability_statement", "subcontractor", "vendor"
   linkedRecordId: int("linkedRecordId"),
-  category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence"
+  category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence", "modification", "evidence"
   uploadedBy: int("uploadedBy"),
+  versionNumber: int("versionNumber").default(1).notNull(),
+  isGoverningDocument: boolean("isGoverningDocument").default(false).notNull(),
+  documentDate: timestamp("documentDate"),
+  notes: text("notes"),
+  storageProvider: varchar("storageProvider", { length: 50 }).default("built-in"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1591,6 +1596,8 @@ export const fileVersions = mysqlTable("file_versions", {
   versionNumber: int("versionNumber").notNull().default(1),
   fileKey: varchar("fileKey", { length: 500 }).notNull(),
   url: text("url").notNull(),
+  size: int("size"),
+  mimeType: varchar("mimeType", { length: 100 }),
   uploadedBy: int("uploadedBy"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

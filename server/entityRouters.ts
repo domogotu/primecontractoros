@@ -6,7 +6,7 @@ import { logAudit } from "./featureRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { sendInvoiceAlert, sendDeadlineReminder } from "./services/email";
 import {
-  listFiles, createFile, deleteFile, getFileById,
+  listFiles, createFile, deleteFile, getFileById, updateFile,
   listContacts, createContact, updateContact, deleteContact, getContactById,
   listMessages, createMessage, deleteMessage,
   listInvoices, createInvoice, updateInvoice, deleteInvoice, getInvoiceById,
@@ -71,7 +71,7 @@ async function requireFinanceDelete(ctx: any): Promise<number> {
 
 export const filesRouter = router({
   list: protectedProcedure
-    .input(z.object({ linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional() }).optional())
+    .input(z.object({ linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), isGoverningDocument: z.boolean().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const wsId = await getWorkspaceId(ctx);
       return listFiles(wsId, input?.linkedRecordType, input?.linkedRecordId);
@@ -83,11 +83,34 @@ export const filesRouter = router({
       return getFileById(input.id, wsId);
     }),
   create: protectedProcedure
-    .input(z.object({ name: z.string(), fileKey: z.string(), url: z.string(), mimeType: z.string().optional(), size: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), category: z.string().optional() }))
+    .input(z.object({ name: z.string(), fileKey: z.string(), url: z.string(), mimeType: z.string().optional(), size: z.number().optional(), linkedRecordType: z.string().optional(), linkedRecordId: z.number().optional(), category: z.string().optional(), isGoverningDocument: z.boolean().optional(), notes: z.string().optional(), documentDate: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       const wsId = await requireWrite(ctx);
       try { await logAudit(wsId, ctx.user.id, "create", "files", 0, input); } catch {}
-      return createFile({ ...input, workspaceId: wsId, uploadedBy: ctx.user?.id });
+      return createFile({ ...input, workspaceId: wsId, uploadedBy: ctx.user?.id, documentDate: input.documentDate ? new Date(input.documentDate) : null });
+    }),
+  update: protectedProcedure
+    .input(z.object({ id: z.number(), name: z.string().optional(), category: z.string().optional(), linkedRecordType: z.string().nullable().optional(), linkedRecordId: z.number().nullable().optional(), isGoverningDocument: z.boolean().optional(), documentDate: z.string().nullable().optional(), notes: z.string().nullable().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      const { id, ...data } = input;
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.category !== undefined) updateData.category = data.category;
+      if (data.linkedRecordType !== undefined) updateData.linkedRecordType = data.linkedRecordType;
+      if (data.linkedRecordId !== undefined) updateData.linkedRecordId = data.linkedRecordId;
+      if (data.isGoverningDocument !== undefined) updateData.isGoverningDocument = data.isGoverningDocument;
+      if (data.documentDate !== undefined) updateData.documentDate = data.documentDate ? new Date(data.documentDate) : null;
+      if (data.notes !== undefined) updateData.notes = data.notes;
+      try { await logAudit(wsId, ctx.user.id, "update", "files", id, updateData); } catch {}
+      return updateFile(id, wsId, updateData);
+    }),
+  toggleGoverning: protectedProcedure
+    .input(z.object({ id: z.number(), isGoverningDocument: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "update", "files", input.id, { isGoverningDocument: input.isGoverningDocument }); } catch {}
+      return updateFile(input.id, wsId, { isGoverningDocument: input.isGoverningDocument });
     }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
@@ -917,11 +940,11 @@ export const fileVersionsRouter = router({
       return listFileVersions(input.fileId);
     }),
   create: protectedProcedure
-    .input(z.object({ fileId: z.number(), versionNumber: z.number(), storageKey: z.string(), storageUrl: z.string(), notes: z.string().optional() }))
+    .input(z.object({ fileId: z.number(), versionNumber: z.number(), storageKey: z.string(), storageUrl: z.string(), size: z.number().optional(), mimeType: z.string().optional(), notes: z.string().optional() }))
     .mutation(async ({ ctx, input }) => {
       const wsId = await requireWrite(ctx);
       try { await logAudit(wsId, ctx.user.id, "create", "fileVersions", 0, input); } catch {}
-      return createFileVersion({ ...input, uploadedBy: ctx.user.id });
+      return createFileVersion({ ...input, workspaceId: wsId, uploadedBy: ctx.user.id });
     }),
 });
 
