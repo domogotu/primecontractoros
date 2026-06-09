@@ -5,6 +5,8 @@ import { logAudit } from "./featureRouter";
 import { getDb } from "./db";
 import {
   files,
+  fileVersions,
+  aiFindings,
   emailNotifications,
   subscriptions,
   plans,
@@ -43,13 +45,20 @@ export const fileStorageRouter = router({
       linkedRecordType: z.string().optional(),
       linkedRecordId: z.number().optional(),
       category: z.string().optional(),
+      isGoverningDocument: z.boolean().optional(),
+      notes: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       const buffer = Buffer.from(input.fileData, "base64");
+      if (buffer.length > MAX_FILE_SIZE) {
+        throw new Error(`File exceeds 10MB limit (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Please reduce file size or contact support for large file handling.`);
+      }
+
       const fileKey = `workspace-${workspaceId}/${Date.now()}-${input.fileName}`;
 
       // Try user-configured S3 first
@@ -75,10 +84,13 @@ export const fileStorageRouter = router({
         linkedRecordType: input.linkedRecordType || null,
         linkedRecordId: input.linkedRecordId || null,
         category: input.category || null,
+        isGoverningDocument: input.isGoverningDocument || false,
+        notes: input.notes || null,
         uploadedBy: ctx.user?.id || null,
-      });
+        storageProvider: s3Config ? "s3" : "built-in",
+      } as any);
 
-      try { await logAudit(workspaceId, ctx.user.id, "create", "fileStorage", 0, input); } catch {}
+      try { await logAudit(workspaceId, ctx.user.id, "create", "fileStorage", 0, { fileName: input.fileName, size: buffer.length }); } catch {}
       return { id: result.insertId, fileKey, url };
     }),
 
@@ -123,6 +135,181 @@ export const fileStorageRouter = router({
         .orderBy(desc(files.createdAt));
 
       return query;
+    }),
+
+  bulkUpload: protectedProcedure
+    .input(z.object({
+      files: z.array(z.object({
+        fileName: z.string(),
+        mimeType: z.string(),
+        fileData: z.string(),
+        linkedRecordType: z.string().optional(),
+        linkedRecordId: z.number().optional(),
+        category: z.string().optional(),
+        isGoverningDocument: z.boolean().optional(),
+        notes: z.string().optional(),
+      })).min(1).max(20),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB per file
+      const results: Array<{ fileName: string; id?: number; error?: string }> = [];
+
+      for (const fileInput of input.files) {
+        try {
+          const buffer = Buffer.from(fileInput.fileData, "base64");
+          if (buffer.length > MAX_FILE_SIZE) {
+            results.push({ fileName: fileInput.fileName, error: `File exceeds 10MB limit (${(buffer.length / 1024 / 1024).toFixed(1)}MB)` });
+            continue;
+          }
+          const fileKey = `workspace-${workspaceId}/${Date.now()}-${fileInput.fileName}`;
+          const s3Config = await getS3Config(workspaceId);
+          let url: string;
+          if (s3Config) {
+            const result = await uploadToS3(s3Config, fileKey, buffer, fileInput.mimeType);
+            url = result.url;
+          } else {
+            const result = await storagePut(fileKey, buffer, fileInput.mimeType);
+            url = result.url;
+          }
+          const [result] = await db.insert(files).values({
+            workspaceId,
+            name: fileInput.fileName,
+            fileKey,
+            url,
+            mimeType: fileInput.mimeType,
+            size: buffer.length,
+            linkedRecordType: fileInput.linkedRecordType || null,
+            linkedRecordId: fileInput.linkedRecordId || null,
+            category: fileInput.category || null,
+            isGoverningDocument: fileInput.isGoverningDocument || false,
+            notes: fileInput.notes || null,
+            uploadedBy: ctx.user?.id || null,
+            storageProvider: s3Config ? "s3" : "built-in",
+          } as any);
+          results.push({ fileName: fileInput.fileName, id: result.insertId });
+        } catch (err: any) {
+          results.push({ fileName: fileInput.fileName, error: err.message || "Upload failed" });
+        }
+      }
+
+      try { await logAudit(workspaceId, ctx.user.id, "create", "fileStorage.bulk", 0, { count: results.filter(r => r.id).length }); } catch {}
+      return { results };
+    }),
+
+  uploadVersion: protectedProcedure
+    .input(z.object({
+      fileId: z.number(),
+      fileName: z.string(),
+      mimeType: z.string(),
+      fileData: z.string(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      const MAX_FILE_SIZE = 10 * 1024 * 1024;
+      const buffer = Buffer.from(input.fileData, "base64");
+      if (buffer.length > MAX_FILE_SIZE) {
+        throw new Error(`File exceeds 10MB limit (${(buffer.length / 1024 / 1024).toFixed(1)}MB)`);
+      }
+
+      // Get current file to determine next version
+      const [currentFile] = await db.select().from(files).where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId)));
+      if (!currentFile) throw new Error("File not found");
+
+      // Get max version number from versions table
+      const existingVersions = await db.select().from(fileVersions).where(eq(fileVersions.fileId, input.fileId)).orderBy(desc(fileVersions.versionNumber));
+      const nextVersion = existingVersions.length > 0 ? existingVersions[0].versionNumber + 1 : (currentFile.versionNumber || 1) + 1;
+
+      // Upload the new file
+      const fileKey = `workspace-${workspaceId}/${Date.now()}-v${nextVersion}-${input.fileName}`;
+      const s3Config = await getS3Config(workspaceId);
+      let url: string;
+      if (s3Config) {
+        const result = await uploadToS3(s3Config, fileKey, buffer, input.mimeType);
+        url = result.url;
+      } else {
+        const result = await storagePut(fileKey, buffer, input.mimeType);
+        url = result.url;
+      }
+
+      // Save old version to versions table (if not already saved)
+      if (existingVersions.length === 0) {
+        // Save the original as version 1
+        await db.insert(fileVersions).values({
+          fileId: input.fileId,
+          workspaceId,
+          versionNumber: currentFile.versionNumber || 1,
+          fileKey: currentFile.fileKey,
+          url: currentFile.url,
+          size: currentFile.size,
+          mimeType: currentFile.mimeType,
+          uploadedBy: currentFile.uploadedBy,
+          notes: "Original upload",
+          createdAt: currentFile.createdAt,
+        } as any);
+      }
+
+      // Save new version to versions table
+      await db.insert(fileVersions).values({
+        fileId: input.fileId,
+        workspaceId,
+        versionNumber: nextVersion,
+        fileKey,
+        url,
+        size: buffer.length,
+        mimeType: input.mimeType,
+        uploadedBy: ctx.user?.id || null,
+        notes: input.notes || null,
+        createdAt: new Date(),
+      } as any);
+
+      // Update the main file record to point to the new version
+      await db.update(files).set({
+        fileKey,
+        url,
+        size: buffer.length,
+        mimeType: input.mimeType,
+        versionNumber: nextVersion,
+        name: input.fileName,
+      } as any).where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId)));
+
+      try { await logAudit(workspaceId, ctx.user.id, "create", "fileVersion", input.fileId, { versionNumber: nextVersion }); } catch {}
+      return { versionNumber: nextVersion, url };
+    }),
+
+  toggleGoverning: protectedProcedure
+    .input(z.object({ fileId: z.number(), isGoverningDocument: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+
+      await db.update(files).set({ isGoverningDocument: input.isGoverningDocument } as any)
+        .where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId)));
+
+      // If marking as governing document on a contract, mark AI findings as stale
+      if (input.isGoverningDocument) {
+        const [file] = await db.select().from(files).where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId)));
+        if (file && file.linkedRecordType === "contract" && file.linkedRecordId) {
+          await db.update(aiFindings)
+            .set({ staleStatus: "stale" } as any)
+            .where(and(
+              eq(aiFindings.workspaceId, workspaceId),
+              eq(aiFindings.contractId, file.linkedRecordId),
+              eq(aiFindings.staleStatus, "current")
+            ));
+        }
+      }
+
+      try { await logAudit(workspaceId, ctx.user.id, "update", "fileStorage.governing", input.fileId, { isGoverningDocument: input.isGoverningDocument }); } catch {}
+      return { success: true };
     }),
 
   delete: protectedProcedure

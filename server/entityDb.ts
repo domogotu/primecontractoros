@@ -30,11 +30,18 @@ export async function listFiles(workspaceId: number, linkedRecordType?: string, 
   return db.select().from(files).where(and(...conditions)).orderBy(desc(files.createdAt));
 }
 
-export async function createFile(data: { workspaceId: number; name: string; fileKey: string; url: string; mimeType?: string; size?: number; linkedRecordType?: string; linkedRecordId?: number; category?: string; uploadedBy?: number }) {
+export async function createFile(data: { workspaceId: number; name: string; fileKey: string; url: string; mimeType?: string; size?: number; linkedRecordType?: string; linkedRecordId?: number; category?: string; uploadedBy?: number; versionNumber?: number; isGoverningDocument?: boolean; documentDate?: Date | null; notes?: string; storageProvider?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(files).values(data as any);
   return { id: result[0].insertId };
+}
+
+export async function updateFile(id: number, workspaceId: number, data: Partial<{ name: string; category: string; linkedRecordType: string | null; linkedRecordId: number | null; isGoverningDocument: boolean; documentDate: Date | null; notes: string | null; versionNumber: number }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(files).set(data as any).where(and(eq(files.id, id), eq(files.workspaceId, workspaceId)));
+  return { success: true };
 }
 
 export async function deleteFile(id: number, workspaceId: number) {
@@ -597,11 +604,22 @@ export async function listFinanceNotes(workspaceId: number, linkedRecordType: st
 }
 
 // ==================== FILE VERSIONS ====================
-export async function createFileVersion(data: { fileId: number; versionNumber: number; storageKey: string; storageUrl: string; uploadedBy?: number; notes?: string }) {
+export async function createFileVersion(data: { fileId: number; workspaceId?: number; versionNumber: number; storageKey: string; storageUrl: string; size?: number; mimeType?: string; uploadedBy?: number; notes?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const { fileVersions } = await import("../drizzle/schema");
-  const result = await db.insert(fileVersions).values({ ...data, createdAt: new Date() } as any);
+  const result = await db.insert(fileVersions).values({
+    fileId: data.fileId,
+    workspaceId: data.workspaceId || 0,
+    versionNumber: data.versionNumber,
+    fileKey: data.storageKey,
+    url: data.storageUrl,
+    size: data.size,
+    mimeType: data.mimeType,
+    uploadedBy: data.uploadedBy,
+    notes: data.notes,
+    createdAt: new Date(),
+  } as any);
   return { id: result[0].insertId };
 }
 

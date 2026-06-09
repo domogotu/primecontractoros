@@ -5,7 +5,8 @@ import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileText, CheckCircle2, Clock, AlertTriangle, Shield, Calendar, DollarSign, Users, Briefcase, Package, ClipboardList, Brain, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle2, Clock, AlertTriangle, Shield, Calendar, DollarSign, Users, Briefcase, Package, ClipboardList, Brain, Loader2, Folder } from "lucide-react";
+import ContractFiles from "@/components/ContractFiles";
 
 export default function ContractHubDetail() {
   const [, params] = useRoute("/app/contracts/:id/hub");
@@ -27,6 +28,7 @@ export default function ContractHubDetail() {
     { title: "Change Orders", description: "Track modifications and change orders", path: "/app/change-management", icon: Briefcase, color: "bg-orange-50 text-orange-700 border-orange-200" },
     { title: "Finance", description: "Invoices, payments, and financial tracking", path: "/app/finance", icon: DollarSign, color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
     { title: "Subcontractors", description: "Manage subs and flowdown requirements", path: "/app/subcontractors", icon: Users, color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    { title: "Files", description: "Contract documents, governing docs, and versions", path: "/app/files", icon: Folder, color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
     { title: "AI Review", description: "AI-powered contract analysis", path: "/app/contracts/" + String(contractId || 0) + "/ai-confirmation", icon: Brain, color: "bg-rose-50 text-rose-700 border-rose-200" },
   ];
 
@@ -70,6 +72,14 @@ export default function ContractHubDetail() {
           );
         })}
       </div>
+
+      {/* Contract Files Section */}
+      <Card className="mb-6">
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><Folder className="w-4 h-4" /> Contract Files & Governing Documents</CardTitle></CardHeader>
+        <CardContent>
+          {contractId && <ContractFiles contractId={contractId} />}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
