@@ -31,6 +31,10 @@ import {
   createFinanceNote, listFinanceNotes,
   createFileVersion, listFileVersions, listAllFileVersionsForWorkspace,
   createContractRequirement, listContractRequirements, updateContractRequirement,
+  listInvoiceLineItems, createInvoiceLineItem, updateInvoiceLineItem, deleteInvoiceLineItem,
+  listInvoiceChecklistItems, createInvoiceChecklistItem, updateInvoiceChecklistItem, deleteInvoiceChecklistItem,
+  listInvoiceIssues, createInvoiceIssue, updateInvoiceIssue, deleteInvoiceIssue,
+  listPaymentApplications, createPaymentApplication, deletePaymentApplication, listAllPaymentApplications,
 } from "./entityDb";
 
 // Helper: get workspace ID from user context (resolves from DB)
@@ -215,6 +219,113 @@ export const invoicesRouter = router({
       try { await logAudit(wsId, ctx.user.id, "create", "invoicePaymentLink", 0, input); } catch {}
       return linkPaymentToInvoice(input);
     }),
+  // Line Items
+  lineItems: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listInvoiceLineItems(input.invoiceId, wsId);
+    }),
+  createLineItem: protectedProcedure
+    .input(z.object({ invoiceId: z.number(), description: z.string(), quantity: z.string().optional(), unitPrice: z.string(), amount: z.string(), category: z.string().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "invoiceLineItem", 0, input); } catch {}
+      return createInvoiceLineItem({ ...input, workspaceId: wsId, quantity: input.quantity || "1" });
+    }),
+  updateLineItem: protectedProcedure
+    .input(z.object({ id: z.number(), description: z.string().optional(), quantity: z.string().optional(), unitPrice: z.string().optional(), amount: z.string().optional(), category: z.string().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      const { id, ...data } = input;
+      try { await logAudit(wsId, ctx.user.id, "update", "invoiceLineItem", id, data); } catch {}
+      return updateInvoiceLineItem(id, wsId, data);
+    }),
+  deleteLineItem: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "invoiceLineItem", input.id, null); } catch {}
+      return deleteInvoiceLineItem(input.id, wsId);
+    }),
+  // Checklist Items
+  checklistItems: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listInvoiceChecklistItems(input.invoiceId, wsId);
+    }),
+  createChecklistItem: protectedProcedure
+    .input(z.object({ invoiceId: z.number(), title: z.string(), description: z.string().optional(), required: z.boolean().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "invoiceChecklistItem", 0, input); } catch {}
+      return createInvoiceChecklistItem({ ...input, workspaceId: wsId });
+    }),
+  updateChecklistItem: protectedProcedure
+    .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), required: z.boolean().optional(), completed: z.boolean().optional(), sortOrder: z.number().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      const { id, ...data } = input;
+      const updateData: Record<string, any> = { ...data };
+      if (input.completed === true) {
+        updateData.completedBy = ctx.user.id;
+        updateData.completedAt = new Date();
+      } else if (input.completed === false) {
+        updateData.completedBy = null;
+        updateData.completedAt = null;
+      }
+      try { await logAudit(wsId, ctx.user.id, "update", "invoiceChecklistItem", id, data); } catch {}
+      return updateInvoiceChecklistItem(id, wsId, updateData);
+    }),
+  deleteChecklistItem: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "invoiceChecklistItem", input.id, null); } catch {}
+      return deleteInvoiceChecklistItem(input.id, wsId);
+    }),
+  // Issues / Disputes
+  issues: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listInvoiceIssues(input.invoiceId, wsId);
+    }),
+  createIssue: protectedProcedure
+    .input(z.object({ invoiceId: z.number(), title: z.string(), description: z.string().optional(), severity: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "invoiceIssue", 0, input); } catch {}
+      return createInvoiceIssue({ ...input, workspaceId: wsId, raisedBy: ctx.user.id });
+    }),
+  updateIssue: protectedProcedure
+    .input(z.object({ id: z.number(), title: z.string().optional(), description: z.string().optional(), severity: z.string().optional(), status: z.string().optional(), resolution: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      const { id, ...data } = input;
+      const updateData: Record<string, any> = { ...data };
+      if (input.status === "resolved" || input.status === "closed") {
+        updateData.resolvedBy = ctx.user.id;
+        updateData.resolvedAt = new Date();
+      }
+      try { await logAudit(wsId, ctx.user.id, "update", "invoiceIssue", id, data); } catch {}
+      return updateInvoiceIssue(id, wsId, updateData);
+    }),
+  deleteIssue: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "invoiceIssue", input.id, null); } catch {}
+      return deleteInvoiceIssue(input.id, wsId);
+    }),
+  // Support Documents (uses existing files system with linkedRecordType="invoice")
+  supportDocs: protectedProcedure
+    .input(z.object({ invoiceId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listFiles(wsId, "invoice", input.invoiceId);
+    }),
 });
 
 export const paymentsRouter = router({
@@ -248,6 +359,47 @@ export const paymentsRouter = router({
       const wsId = await requireDelete(ctx);
       try { await logAudit(wsId, ctx.user.id, "delete", "payments", 0, null); } catch {}
       return deletePayment(input.id, wsId);
+    }),
+  // Payment Applications
+  applications: protectedProcedure
+    .input(z.object({ paymentId: z.number().optional(), invoiceId: z.number().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listPaymentApplications(wsId, input?.paymentId, input?.invoiceId);
+    }),
+  allApplications: protectedProcedure
+    .query(async ({ ctx }) => {
+      const wsId = await getWorkspaceId(ctx);
+      return listAllPaymentApplications(wsId);
+    }),
+  applyToInvoice: protectedProcedure
+    .input(z.object({ paymentId: z.number(), invoiceId: z.number(), amount: z.string(), notes: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWrite(ctx);
+      try { await logAudit(wsId, ctx.user.id, "create", "paymentApplication", 0, input); } catch {}
+      const result = await createPaymentApplication({ ...input, workspaceId: wsId });
+      // Auto-update invoice status based on total applied
+      const allApps = await listPaymentApplications(wsId, undefined, input.invoiceId);
+      const totalApplied = allApps.reduce((sum: number, app: any) => sum + parseFloat(app.amount || "0"), 0);
+      const invoice = await getInvoiceById(input.invoiceId, wsId);
+      if (invoice) {
+        const invoiceAmount = parseFloat(invoice.amount || "0");
+        if (totalApplied >= invoiceAmount) {
+          await updateInvoice(input.invoiceId, wsId, { status: "paid", paidDate: new Date() } as any);
+          await addInvoiceStatusHistory({ invoiceId: input.invoiceId, oldStatus: invoice.status || "draft", newStatus: "paid", changedBy: ctx.user.id, notes: "Auto-updated: fully paid via payment application" });
+        } else if (totalApplied > 0) {
+          await updateInvoice(input.invoiceId, wsId, { status: "partially_paid" } as any);
+          await addInvoiceStatusHistory({ invoiceId: input.invoiceId, oldStatus: invoice.status || "draft", newStatus: "partially_paid", changedBy: ctx.user.id, notes: `Auto-updated: $${totalApplied.toFixed(2)} of $${invoiceAmount.toFixed(2)} applied` });
+        }
+      }
+      return result;
+    }),
+  removeApplication: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireDelete(ctx);
+      try { await logAudit(wsId, ctx.user.id, "delete", "paymentApplication", input.id, null); } catch {}
+      return deletePaymentApplication(input.id, wsId);
     }),
 });
 

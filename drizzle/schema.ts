@@ -319,7 +319,7 @@ export const invoices = mysqlTable("invoices", {
   contractId: int("contractId"),
   invoiceNumber: varchar("invoiceNumber", { length: 100 }).notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["draft", "submitted", "approved", "paid", "rejected", "overdue"]).default("draft"),
+  status: mysqlEnum("status", ["draft", "ready_for_review", "approved", "submitted", "partially_paid", "paid", "disputed", "void", "overdue", "rejected"]).default("draft"),
   issuedDate: timestamp("issuedDate"),
   dueDate: timestamp("dueDate"),
   paidDate: timestamp("paidDate"),
@@ -343,7 +343,7 @@ export const payments = mysqlTable("payments", {
   paymentDate: timestamp("paymentDate"),
   method: varchar("method", { length: 100 }),
   reference: varchar("reference", { length: 255 }),
-  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).default("pending"),
+  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded", "recorded", "partially_applied", "fully_applied", "reversed", "disputed", "unapplied"]).default("recorded"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -2170,3 +2170,71 @@ export const farDfarsExports = mysqlTable("far_dfars_exports", {
 });
 export type FarDfarsExport = typeof farDfarsExports.$inferSelect;
 export type InsertFarDfarsExport = typeof farDfarsExports.$inferInsert;
+
+// ==================== INVOICE LINE ITEMS ====================
+export const invoiceLineItems = mysqlTable("invoice_line_items", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }).default("1"),
+  unitPrice: decimal("unitPrice", { precision: 12, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
+export type InsertInvoiceLineItem = typeof invoiceLineItems.$inferInsert;
+
+// ==================== INVOICE CHECKLIST ITEMS ====================
+export const invoiceChecklistItems = mysqlTable("invoice_checklist_items", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  required: boolean("required").default(true),
+  completed: boolean("completed").default(false),
+  completedBy: int("completedBy"),
+  completedAt: timestamp("completedAt"),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceChecklistItem = typeof invoiceChecklistItems.$inferSelect;
+export type InsertInvoiceChecklistItem = typeof invoiceChecklistItems.$inferInsert;
+
+// ==================== INVOICE ISSUES / DISPUTES ====================
+export const invoiceIssues = mysqlTable("invoice_issues", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
+  status: mysqlEnum("status", ["open", "in_progress", "resolved", "closed"]).default("open"),
+  resolution: text("resolution"),
+  raisedBy: int("raisedBy"),
+  resolvedBy: int("resolvedBy"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceIssue = typeof invoiceIssues.$inferSelect;
+export type InsertInvoiceIssue = typeof invoiceIssues.$inferInsert;
+
+// ==================== PAYMENT APPLICATIONS ====================
+export const paymentApplications = mysqlTable("payment_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  paymentId: int("paymentId").notNull(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  appliedAt: timestamp("appliedAt").defaultNow().notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PaymentApplication = typeof paymentApplications.$inferSelect;
+export type InsertPaymentApplication = typeof paymentApplications.$inferInsert;
