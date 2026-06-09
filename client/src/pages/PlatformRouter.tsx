@@ -28,7 +28,7 @@ import PlatformNotifications from "./PlatformNotifications";
 import PlatformSecurity from "./PlatformSecurity";
 import PlatformLaunchReadiness from "./PlatformLaunchReadiness";
 import PlatformUserDetailPage from "./PlatformUserDetail";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 
@@ -49,7 +49,7 @@ export default function PlatformRouter() {
   }
 
   if (!isAuthenticated) {
-    window.location.href = getLoginUrl();
+    navigateToLogin();
     return null;
   }
 

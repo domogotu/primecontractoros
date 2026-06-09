@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation, useSearch } from "wouter";
 import { useEffect, useState } from "react";
 import { CheckCircle2, LogIn, Tag } from "lucide-react";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 /**
@@ -91,7 +91,7 @@ export default function GetStarted() {
         selectedAt: new Date().toISOString(),
       }));
     }
-    window.location.href = getLoginUrl();
+    navigateToLogin();
   };
 
   const benefits = [

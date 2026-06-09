@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Clock, LogIn, Users } from "lucide-react";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 
 export default function InviteAccept() {
   const [, params] = useRoute("/invite/accept/:token");
@@ -48,7 +48,7 @@ export default function InviteAccept() {
   function handleLogin() {
     // Store the invite token in sessionStorage so we can redirect back after login
     sessionStorage.setItem("pendingInviteToken", token);
-    window.location.href = getLoginUrl();
+    navigateToLogin();
   }
 
   // Auto-accept if user is already logged in and came back from login

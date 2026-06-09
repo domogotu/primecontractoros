@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import WorkspaceSidebar from "./WorkspaceSidebar";
 import MobileNav from "./MobileNav";
 import { WorkspaceContext, useWorkspaceQuery } from "@/hooks/useWorkspace";
@@ -126,7 +126,7 @@ export default function AppShell({ children }: AppShellProps) {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      window.location.href = getLoginUrl();
+      navigateToLogin();
     }
   }, [loading, isAuthenticated]);
 

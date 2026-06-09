@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 import { ArrowRight, LogIn } from "lucide-react";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 /**
@@ -22,7 +22,7 @@ export default function Login() {
   }, [isAuthenticated, loading, navigate]);
 
   const handleLogin = () => {
-    window.location.href = getLoginUrl();
+    navigateToLogin();
   };
 
   return (
