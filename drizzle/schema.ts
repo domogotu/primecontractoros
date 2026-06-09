@@ -1366,7 +1366,8 @@ export const accessStates = mysqlTable("access_states", {
   workspaceId: int("workspaceId").notNull(),
   state: mysqlEnum("state", [
     "signup_started", "pending_setup", "trial_active", "limited_access",
-    "pending_payment", "active_paid", "past_due", "suspended", "canceled", "archived"
+    "pending_payment", "active_paid", "past_due", "suspended", "canceled", "archived",
+    "grace", "override"
   ]).default("signup_started").notNull(),
   previousState: varchar("previousState", { length: 50 }),
   changedAt: timestamp("changedAt").defaultNow().notNull(),
@@ -2170,3 +2171,21 @@ export const farDfarsExports = mysqlTable("far_dfars_exports", {
 });
 export type FarDfarsExport = typeof farDfarsExports.$inferSelect;
 export type InsertFarDfarsExport = typeof farDfarsExports.$inferInsert;
+
+// Checkout Sessions — track Stripe checkout sessions through the billing flow
+export const checkoutSessions = mysqlTable("checkout_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"), // nullable — workspace may not exist yet at checkout start
+  planId: int("planId").notNull(),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "completed", "expired", "canceled"]).default("pending").notNull(),
+  billingInterval: mysqlEnum("billingInterval", ["month", "year"]).default("month").notNull(),
+  completedAt: timestamp("completedAt"),
+  canceledAt: timestamp("canceledAt"),
+  metadata: text("metadata"), // JSON for extra context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CheckoutSession = typeof checkoutSessions.$inferSelect;
+export type InsertCheckoutSession = typeof checkoutSessions.$inferInsert;

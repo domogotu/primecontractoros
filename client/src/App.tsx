@@ -103,6 +103,7 @@ import SAMSearch from "./pages/SAMSearch";
 import RateParityDashboard from "./pages/RateParityDashboard";
 import Training from "./pages/Training";
 import Subscription from "./pages/Subscription";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -129,6 +130,7 @@ function Router() {
       <Route path={"/glossary"} component={Glossary} />
       <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
+      <Route path={"/checkout/success"} component={CheckoutSuccess} />
       <Route path={"/login"} component={Login} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={ContactPage} />

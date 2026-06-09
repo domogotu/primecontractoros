@@ -1,36 +1,96 @@
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useEffect, useState } from "react";
-import { CheckCircle2, LogIn } from "lucide-react";
+import { CheckCircle2, LogIn, Tag } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 /**
  * Get Started / Signup Page
- * 
- * Redirects to Manus OAuth for account creation.
- * After OAuth, new users are directed to the onboarding flow.
- * Includes Terms of Service acceptance checkbox (required before signup).
+ *
+ * Phase 2 update:
+ * - Reads ?plan=<slug> query param and localStorage `pcos_selected_plan`
+ * - Shows the selected plan name so the user knows what they're signing up for
+ * - After OAuth, authenticated users are routed to /checkout/success (if a plan
+ *   was selected) or /app/dashboard (if no plan was pre-selected)
+ * - Stores plan selection in localStorage so it survives the OAuth redirect
  */
 export default function GetStarted() {
   const [, navigate] = useLocation();
+  const search = useSearch();
   const { isAuthenticated, loading } = useAuth();
   const [tosAccepted, setTosAccepted] = useState(false);
 
+  // Resolve selected plan from URL param or localStorage
+  const params = new URLSearchParams(search);
+  const planSlugFromUrl = params.get("plan");
+
+  const [selectedPlan, setSelectedPlan] = useState<{
+    name: string;
+    slug: string;
+    billingInterval: string;
+  } | null>(null);
+
+  useEffect(() => {
+    // Prefer URL param; fall back to localStorage
+    if (planSlugFromUrl) {
+      const stored = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("pcos_selected_plan") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      if (stored && stored.slug === planSlugFromUrl) {
+        setSelectedPlan(stored);
+      } else {
+        // URL param present but no localStorage match — create a minimal entry
+        const planName = planSlugFromUrl.charAt(0).toUpperCase() + planSlugFromUrl.slice(1);
+        const entry = { name: planName, slug: planSlugFromUrl, billingInterval: "month" };
+        setSelectedPlan(entry);
+        localStorage.setItem("pcos_selected_plan", JSON.stringify({
+          ...entry,
+          selectedAt: new Date().toISOString(),
+        }));
+      }
+    } else {
+      // No URL param — check localStorage
+      try {
+        const stored = JSON.parse(localStorage.getItem("pcos_selected_plan") || "null");
+        if (stored) setSelectedPlan(stored);
+      } catch {
+        // ignore
+      }
+    }
+  }, [planSlugFromUrl]);
+
+  // Once authenticated, route to checkout success (plan was selected) or dashboard
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate("/app/dashboard", { replace: true });
+      const hasPlan = !!selectedPlan || !!localStorage.getItem("pcos_selected_plan");
+      if (hasPlan) {
+        navigate("/checkout/success", { replace: true });
+      } else {
+        navigate("/app/dashboard", { replace: true });
+      }
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, selectedPlan]);
 
   const handleSignUp = () => {
     if (!tosAccepted) return;
-    // Store acceptance in localStorage so it can be recorded after OAuth callback
+    // Persist TOS acceptance so it can be recorded after OAuth callback
     localStorage.setItem("tos_accepted", JSON.stringify({
       documentType: "terms_of_service",
       version: "1.0",
       acceptedAt: new Date().toISOString(),
     }));
+    // Ensure plan selection is persisted before redirect
+    if (selectedPlan && !localStorage.getItem("pcos_selected_plan")) {
+      localStorage.setItem("pcos_selected_plan", JSON.stringify({
+        ...selectedPlan,
+        selectedAt: new Date().toISOString(),
+      }));
+    }
     window.location.href = getLoginUrl();
   };
 
@@ -42,6 +102,12 @@ export default function GetStarted() {
     "Team collaboration and workspace management",
     "Finance tracking with invoicing and payments",
   ];
+
+  const planLabels: Record<string, string> = {
+    starter: "Starter — $99/month",
+    growth: "Growth — $299/month",
+    advanced: "Advanced — $799/month",
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -74,6 +140,24 @@ export default function GetStarted() {
               </p>
             </div>
 
+            {selectedPlan && (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+                <Tag className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Selected plan</p>
+                  <p className="text-sm text-primary font-semibold">
+                    {planLabels[selectedPlan.slug] ?? selectedPlan.name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/pricing")}
+                  className="ml-auto text-xs text-gray-400 hover:text-gray-700 underline"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
             <div className="space-y-3">
               {benefits.map((benefit, idx) => (
                 <div key={idx} className="flex items-start gap-3">
@@ -89,7 +173,7 @@ export default function GetStarted() {
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Create Your Account</h2>
               <p className="text-sm text-gray-500">
-                Sign up securely with your Manus account. After creating your account, you will complete a brief onboarding to set up your workspace.
+                Sign up securely with your Manus account. After creating your account, you will complete checkout to activate your workspace.
               </p>
             </div>
 
@@ -131,6 +215,11 @@ export default function GetStarted() {
                 <p className="font-medium text-gray-900">What happens next:</p>
                 <ol className="list-decimal list-inside space-y-1">
                   <li>Create your secure account via Manus</li>
+                  {selectedPlan ? (
+                    <li>Complete checkout for the {selectedPlan.name} plan</li>
+                  ) : (
+                    <li>Choose a plan or start a free trial</li>
+                  )}
                   <li>Complete a brief onboarding wizard</li>
                   <li>Access your workspace dashboard</li>
                 </ol>
