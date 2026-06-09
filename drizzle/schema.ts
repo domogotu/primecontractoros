@@ -2296,3 +2296,48 @@ export const closeoutEvidence = mysqlTable("closeout_evidence", {
 });
 export type CloseoutEvidence = typeof closeoutEvidence.$inferSelect;
 export type InsertCloseoutEvidence = typeof closeoutEvidence.$inferInsert;
+
+// ==================== PHASE 6: PLATFORM PAGES ====================
+
+// Launch Readiness Items — Persisted checklist for platform launch readiness
+export const launchReadinessItems = mysqlTable("launch_readiness_items", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "passed", "failed", "blocked"]).default("not_started").notNull(),
+  owner: varchar("owner", { length: 255 }),
+  notes: text("notes"),
+  lastCheckedAt: timestamp("lastCheckedAt"),
+  relatedRoute: varchar("relatedRoute", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchReadinessItem = typeof launchReadinessItems.$inferSelect;
+export type InsertLaunchReadinessItem = typeof launchReadinessItems.$inferInsert;
+
+// Notification Templates — Platform-wide notification/email templates
+export const notificationTemplates = mysqlTable("notification_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // welcome, billing_success, billing_failure, support_ticket_update, invite_member, deadline_reminder, invoice_reminder, contract_alert, closeout_alert
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationTemplate = typeof notificationTemplates.$inferInsert;
+
+// Integration Test Results — Store results of platform integration tests
+export const integrationTestResults = mysqlTable("integration_test_results", {
+  id: int("id").autoincrement().primaryKey(),
+  integrationName: varchar("integrationName", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["pass", "fail", "warning", "untested"]).default("untested").notNull(),
+  message: text("message"),
+  testedAt: timestamp("testedAt").defaultNow().notNull(),
+  testedBy: int("testedBy"),
+});
+export type IntegrationTestResult = typeof integrationTestResults.$inferSelect;
+export type InsertIntegrationTestResult = typeof integrationTestResults.$inferInsert;
