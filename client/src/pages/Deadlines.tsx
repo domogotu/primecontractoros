@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearch } from "wouter";
 import PageGuide from "@/components/PageGuide";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
@@ -45,6 +46,9 @@ function daysUntil(dueDate: Date | string): number {
 }
 
 export default function Deadlines() {
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +60,9 @@ export default function Deadlines() {
     linkedRecordType: "",
   });
 
-  const { data: deadlines = [], isLoading, refetch } = trpc.deadlines.list.useQuery();
+  const { data: deadlines = [], isLoading, refetch } = trpc.deadlines.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
   const createMutation = trpc.deadlines.create.useMutation({
     onSuccess: () => {
       refetch();

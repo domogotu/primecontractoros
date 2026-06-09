@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,24 @@ const statusIcons: Record<string, typeof CheckCircle2> = {
 
 export default function Requirements() {
   const [, navigate] = useLocation();
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractId = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
 
-  const { data: requirements, isLoading } = trpc.compliance.list.useQuery();
+  // Use contractRequirements if contractId is present, otherwise fall back to compliance list
+  const { data: contractReqs, isLoading: reqsLoading } = trpc.contractRequirements.list.useQuery(
+    { contractId: contractId! },
+    { enabled: !!contractId }
+  );
+  const { data: complianceReqs, isLoading: compLoading } = trpc.compliance.list.useQuery(
+    contractId ? { contractId } : undefined,
+    { enabled: !contractId }
+  );
+  const requirements = contractId ? contractReqs : complianceReqs;
+  const isLoading = contractId ? reqsLoading : compLoading;
 
   const filtered = useMemo(() => {
     if (!requirements) return [];

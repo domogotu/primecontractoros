@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
@@ -50,6 +50,9 @@ import { Textarea } from "@/components/ui/textarea";
 export default function Deliverables() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -69,7 +72,9 @@ export default function Deliverables() {
   });
 
   // Queries
-  const { data: deliverablesData, isLoading, refetch } = trpc.deliverables.list.useQuery();
+  const { data: deliverablesData, isLoading, refetch } = trpc.deliverables.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
   const createMutation = trpc.deliverables.create.useMutation({
     onSuccess: () => {
       toast({ title: "Deliverable created successfully" });

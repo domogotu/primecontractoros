@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
 import PageLayout from "@/components/PageLayout";
@@ -28,16 +29,22 @@ const statusConfig: Record<string, string> = {
 export default function ChangeManagement() {
   const { user } = useAuth();
   const { canWrite, canDelete } = useWorkspaceRole();
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
+  const shouldAutoOpen = urlParams.get("create") === "true";
   const utils = trpc.useUtils();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(shouldAutoOpen);
   const [editItem, setEditItem] = useState<any>(null);
   const [deleteItem, setDeleteItem] = useState<any>(null);
   const [form, setForm] = useState({ title: "", description: "", changeType: "scope", status: "draft", impactCost: "", impactSchedule: "", submittedBy: "" });
 
-  const { data: changes = [], isLoading } = trpc.changeOrders.list.useQuery();
+  const { data: changes = [], isLoading } = trpc.changeOrders.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
 
   const createChange = trpc.changeOrders.create.useMutation({
     onSuccess: () => {
@@ -96,7 +103,7 @@ export default function ChangeManagement() {
     if (isEdit && editItem) {
       updateChange.mutate({ id: editItem.id, ...form });
     } else {
-      createChange.mutate({ ...form, submittedBy: form.submittedBy || user?.name || "" });
+      createChange.mutate({ ...form, submittedBy: form.submittedBy || user?.name || "", contractId: contractIdParam });
     }
   };
 

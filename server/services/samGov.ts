@@ -5,9 +5,20 @@
  * using the official SAM.gov API.
  */
 
-const SAM_API_KEY = process.env.SAM_GOV_API_KEY || "SAM-ba748d6d-784a-4dde-892a-6fecfcc411ef";
 const SAM_OPPORTUNITIES_URL = "https://api.sam.gov/opportunities/v2/search";
 const SAM_ENTITY_URL = "https://api.sam.gov/entity-information/v3/entities";
+
+/**
+ * Get SAM.gov API key from environment variable.
+ * Workspace-level keys can be stored in workspaceSettings under key "sam_gov_api_key"
+ * and passed explicitly to functions that need it.
+ */
+export function getSamApiKey(workspaceApiKey?: string | null): string {
+  return workspaceApiKey || process.env.SAM_GOV_API_KEY || "";
+}
+
+// Default key for backward compatibility
+const SAM_API_KEY = process.env.SAM_GOV_API_KEY || "";
 
 export interface SamOpportunity {
   noticeId: string;

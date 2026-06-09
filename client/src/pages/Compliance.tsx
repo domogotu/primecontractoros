@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, Shield, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,13 +11,18 @@ import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Compliance() {
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [form, setForm] = useState({
-    contractId: "", title: "", description: "", regulation: "", category: "far", dueDate: "", notes: "",
+    contractId: contractIdParam ? String(contractIdParam) : "", title: "", description: "", regulation: "", category: "far", dueDate: "", notes: "",
   });
 
-  const { data: items = [], isLoading, refetch } = trpc.compliance.list.useQuery();
+  const { data: items = [], isLoading, refetch } = trpc.compliance.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
   const createMutation = trpc.compliance.create.useMutation({
     onSuccess: () => {
       refetch();

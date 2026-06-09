@@ -16,7 +16,7 @@ import {
 } from "./services/samImport";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { getDb } from "./db";
-import { opportunities, samImportLogs, opportunitySourceFiles } from "../drizzle/schema";
+import { opportunities, samImportLogs, opportunitySourceFiles, opportunityImportRuns } from "../drizzle/schema";
 import { logAudit } from "./featureRouter";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
@@ -484,6 +484,160 @@ export const samRouter = router({
 
       try { await logAudit(wsId, ctx.user.id, "create", "opportunities", 0, { source: "sam.gov", noticeId: input.noticeId }); } catch {}
       return { success: true, id: (result as any)?.[0]?.insertId || 0 };
+    }),
+
+  // ─── Bulk Import from Search Results ──────────────────────────────────────
+  bulkImport: protectedProcedure
+    .input(z.object({
+      opportunities: z.array(z.object({
+        noticeId: z.string(),
+        title: z.string(),
+        agency: z.string().optional(),
+        solicitationNumber: z.string().optional(),
+        naicsCode: z.string().optional(),
+        setAside: z.string().optional(),
+        responseDeadline: z.string().optional(),
+        description: z.string().optional(),
+        sourceLink: z.string().optional(),
+        type: z.string().optional(),
+      })),
+      triggerAiReview: z.boolean().default(false),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      // Create import run record
+      const runResult = await db.insert(opportunityImportRuns).values({
+        workspaceId: wsId,
+        runType: "bulk",
+        status: "running",
+        totalItems: input.opportunities.length,
+        importedBy: ctx.user.id,
+      });
+      const runId = (runResult as any)?.[0]?.insertId;
+
+      let importedCount = 0;
+      let skippedCount = 0;
+      let failedCount = 0;
+      let duplicateCount = 0;
+      const importedIds: number[] = [];
+
+      for (const opp of input.opportunities) {
+        try {
+          // Check for duplicates
+          const dupCheck = await checkForDuplicate(db, wsId, opp.noticeId, opp.noticeId, opp.solicitationNumber || null, opp.sourceLink || null);
+          if (dupCheck.isDuplicate) {
+            duplicateCount++;
+            skippedCount++;
+            continue;
+          }
+
+          const result = await db.insert(opportunities).values({
+            workspaceId: wsId,
+            title: opp.title,
+            agency: opp.agency || null,
+            solicitation: opp.solicitationNumber || null,
+            naics: opp.naicsCode || null,
+            setAside: opp.setAside || null,
+            dueDate: opp.responseDeadline ? new Date(opp.responseDeadline) : null,
+            summary: opp.description?.substring(0, 500) || null,
+            sourceLink: opp.sourceLink || null,
+            samOpportunityId: opp.noticeId,
+            noticeId: opp.noticeId,
+            sourceSystem: "SAM.gov",
+            type: opp.type || "federal",
+            status: "new",
+            importStatus: "imported",
+            reviewStatus: "needs_review",
+            pursuitDecision: "undecided",
+            createdBy: ctx.user.id,
+          });
+          const oppId = (result as any)?.[0]?.insertId;
+          if (oppId) importedIds.push(oppId);
+          importedCount++;
+        } catch (err: any) {
+          console.error("[SAM Bulk Import] Failed to import:", opp.noticeId, err.message);
+          failedCount++;
+        }
+      }
+
+      // Update import run
+      await db.update(opportunityImportRuns).set({
+        status: "completed",
+        importedCount,
+        skippedCount,
+        failedCount,
+        duplicateCount,
+        importedOpportunityIds: importedIds,
+        triggeredAiReview: input.triggerAiReview,
+        completedAt: new Date(),
+      }).where(eq(opportunityImportRuns.id, runId));
+
+      // Log
+      await db.insert(samImportLogs).values({
+        workspaceId: wsId,
+        samUrl: "bulk_import",
+        importStatus: "success",
+        rawResponseSnapshot: JSON.stringify({ importedCount, skippedCount, failedCount, duplicateCount }),
+        importedBy: ctx.user.id,
+      });
+
+      try { await logAudit(wsId, ctx.user.id, "create", "opportunities", 0, { source: "sam.gov_bulk", count: importedCount }); } catch {}
+
+      return {
+        success: true,
+        runId,
+        importedCount,
+        skippedCount,
+        failedCount,
+        duplicateCount,
+        importedIds,
+        message: `Bulk import complete: ${importedCount} imported, ${duplicateCount} duplicates skipped, ${failedCount} failed.`,
+      };
+    }),
+
+  // ─── Get Import Runs ──────────────────────────────────────────────────────
+  getImportRuns: protectedProcedure
+    .input(z.object({ limit: z.number().default(20) }).optional())
+    .query(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(opportunityImportRuns)
+        .where(eq(opportunityImportRuns.workspaceId, wsId))
+        .orderBy(desc(opportunityImportRuns.startedAt))
+        .limit(input?.limit || 20);
+    }),
+
+  // ─── Trigger AI Review After Import ───────────────────────────────────────
+  triggerAiReview: protectedProcedure
+    .input(z.object({ opportunityId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const wsId = await requireWorkspaceId(ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+      // Get opportunity data
+      const [opp] = await db.select().from(opportunities)
+        .where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.workspaceId, wsId)))
+        .limit(1);
+
+      if (!opp) throw new TRPCError({ code: "NOT_FOUND", message: "Opportunity not found" });
+
+      // Trigger AI review using the existing engine
+      try {
+        const { runOpportunityReview } = await import("./aiEngine");
+        const result = await runOpportunityReview(
+          { workspaceId: wsId, userId: ctx.user.id, recordType: "opportunity", recordId: input.opportunityId, runType: "opportunity_review" },
+          JSON.stringify(opp)
+        );
+        return { success: true, result };
+      } catch (err: any) {
+        console.error("[SAM AI Review] Failed:", err.message);
+        return { success: false, error: err.message };
+      }
     }),
 });
 

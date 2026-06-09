@@ -262,10 +262,14 @@ export async function deleteDeliverable(id: number, workspaceId: number) {
 }
 
 // ==================== DEADLINES ====================
-export async function listDeadlines(workspaceId: number) {
+export async function listDeadlines(workspaceId: number, contractId?: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(deadlines).where(eq(deadlines.workspaceId, workspaceId)).orderBy(desc(deadlines.dueDate));
+  const conditions = [eq(deadlines.workspaceId, workspaceId)];
+  if (contractId) conditions.push(eq(deadlines.linkedRecordId, contractId));
+  // When contractId is provided, also filter by linkedRecordType = 'contract'
+  if (contractId) conditions.push(eq(deadlines.linkedRecordType, "contract"));
+  return db.select().from(deadlines).where(and(...conditions)).orderBy(desc(deadlines.dueDate));
 }
 
 export async function createDeadline(data: { workspaceId: number; title: string; description?: string; dueDate: Date; linkedRecordType?: string; linkedRecordId?: number; priority?: string }) {
