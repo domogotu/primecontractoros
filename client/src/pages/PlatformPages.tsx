@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square, ChevronDown } from "lucide-react";
+import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square, ChevronDown, ShieldCheck, ShieldOff, RefreshCw, CreditCard, FileText, StickyNote, XCircle } from "lucide-react";
+import { useState as useStateLocal } from "react";
 import { toast } from "sonner";
 
 // ==================== SHARED COMPONENTS ====================
@@ -266,27 +267,261 @@ export function PlatformDiscounts() {
 }
 
 // ==================== BILLING MANAGEMENT ====================
+// ─── Access Status Badge ─────────────────────────────────────────────────────
+function AccessStateBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    active_paid: "bg-green-900 text-green-300 border-green-700",
+    trial_active: "bg-amber-900 text-amber-300 border-amber-700",
+    grace: "bg-blue-900 text-blue-300 border-blue-700",
+    override: "bg-purple-900 text-purple-300 border-purple-700",
+    past_due: "bg-red-900 text-red-300 border-red-700",
+    pending_payment: "bg-orange-900 text-orange-300 border-orange-700",
+    pending_setup: "bg-slate-700 text-slate-300 border-slate-600",
+    suspended: "bg-red-950 text-red-400 border-red-800",
+    canceled: "bg-slate-800 text-slate-400 border-slate-700",
+    no_access: "bg-slate-800 text-slate-500 border-slate-700",
+  };
+  const cls = colors[status] ?? "bg-slate-800 text-slate-400 border-slate-700";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${cls}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+// ─── Workspace Billing Detail Modal ─────────────────────────────────────────
+function WorkspaceBillingModal({ workspaceId, onClose }: { workspaceId: number; onClose: () => void }) {
+  const [activeTab, setActiveTab] = useStateLocal<"overview" | "events" | "notes">("overview");
+  const [graceDays, setGraceDays] = useStateLocal("14");
+  const [graceReason, setGraceReason] = useStateLocal("");
+  const [suspendReason, setSuspendReason] = useStateLocal("");
+  const [restoreReason, setRestoreReason] = useStateLocal("");
+  const [noteText, setNoteText] = useStateLocal("");
+  const [overrideReason, setOverrideReason] = useStateLocal("");
+
+  const detailQuery = trpc.platformAdmin.billing.getWorkspaceBilling.useQuery({ workspaceId });
+  const eventsQuery = trpc.platformAdmin.billing.getBillingEvents.useQuery({ workspaceId });
+  const plansQuery = trpc.platformAdmin.billing.list.useQuery();
+  const allPlansQuery = trpc.billing.getPlans.useQuery();
+
+  const grantGraceMutation = trpc.platformAdmin.billing.grantGracePeriod.useMutation({
+    onSuccess: () => { toast.success("Grace period granted."); detailQuery.refetch(); setGraceReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const suspendMutation = trpc.platformAdmin.billing.suspendAccess.useMutation({
+    onSuccess: () => { toast.success("Access suspended."); detailQuery.refetch(); setSuspendReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const restoreMutation = trpc.platformAdmin.billing.restoreAccess.useMutation({
+    onSuccess: () => { toast.success("Access restored."); detailQuery.refetch(); setRestoreReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const overrideMutation = trpc.platformAdmin.billing.setOverride.useMutation({
+    onSuccess: () => { toast.success("Override set."); detailQuery.refetch(); setOverrideReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const noteMutation = trpc.platformAdmin.billing.addBillingNote.useMutation({
+    onSuccess: () => { toast.success("Note added."); detailQuery.refetch(); setNoteText(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const d = detailQuery.data;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <div>
+            <h2 className="text-xl font-bold text-white">Workspace #{workspaceId} — Billing</h2>
+            {d?.workspace && <p className="text-slate-400 text-sm mt-0.5">{d.workspace.name} · {d.owner?.email}</p>}
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><XCircle className="w-5 h-5" /></button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-700">
+          {(["overview", "events", "notes"] as const).map((t) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-6 py-3 text-sm font-medium capitalize transition-colors ${activeTab === t ? "text-blue-300 border-b-2 border-blue-400" : "text-slate-400 hover:text-slate-200"}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-6 space-y-6">
+          {detailQuery.isLoading && <div className="flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-300" /></div>}
+
+          {activeTab === "overview" && d && (
+            <>
+              {/* Current State */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900 rounded-lg p-4">
+                  <p className="text-xs text-slate-400 mb-1">Access State</p>
+                  {d.accessState ? <AccessStateBadge status={d.accessState.state} /> : <span className="text-slate-500 text-sm">None</span>}
+                  {d.accessState?.reason && <p className="text-xs text-slate-500 mt-1">{d.accessState.reason}</p>}
+                  {d.accessState?.changedAt && <p className="text-xs text-amber-400 mt-1">Changed: {new Date(d.accessState.changedAt).toLocaleDateString()}</p>}
+                </div>
+                <div className="bg-slate-900 rounded-lg p-4">
+                  <p className="text-xs text-slate-400 mb-1">Subscription</p>
+                  {d.subscription ? (
+                    <>
+                      <p className="text-white font-medium">{d.plan?.name ?? `Plan #${d.subscription.planId}`}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 capitalize">{d.subscription.status}</p>
+                      {d.subscription.currentPeriodEnd && <p className="text-xs text-slate-500 mt-0.5">Renews: {new Date(d.subscription.currentPeriodEnd).toLocaleDateString()}</p>}
+                    </>
+                  ) : <span className="text-slate-500 text-sm">No subscription</span>}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Management Actions</h3>
+
+                {/* Grant Grace Period */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-medium text-white">Grant Grace Period</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input type="number" min={1} max={365} value={graceDays} onChange={(e) => setGraceDays(e.target.value)}
+                      placeholder="Days" className="w-24 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Input value={graceReason} onChange={(e) => setGraceReason(e.target.value)}
+                      placeholder="Reason (required)" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => grantGraceMutation.mutate({ workspaceId, daysUntilExpiry: parseInt(graceDays) || 14, reason: graceReason })}
+                      disabled={!graceReason || grantGraceMutation.isPending} className="bg-amber-700 hover:bg-amber-600 text-white">
+                      {grantGraceMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Grant"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Suspend / Restore */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldOff className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-medium text-white">Suspend / Restore Access</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
+                      placeholder="Reason for suspension" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" variant="destructive" onClick={() => suspendMutation.mutate({ workspaceId, reason: suspendReason })}
+                      disabled={!suspendReason || suspendMutation.isPending}>
+                      {suspendMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Suspend"}
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={restoreReason} onChange={(e) => setRestoreReason(e.target.value)}
+                      placeholder="Reason for restoration" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => restoreMutation.mutate({ workspaceId, reason: restoreReason, newStatus: "active_paid" })}
+                      disabled={!restoreReason || restoreMutation.isPending} className="bg-green-700 hover:bg-green-600 text-white">
+                      {restoreMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Restore"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Platform Override */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm font-medium text-white">Platform Override (bypasses billing)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)}
+                      placeholder="Reason for override" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => overrideMutation.mutate({ workspaceId, reason: overrideReason })}
+                      disabled={!overrideReason || overrideMutation.isPending} className="bg-purple-700 hover:bg-purple-600 text-white">
+                      {overrideMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Set Override"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "events" && (
+            <>
+              {eventsQuery.isLoading && <div className="flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-blue-300" /></div>}
+              {!eventsQuery.isLoading && (!eventsQuery.data || eventsQuery.data.length === 0) && (
+                <EmptyState message="No billing events recorded." />
+              )}
+              {eventsQuery.data && eventsQuery.data.length > 0 && (
+                <div className="space-y-2">
+                  {eventsQuery.data.map((ev: any) => (
+                    <div key={ev.id} className="bg-slate-900 rounded-lg p-3 flex items-start gap-3">
+                      <CreditCard className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-white">{ev.eventType?.replace(/_/g, " ")}</span>
+                          {ev.newState && <AccessStateBadge status={ev.newState} />}
+                        </div>
+                        {ev.reason && <p className="text-xs text-slate-400 mt-0.5 truncate">{ev.reason}</p>}
+                        <p className="text-xs text-slate-500 mt-0.5">{ev.createdAt ? new Date(ev.createdAt).toLocaleString() : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "notes" && (
+            <>
+              <div className="flex gap-2">
+                <Input value={noteText} onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add an internal note..." className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                <Button size="sm" onClick={() => noteMutation.mutate({ workspaceId, note: noteText })}
+                  disabled={!noteText || noteMutation.isPending} className="bg-blue-700 hover:bg-blue-600 text-white">
+                  {noteMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <StickyNote className="w-4 h-4" />}
+                </Button>
+              </div>
+              {d?.notes && d.notes.length > 0 ? (
+                <div className="space-y-2">
+                  {d.notes.map((n: any) => (
+                    <div key={n.id} className="bg-slate-900 rounded-lg p-3">
+                      <p className="text-sm text-slate-200">{n.note}</p>
+                      <p className="text-xs text-slate-500 mt-1">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : <EmptyState message="No notes yet." />}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformBilling() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useStateLocal<number | null>(null);
 
-  const billingQuery = trpc.platformAdmin.billing.list.useQuery();
+  const accessStatesQuery = trpc.platformAdmin.billing.listAccessStates.useQuery();
   const statsQuery = trpc.platformAdmin.billing.stats.useQuery();
 
-  const billing = billingQuery.data || [];
+  const rows = accessStatesQuery.data || [];
   const stats = statsQuery.data || { totalRecords: 0, activeSubscriptions: 0, activeTrials: 0, pendingPayments: 0, pastDue: 0, failedPayments: 0 };
 
-  const filtered = billing.filter((b) => {
-    const matchesSearch = b.workspaceId?.toString().includes(search) || b.status?.toLowerCase().includes(search.toLowerCase());
+  const filtered = rows.filter((r) => {
+    const matchesSearch =
+      r.workspaceName?.toLowerCase().includes(search.toLowerCase()) ||
+      r.workspaceOwner?.toLowerCase().includes(search.toLowerCase()) ||
+      r.workspaceId?.toString().includes(search) ||
+      r.status?.toLowerCase().includes(search.toLowerCase());
     if (filter === "all") return matchesSearch;
-    return matchesSearch && b.status === filter;
+    return matchesSearch && r.status === filter;
   });
 
-  if (billingQuery.isLoading) return <LoadingState />;
+  if (accessStatesQuery.isLoading) return <LoadingState />;
 
   return (
     <div className="min-h-screen bg-slate-900">
-      <PageHeader title="Billing Management" description="Manage workspace billing, subscriptions, and payment states." />
+      {selectedWorkspaceId !== null && (
+        <WorkspaceBillingModal workspaceId={selectedWorkspaceId} onClose={() => setSelectedWorkspaceId(null)} />
+      )}
+
+      <PageHeader title="Billing Management" description="Manage workspace access states, subscriptions, and billing events." />
 
       <div className="p-4 sm:p-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
@@ -299,48 +534,53 @@ export function PlatformBilling() {
         </div>
 
         <div className="mb-6 flex gap-2 flex-wrap">
-          {["all", "trial", "active", "past_due", "cancelled", "expired"].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? "bg-blue-900 text-white" : "bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-900"}`}>
-              {f === "all" ? "All" : f.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+          {["all", "active_paid", "trial_active", "grace", "override", "past_due", "suspended", "canceled", "pending_setup"].map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === f ? "bg-blue-900 text-white" : "bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-900"
+              }`}>
+              {f === "all" ? "All" : f.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </button>
           ))}
         </div>
 
         <div className="mb-6">
-          <Input placeholder="Search by workspace or status..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
+          <Input placeholder="Search by workspace name, owner email, or status..." value={search}
+            onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
         </div>
 
         {filtered.length === 0 ? (
-          <EmptyState message="No billing records found." />
+          <EmptyState message="No access state records found. Workspaces will appear here once they complete signup." />
         ) : (
           <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-700 bg-slate-900">
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Workspace</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Plan ID</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Cycle</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Trial Ends</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Period End</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Owner</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Access State</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Plan</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Sub Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Expires</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Updated</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((b) => (
-                  <tr key={b.id} className="border-b border-slate-700 hover:bg-slate-900">
-                    <td className="px-4 py-3 text-white">WS #{b.workspaceId}</td>
-                    <td className="px-4 py-3 text-slate-300">Plan #{b.planId}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={b.status === "active" ? "default" : b.status === "trial" ? "secondary" : "destructive"}>
-                        {b.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300 capitalize">{b.billingCycle || "—"}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{b.trialEndsAt ? new Date(b.trialEndsAt).toLocaleDateString() : "—"}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{b.currentPeriodEnd ? new Date(b.currentPeriodEnd).toLocaleDateString() : "—"}</td>
+                {filtered.map((r) => (
+                  <tr key={r.id} className="border-b border-slate-700 hover:bg-slate-900">
+                    <td className="px-4 py-3 text-white font-medium">{r.workspaceName ?? `WS #${r.workspaceId}`}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{r.workspaceOwner ?? "\u2014"}</td>
+                    <td className="px-4 py-3"><AccessStateBadge status={r.status} /></td>
+                    <td className="px-4 py-3 text-slate-300 text-xs">{r.planName ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs capitalize">{r.subscriptionStatus ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : "\u2014"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => toast.info("Coming soon \u2014 Billing detail view is not yet configured.")} className="text-blue-400 hover:text-blue-300"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => setSelectedWorkspaceId(r.workspaceId)}
+                        className="text-blue-400 hover:text-blue-300" title="Manage billing">
+                        <Eye className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}

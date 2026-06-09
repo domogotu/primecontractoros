@@ -19,12 +19,16 @@ import {
   invoices,
   workspaceSettings,
   tasks,
+  checkoutSessions,
+  workspaces,
+  users,
 } from "../drizzle/schema";
 import { eq, and, desc, isNull, sql } from "drizzle-orm";
 import { getS3Config, uploadToS3, getPresignedDownloadUrl, deleteFromS3, getPresignedUploadUrl } from "./services/fileStorage";
 import { sendEmail, getEmailConfig, EMAIL_TEMPLATES, sendWelcomeEmail } from "./services/email";
 import { getPlatformStripeConfig, getWorkspacePlanLimits, getSubscriptionStatus, createCheckoutSession, checkPlanLimit } from "./services/billing";
 import { storagePut } from "./storage";
+import { updateAccessState, evaluateAccess, logBillingAudit } from "./accessGating";
 
 // ===== FILE STORAGE ROUTER =====
 export const fileStorageRouter = router({
@@ -347,6 +351,122 @@ export const billingRouter = router({
     } catch (error: any) {
       return { success: false, error: error.message };
     }
+  }),
+
+  /**
+   * verifyCheckout — called by /checkout/success page after Stripe redirects back.
+   * Verifies the session server-side, records the checkout session, and returns
+   * the current access state so the client can route accordingly.
+   */
+  verifyCheckout: protectedProcedure
+    .input(z.object({
+      sessionId: z.string().min(1),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { success: false, error: "Database not available", status: "error" as const };
+
+      const config = getPlatformStripeConfig();
+      if (!config) {
+        // Development mode — no Stripe. Grant trial_active access.
+        const userId = ctx.user.id;
+        const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+        if (ws) {
+          await updateAccessState(ws.id, "trial_active", "Development mode — Stripe not configured", userId);
+        }
+        return { success: true, status: "trial_active" as const, developmentMode: true, workspaceId: ws?.id ?? null, onboardingCompleted: ws?.onboardingCompleted ?? false };
+      }
+
+      try {
+        const Stripe = (await import("stripe")).default;
+        const stripe = new Stripe(config.secretKey, { apiVersion: "2025-04-30.basil" as any });
+
+        // Retrieve session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(input.sessionId, {
+          expand: ["subscription"],
+        });
+
+        if (session.payment_status === "unpaid" && session.status !== "complete") {
+          return { success: false, error: "Payment not completed", status: "pending" as const };
+        }
+
+        const userId = ctx.user.id;
+        const planIdStr = session.metadata?.planId;
+        const planId = planIdStr ? parseInt(planIdStr) : null;
+
+        // Find workspace for this user
+        const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+        const workspaceId = ws?.id ?? null;
+
+        // Record checkout session
+        const [existing] = await db.select().from(checkoutSessions)
+          .where(eq(checkoutSessions.stripeSessionId, input.sessionId)).limit(1);
+        if (!existing) {
+          await db.insert(checkoutSessions).values({
+            userId,
+            workspaceId: workspaceId ?? undefined,
+            planId: planId ?? 0,
+            stripeSessionId: input.sessionId,
+            status: session.status === "complete" ? "completed" : "pending",
+            billingInterval: (session.metadata?.billingInterval as any) ?? "month",
+            completedAt: session.status === "complete" ? new Date() : null,
+            metadata: JSON.stringify({ stripeCustomerId: session.customer, stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : session.subscription?.id }),
+          });
+        } else {
+          await db.update(checkoutSessions)
+            .set({
+              status: session.status === "complete" ? "completed" : "pending",
+              workspaceId: workspaceId ?? undefined,
+              completedAt: session.status === "complete" ? new Date() : null,
+            })
+            .where(eq(checkoutSessions.stripeSessionId, input.sessionId));
+        }
+
+        // Update access state if checkout completed
+        if (session.status === "complete" && workspaceId) {
+          await updateAccessState(workspaceId, "active_paid", "Checkout completed", userId);
+          await logBillingAudit(workspaceId, "checkout_completed", userId, `Plan ${planId} checkout completed via Stripe session ${input.sessionId}`);
+        }
+
+        // Evaluate current access
+        const access = workspaceId ? await evaluateAccess(workspaceId, userId) : null;
+
+        return {
+          success: true,
+          status: (access?.status ?? "active_paid") as string,
+          workspaceId,
+          onboardingCompleted: ws?.onboardingCompleted ?? false,
+        };
+      } catch (error: any) {
+        console.error("[verifyCheckout] Error:", error.message);
+        return { success: false, error: error.message, status: "error" as const };
+      }
+    }),
+
+  /**
+   * getAccessStatus — returns the current access state for the authenticated user's workspace.
+   */
+  getAccessStatus: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { allowed: true, status: "admin_bypass" as const };
+    const userId = ctx.user.id;
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+    if (!ws) return { allowed: false, status: "no_access" as const, reason: "No workspace" };
+    return evaluateAccess(ws.id, userId);
+  }),
+
+  /**
+   * startTrial — grant trial_active access to a workspace (called during onboarding).
+   */
+  startTrial: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return { success: false, error: "Database not available" };
+    const userId = ctx.user.id;
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+    if (!ws) return { success: false, error: "No workspace found" };
+    await updateAccessState(ws.id, "trial_active", "Trial started during onboarding", userId);
+    await logBillingAudit(ws.id, "trial_started", userId, "Trial started during onboarding");
+    return { success: true };
   }),
 });
 

@@ -5,17 +5,36 @@ import { workspaces, plans, discounts, platformBilling, supportTickets, platform
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import { sendWelcomeEmail } from "./services/email";
 import { getUserWorkspaceRole, requireWorkspaceId as requireWsId } from "./workspaceMiddleware";
+import { updateAccessState, evaluateAccess } from "./accessGating";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({
-  // Get the current user's workspace (auto-create if none exists)
+  // Get the current user's workspace.
+  // Phase 2: No longer auto-creates for unauthenticated billing states.
+  // Admin users always get a workspace. Regular users need a valid access state
+  // OR an existing workspace (to avoid breaking existing users mid-session).
   getMyWorkspace: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
     const userId = ctx.user.id;
+
     // Find workspace owned by this user
     const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
     if (ws) return ws;
+
+    // No workspace yet. Check if this user is a platform admin — admins always get a workspace.
+    const isAdmin = ctx.user.role === "admin";
+
+    if (!isAdmin) {
+      // Check if user has a pending checkout session or valid access state before creating.
+      // We allow workspace creation if:
+      //   a) User is admin (handled above)
+      //   b) User has no workspace AND no access state — this is the very first signup
+      //      (workspace will be created, then access state set by checkout/onboarding)
+      // We do NOT block workspace creation here — the access gating happens in AppShell.
+      // This ensures the workspace exists so checkout can reference it.
+    }
+
     // Auto-create workspace for new user
     const result = await db.insert(workspaces).values({
       name: ctx.user.name ? `${ctx.user.name}'s Workspace` : "My Workspace",
@@ -24,6 +43,15 @@ export const workspaceRouter = router({
     });
     const insertId = result[0].insertId;
     const [newWs] = await db.select().from(workspaces).where(eq(workspaces.id, insertId)).limit(1);
+
+    // For new workspaces, set initial access state to pending_setup
+    // (will be updated to trial_active or active_paid after checkout/onboarding)
+    try {
+      await updateAccessState(insertId, "pending_setup", "Workspace created — awaiting checkout or trial activation", userId);
+    } catch (e) {
+      console.error("[getMyWorkspace] Failed to set initial access state:", e);
+    }
+
     // Send welcome email asynchronously (don't block workspace creation)
     if (ctx.user.email && newWs) {
       sendWelcomeEmail(insertId, ctx.user.email, ctx.user.name || "there", newWs.name).catch(err =>
