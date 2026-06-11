@@ -1575,3 +1575,16 @@
 - [x] Enhance NotFound page with Home, Login, Get Started, Support buttons
 - [x] Verify no old domain references remain in codebase
 - [x] Write and pass vitest tests for login flow (9 tests passing)
+
+## Fake Data Removal (Production Stabilization)
+- [x] Remove hardcoded AI findings from AIConfirmation.tsx (replaced with empty state + scan prompt)
+- [x] Fix PlanFeatures.tsx to use real billing data instead of hardcoded plan info
+- [x] Replace "Coming soon" toasts with proper setup-required messages
+- [x] Fix PlatformDemoWorkspaces placeholder with proper empty state
+- [x] Fix DemoMode page to add admin-only warning and clear labeling
+- [x] Fix DocumentVersions placeholder storageKey
+- [x] Verify all 26 customer pages use tRPC (real DB queries)
+- [x] Verify workspace isolation (workspaceId filtering) on all procedures
+- [x] Verify PlatformBackups, PlatformCompliance, WorkspaceExport use real API calls
+- [x] Verify Dashboard and Finance metrics calculate from real records
+- [x] All tests pass (98/101 - 3 Resend failures expected without API key)

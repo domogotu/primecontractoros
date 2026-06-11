@@ -141,7 +141,7 @@ export function PlatformPlans() {
                   <div className="flex justify-between text-slate-300"><span>Max Contracts:</span><span className="font-semibold text-white">{plan.maxContracts}</span></div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => toast.info("Coming soon \u2014 Plan detail view is not yet configured.")} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
+                  <Button onClick={() => toast.info(`Plan: ${plan.name} — Monthly: $${plan.monthlyPrice}, Annual: $${plan.annualPrice || 'N/A'}, Max Users: ${plan.maxUsers}, Max Contracts: ${plan.maxContracts}, Features: ${plan.features || 'None'}, Active: ${plan.isActive ? 'Yes' : 'No'}`)} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
                   <Button onClick={() => deleteMutation.mutate({ id: plan.id })} size="sm" variant="outline" className="flex-1 border-red-700 text-red-400 hover:bg-red-900"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </Card>
@@ -1547,7 +1547,18 @@ export function PlatformWorkspaceSummary() {
 }
 
 export function PlatformDemoWorkspaces() {
-  return <div className="p-8 text-slate-300">Demo Workspaces (placeholder — coming soon)</div>;
+  return (
+    <div className="p-8">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center max-w-lg mx-auto">
+        <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">Demo Workspaces</h3>
+        <p className="text-slate-400 text-sm mb-4">Demo workspaces allow you to showcase PrimeContractorOS features without affecting production data. This feature requires configuration.</p>
+        <p className="text-xs text-slate-500">Status: Setup Required</p>
+      </div>
+    </div>
+  );
 }
 
 export { default as PlatformTasks } from "./PlatformTasks";

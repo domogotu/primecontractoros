@@ -1,6 +1,6 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import { useLocation, Link } from "wouter";
+import React from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
@@ -8,8 +8,7 @@ import PageGuide from "@/components/PageGuide";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   CheckCircle2, 
   Lock, 
@@ -19,7 +18,7 @@ import {
   Users, 
   HardDrive, 
   Shield,
-  ArrowRight
+  AlertCircle
 } from "lucide-react";
 
 export default function PlanFeatures() {
@@ -27,24 +26,13 @@ export default function PlanFeatures() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Try to use trpc, fallback to demo data
-  const { data: featuresData, isLoading } = trpc.planFeatures?.list?.useQuery(undefined, {
-    retry: false,
-  }) || { data: null, isLoading: false };
+  const { data: billingStatus, isLoading: loadingBilling } = trpc.billing.getStatus.useQuery();
+  const { data: plans = [], isLoading: loadingPlans } = trpc.billing.getPlans.useQuery();
+  const { data: workspace } = trpc.workspace.getMyWorkspace.useQuery();
 
-  const currentPlan = {
-    name: "Growth Plan",
-    price: "$199/mo",
-    status: "Active",
-    renewalDate: "Oct 1, 2026"
-  };
+  const isLoading = loadingBilling || loadingPlans;
 
-  const usage = {
-    storage: { used: 45, total: 100, unit: "GB" },
-    aiRuns: { used: 850, total: 1000, unit: "runs" },
-    team: { used: 8, total: 10, unit: "members" }
-  };
-
+  // Feature categories are static UI config describing what's available per tier
   const featureCategories = [
     {
       name: "Core",
@@ -95,7 +83,7 @@ export default function PlanFeatures() {
       name: "Storage",
       icon: <HardDrive className="w-5 h-5 text-slate-500" />,
       features: [
-        { name: "100GB Storage", description: "Included storage quota", included: true },
+        { name: "Document Storage", description: "Included storage quota", included: true },
         { name: "Version History", description: "30-day document history", included: true },
         { name: "Unlimited Storage", description: "No storage limits", included: false, unlocksIn: "Advanced" }
       ]
@@ -110,14 +98,34 @@ export default function PlanFeatures() {
     setLocation("/app/settings/billing");
   };
 
+  if (isLoading) {
+    return (
+      <PageLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48 col-span-2" />
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const currentPlanName = billingStatus?.planName || workspace?.plan || "No Plan";
+  const planStatus = billingStatus?.status || "unknown";
+  const currentPeriodEnd = billingStatus?.currentPeriodEnd
+    ? new Date(billingStatus.currentPeriodEnd).toLocaleDateString()
+    : "N/A";
+
   return (
     <PageLayout>
       <PageGuide
         title="Plan Features"
-        description="View your current plan capabilities, usage limits, and explore available upgrades."
-        whenToUse="Use this page to understand what features are available in your current workspace plan and check your usage limits."
+        description="View your current plan capabilities and explore available upgrades."
+        whenToUse="Use this page to understand what features are available in your current workspace plan."
         whatToDoNext={[
-          "Review your current usage meters",
+          "Review your current plan status",
           "Explore locked features",
           "Upgrade your plan if needed"
         ]}
@@ -128,79 +136,41 @@ export default function PlanFeatures() {
       />
 
       <div className="space-y-6">
-        {/* Current Plan & Usage */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="col-span-1 md:col-span-1 bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-foreground">Current Plan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">{currentPlan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{currentPlan.price}</p>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {currentPlan.status}
-                </span>
+        {/* Current Plan */}
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium text-foreground">Current Plan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-foreground">{currentPlanName}</h3>
+                <p className="text-sm text-muted-foreground capitalize">Status: {planStatus}</p>
               </div>
-              <p className="text-sm text-muted-foreground mb-6">
-                Renews on {currentPlan.renewalDate}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                planStatus === "active" ? "bg-green-100 text-green-800" :
+                planStatus === "trialing" ? "bg-blue-100 text-blue-800" :
+                "bg-gray-100 text-gray-800"
+              }`}>
+                {planStatus === "active" ? "Active" : planStatus === "trialing" ? "Trial" : planStatus || "Unknown"}
+              </span>
+            </div>
+            {currentPeriodEnd !== "N/A" && (
+              <p className="text-sm text-muted-foreground mb-4">
+                Current period ends: {currentPeriodEnd}
               </p>
-              <Button onClick={handleUpgrade} className="w-full">
-                Request Upgrade
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="col-span-1 md:col-span-2 bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium text-foreground">Current Usage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-foreground font-medium">Storage</span>
-                    <span className="text-muted-foreground">{usage.storage.used} / {usage.storage.total} {usage.storage.unit}</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ width: `${(usage.storage.used / usage.storage.total) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-foreground font-medium">AI Runs</span>
-                    <span className="text-muted-foreground">{usage.aiRuns.used} / {usage.aiRuns.total} {usage.aiRuns.unit}</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-amber-500 h-2 rounded-full" 
-                      style={{ width: `${(usage.aiRuns.used / usage.aiRuns.total) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-foreground font-medium">Team Members</span>
-                    <span className="text-muted-foreground">{usage.team.used} / {usage.team.total} {usage.team.unit}</span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-indigo-500 h-2 rounded-full" 
-                      style={{ width: `${(usage.team.used / usage.team.total) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
+            )}
+            {!billingStatus && (
+              <div className="flex items-center gap-2 text-amber-600 text-sm mb-4">
+                <AlertCircle className="w-4 h-4" />
+                <span>Billing not configured. Contact your workspace admin.</span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+            <Button onClick={handleUpgrade} className="w-full">
+              Manage Subscription
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Feature Grid */}
         <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">Features by Category</h2>
@@ -243,49 +213,61 @@ export default function PlanFeatures() {
           ))}
         </div>
 
-        {/* Plan Comparison */}
-        <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">Plan Comparison</h2>
-        <Card className="bg-card border-border overflow-hidden">
-          <div className="grid grid-cols-4 border-b border-border bg-muted/50">
-            <div className="p-4 font-medium text-foreground">Feature</div>
-            <div className="p-4 font-medium text-center text-foreground">Starter</div>
-            <div className="p-4 font-medium text-center text-foreground border-x border-border bg-primary/5">Growth (Current)</div>
-            <div className="p-4 font-medium text-center text-foreground">Advanced</div>
-          </div>
-          
-          <div className="divide-y divide-border">
-            {[
-              { name: "Users", starter: "Up to 3", growth: "Up to 10", advanced: "Unlimited" },
-              { name: "Storage", starter: "10GB", growth: "100GB", advanced: "Unlimited" },
-              { name: "AI Runs", starter: "100/mo", growth: "1000/mo", advanced: "Unlimited" },
-              { name: "Custom Workflows", starter: false, growth: false, advanced: true },
-              { name: "API Access", starter: false, growth: true, advanced: true },
-              { name: "SSO/SAML", starter: false, growth: false, advanced: true },
-            ].map((row, idx) => (
-              <div key={idx} className="grid grid-cols-4 hover:bg-muted/50 transition-colors">
-                <div className="p-4 text-sm text-foreground flex items-center">{row.name}</div>
-                <div className="p-4 text-sm text-center flex items-center justify-center text-muted-foreground">
-                  {typeof row.starter === 'boolean' ? (row.starter ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : "-") : row.starter}
-                </div>
-                <div className="p-4 text-sm text-center flex items-center justify-center font-medium text-foreground border-x border-border bg-primary/5">
-                  {typeof row.growth === 'boolean' ? (row.growth ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : "-") : row.growth}
-                </div>
-                <div className="p-4 text-sm text-center flex items-center justify-center text-muted-foreground">
-                  {typeof row.advanced === 'boolean' ? (row.advanced ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : "-") : row.advanced}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-4 border-t border-border bg-muted/20 p-4">
-            <div></div>
-            <div className="text-center">
-              <Button variant="outline" size="sm" onClick={() => toast({ title: "Coming soon", description: "Plan downgrade is not yet configured. Contact support for plan changes." })}>Downgrade</Button>
+        {/* Available Plans */}
+        {plans.length > 0 && (
+          <>
+            <h2 className="text-xl font-semibold text-foreground mt-8 mb-4">Available Plans</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {plans.map((plan: any) => (
+                <Card key={plan.id} className={`bg-card border-border ${plan.name === currentPlanName ? 'ring-2 ring-primary' : ''}`}>
+                  <CardHeader>
+                    <CardTitle className="text-lg text-foreground">{plan.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{plan.description || "Government contracting plan"}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <span className="text-2xl font-bold text-foreground">
+                        ${plan.monthlyPrice || plan.price || 0}
+                      </span>
+                      <span className="text-muted-foreground">/mo</span>
+                    </div>
+                    {plan.name === currentPlanName ? (
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Current Plan
+                      </span>
+                    ) : (
+                      <Button size="sm" onClick={handleUpgrade} variant="outline">
+                        {(plan.monthlyPrice || plan.price || 0) > 0 ? "Upgrade" : "Contact Sales"}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <div className="text-center">
-              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Current Plan</span>
-            </div>
-            <div className="text-center">
-              <Button size="sm" onClick={handleUpgrade}>Upgrade</Button>
+          </>
+        )}
+
+        {/* No plans available */}
+        {plans.length === 0 && !loadingPlans && (
+          <Card className="bg-card border-border p-8 text-center">
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">Plans Not Configured</h3>
+            <p className="text-muted-foreground">
+              Subscription plans have not been set up yet. Contact your platform administrator.
+            </p>
+          </Card>
+        )}
+
+        {/* Downgrade notice */}
+        <Card className="bg-card border-border p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div>
+              <h4 className="font-medium text-foreground">Need to change your plan?</h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Plan upgrades can be initiated from the Billing page. For downgrades or cancellations,
+                please submit a request via the <a href="/app/support" className="text-blue-600 hover:underline">Support page</a>.
+              </p>
             </div>
           </div>
         </Card>
