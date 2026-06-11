@@ -95,7 +95,7 @@ export default function Login() {
             {/* Sign Up Link */}
             <Button
               variant="outline"
-              onClick={handleLogin}
+              onClick={() => navigate("/get-started")}
               className="w-full"
             >
               Create Account <ArrowRight className="ml-2 h-4 w-4" />

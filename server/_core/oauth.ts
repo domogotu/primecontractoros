@@ -101,8 +101,18 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to home page on success
-      res.redirect(302, "/");
+      // Parse state to determine post-login redirect
+      let redirectTo = "/app/dashboard";
+      try {
+        const stateData = JSON.parse(atob(state));
+        if (stateData.returnPath && stateData.returnPath.startsWith("/")) {
+          redirectTo = stateData.returnPath;
+        }
+      } catch {
+        // If state is just a URL (legacy format), redirect to dashboard
+        redirectTo = "/app/dashboard";
+      }
+      res.redirect(302, redirectTo);
     } catch (error: any) {
       // Log full error details including response body from OAuth server
       const axiosResponse = error?.response;

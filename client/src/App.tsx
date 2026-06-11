@@ -128,9 +128,11 @@ function Router() {
     <Switch>
       {/* Public pages - no sidebar, no auth required */}
       <Route path={"/"} component={Home} />
+      <Route path={"/home"} component={Home} />
       <Route path={"/features"} component={Features} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/help"} component={Help} />
+      <Route path={"/help-center"} component={Help} />
       <Route path={"/glossary"} component={Glossary} />
       <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
@@ -221,6 +223,8 @@ function Router() {
       <Route path={"/app/closeout"} component={withAppShell(Closeout)} />
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/lessons-learned"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
       
       {/* Batch 1-4: Product Completion Routes */}

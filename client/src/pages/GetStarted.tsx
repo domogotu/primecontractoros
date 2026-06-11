@@ -91,7 +91,7 @@ export default function GetStarted() {
         selectedAt: new Date().toISOString(),
       }));
     }
-    navigateToLogin();
+    navigateToLogin(selectedPlan ? "/checkout/success" : "/app/onboarding");
   };
 
   const benefits = [

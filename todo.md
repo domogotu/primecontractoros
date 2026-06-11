@@ -1561,3 +1561,17 @@
 - [x] Add React error boundary to prevent full-page crashes
 - [x] Test all WhatsNext links work correctly
 - [x] Deploy fix
+
+## Login Hotfix (Production Stabilization)
+- [x] Fix navigateToLogin infinite recursion bug (was calling itself instead of window.location.href)
+- [x] Update getLoginUrl to encode JSON state with origin + returnPath
+- [x] Fix SDK decodeState to handle JSON state format (extract origin for redirectUri)
+- [x] Fix OAuth callback to parse returnPath from JSON state for post-login redirect
+- [x] Fix GetStarted signup flow to pass returnPath to navigateToLogin
+- [x] Fix Login page Create Account button to route to /get-started
+- [x] Add /home and /help-center route aliases
+- [x] Add /app/lessons and /app/loss-review route aliases
+- [x] Add primecontractoros.com to Vite allowedHosts
+- [x] Enhance NotFound page with Home, Login, Get Started, Support buttons
+- [x] Verify no old domain references remain in codebase
+- [x] Write and pass vitest tests for login flow (9 tests passing)
