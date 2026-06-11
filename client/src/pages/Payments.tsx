@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -404,6 +405,14 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
     
-      </PageLayout>
+            <PageGuidancePanel
+        pageKey="payments"
+        title="Payments Help"
+        description="Log received payments and match them to invoices. Track unmatched payments and outstanding balances."
+        whatToDoNext={["Log payments as they are received", "Match payments to submitted invoices", "Identify unmatched or partial payments", "Track outstanding balances across contracts"]}
+        helpArticleSlug="why-invoices-payments-separate"
+        glossaryTerms={["payment", "invoice", "prompt-payment"]}
+      />
+    </PageLayout>
   );
 }

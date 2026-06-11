@@ -74,6 +74,7 @@ import { platformHealthRouter } from "./platformHealthRouter";
 import { dispatchWebhookEvent } from "./services/webhookDispatch";
 import { emailPreferences, aiRuns, aiSuggestions } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
+import { contextualHelpRouter, lifecycleRouter, autoPopulationRouter, sourceReferencesRouter, templateImprovementsRouter, helpArticlesRouter, glossaryRouter, dashboardDataRouter, aiSuggestionsEnhancedRouter, aiFindingsEnhancedRouter } from "./phase35Router";
 
 export const appRouter = router({
   pdf: pdfRouter,
@@ -164,6 +165,16 @@ export const appRouter = router({
   farDfars: farDfarsRouter,
   customerSupport: customerSupportRouter,
   platformHealth: platformHealthRouter,
+  contextualHelp: contextualHelpRouter,
+  lifecycle: lifecycleRouter,
+  autoPopulation: autoPopulationRouter,
+  sourceRefs: sourceReferencesRouter,
+  templateImprovements: templateImprovementsRouter,
+  helpArticles: helpArticlesRouter,
+  glossaryData: glossaryRouter,
+  dashboardData: dashboardDataRouter,
+  aiSuggestionsV2: aiSuggestionsEnhancedRouter,
+  aiFindingsV2: aiFindingsEnhancedRouter,
   emailPrefs: router({
     get: protectedProcedure.query(async ({ ctx }) => {
       const db = await getDb();

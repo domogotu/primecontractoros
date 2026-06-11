@@ -2373,3 +2373,115 @@ export const opportunityImportRuns = mysqlTable("opportunity_import_runs", {
 });
 export type OpportunityImportRun = typeof opportunityImportRuns.$inferSelect;
 export type InsertOpportunityImportRun = typeof opportunityImportRuns.$inferInsert;
+
+// ==================== PHASE 35: GUIDED AI EXPERIENCE TABLES ====================
+
+// Contextual Help Items — page-specific help content
+export const contextualHelpItems = mysqlTable("contextual_help_items", {
+  id: int("id").autoincrement().primaryKey(),
+  pageKey: varchar("pageKey", { length: 100 }).notNull(),
+  sectionKey: varchar("sectionKey", { length: 100 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  helpArticleSlug: varchar("helpArticleSlug", { length: 255 }),
+  glossaryTermSlug: varchar("glossaryTermSlug", { length: 255 }),
+  audience: mysqlEnum("audience", ["public", "customer", "platform_owner", "all"]).default("customer").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContextualHelpItem = typeof contextualHelpItems.$inferSelect;
+export type InsertContextualHelpItem = typeof contextualHelpItems.$inferInsert;
+
+// Lifecycle Status History — audit trail for all status changes
+export const lifecycleStatusHistory = mysqlTable("lifecycle_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 64 }).notNull(),
+  recordId: int("recordId").notNull(),
+  previousStatus: varchar("previousStatus", { length: 50 }),
+  newStatus: varchar("newStatus", { length: 50 }).notNull(),
+  reason: text("reason"),
+  changedBy: int("changedBy"),
+  changedAt: timestamp("changedAt").defaultNow().notNull(),
+});
+export type LifecycleStatusHistory = typeof lifecycleStatusHistory.$inferSelect;
+export type InsertLifecycleStatusHistory = typeof lifecycleStatusHistory.$inferInsert;
+
+// Auto-Population Events — track when fields are auto-filled
+export const autoPopulationEvents = mysqlTable("auto_population_events", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  targetRecordType: varchar("targetRecordType", { length: 64 }).notNull(),
+  targetRecordId: int("targetRecordId").notNull(),
+  sourceRecordType: varchar("sourceRecordType", { length: 64 }).notNull(),
+  sourceRecordId: int("sourceRecordId").notNull(),
+  fieldsApplied: json("fieldsApplied"),
+  fieldsSkipped: json("fieldsSkipped"),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AutoPopulationEvent = typeof autoPopulationEvents.$inferSelect;
+export type InsertAutoPopulationEvent = typeof autoPopulationEvents.$inferInsert;
+
+// Source References — link records to their source documents/files
+export const sourceReferences = mysqlTable("source_references", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  relatedRecordType: varchar("relatedRecordType", { length: 64 }).notNull(),
+  relatedRecordId: int("relatedRecordId").notNull(),
+  sourceType: varchar("sourceType", { length: 100 }).notNull(),
+  sourceFileId: int("sourceFileId"),
+  sourceUrl: text("sourceUrl"),
+  sourceLocation: varchar("sourceLocation", { length: 500 }),
+  excerpt: text("excerpt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SourceReference = typeof sourceReferences.$inferSelect;
+export type InsertSourceReference = typeof sourceReferences.$inferInsert;
+
+// Template Improvement Suggestions — suggestions from lessons learned
+export const templateImprovementSuggestions = mysqlTable("template_improvement_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  templateType: varchar("templateType", { length: 100 }).notNull(),
+  sourceLessonId: int("sourceLessonId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  recommendation: text("recommendation").notNull(),
+  status: mysqlEnum("status", ["new", "accepted", "rejected", "applied"]).default("new").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TemplateImprovementSuggestion = typeof templateImprovementSuggestions.$inferSelect;
+export type InsertTemplateImprovementSuggestion = typeof templateImprovementSuggestions.$inferInsert;
+
+// Help Articles — real help center content
+export const helpArticles = mysqlTable("help_articles", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  category: varchar("category", { length: 100 }),
+  relatedGlossaryTerms: text("relatedGlossaryTerms"),
+  isPublished: boolean("isPublished").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type HelpArticle = typeof helpArticles.$inferSelect;
+export type InsertHelpArticle = typeof helpArticles.$inferInsert;
+
+// Glossary Terms — government contracting terminology
+export const glossaryTerms = mysqlTable("glossary_terms", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  term: varchar("term", { length: 255 }).notNull(),
+  definition: text("definition").notNull(),
+  whereInApp: text("whereInApp"),
+  relatedPages: text("relatedPages"),
+  relatedHelpArticles: text("relatedHelpArticles"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GlossaryTerm = typeof glossaryTerms.$inferSelect;
+export type InsertGlossaryTerm = typeof glossaryTerms.$inferInsert;

@@ -7,6 +7,10 @@ import { Target, FileText, Briefcase, DollarSign, Folder, MessageSquare, Contact
 import { GuidancePanel } from "@/components/GuidancePanel";
 import AIWorkflowButtons from "@/components/AIWorkflowButtons";
 import PageGuide from "@/components/PageGuide";
+import SetupReadinessCard from "@/components/SetupReadinessCard";
+import AttentionItemsCard from "@/components/AttentionItemsCard";
+import WorkspaceSnapshotCard from "@/components/WorkspaceSnapshotCard";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
@@ -549,6 +553,15 @@ export default function Dashboard() {
             </Card>
           </div>
 
+          {/* Setup Readiness & Attention Items */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <SetupReadinessCard />
+            <AttentionItemsCard />
+          </div>
+
+          {/* Workspace Snapshot */}
+          <WorkspaceSnapshotCard />
+
           {/* Pipeline Summary */}
           <Card className="bg-white border border-gray-200 p-4 md:p-6">
             <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-4">Contracting Pipeline</h3>
@@ -577,6 +590,21 @@ export default function Dashboard() {
 
         </div>
       </div>
+
+      {/* Contextual Help Panel */}
+      <PageGuidancePanel
+        pageKey="dashboard"
+        title="Dashboard Help"
+        description="Your workspace command center. Shows real-time status of your government contracting pipeline — opportunities, proposals, contracts, invoices, and payments."
+        whatToDoNext={[
+          "Review any validation warnings at the top",
+          "Check the lifecycle progress to see where you are",
+          "Address attention items and overdue tasks",
+          "Use the pipeline view to navigate to specific areas"
+        ]}
+        helpArticleSlug="what-is-primecontractoros"
+        glossaryTerms={["workspace", "opportunity", "proposal", "contract-hub"]}
+      />
     </div>
   );
 }

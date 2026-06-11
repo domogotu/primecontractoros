@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
@@ -234,6 +235,14 @@ export default function Contacts() {
           ))}
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="contacts"
+        title="Contacts Help"
+        description="Manage operational contacts — contracting officers, CORs, billing contacts, partners, and subcontractors. Link contacts to specific records."
+        whatToDoNext={["Add contracting officer and COR for each contract", "Link contacts to specific contracts", "Add billing and technical contacts", "Track subcontractor contacts"]}
+        helpArticleSlug="what-is-a-cor"
+        glossaryTerms={["contracting-officer", "cor"]}
+      />
     </PageLayout>
   );
 }

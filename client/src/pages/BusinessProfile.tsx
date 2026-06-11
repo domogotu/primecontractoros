@@ -39,6 +39,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import AutosaveIndicator from "@/components/AutosaveIndicator";
@@ -1431,6 +1432,14 @@ export default function BusinessProfile() {
           </div>
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="business-profile"
+        title="Business Profile Help"
+        description="Your workspace business identity. Maintain UEI, CAGE, SAM status, NAICS codes, certifications, and capabilities. This data auto-fills into capability statements and proposals."
+        whatToDoNext={["Enter your UEI and CAGE code", "Confirm SAM registration status", "Set primary NAICS codes", "Add certifications and set-aside eligibility"]}
+        helpArticleSlug="what-is-sam"
+        glossaryTerms={["uei", "cage", "sam", "naics"]}
+      />
     </PageLayout>
   );
 }

@@ -3,6 +3,7 @@ import PageLayout from "@/components/PageLayout";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -211,6 +212,14 @@ export default function AIConfirmation() {
           ))
         )}
       </div>
+          <PageGuidancePanel
+        pageKey="ai-confirmation"
+        title="AI Confirmation Help"
+        description="Review AI findings before they affect contract operations. Only approved findings can create live contract objects. Reject or hold findings that need manual review."
+        whatToDoNext={["Review each finding carefully", "Approve findings that are correct", "Reject findings that are inaccurate", "Create live objects from approved findings"]}
+        helpArticleSlug="what-is-ai-confirmation"
+        glossaryTerms={["ai-finding", "awarded-contract", "deliverable", "compliance-item"]}
+      />
     </PageLayout>
   );
 }

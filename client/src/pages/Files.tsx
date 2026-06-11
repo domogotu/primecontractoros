@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
@@ -417,6 +418,14 @@ export default function Files() {
       <p className="mt-4 text-xs text-muted-foreground">
         Maximum file size: 10MB per file (base64 upload). Bulk upload supports up to 20 files at once. Files are stored using built-in secure storage. For custom S3 storage, configure credentials in Settings → Integrations.
       </p>
+          <PageGuidancePanel
+        pageKey="files"
+        title="Files Help"
+        description="Workspace file management. Upload and categorize documents linked to opportunities, proposals, contracts, invoices, and closeout records."
+        whatToDoNext={["Upload governing contract files for AI Confirmation", "Categorize files by type (governing, supporting, deliverable)", "Link files to specific records", "Track file versions"]}
+        helpArticleSlug="what-is-a-governing-contract-file"
+        glossaryTerms={["awarded-contract", "modification"]}
+      />
     </PageLayout>
   );
 }

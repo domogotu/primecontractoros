@@ -9,6 +9,7 @@ import ContractForm from "@/components/ContractForm";
 import SmartIntakeContract from "@/components/SmartIntakeContract";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
@@ -370,6 +371,19 @@ export default function Contracts() {
           </DialogBody>
         </DialogContent>
       </Dialog>
+      <PageGuidancePanel
+        pageKey="contracts"
+        title="Contracts Help"
+        description="Your awarded contracts and active contract pipeline. Each contract should have a governing file uploaded for AI Confirmation. Track status from setup through closeout."
+        whatToDoNext={[
+          "Upload governing contract file for each new contract",
+          "Run AI Confirmation to extract requirements",
+          "Review and approve AI findings",
+          "Move to Contract Hub for active operations"
+        ]}
+        helpArticleSlug="what-is-an-awarded-contract"
+        glossaryTerms={["awarded-contract", "modification", "contract-hub", "ai-finding"]}
+      />
     </PageLayout>
   );
 }

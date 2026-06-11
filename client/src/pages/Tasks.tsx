@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFoo
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
@@ -231,6 +232,14 @@ export default function Tasks() {
           ))}
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="tasks"
+        title="Tasks Help"
+        description="Your execution list. Tasks can be created manually, from AI suggestions, or from AI findings. Track priority, due dates, and linked records."
+        whatToDoNext={["Review and prioritize open tasks", "Complete overdue tasks first", "Create tasks from AI suggestions", "Link tasks to specific contracts or proposals"]}
+        helpArticleSlug="what-is-primecontractoros"
+        glossaryTerms={["ai-suggestion"]}
+      />
     </PageLayout>
   );
 }

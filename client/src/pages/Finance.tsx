@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useLocation, useSearch } from "wouter";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import MetricCard from "@/components/MetricCard";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
@@ -182,6 +183,14 @@ export default function Finance() {
           </div>
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="finance"
+        title="Finance Help"
+        description="Workspace financial overview showing total billed, total paid, outstanding balance, overdue invoices, and unmatched payments across all contracts."
+        whatToDoNext={["Review outstanding balances", "Follow up on overdue invoices", "Match unmatched payments", "Track financial health per contract"]}
+        helpArticleSlug="why-invoices-payments-separate"
+        glossaryTerms={["invoice", "payment", "proper-invoice"]}
+      />
     </PageLayout>
   );
 }

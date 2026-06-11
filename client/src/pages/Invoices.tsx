@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFoo
 import { Card } from "@/components/ui/card";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
@@ -290,6 +291,20 @@ export default function Invoices() {
           })}
         </div>
       )}
+      <PageGuidancePanel
+        pageKey="invoices"
+        title="Invoices Help"
+        description="Track invoices separately from payments. Create invoices from contracts, attach support documentation, and track submission and payment status."
+        whatToDoNext={[
+          "Create invoices linked to active contracts",
+          "Attach required supporting documentation",
+          "Track submission status and follow up on overdue invoices",
+          "Match received payments to invoices on the Payments page"
+        ]}
+        helpArticleSlug="why-invoices-payments-separate"
+        glossaryTerms={["invoice", "proper-invoice", "prompt-payment"]}
+        warnings={["Invoices and payments are tracked separately because submission and receipt are different events in government contracting."]}
+      />
     </PageLayout>
   );
 }
