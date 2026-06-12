@@ -954,10 +954,10 @@ export const fileVersionsRouter = router({
 import { listProposalFrameworks, getProposalFramework, listProposalSections, createProposalSection, updateProposalSection, deleteProposalSection } from "./entityDb";
 
 export const proposalFrameworksRouter = router({
-  list: publicProcedure.query(async () => {
+  list: protectedProcedure.query(async () => {
     return listProposalFrameworks();
   }),
-  get: publicProcedure
+  get: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       return getProposalFramework(input.id);

@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import { onboardingProgress, recordNotes, recordTimeline } from "../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { logAudit } from "./featureRouter";
+import { requireWorkspaceId } from "./workspaceMiddleware";
 
 export const onboardingRouter = router({
   getProgress: protectedProcedure.query(async ({ ctx }) => {
@@ -16,15 +17,16 @@ export const onboardingRouter = router({
     .input(z.object({ step: z.string(), completed: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
+      const wsId = await requireWorkspaceId(ctx.user.id).catch(() => 0);
       const existing = await db.select().from(onboardingProgress).where(eq(onboardingProgress.userId, ctx.user.id));
       if (existing.length === 0) {
-        await db.insert(onboardingProgress).values({ userId: ctx.user.id, workspaceId: 0, completedSteps: JSON.stringify({ [input.step]: input.completed }), currentStep: input.step, completed: false });
+        await db.insert(onboardingProgress).values({ userId: ctx.user.id, workspaceId: wsId, completedSteps: JSON.stringify({ [input.step]: input.completed }), currentStep: input.step, completed: false });
       } else {
         const current = JSON.parse(existing[0].completedSteps || "{}");
         current[input.step] = input.completed;
         await db.update(onboardingProgress).set({ completedSteps: JSON.stringify(current), currentStep: input.step }).where(eq(onboardingProgress.userId, ctx.user.id));
       }
-      try { await logAudit(workspaceId, ctx.user.id, "update", "onboarding", 0, input); } catch {}
+      try { await logAudit(wsId, ctx.user.id, "update", "onboarding", 0, input); } catch {}
       return { success: true };
     }),
 });

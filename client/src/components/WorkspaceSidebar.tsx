@@ -157,7 +157,7 @@ export default function WorkspaceSidebar() {
         { icon: Crown,     label: "Plan Features",          path: "/app/plan-features" },
         { icon: Activity,  label: "Diagnostics",            path: "/app/diagnostics" },
         { icon: Zap,       label: "Onboarding",             path: "/app/onboarding" },
-        { icon: Clock,     label: "Demo Mode",              path: "/app/demo-mode" },
+
       ],
     },
   ];

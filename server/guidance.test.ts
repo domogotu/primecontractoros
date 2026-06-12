@@ -1,5 +1,28 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GuidanceEngine, type GuidanceContext, type NextAction } from './services/guidanceEngine';
+
+// vi.mock is hoisted - cannot reference variables defined outside the factory
+// All mock setup must be INSIDE the factory function
+vi.mock('/home/ubuntu/primecontractoros/server/db', () => {
+  const createQueryChain = (result: any[] = []) => {
+    const whereResult: any = Object.assign(Promise.resolve(result), {
+      limit: vi.fn().mockResolvedValue(result),
+    });
+    return {
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue(whereResult),
+      }),
+    };
+  };
+
+  const mockDb = {
+    select: vi.fn().mockImplementation(() => createQueryChain([])),
+  };
+
+  return {
+    getDb: vi.fn().mockResolvedValue(mockDb),
+  };
+});
 
 describe('GuidanceEngine', () => {
   let engine: GuidanceEngine;
@@ -21,23 +44,20 @@ describe('GuidanceEngine', () => {
 
     it('should return actions with required fields', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
-      
-      if (actions.length > 0) {
-        const action = actions[0];
-        expect(action).toHaveProperty('category');
-        expect(action).toHaveProperty('title');
-        expect(action).toHaveProperty('description');
-        expect(action).toHaveProperty('actionType');
-        expect(action).toHaveProperty('priority');
-        expect(action).toHaveProperty('reason');
-        expect(action).toHaveProperty('estimatedMinutes');
-      }
+      expect(actions.length).toBeGreaterThan(0);
+      const action = actions[0];
+      expect(action).toHaveProperty('category');
+      expect(action).toHaveProperty('title');
+      expect(action).toHaveProperty('description');
+      expect(action).toHaveProperty('actionType');
+      expect(action).toHaveProperty('priority');
+      expect(action).toHaveProperty('reason');
+      expect(action).toHaveProperty('estimatedMinutes');
     });
 
     it('should return actions with valid priority levels', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
       const validPriorities = ['low', 'medium', 'high', 'critical'];
-      
       actions.forEach(action => {
         expect(validPriorities).toContain(action.priority);
       });
@@ -56,7 +76,6 @@ describe('GuidanceEngine', () => {
     it('should return a single NextAction or null', async () => {
       const action = await engine.getNextBestAction(mockContext);
       expect(action === null || typeof action === 'object').toBe(true);
-      
       if (action) {
         expect(action).toHaveProperty('title');
         expect(action).toHaveProperty('description');
@@ -65,14 +84,12 @@ describe('GuidanceEngine', () => {
 
     it('should return the highest priority action when multiple exist', async () => {
       const action = await engine.getNextBestAction(mockContext);
-      
       if (action) {
         const allActions = await engine.analyzeWorkspace(mockContext);
         const highestPriorityAction = allActions.reduce((prev, current) => {
-          const priorityMap = { critical: 4, high: 3, medium: 2, low: 1 };
+          const priorityMap: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
           return priorityMap[current.priority] > priorityMap[prev.priority] ? current : prev;
         });
-        
         expect(action.priority).toBe(highestPriorityAction.priority);
       }
     });
@@ -101,15 +118,7 @@ describe('GuidanceEngine', () => {
   describe('Action Types', () => {
     it('should return actions with valid action types', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
-      const validActionTypes = [
-        'create',
-        'update',
-        'review',
-        'upload',
-        'invite',
-        'track',
-      ];
-
+      const validActionTypes = ['create', 'update', 'review', 'upload', 'invite', 'track'];
       actions.forEach(action => {
         expect(validActionTypes).toContain(action.actionType);
       });
@@ -119,11 +128,10 @@ describe('GuidanceEngine', () => {
   describe('Estimated Minutes', () => {
     it('should have reasonable estimated minutes for each action', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
-      
       actions.forEach(action => {
         expect(typeof action.estimatedMinutes).toBe('number');
         expect(action.estimatedMinutes).toBeGreaterThan(0);
-        expect(action.estimatedMinutes).toBeLessThan(480); // Less than 8 hours
+        expect(action.estimatedMinutes).toBeLessThan(480);
       });
     });
   });
@@ -131,7 +139,6 @@ describe('GuidanceEngine', () => {
   describe('Rationale Field', () => {
     it('should optionally include rationale for actions', async () => {
       const actions = await engine.analyzeWorkspace(mockContext);
-      
       actions.forEach(action => {
         if (action.rationale) {
           expect(typeof action.rationale).toBe('string');

@@ -14,9 +14,10 @@ export const onboardingRouter = router({
   }),
   updateStep: protectedProcedure.input(z.object({ step: z.string(), completed: z.boolean() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    const wsId = await requireWorkspaceId(ctx.user.id).catch(() => 0);
     const existing = await db.select().from(onboardingProgress).where(eq(onboardingProgress.userId, ctx.user.id));
     if (existing.length === 0) {
-      await db.insert(onboardingProgress).values({ userId: ctx.user.id, workspaceId: 0, completedSteps: JSON.stringify({ [input.step]: input.completed }), currentStep: input.step, completed: false });
+      await db.insert(onboardingProgress).values({ userId: ctx.user.id, workspaceId: wsId, completedSteps: JSON.stringify({ [input.step]: input.completed }), currentStep: input.step, completed: false });
     } else {
       const current = JSON.parse(existing[0].completedSteps || '{}');
       current[input.step] = input.completed;
