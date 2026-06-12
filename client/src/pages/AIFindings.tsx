@@ -1,4 +1,5 @@
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Brain, CheckCircle2, XCircle, Clock, AlertTriangle, Search, Filter, ChevronDown, Eye } from "lucide-react";
@@ -501,6 +502,14 @@ export default function AIFindings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          <PageGuidancePanel
+        pageKey="ai-findings"
+        title="AI Findings Help"
+        description="Source-linked analysis results from AI Confirmation. Each finding references a specific location in your governing contract file. Review and approve before creating live objects."
+        whatToDoNext={["Review findings with source references", "Approve correct findings to create live objects", "Reject inaccurate findings", "Re-run analysis when governing file changes"]}
+        helpArticleSlug="what-is-ai-confirmation"
+        glossaryTerms={["ai-finding", "contract-hub"]}
+      />
     </PageLayout>
   );
 }

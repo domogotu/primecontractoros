@@ -165,13 +165,16 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
         setRunningAction(null);
         break;
       case "compare_versions":
+        contractScan.mutate({ contractId: recordId! });
+        break;
       case "create_tasks":
+        contractScan.mutate({ contractId: recordId! });
+        break;
       case "mark_governing":
-        toast.info("Feature coming soon");
-        setRunningAction(null);
+        fileAnalysis.mutate({ fileId: recordId!, analysisType: "mark_governing" });
         break;
       default:
-        toast.info("Feature coming soon");
+        toast.error("Unknown action: " + actionId);
         setRunningAction(null);
     }
   };

@@ -84,7 +84,7 @@ export default function ContractDetail() {
     { enabled: !!contractId }
   );
   const initiateCloseout = trpc.intCloseout.initiate.useMutation({
-    onSuccess: () => { utils.intCloseout.getByContract.invalidate(); toast.success('Closeout checklist initiated'); },
+    onSuccess: () => { utils.intCloseout.getByContract.invalidate(); toast.success('Closeout initiated'); navigate(`/app/contracts/${contractId}/closeout`); },
   });
   const toggleCloseoutItem = trpc.intCloseout.toggleItem.useMutation({
     onSuccess: () => { utils.intCloseout.getByContract.invalidate(); },
@@ -412,10 +412,16 @@ export default function ContractDetail() {
                       </div>
                     ))}
                   </div>
-                  {closeoutData.completionPercentage === 100 && closeoutData.status !== 'completed' && (
+                  {closeoutData.canComplete && closeoutData.status !== 'completed' && (
                     <Button className="w-full" onClick={() => updateCloseoutStatus.mutate({ closeoutId: closeoutData.id, status: 'completed' })}>
                       Mark Closeout Complete
                     </Button>
+                  )}
+                  {!closeoutData.canComplete && closeoutData.completionPercentage > 0 && (
+                    <p className="text-xs text-amber-600 mt-2 text-center">
+                      {closeoutData.unresolvedBlockers > 0 ? `${closeoutData.unresolvedBlockers} open blocker(s) must be resolved. ` : ''}
+                      {closeoutData.requiredCompleted < closeoutData.requiredTotal ? `${closeoutData.requiredTotal - closeoutData.requiredCompleted} required item(s) incomplete.` : ''}
+                    </p>
                   )}
                 </div>
               ) : (

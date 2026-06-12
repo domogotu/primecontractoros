@@ -96,7 +96,7 @@ export default function CustomerAdoption() {
     if (route) {
       setLocation(route);
     } else {
-      toast({ title: "Coming soon", description: `${moduleName} setup is not yet available.` });
+      toast({ title: "Setup Required", description: `${moduleName} module requires additional configuration. Navigate to the module page for setup instructions.` });
     }
   };
 

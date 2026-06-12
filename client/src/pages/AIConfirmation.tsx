@@ -3,6 +3,7 @@ import PageLayout from "@/components/PageLayout";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,14 +31,7 @@ export default function AIConfirmation() {
     { enabled: !!contractId }
   );
 
-  const [findings, setFindings] = useState<Finding[]>([
-    { id: "1", category: "Compliance", title: "FAR 52.219-8 Small Business Subcontracting Plan Required", description: "Contract value exceeds $750,000 threshold. A subcontracting plan for small business participation is required under FAR 52.219-8.", severity: "critical", source: "AI Contract Scan", clauseRef: "FAR 52.219-8", aiConfidence: 0.95, status: "pending" },
-    { id: "2", category: "Deliverable", title: "Monthly Status Report Due by 5th Business Day", description: "Section C.4.2 requires monthly status reports submitted by the 5th business day of each month. Ensure recurring deadline is tracked.", severity: "high", source: "AI Contract Scan", clauseRef: "Section C.4.2", aiConfidence: 0.92, status: "pending" },
-    { id: "3", category: "Financial", title: "Invoice Format Must Follow WAWF Requirements", description: "All invoices must be submitted through Wide Area Workflow (WAWF) per DFARS 252.232-7006.", severity: "high", source: "AI Contract Scan", clauseRef: "DFARS 252.232-7006", aiConfidence: 0.88, status: "pending" },
-    { id: "4", category: "Security", title: "CUI Handling Requirements Identified", description: "Contract contains Controlled Unclassified Information (CUI) markings. NIST SP 800-171 compliance required per DFARS 252.204-7012.", severity: "critical", source: "AI Contract Scan", clauseRef: "DFARS 252.204-7012", aiConfidence: 0.91, status: "pending" },
-    { id: "5", category: "Requirement", title: "Key Personnel Clause — Substitution Requires CO Approval", description: "Key personnel identified in Section H. Any substitution requires 30-day advance notice and Contracting Officer approval.", severity: "medium", source: "AI Contract Scan", clauseRef: "Section H.3", aiConfidence: 0.87, status: "pending" },
-    { id: "6", category: "Insurance", title: "Professional Liability Insurance $1M Minimum", description: "Section I requires professional liability insurance with minimum $1,000,000 per occurrence.", severity: "medium", source: "AI Contract Scan", clauseRef: "Section I.2", aiConfidence: 0.85, status: "pending" },
-  ]);
+  const [findings, setFindings] = useState<Finding[]>([]);
 
   const [isScanning, setIsScanning] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -169,7 +163,15 @@ export default function AIConfirmation() {
       {/* Findings List */}
       <div className="space-y-4">
         {filteredFindings.length === 0 ? (
-          <Card><CardContent className="p-8 text-center text-gray-500">No findings match the current filters.</CardContent></Card>
+          <Card><CardContent className="p-8 text-center text-gray-500">
+            {findings.length === 0 ? (
+              <div>
+                <Brain className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="font-medium text-gray-700 mb-1">No AI Findings Yet</p>
+                <p className="text-sm">Click "Run AI Scan" above to analyze this contract for compliance issues, obligations, and risks.</p>
+              </div>
+            ) : "No findings match the current filters."}
+          </CardContent></Card>
         ) : (
           filteredFindings.map((finding) => (
             <Card key={finding.id} className={`border-l-4 ${finding.severity === "critical" ? "border-l-red-500" : finding.severity === "high" ? "border-l-orange-500" : finding.severity === "medium" ? "border-l-amber-500" : "border-l-blue-500"}`}>
@@ -210,6 +212,14 @@ export default function AIConfirmation() {
           ))
         )}
       </div>
+          <PageGuidancePanel
+        pageKey="ai-confirmation"
+        title="AI Confirmation Help"
+        description="Review AI findings before they affect contract operations. Only approved findings can create live contract objects. Reject or hold findings that need manual review."
+        whatToDoNext={["Review each finding carefully", "Approve findings that are correct", "Reject findings that are inaccurate", "Create live objects from approved findings"]}
+        helpArticleSlug="what-is-ai-confirmation"
+        glossaryTerms={["ai-finding", "awarded-contract", "deliverable", "compliance-item"]}
+      />
     </PageLayout>
   );
 }

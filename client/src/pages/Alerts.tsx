@@ -1,4 +1,5 @@
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Plus, Search, Trash2, AlertCircle, Bell, ListTodo } from "lucide-react";
@@ -141,6 +142,14 @@ export default function Alerts() {
           ))}
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="alerts"
+        title="Alerts Help"
+        description="Workspace attention items. Alerts are generated when action is needed — missing information, approaching deadlines, unmatched payments, or AI findings needing review."
+        whatToDoNext={["Address high-priority alerts first", "Dismiss resolved alerts", "Follow links to take action on each alert", "Check regularly for new system-generated alerts"]}
+        helpArticleSlug="what-is-primecontractoros"
+        glossaryTerms={["ai-suggestion"]}
+      />
     </PageLayout>
   );
 }

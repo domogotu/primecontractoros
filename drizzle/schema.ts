@@ -260,10 +260,15 @@ export const files = mysqlTable("files", {
   url: text("url").notNull(),
   mimeType: varchar("mimeType", { length: 100 }),
   size: int("size"),
-  linkedRecordType: varchar("linkedRecordType", { length: 50 }), // "opportunity", "proposal", "contract"
+  linkedRecordType: varchar("linkedRecordType", { length: 50 }), // "opportunity", "proposal", "contract", "invoice", "payment", "closeout", "support", "business_profile", "capability_statement", "subcontractor", "vendor"
   linkedRecordId: int("linkedRecordId"),
-  category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence"
+  category: varchar("category", { length: 100 }), // "governing", "supporting", "deliverable", "correspondence", "modification", "evidence"
   uploadedBy: int("uploadedBy"),
+  versionNumber: int("versionNumber").default(1).notNull(),
+  isGoverningDocument: boolean("isGoverningDocument").default(false).notNull(),
+  documentDate: timestamp("documentDate"),
+  notes: text("notes"),
+  storageProvider: varchar("storageProvider", { length: 50 }).default("built-in"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   deletedAt: timestamp("deletedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -319,7 +324,7 @@ export const invoices = mysqlTable("invoices", {
   contractId: int("contractId"),
   invoiceNumber: varchar("invoiceNumber", { length: 100 }).notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["draft", "submitted", "approved", "paid", "rejected", "overdue"]).default("draft"),
+  status: mysqlEnum("status", ["draft", "ready_for_review", "approved", "submitted", "partially_paid", "paid", "disputed", "void", "overdue", "rejected"]).default("draft"),
   issuedDate: timestamp("issuedDate"),
   dueDate: timestamp("dueDate"),
   paidDate: timestamp("paidDate"),
@@ -343,7 +348,7 @@ export const payments = mysqlTable("payments", {
   paymentDate: timestamp("paymentDate"),
   method: varchar("method", { length: 100 }),
   reference: varchar("reference", { length: 255 }),
-  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).default("pending"),
+  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded", "recorded", "partially_applied", "fully_applied", "reversed", "disputed", "unapplied"]).default("recorded"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -434,6 +439,9 @@ export const closeoutRecords = mysqlTable("closeoutRecords", {
   governmentPropertyReturned: boolean("governmentPropertyReturned").default(false),
   finalReportSubmitted: boolean("finalReportSubmitted").default(false),
   notes: text("notes"),
+  summary: text("summary"),
+  initiatedBy: int("initiatedBy"),
+  completedBy: int("completedBy"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -655,11 +663,13 @@ export const supportTickets = mysqlTable("supportTickets", {
   userId: int("userId"),
   subject: varchar("subject", { length: 255 }).notNull(),
   body: text("body").notNull(),
+  category: varchar("category", { length: 100 }),
   priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium"),
   status: mysqlEnum("status", ["open", "in_progress", "waiting_on_customer", "resolved", "closed"]).default("open"),
   assignedTo: varchar("assignedTo", { length: 255 }),
   resolution: text("resolution"),
   resolvedAt: timestamp("resolvedAt"),
+  closedAt: timestamp("closedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -787,7 +797,7 @@ export const workspaceMembers = mysqlTable("workspaceMembers", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull(),
   userId: int("userId").notNull(),
-  role: mysqlEnum("role", ["owner", "admin", "member", "viewer"]).default("member").notNull(),
+  role: mysqlEnum("role", ["owner", "admin", "contract_manager", "finance_user", "member", "viewer"]).default("member").notNull(),
   invitedBy: int("invitedBy"),
   joinedAt: timestamp("joinedAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -817,11 +827,18 @@ export const closeoutChecklistItems = mysqlTable("closeoutChecklistItems", {
   closeoutId: int("closeoutId").notNull(),
   label: varchar("label", { length: 255 }).notNull(),
   description: text("description"),
+  required: boolean("required").default(true).notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "completed", "blocked"]).default("not_started"),
   completed: boolean("completed").default(false).notNull(),
   completedAt: timestamp("completedAt"),
   completedBy: int("completedBy"),
+  owner: varchar("owner", { length: 255 }),
+  dueDate: timestamp("dueDate"),
+  category: varchar("category", { length: 100 }),
+  sourceAiFindingId: int("sourceAiFindingId"),
   sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type CloseoutChecklistItem = typeof closeoutChecklistItems.$inferSelect;
 export type InsertCloseoutChecklistItem = typeof closeoutChecklistItems.$inferInsert;
@@ -1161,7 +1178,7 @@ export const invites = mysqlTable("invites", {
   id: int("id").primaryKey().autoincrement(),
   workspaceId: int("workspace_id").notNull(),
   email: varchar("email", { length: 255 }).notNull(),
-  role: varchar("role", { length: 64 }).notNull().default("standard_user"),
+  role: varchar("role", { length: 64 }).notNull().default("member"),
   invitedBy: int("invited_by").notNull(),
   token: varchar("token", { length: 255 }).notNull(),
   status: varchar("status", { length: 32 }).notNull().default("pending"),
@@ -1170,6 +1187,8 @@ export const invites = mysqlTable("invites", {
   cancelledAt: timestamp("cancelled_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+export type Invite = typeof invites.$inferSelect;
+export type InsertInvite = typeof invites.$inferInsert;
 
 export const documentVersions = mysqlTable("document_versions", {
   id: int("id").primaryKey().autoincrement(),
@@ -1366,7 +1385,8 @@ export const accessStates = mysqlTable("access_states", {
   workspaceId: int("workspaceId").notNull(),
   state: mysqlEnum("state", [
     "signup_started", "pending_setup", "trial_active", "limited_access",
-    "pending_payment", "active_paid", "past_due", "suspended", "canceled", "archived"
+    "pending_payment", "active_paid", "past_due", "suspended", "canceled", "archived",
+    "grace", "override"
   ]).default("signup_started").notNull(),
   previousState: varchar("previousState", { length: 50 }),
   changedAt: timestamp("changedAt").defaultNow().notNull(),
@@ -1408,11 +1428,14 @@ export const supportMessages = mysqlTable("support_messages", {
   ticketId: int("ticketId").notNull(),
   senderType: mysqlEnum("senderType", ["customer", "admin"]).notNull(),
   senderId: int("senderId"),
+  senderName: varchar("senderName", { length: 255 }),
   content: text("content").notNull(),
   isInternalNote: boolean("isInternalNote").default(false).notNull(),
+  attachmentFileId: int("attachmentFileId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type SupportMessage = typeof supportMessages.$inferSelect;
+export type InsertSupportMessage = typeof supportMessages.$inferInsert;
 
 // Proposal Frameworks — reusable proposal structure templates
 export const proposalFrameworks = mysqlTable("proposal_frameworks", {
@@ -1524,13 +1547,20 @@ export const closeoutBlockingItems = mysqlTable("closeout_blocking_items", {
   id: int("id").primaryKey().autoincrement(),
   closeoutId: int("closeoutId").notNull(),
   workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
   blockerType: varchar("blockerType", { length: 100 }).notNull(),
   description: text("description"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
   recordType: varchar("recordType", { length: 64 }),
   recordId: int("recordId"),
-  status: mysqlEnum("status", ["open", "resolved"]).default("open"),
+  status: mysqlEnum("status", ["open", "resolved", "waived"]).default("open"),
+  resolutionNotes: text("resolutionNotes"),
+  owner: varchar("owner", { length: 255 }),
+  dueDate: timestamp("dueDate"),
   resolvedAt: timestamp("resolvedAt"),
+  resolvedBy: int("resolvedBy"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type CloseoutBlockingItem = typeof closeoutBlockingItems.$inferSelect;
 
@@ -1566,6 +1596,8 @@ export const fileVersions = mysqlTable("file_versions", {
   versionNumber: int("versionNumber").notNull().default(1),
   fileKey: varchar("fileKey", { length: 500 }).notNull(),
   url: text("url").notNull(),
+  size: int("size"),
+  mimeType: varchar("mimeType", { length: 100 }),
   uploadedBy: int("uploadedBy"),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -2170,3 +2202,286 @@ export const farDfarsExports = mysqlTable("far_dfars_exports", {
 });
 export type FarDfarsExport = typeof farDfarsExports.$inferSelect;
 export type InsertFarDfarsExport = typeof farDfarsExports.$inferInsert;
+
+// Checkout Sessions — track Stripe checkout sessions through the billing flow
+export const checkoutSessions = mysqlTable("checkout_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"), // nullable — workspace may not exist yet at checkout start
+  planId: int("planId").notNull(),
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "completed", "expired", "canceled"]).default("pending").notNull(),
+  billingInterval: mysqlEnum("billingInterval", ["month", "year"]).default("month").notNull(),
+  completedAt: timestamp("completedAt"),
+  canceledAt: timestamp("canceledAt"),
+  metadata: text("metadata"), // JSON for extra context
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type CheckoutSession = typeof checkoutSessions.$inferSelect;
+export type InsertCheckoutSession = typeof checkoutSessions.$inferInsert;
+
+// ==================== INVOICE LINE ITEMS ====================
+export const invoiceLineItems = mysqlTable("invoice_line_items", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  description: text("description").notNull(),
+  quantity: decimal("quantity", { precision: 12, scale: 4 }).default("1"),
+  unitPrice: decimal("unitPrice", { precision: 12, scale: 2 }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  category: varchar("category", { length: 100 }),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceLineItem = typeof invoiceLineItems.$inferSelect;
+export type InsertInvoiceLineItem = typeof invoiceLineItems.$inferInsert;
+
+// ==================== INVOICE CHECKLIST ITEMS ====================
+export const invoiceChecklistItems = mysqlTable("invoice_checklist_items", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  required: boolean("required").default(true),
+  completed: boolean("completed").default(false),
+  completedBy: int("completedBy"),
+  completedAt: timestamp("completedAt"),
+  sortOrder: int("sortOrder").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceChecklistItem = typeof invoiceChecklistItems.$inferSelect;
+export type InsertInvoiceChecklistItem = typeof invoiceChecklistItems.$inferInsert;
+
+// ==================== INVOICE ISSUES / DISPUTES ====================
+export const invoiceIssues = mysqlTable("invoice_issues", {
+  id: int("id").autoincrement().primaryKey(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).default("medium"),
+  status: mysqlEnum("status", ["open", "in_progress", "resolved", "closed"]).default("open"),
+  resolution: text("resolution"),
+  raisedBy: int("raisedBy"),
+  resolvedBy: int("resolvedBy"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InvoiceIssue = typeof invoiceIssues.$inferSelect;
+export type InsertInvoiceIssue = typeof invoiceIssues.$inferInsert;
+
+// ==================== PAYMENT APPLICATIONS ====================
+export const paymentApplications = mysqlTable("payment_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  paymentId: int("paymentId").notNull(),
+  invoiceId: int("invoiceId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  appliedAt: timestamp("appliedAt").defaultNow().notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PaymentApplication = typeof paymentApplications.$inferSelect;
+export type InsertPaymentApplication = typeof paymentApplications.$inferInsert;
+
+// Closeout Evidence — links files/documents to closeout items or blockers
+export const closeoutEvidence = mysqlTable("closeout_evidence", {
+  id: int("id").primaryKey().autoincrement(),
+  workspaceId: int("workspaceId").notNull(),
+  closeoutId: int("closeoutId").notNull(),
+  linkedItemType: varchar("linkedItemType", { length: 50 }).notNull(), // "checklist_item" or "blocker"
+  linkedItemId: int("linkedItemId").notNull(),
+  fileId: int("fileId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  url: text("url"),
+  description: text("description"),
+  uploadedBy: int("uploadedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CloseoutEvidence = typeof closeoutEvidence.$inferSelect;
+export type InsertCloseoutEvidence = typeof closeoutEvidence.$inferInsert;
+
+// ==================== PHASE 6: PLATFORM PAGES ====================
+
+// Launch Readiness Items — Persisted checklist for platform launch readiness
+export const launchReadinessItems = mysqlTable("launch_readiness_items", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "passed", "failed", "blocked"]).default("not_started").notNull(),
+  owner: varchar("owner", { length: 255 }),
+  notes: text("notes"),
+  lastCheckedAt: timestamp("lastCheckedAt"),
+  relatedRoute: varchar("relatedRoute", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LaunchReadinessItem = typeof launchReadinessItems.$inferSelect;
+export type InsertLaunchReadinessItem = typeof launchReadinessItems.$inferInsert;
+
+// Notification Templates — Platform-wide notification/email templates
+export const notificationTemplates = mysqlTable("notification_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // welcome, billing_success, billing_failure, support_ticket_update, invite_member, deadline_reminder, invoice_reminder, contract_alert, closeout_alert
+  subject: varchar("subject", { length: 500 }).notNull(),
+  body: text("body").notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationTemplate = typeof notificationTemplates.$inferInsert;
+
+// Integration Test Results — Store results of platform integration tests
+export const integrationTestResults = mysqlTable("integration_test_results", {
+  id: int("id").autoincrement().primaryKey(),
+  integrationName: varchar("integrationName", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["pass", "fail", "warning", "untested"]).default("untested").notNull(),
+  message: text("message"),
+  testedAt: timestamp("testedAt").defaultNow().notNull(),
+  testedBy: int("testedBy"),
+});
+export type IntegrationTestResult = typeof integrationTestResults.$inferSelect;
+export type InsertIntegrationTestResult = typeof integrationTestResults.$inferInsert;
+
+// Opportunity Import Runs - Tracks bulk and individual import operations
+export const opportunityImportRuns = mysqlTable("opportunity_import_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  runType: varchar("runType", { length: 50 }).notNull().default("single"), // single, bulk, url
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, running, completed, failed
+  totalItems: int("totalItems").default(0),
+  importedCount: int("importedCount").default(0),
+  skippedCount: int("skippedCount").default(0),
+  failedCount: int("failedCount").default(0),
+  duplicateCount: int("duplicateCount").default(0),
+  searchQuery: text("searchQuery"),
+  sourceUrl: text("sourceUrl"),
+  errorSummary: text("errorSummary"),
+  importedOpportunityIds: json("importedOpportunityIds"),
+  triggeredAiReview: boolean("triggeredAiReview").default(false),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  importedBy: int("importedBy"),
+});
+export type OpportunityImportRun = typeof opportunityImportRuns.$inferSelect;
+export type InsertOpportunityImportRun = typeof opportunityImportRuns.$inferInsert;
+
+// ==================== PHASE 35: GUIDED AI EXPERIENCE TABLES ====================
+
+// Contextual Help Items — page-specific help content
+export const contextualHelpItems = mysqlTable("contextual_help_items", {
+  id: int("id").autoincrement().primaryKey(),
+  pageKey: varchar("pageKey", { length: 100 }).notNull(),
+  sectionKey: varchar("sectionKey", { length: 100 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  helpArticleSlug: varchar("helpArticleSlug", { length: 255 }),
+  glossaryTermSlug: varchar("glossaryTermSlug", { length: 255 }),
+  audience: mysqlEnum("audience", ["public", "customer", "platform_owner", "all"]).default("customer").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContextualHelpItem = typeof contextualHelpItems.$inferSelect;
+export type InsertContextualHelpItem = typeof contextualHelpItems.$inferInsert;
+
+// Lifecycle Status History — audit trail for all status changes
+export const lifecycleStatusHistory = mysqlTable("lifecycle_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  recordType: varchar("recordType", { length: 64 }).notNull(),
+  recordId: int("recordId").notNull(),
+  previousStatus: varchar("previousStatus", { length: 50 }),
+  newStatus: varchar("newStatus", { length: 50 }).notNull(),
+  reason: text("reason"),
+  changedBy: int("changedBy"),
+  changedAt: timestamp("changedAt").defaultNow().notNull(),
+});
+export type LifecycleStatusHistory = typeof lifecycleStatusHistory.$inferSelect;
+export type InsertLifecycleStatusHistory = typeof lifecycleStatusHistory.$inferInsert;
+
+// Auto-Population Events — track when fields are auto-filled
+export const autoPopulationEvents = mysqlTable("auto_population_events", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  targetRecordType: varchar("targetRecordType", { length: 64 }).notNull(),
+  targetRecordId: int("targetRecordId").notNull(),
+  sourceRecordType: varchar("sourceRecordType", { length: 64 }).notNull(),
+  sourceRecordId: int("sourceRecordId").notNull(),
+  fieldsApplied: json("fieldsApplied"),
+  fieldsSkipped: json("fieldsSkipped"),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AutoPopulationEvent = typeof autoPopulationEvents.$inferSelect;
+export type InsertAutoPopulationEvent = typeof autoPopulationEvents.$inferInsert;
+
+// Source References — link records to their source documents/files
+export const sourceReferences = mysqlTable("source_references", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  relatedRecordType: varchar("relatedRecordType", { length: 64 }).notNull(),
+  relatedRecordId: int("relatedRecordId").notNull(),
+  sourceType: varchar("sourceType", { length: 100 }).notNull(),
+  sourceFileId: int("sourceFileId"),
+  sourceUrl: text("sourceUrl"),
+  sourceLocation: varchar("sourceLocation", { length: 500 }),
+  excerpt: text("excerpt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SourceReference = typeof sourceReferences.$inferSelect;
+export type InsertSourceReference = typeof sourceReferences.$inferInsert;
+
+// Template Improvement Suggestions — suggestions from lessons learned
+export const templateImprovementSuggestions = mysqlTable("template_improvement_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  templateType: varchar("templateType", { length: 100 }).notNull(),
+  sourceLessonId: int("sourceLessonId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  recommendation: text("recommendation").notNull(),
+  status: mysqlEnum("status", ["new", "accepted", "rejected", "applied"]).default("new").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TemplateImprovementSuggestion = typeof templateImprovementSuggestions.$inferSelect;
+export type InsertTemplateImprovementSuggestion = typeof templateImprovementSuggestions.$inferInsert;
+
+// Help Articles — real help center content
+export const helpArticles = mysqlTable("help_articles", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  category: varchar("category", { length: 100 }),
+  relatedGlossaryTerms: text("relatedGlossaryTerms"),
+  isPublished: boolean("isPublished").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type HelpArticle = typeof helpArticles.$inferSelect;
+export type InsertHelpArticle = typeof helpArticles.$inferInsert;
+
+// Glossary Terms — government contracting terminology
+export const glossaryTerms = mysqlTable("glossary_terms", {
+  id: int("id").autoincrement().primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  term: varchar("term", { length: 255 }).notNull(),
+  definition: text("definition").notNull(),
+  whereInApp: text("whereInApp"),
+  relatedPages: text("relatedPages"),
+  relatedHelpArticles: text("relatedHelpArticles"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GlossaryTerm = typeof glossaryTerms.$inferSelect;
+export type InsertGlossaryTerm = typeof glossaryTerms.$inferInsert;

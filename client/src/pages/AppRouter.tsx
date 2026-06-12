@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 
 /**
  * AppRouter Page
@@ -25,7 +25,7 @@ export default function AppRouter() {
     if (authLoading || onboardingLoading) return;
 
     if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
+      navigateToLogin();
       return;
     }
 

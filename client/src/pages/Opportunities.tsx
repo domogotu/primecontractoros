@@ -10,6 +10,8 @@ import SmartIntakeOpportunity from "@/components/SmartIntakeOpportunity";
 import SamImportPanel from "@/components/SamImportPanel";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
+import EmptyStateGuide from "@/components/EmptyStateGuide";
 import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
@@ -394,6 +396,19 @@ export default function Opportunities() {
           </DialogBody>
         </DialogContent>
       </Dialog>
+      <PageGuidancePanel
+        pageKey="opportunities"
+        title="Opportunities Help"
+        description="Track and evaluate government contracting opportunities. Import from SAM.gov or create manually. Review each opportunity to make a pursue/no-pursue decision."
+        whatToDoNext={[
+          "Import opportunities from SAM.gov using the Import button",
+          "Review each opportunity's NAICS, set-aside, and due date",
+          "Make a go/no-go decision for each opportunity",
+          "Convert pursued opportunities to proposals"
+        ]}
+        helpArticleSlug="what-is-an-opportunity"
+        glossaryTerms={["opportunity", "solicitation", "set-aside", "naics"]}
+      />
     </PageLayout>
   );
 }

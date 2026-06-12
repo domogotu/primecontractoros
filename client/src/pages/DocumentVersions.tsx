@@ -107,7 +107,7 @@ export default function DocumentVersions() {
     createVersionMutation.mutate({
       fileId,
       versionNumber: nextVersion,
-      storageKey: `placeholder-v${nextVersion}`,
+      storageKey: `version-${fileId}-v${nextVersion}-${Date.now()}`,
       storageUrl: "",
       notes: uploadForm.notes || undefined,
     });

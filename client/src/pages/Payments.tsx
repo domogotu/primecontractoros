@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, DollarSign, ArrowDownRight, ArrowUpRight, Plus, Trash2 } from "lucide-react";
+import { Search, DollarSign, ArrowDownRight, ArrowUpRight, Plus, Trash2, ExternalLink } from "lucide-react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import PageLayout from "@/components/PageLayout";
@@ -277,7 +279,10 @@ export default function Payments() {
                       {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : "—"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 flex gap-1">
+                    <Link href={`/app/payments/${payment.id}`}>
+                      <Button variant="ghost" size="sm"><ExternalLink className="w-4 h-4 text-blue-500" /></Button>
+                    </Link>
                     <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate({ id: payment.id })}>
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
@@ -400,6 +405,14 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
     
-      </PageLayout>
+            <PageGuidancePanel
+        pageKey="payments"
+        title="Payments Help"
+        description="Log received payments and match them to invoices. Track unmatched payments and outstanding balances."
+        whatToDoNext={["Log payments as they are received", "Match payments to submitted invoices", "Identify unmatched or partial payments", "Track outstanding balances across contracts"]}
+        helpArticleSlug="why-invoices-payments-separate"
+        glossaryTerms={["payment", "invoice", "prompt-payment"]}
+      />
+    </PageLayout>
   );
 }

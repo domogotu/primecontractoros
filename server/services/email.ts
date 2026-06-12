@@ -23,8 +23,8 @@ export async function getEmailConfig(workspaceId: number): Promise<EmailConfig |
     if (s.settingValue) settingsMap[s.settingKey] = s.settingValue;
   }
 
-  const apiKey = settingsMap["resend_api_key"] || ENV.resendApiKey;
-  const fromEmail = settingsMap["email_from_address"] || "onboarding@resend.dev";
+  const apiKey = settingsMap["resend_api_key"] || ENV.resendApiKey || "";
+  const fromEmail = settingsMap["email_from_address"] || "noreply@primecontractoros.com";
   const fromName = settingsMap["email_from_name"] || "PrimeContractorOS";
 
   if (!apiKey) return null;

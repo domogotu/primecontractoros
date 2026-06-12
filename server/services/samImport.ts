@@ -8,7 +8,7 @@
 
 import { getOpportunityByNoticeId, searchOpportunities, type SamOpportunity } from "./samGov";
 
-const SAM_API_KEY = process.env.SAM_GOV_API_KEY || "SAM-ba748d6d-784a-4dde-892a-6fecfcc411ef";
+const SAM_API_KEY = process.env.SAM_GOV_API_KEY || "";
 const SAM_RESOURCES_URL = "https://api.sam.gov/opportunities/v1/search";
 
 // ─── URL Validation & ID Extraction ────────────────────────────────────────────

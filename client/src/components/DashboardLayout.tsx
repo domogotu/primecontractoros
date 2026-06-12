@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import {
   LayoutDashboard, LogOut, Users, FileText, DollarSign, MessageSquare,
   BarChart3, Settings, User, Zap, CheckCircle2, BookOpen, Briefcase,
@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Access to this dashboard requires authentication.
           </p>
           <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
+            onClick={() => { navigateToLogin(); }}
             size="lg"
             className="w-full"
           >

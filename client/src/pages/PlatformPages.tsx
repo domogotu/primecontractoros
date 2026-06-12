@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square, ChevronDown } from "lucide-react";
+import { Loader2, Trash2, Plus, Eye, Copy, AlertCircle, Shield, Clock, Search, MessageSquare, ArrowLeftRight, Download, CheckSquare, Square, ChevronDown, ShieldCheck, ShieldOff, RefreshCw, CreditCard, FileText, StickyNote, XCircle } from "lucide-react";
+import { useState as useStateLocal } from "react";
 import { toast } from "sonner";
 
 // ==================== SHARED COMPONENTS ====================
@@ -140,7 +141,7 @@ export function PlatformPlans() {
                   <div className="flex justify-between text-slate-300"><span>Max Contracts:</span><span className="font-semibold text-white">{plan.maxContracts}</span></div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => toast.info("Coming soon \u2014 Plan detail view is not yet configured.")} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
+                  <Button onClick={() => toast.info(`Plan: ${plan.name} — Monthly: $${plan.monthlyPrice}, Annual: $${plan.annualPrice || 'N/A'}, Max Users: ${plan.maxUsers}, Max Contracts: ${plan.maxContracts}, Features: ${plan.features || 'None'}, Active: ${plan.isActive ? 'Yes' : 'No'}`)} size="sm" variant="outline" className="flex-1 border-slate-700 text-slate-300"><Eye className="w-4 h-4" /></Button>
                   <Button onClick={() => deleteMutation.mutate({ id: plan.id })} size="sm" variant="outline" className="flex-1 border-red-700 text-red-400 hover:bg-red-900"><Trash2 className="w-4 h-4" /></Button>
                 </div>
               </Card>
@@ -266,27 +267,261 @@ export function PlatformDiscounts() {
 }
 
 // ==================== BILLING MANAGEMENT ====================
+// ─── Access Status Badge ─────────────────────────────────────────────────────
+function AccessStateBadge({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    active_paid: "bg-green-900 text-green-300 border-green-700",
+    trial_active: "bg-amber-900 text-amber-300 border-amber-700",
+    grace: "bg-blue-900 text-blue-300 border-blue-700",
+    override: "bg-purple-900 text-purple-300 border-purple-700",
+    past_due: "bg-red-900 text-red-300 border-red-700",
+    pending_payment: "bg-orange-900 text-orange-300 border-orange-700",
+    pending_setup: "bg-slate-700 text-slate-300 border-slate-600",
+    suspended: "bg-red-950 text-red-400 border-red-800",
+    canceled: "bg-slate-800 text-slate-400 border-slate-700",
+    no_access: "bg-slate-800 text-slate-500 border-slate-700",
+  };
+  const cls = colors[status] ?? "bg-slate-800 text-slate-400 border-slate-700";
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${cls}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+// ─── Workspace Billing Detail Modal ─────────────────────────────────────────
+function WorkspaceBillingModal({ workspaceId, onClose }: { workspaceId: number; onClose: () => void }) {
+  const [activeTab, setActiveTab] = useStateLocal<"overview" | "events" | "notes">("overview");
+  const [graceDays, setGraceDays] = useStateLocal("14");
+  const [graceReason, setGraceReason] = useStateLocal("");
+  const [suspendReason, setSuspendReason] = useStateLocal("");
+  const [restoreReason, setRestoreReason] = useStateLocal("");
+  const [noteText, setNoteText] = useStateLocal("");
+  const [overrideReason, setOverrideReason] = useStateLocal("");
+
+  const detailQuery = trpc.platformAdmin.billing.getWorkspaceBilling.useQuery({ workspaceId });
+  const eventsQuery = trpc.platformAdmin.billing.getBillingEvents.useQuery({ workspaceId });
+  const plansQuery = trpc.platformAdmin.billing.list.useQuery();
+  const allPlansQuery = trpc.billing.getPlans.useQuery();
+
+  const grantGraceMutation = trpc.platformAdmin.billing.grantGracePeriod.useMutation({
+    onSuccess: () => { toast.success("Grace period granted."); detailQuery.refetch(); setGraceReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const suspendMutation = trpc.platformAdmin.billing.suspendAccess.useMutation({
+    onSuccess: () => { toast.success("Access suspended."); detailQuery.refetch(); setSuspendReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const restoreMutation = trpc.platformAdmin.billing.restoreAccess.useMutation({
+    onSuccess: () => { toast.success("Access restored."); detailQuery.refetch(); setRestoreReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const overrideMutation = trpc.platformAdmin.billing.setOverride.useMutation({
+    onSuccess: () => { toast.success("Override set."); detailQuery.refetch(); setOverrideReason(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const noteMutation = trpc.platformAdmin.billing.addBillingNote.useMutation({
+    onSuccess: () => { toast.success("Note added."); detailQuery.refetch(); setNoteText(""); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const d = detailQuery.data;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <div>
+            <h2 className="text-xl font-bold text-white">Workspace #{workspaceId} — Billing</h2>
+            {d?.workspace && <p className="text-slate-400 text-sm mt-0.5">{d.workspace.name} · {d.owner?.email}</p>}
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white"><XCircle className="w-5 h-5" /></button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-700">
+          {(["overview", "events", "notes"] as const).map((t) => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-6 py-3 text-sm font-medium capitalize transition-colors ${activeTab === t ? "text-blue-300 border-b-2 border-blue-400" : "text-slate-400 hover:text-slate-200"}`}>
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-6 space-y-6">
+          {detailQuery.isLoading && <div className="flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-300" /></div>}
+
+          {activeTab === "overview" && d && (
+            <>
+              {/* Current State */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900 rounded-lg p-4">
+                  <p className="text-xs text-slate-400 mb-1">Access State</p>
+                  {d.accessState ? <AccessStateBadge status={d.accessState.state} /> : <span className="text-slate-500 text-sm">None</span>}
+                  {d.accessState?.reason && <p className="text-xs text-slate-500 mt-1">{d.accessState.reason}</p>}
+                  {d.accessState?.changedAt && <p className="text-xs text-amber-400 mt-1">Changed: {new Date(d.accessState.changedAt).toLocaleDateString()}</p>}
+                </div>
+                <div className="bg-slate-900 rounded-lg p-4">
+                  <p className="text-xs text-slate-400 mb-1">Subscription</p>
+                  {d.subscription ? (
+                    <>
+                      <p className="text-white font-medium">{d.plan?.name ?? `Plan #${d.subscription.planId}`}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 capitalize">{d.subscription.status}</p>
+                      {d.subscription.currentPeriodEnd && <p className="text-xs text-slate-500 mt-0.5">Renews: {new Date(d.subscription.currentPeriodEnd).toLocaleDateString()}</p>}
+                    </>
+                  ) : <span className="text-slate-500 text-sm">No subscription</span>}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Management Actions</h3>
+
+                {/* Grant Grace Period */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-medium text-white">Grant Grace Period</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input type="number" min={1} max={365} value={graceDays} onChange={(e) => setGraceDays(e.target.value)}
+                      placeholder="Days" className="w-24 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Input value={graceReason} onChange={(e) => setGraceReason(e.target.value)}
+                      placeholder="Reason (required)" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => grantGraceMutation.mutate({ workspaceId, daysUntilExpiry: parseInt(graceDays) || 14, reason: graceReason })}
+                      disabled={!graceReason || grantGraceMutation.isPending} className="bg-amber-700 hover:bg-amber-600 text-white">
+                      {grantGraceMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Grant"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Suspend / Restore */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldOff className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-medium text-white">Suspend / Restore Access</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)}
+                      placeholder="Reason for suspension" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" variant="destructive" onClick={() => suspendMutation.mutate({ workspaceId, reason: suspendReason })}
+                      disabled={!suspendReason || suspendMutation.isPending}>
+                      {suspendMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Suspend"}
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={restoreReason} onChange={(e) => setRestoreReason(e.target.value)}
+                      placeholder="Reason for restoration" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => restoreMutation.mutate({ workspaceId, reason: restoreReason, newStatus: "active_paid" })}
+                      disabled={!restoreReason || restoreMutation.isPending} className="bg-green-700 hover:bg-green-600 text-white">
+                      {restoreMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Restore"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Platform Override */}
+                <div className="bg-slate-900 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm font-medium text-white">Platform Override (bypasses billing)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)}
+                      placeholder="Reason for override" className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                    <Button size="sm" onClick={() => overrideMutation.mutate({ workspaceId, reason: overrideReason })}
+                      disabled={!overrideReason || overrideMutation.isPending} className="bg-purple-700 hover:bg-purple-600 text-white">
+                      {overrideMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Set Override"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "events" && (
+            <>
+              {eventsQuery.isLoading && <div className="flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-blue-300" /></div>}
+              {!eventsQuery.isLoading && (!eventsQuery.data || eventsQuery.data.length === 0) && (
+                <EmptyState message="No billing events recorded." />
+              )}
+              {eventsQuery.data && eventsQuery.data.length > 0 && (
+                <div className="space-y-2">
+                  {eventsQuery.data.map((ev: any) => (
+                    <div key={ev.id} className="bg-slate-900 rounded-lg p-3 flex items-start gap-3">
+                      <CreditCard className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-white">{ev.eventType?.replace(/_/g, " ")}</span>
+                          {ev.newState && <AccessStateBadge status={ev.newState} />}
+                        </div>
+                        {ev.reason && <p className="text-xs text-slate-400 mt-0.5 truncate">{ev.reason}</p>}
+                        <p className="text-xs text-slate-500 mt-0.5">{ev.createdAt ? new Date(ev.createdAt).toLocaleString() : ""}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === "notes" && (
+            <>
+              <div className="flex gap-2">
+                <Input value={noteText} onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Add an internal note..." className="flex-1 bg-slate-800 border-slate-600 text-white text-sm" />
+                <Button size="sm" onClick={() => noteMutation.mutate({ workspaceId, note: noteText })}
+                  disabled={!noteText || noteMutation.isPending} className="bg-blue-700 hover:bg-blue-600 text-white">
+                  {noteMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <StickyNote className="w-4 h-4" />}
+                </Button>
+              </div>
+              {d?.notes && d.notes.length > 0 ? (
+                <div className="space-y-2">
+                  {d.notes.map((n: any) => (
+                    <div key={n.id} className="bg-slate-900 rounded-lg p-3">
+                      <p className="text-sm text-slate-200">{n.note}</p>
+                      <p className="text-xs text-slate-500 mt-1">{n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : <EmptyState message="No notes yet." />}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlatformBilling() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useStateLocal<number | null>(null);
 
-  const billingQuery = trpc.platformAdmin.billing.list.useQuery();
+  const accessStatesQuery = trpc.platformAdmin.billing.listAccessStates.useQuery();
   const statsQuery = trpc.platformAdmin.billing.stats.useQuery();
 
-  const billing = billingQuery.data || [];
+  const rows = accessStatesQuery.data || [];
   const stats = statsQuery.data || { totalRecords: 0, activeSubscriptions: 0, activeTrials: 0, pendingPayments: 0, pastDue: 0, failedPayments: 0 };
 
-  const filtered = billing.filter((b) => {
-    const matchesSearch = b.workspaceId?.toString().includes(search) || b.status?.toLowerCase().includes(search.toLowerCase());
+  const filtered = rows.filter((r) => {
+    const matchesSearch =
+      r.workspaceName?.toLowerCase().includes(search.toLowerCase()) ||
+      r.workspaceOwner?.toLowerCase().includes(search.toLowerCase()) ||
+      r.workspaceId?.toString().includes(search) ||
+      r.status?.toLowerCase().includes(search.toLowerCase());
     if (filter === "all") return matchesSearch;
-    return matchesSearch && b.status === filter;
+    return matchesSearch && r.status === filter;
   });
 
-  if (billingQuery.isLoading) return <LoadingState />;
+  if (accessStatesQuery.isLoading) return <LoadingState />;
 
   return (
     <div className="min-h-screen bg-slate-900">
-      <PageHeader title="Billing Management" description="Manage workspace billing, subscriptions, and payment states." />
+      {selectedWorkspaceId !== null && (
+        <WorkspaceBillingModal workspaceId={selectedWorkspaceId} onClose={() => setSelectedWorkspaceId(null)} />
+      )}
+
+      <PageHeader title="Billing Management" description="Manage workspace access states, subscriptions, and billing events." />
 
       <div className="p-4 sm:p-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
@@ -299,48 +534,53 @@ export function PlatformBilling() {
         </div>
 
         <div className="mb-6 flex gap-2 flex-wrap">
-          {["all", "trial", "active", "past_due", "cancelled", "expired"].map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filter === f ? "bg-blue-900 text-white" : "bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-900"}`}>
-              {f === "all" ? "All" : f.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+          {["all", "active_paid", "trial_active", "grace", "override", "past_due", "suspended", "canceled", "pending_setup"].map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filter === f ? "bg-blue-900 text-white" : "bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-900"
+              }`}>
+              {f === "all" ? "All" : f.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </button>
           ))}
         </div>
 
         <div className="mb-6">
-          <Input placeholder="Search by workspace or status..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
+          <Input placeholder="Search by workspace name, owner email, or status..." value={search}
+            onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
         </div>
 
         {filtered.length === 0 ? (
-          <EmptyState message="No billing records found." />
+          <EmptyState message="No access state records found. Workspaces will appear here once they complete signup." />
         ) : (
           <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-700 bg-slate-900">
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Workspace</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Plan ID</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Cycle</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Trial Ends</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Period End</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Owner</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Access State</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Plan</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Sub Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Expires</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Updated</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((b) => (
-                  <tr key={b.id} className="border-b border-slate-700 hover:bg-slate-900">
-                    <td className="px-4 py-3 text-white">WS #{b.workspaceId}</td>
-                    <td className="px-4 py-3 text-slate-300">Plan #{b.planId}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={b.status === "active" ? "default" : b.status === "trial" ? "secondary" : "destructive"}>
-                        {b.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300 capitalize">{b.billingCycle || "—"}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{b.trialEndsAt ? new Date(b.trialEndsAt).toLocaleDateString() : "—"}</td>
-                    <td className="px-4 py-3 text-slate-400 text-xs">{b.currentPeriodEnd ? new Date(b.currentPeriodEnd).toLocaleDateString() : "—"}</td>
+                {filtered.map((r) => (
+                  <tr key={r.id} className="border-b border-slate-700 hover:bg-slate-900">
+                    <td className="px-4 py-3 text-white font-medium">{r.workspaceName ?? `WS #${r.workspaceId}`}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{r.workspaceOwner ?? "\u2014"}</td>
+                    <td className="px-4 py-3"><AccessStateBadge status={r.status} /></td>
+                    <td className="px-4 py-3 text-slate-300 text-xs">{r.planName ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs capitalize">{r.subscriptionStatus ?? "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-400 text-xs">{r.expiresAt ? new Date(r.expiresAt).toLocaleDateString() : "\u2014"}</td>
+                    <td className="px-4 py-3 text-slate-500 text-xs">{r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : "\u2014"}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => toast.info("Coming soon \u2014 Billing detail view is not yet configured.")} className="text-blue-400 hover:text-blue-300"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => setSelectedWorkspaceId(r.workspaceId)}
+                        className="text-blue-400 hover:text-blue-300" title="Manage billing">
+                        <Eye className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -423,12 +663,23 @@ export function PlatformSupport() {
   const [search, setSearch] = useState("");
   const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
   const [resolution, setResolution] = useState("");
+  const [replyContent, setReplyContent] = useState("");
+  const [isInternalNote, setIsInternalNote] = useState(false);
 
-  const ticketsQuery = trpc.platform.support.list.useQuery();
-  const updateMutation = trpc.platform.support.update.useMutation({
-    onSuccess: () => { ticketsQuery.refetch(); setSelectedTicket(null); setResolution(""); toast.success("Ticket updated."); },
+  const ticketsQuery = trpc.customerSupport.adminList.useQuery({});
+  const updateMutation = trpc.customerSupport.adminUpdate.useMutation({
+    onSuccess: () => { ticketsQuery.refetch(); messagesQuery.refetch(); setResolution(""); toast.success("Ticket updated."); },
     onError: (err: any) => toast.error(err.message),
   });
+  const replyMutation = trpc.customerSupport.adminReply.useMutation({
+    onSuccess: () => { messagesQuery.refetch(); setReplyContent(""); setIsInternalNote(false); toast.success("Reply sent."); },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const messagesQuery = trpc.customerSupport.adminGetMessages.useQuery(
+    { ticketId: selectedTicket! },
+    { enabled: !!selectedTicket }
+  );
 
   const tickets = ticketsQuery.data || [];
   const filtered = tickets.filter((t: any) => {
@@ -439,9 +690,11 @@ export function PlatformSupport() {
 
   if (ticketsQuery.isLoading) return <LoadingState />;
 
+  const messages = messagesQuery.data || [];
+
   return (
     <div className="min-h-screen bg-slate-900">
-      <PageHeader title="Support Tickets" description="Manage customer support requests and resolutions." />
+      <PageHeader title="Support Tickets" description="Manage customer support requests and resolutions across all workspaces." />
 
       <div className="p-4 sm:p-8">
         {/* Stats */}
@@ -449,8 +702,8 @@ export function PlatformSupport() {
           <StatCard label="Total" value={tickets.length} />
           <StatCard label="Open" value={tickets.filter((t: any) => t.status === "open").length} color="text-amber-400" />
           <StatCard label="In Progress" value={tickets.filter((t: any) => t.status === "in_progress").length} color="text-blue-400" />
+          <StatCard label="Waiting" value={tickets.filter((t: any) => t.status === "waiting_on_customer").length} color="text-purple-400" />
           <StatCard label="Resolved" value={tickets.filter((t: any) => t.status === "resolved").length} color="text-green-400" />
-          <StatCard label="Closed" value={tickets.filter((t: any) => t.status === "closed").length} color="text-slate-400" />
         </div>
 
         {/* Filters */}
@@ -466,44 +719,102 @@ export function PlatformSupport() {
           <Input placeholder="Search tickets..." value={search} onChange={(e) => setSearch(e.target.value)} className="bg-slate-800 border-slate-700 text-white" />
         </div>
 
-        {/* Ticket Detail Modal */}
+        {/* Ticket Detail Modal with Messages */}
         {selectedTicket && (() => {
           const ticket = tickets.find((t: any) => t.id === selectedTicket);
           if (!ticket) return null;
           return (
             <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-              <Card className="bg-slate-800 border-slate-700 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold text-white mb-2">{ticket.subject}</h3>
-                <div className="flex gap-2 mb-4">
-                  <Badge variant={ticket.status === "open" ? "default" : "secondary"}>{ticket.status}</Badge>
-                  <Badge variant={ticket.priority === "critical" ? "destructive" : "secondary"}>{ticket.priority}</Badge>
-                </div>
-                <p className="text-slate-300 text-sm mb-4 whitespace-pre-wrap">{ticket.body}</p>
-                <div className="text-xs text-slate-500 mb-4">
-                  <p>User #{ticket.userId} | WS #{ticket.workspaceId || "N/A"}</p>
-                  <p>Created: {new Date(ticket.createdAt).toLocaleString()}</p>
-                </div>
-
-                <div className="space-y-3">
+              <Card className="bg-slate-800 border-slate-700 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <label className="text-xs text-slate-400 block mb-1">Update Status</label>
-                    <div className="flex gap-2 flex-wrap">
-                      {(["in_progress", "waiting_on_customer", "resolved", "closed"] as const).map((s) => (
-                        <Button key={s} size="sm" variant="outline" className="border-slate-700 text-slate-300 text-xs"
-                          onClick={() => updateMutation.mutate({ id: ticket.id, status: s, resolution: resolution || undefined })}>
-                          {s.replace(/_/g, " ")}
-                        </Button>
-                      ))}
+                    <h3 className="text-lg font-semibold text-white mb-1">{ticket.subject}</h3>
+                    <div className="flex gap-2 mb-2">
+                      <Badge variant={ticket.status === "open" ? "default" : "secondary"}>{ticket.status?.replace(/_/g, " ")}</Badge>
+                      <Badge variant={ticket.priority === "critical" ? "destructive" : "secondary"}>{ticket.priority}</Badge>
+                      {ticket.category && <Badge variant="outline" className="border-slate-600 text-slate-300">{ticket.category}</Badge>}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      <p>User #{ticket.userId} | Workspace #{ticket.workspaceId || "N/A"} | Created: {new Date(ticket.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-slate-400 block mb-1">Resolution Note</label>
-                    <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Add resolution note..." className="bg-slate-900 border-slate-700 text-white" />
+                  <Button onClick={() => { setSelectedTicket(null); setResolution(""); setReplyContent(""); }} variant="outline" size="sm" className="border-slate-700 text-slate-300">✕</Button>
+                </div>
+
+                {/* Status Actions */}
+                <div className="mb-4 p-3 rounded-lg bg-slate-900 border border-slate-700">
+                  <label className="text-xs text-slate-400 block mb-2">Update Status</label>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {(["open", "in_progress", "waiting_on_customer", "resolved", "closed"] as const).map((s) => (
+                      <Button key={s} size="sm" variant={ticket.status === s ? "default" : "outline"}
+                        className={ticket.status === s ? "bg-blue-600" : "border-slate-700 text-slate-300 text-xs"}
+                        onClick={() => updateMutation.mutate({ id: ticket.id, status: s, resolution: resolution || undefined })}>
+                        {s.replace(/_/g, " ")}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Resolution note (optional)..." className="bg-slate-800 border-slate-700 text-white flex-1" />
+                    <Button size="sm" variant="outline" className="border-slate-700 text-slate-300" onClick={() => updateMutation.mutate({ id: ticket.id, resolution })} disabled={!resolution.trim()}>Save Note</Button>
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={() => { setSelectedTicket(null); setResolution(""); }} variant="outline" className="border-slate-700 text-slate-300">Close</Button>
+                {/* Message Thread */}
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-slate-400 mb-2 flex items-center gap-1">
+                    <MessageSquare className="w-4 h-4" /> Messages ({messages.length})
+                  </h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {messages.length === 0 ? (
+                      <p className="text-xs text-slate-500 text-center py-4">No messages yet.</p>
+                    ) : (
+                      messages.map((msg: any) => (
+                        <div key={msg.id} className={`p-3 rounded-lg text-sm ${
+                          msg.isInternalNote
+                            ? "bg-amber-900/20 border border-amber-800"
+                            : msg.senderType === "admin"
+                            ? "bg-blue-900/20 border border-blue-800"
+                            : "bg-slate-900 border border-slate-700"
+                        }`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs font-medium ${
+                              msg.isInternalNote ? "text-amber-400" : msg.senderType === "admin" ? "text-blue-400" : "text-slate-300"
+                            }`}>
+                              {msg.isInternalNote ? "🔒 Internal Note" : msg.senderType === "admin" ? "Support Team" : msg.senderName || "Customer"}
+                            </span>
+                            <span className="text-xs text-slate-500 ml-auto">{new Date(msg.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="text-slate-300 whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Reply Form */}
+                <div className="p-3 rounded-lg bg-slate-900 border border-slate-700">
+                  <div className="flex items-center gap-3 mb-2">
+                    <label className="text-xs text-slate-400">Reply</label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <input type="checkbox" checked={isInternalNote} onChange={(e) => setIsInternalNote(e.target.checked)} className="rounded border-slate-600" />
+                      <span className={isInternalNote ? "text-amber-400 font-medium" : "text-slate-400"}>Internal Note (hidden from customer)</span>
+                    </label>
+                  </div>
+                  <textarea
+                    value={replyContent}
+                    onChange={(e) => setReplyContent(e.target.value)}
+                    rows={3}
+                    placeholder={isInternalNote ? "Add internal note (not visible to customer)..." : "Reply to customer..."}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y text-sm mb-2"
+                  />
+                  <div className="flex justify-end">
+                    <Button size="sm" disabled={!replyContent.trim() || replyMutation.isPending}
+                      className={isInternalNote ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
+                      onClick={() => replyMutation.mutate({ ticketId: selectedTicket!, content: replyContent.trim(), isInternalNote })}>
+                      {replyMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
+                      {isInternalNote ? "Add Internal Note" : "Send Reply"}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             </div>
@@ -520,7 +831,7 @@ export function PlatformSupport() {
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Subject</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Priority</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">User</th>
+                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Workspace</th>
                   <th className="px-4 py-3 text-left font-semibold text-slate-400">Created</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-400">Actions</th>
                 </tr>
@@ -539,7 +850,7 @@ export function PlatformSupport() {
                         {t.status?.replace(/_/g, " ")}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-slate-300">User #{t.userId}</td>
+                    <td className="px-4 py-3 text-slate-300 text-xs">WS #{t.workspaceId || "N/A"}</td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{new Date(t.createdAt).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
                       <button className="text-blue-400 hover:text-blue-300"><MessageSquare className="w-4 h-4" /></button>
@@ -1236,7 +1547,18 @@ export function PlatformWorkspaceSummary() {
 }
 
 export function PlatformDemoWorkspaces() {
-  return <div className="p-8 text-slate-300">Demo Workspaces (placeholder — coming soon)</div>;
+  return (
+    <div className="p-8">
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center max-w-lg mx-auto">
+        <div className="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+        </div>
+        <h3 className="text-lg font-semibold text-white mb-2">Demo Workspaces</h3>
+        <p className="text-slate-400 text-sm mb-4">Demo workspaces allow you to showcase PrimeContractorOS features without affecting production data. This feature requires configuration.</p>
+        <p className="text-xs text-slate-500">Status: Setup Required</p>
+      </div>
+    </div>
+  );
 }
 
 export { default as PlatformTasks } from "./PlatformTasks";

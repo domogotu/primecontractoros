@@ -2,17 +2,25 @@ import { trpc } from "@/lib/trpc";
 import { DollarSign, TrendingUp, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import MetricCard from "@/components/MetricCard";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 
 export default function Finance() {
   const [, navigate] = useLocation();
-  const { data: invoices = [], isLoading: loadingInv } = trpc.invoices.list.useQuery();
-  const { data: payments = [], isLoading: loadingPay } = trpc.payments.list.useQuery();
+  const searchParams = useSearch();
+  const urlParams = new URLSearchParams(searchParams);
+  const contractIdParam = urlParams.get("contractId") ? parseInt(urlParams.get("contractId")!) : undefined;
+  const { data: invoices = [], isLoading: loadingInv } = trpc.invoices.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
+  const { data: payments = [], isLoading: loadingPay } = trpc.payments.list.useQuery(
+    contractIdParam ? { contractId: contractIdParam } : undefined
+  );
   const { data: financeSummary } = trpc.finance.summary.useQuery();
 
   const totalBilled = (invoices as any[]).reduce((sum, inv) => sum + parseFloat(inv.amount || "0"), 0);
@@ -175,6 +183,14 @@ export default function Finance() {
           </div>
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="finance"
+        title="Finance Help"
+        description="Workspace financial overview showing total billed, total paid, outstanding balance, overdue invoices, and unmatched payments across all contracts."
+        whatToDoNext={["Review outstanding balances", "Follow up on overdue invoices", "Match unmatched payments", "Track financial health per contract"]}
+        helpArticleSlug="why-invoices-payments-separate"
+        glossaryTerms={["invoice", "payment", "proper-invoice"]}
+      />
     </PageLayout>
   );
 }

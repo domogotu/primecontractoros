@@ -22,8 +22,13 @@ import PlatformWorkspaceDetailPage from "./PlatformWorkspaceDetail";
 import PlatformOnboardingPage from "./PlatformOnboarding";
 import PlatformBackups from "./PlatformBackups";
 import PlatformConsentRecords from "./PlatformConsentRecords";
+import PlatformSystemHealth from "./PlatformSystemHealth";
+import PlatformIntegrations from "./PlatformIntegrations";
+import PlatformNotifications from "./PlatformNotifications";
+import PlatformSecurity from "./PlatformSecurity";
+import PlatformLaunchReadiness from "./PlatformLaunchReadiness";
 import PlatformUserDetailPage from "./PlatformUserDetail";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 
@@ -44,7 +49,7 @@ export default function PlatformRouter() {
   }
 
   if (!isAuthenticated) {
-    window.location.href = getLoginUrl();
+    navigateToLogin();
     return null;
   }
 
@@ -85,6 +90,11 @@ export default function PlatformRouter() {
     if (normalizedLocation === "/platform/onboarding") return <PlatformOnboardingPage />;
     if (normalizedLocation === "/platform/backups") return <PlatformBackups />;
     if (normalizedLocation === "/platform/consent-records") return <PlatformConsentRecords />;
+    if (normalizedLocation === "/platform/system-health") return <PlatformSystemHealth />;
+    if (normalizedLocation === "/platform/integrations") return <PlatformIntegrations />;
+    if (normalizedLocation === "/platform/notifications") return <PlatformNotifications />;
+    if (normalizedLocation === "/platform/security") return <PlatformSecurity />;
+    if (normalizedLocation === "/platform/launch-readiness") return <PlatformLaunchReadiness />;
     return <PlatformAdmin />;
   };
 
@@ -106,6 +116,11 @@ export default function PlatformRouter() {
     if (n === "/platform/onboarding") return "Onboarding";
     if (n === "/platform/backups") return "Backups & Export";
     if (n === "/platform/consent-records") return "Consent Records";
+    if (n === "/platform/system-health") return "System Health";
+    if (n === "/platform/integrations") return "Integrations";
+    if (n === "/platform/notifications") return "Notifications";
+    if (n === "/platform/security") return "Security";
+    if (n === "/platform/launch-readiness") return "Launch Readiness";
     return "Platform Admin";
   })();
 

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { useToast } from "@/hooks/use-toast";
 import { 
   CheckCircle, 
@@ -409,6 +410,14 @@ export default function AISuggestions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          <PageGuidancePanel
+        pageKey="ai-suggestions"
+        title="AI Suggestions Help"
+        description="Review AI-generated guidance recommendations. Suggestions help identify missing information, next steps, or improvements. Accept, dismiss, or create tasks from suggestions."
+        whatToDoNext={["Review new suggestions", "Accept or dismiss each suggestion", "Create tasks from actionable suggestions", "Check back after making changes for updated suggestions"]}
+        helpArticleSlug="what-is-ai-confirmation"
+        glossaryTerms={["ai-suggestion", "ai-finding"]}
+      />
     </PageLayout>
   );
 }

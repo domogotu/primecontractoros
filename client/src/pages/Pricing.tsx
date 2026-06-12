@@ -4,11 +4,14 @@ import { Check, ArrowRight } from "lucide-react";
 
 /**
  * Pricing Page
- * 
+ *
  * Design: Professional Minimalism
  * - Clear plan comparison
  * - Access model explanation
  * - Trial and discount information
+ *
+ * Phase 2: Plan selection is now persisted to localStorage so the
+ * signup / checkout flow can carry the selected plan forward.
  */
 export default function Pricing() {
   const [, navigate] = useLocation();
@@ -16,8 +19,10 @@ export default function Pricing() {
   const plans = [
     {
       name: "Starter",
+      slug: "starter",
       description: "Perfect for new contractors",
       price: "$99",
+      annualPrice: "$84",
       period: "/month",
       features: [
         "Up to 5 team members",
@@ -32,8 +37,10 @@ export default function Pricing() {
     },
     {
       name: "Growth",
+      slug: "growth",
       description: "For growing contractors",
       price: "$299",
+      annualPrice: "$254",
       period: "/month",
       features: [
         "Up to 20 team members",
@@ -50,8 +57,10 @@ export default function Pricing() {
     },
     {
       name: "Advanced",
+      slug: "advanced",
       description: "For established contractors",
       price: "$799",
+      annualPrice: "$679",
       period: "/month",
       features: [
         "Unlimited team members",
@@ -68,6 +77,24 @@ export default function Pricing() {
       highlight: false,
     },
   ];
+
+  /**
+   * Store the selected plan in localStorage so GetStarted and the
+   * post-auth checkout flow can read it without losing it across the
+   * OAuth redirect.
+   */
+  const handleSelectPlan = (plan: typeof plans[0]) => {
+    localStorage.setItem(
+      "pcos_selected_plan",
+      JSON.stringify({
+        name: plan.name,
+        slug: plan.slug,
+        billingInterval: "month",
+        selectedAt: new Date().toISOString(),
+      })
+    );
+    navigate(`/get-started?plan=${plan.slug}`);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -133,12 +160,15 @@ export default function Pricing() {
                   <div>
                     <span className="text-4xl font-bold">{plan.price}</span>
                     <span className="text-gray-500">{plan.period}</span>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {plan.annualPrice}/mo billed annually (save 15%)
+                    </p>
                   </div>
 
                   <Button
                     size="lg"
                     className="w-full"
-                    onClick={() => navigate("/get-started")}
+                    onClick={() => handleSelectPlan(plan)}
                     variant={plan.highlight ? "default" : "outline"}
                   >
                     {plan.cta} <ArrowRight className="ml-2 h-4 w-4" />
@@ -180,7 +210,7 @@ export default function Pricing() {
                 </li>
                 <li className="flex gap-2">
                   <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                  <span>No credit card required</span>
+                  <span>No credit card required during trial</span>
                 </li>
               </ul>
             </div>
@@ -209,7 +239,7 @@ export default function Pricing() {
             <div className="p-8 rounded-lg bg-white border border-gray-200">
               <h3 className="text-xl font-semibold mb-3">Paid Plans</h3>
               <p className="text-gray-500 mb-4">
-                Activate a paid plan immediately for full access. Includes a 7-day trial period, after which you're billed monthly.
+                Activate a paid plan immediately for full access. Includes a 7-day trial period, after which you're billed monthly or annually.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex gap-2">
@@ -254,7 +284,7 @@ export default function Pricing() {
               },
               {
                 q: "Can I use a promo code?",
-                a: "Yes. Promo codes can be applied during signup or at any time in your account settings.",
+                a: "Yes. Promo codes can be applied during checkout or at any time in your billing settings.",
               },
             ].map((faq, idx) => (
               <div key={idx} className="p-6 rounded-lg bg-white border border-gray-200">

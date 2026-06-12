@@ -1,0 +1,43 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://3mdrx4UqQ4U9N11.8c52d990253f:6OYQMa3S591J6ilEcJsS@gateway06.us-east-1.prod.aws.tidbcloud.com:4000/PHGHy5iBzQLRZh8BMY8TkG?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663625913792/PHGHy5iBzQLRZh8BMY8TkG",
+    "access_key_id": "ASIAZV3A2ECZN7ZPHWJN",
+    "secret_access_key": "t6gztFSopOZHbuU36CCNexIpfTuM15Qb/8W+Gx4S",
+    "session_token": "IQoJb3JpZ2luX2VjEA4aCXVzLWVhc3QtMSJHMEUCIDCv493gmvDHiUJKTfJIu3p9Q+sa0UwRqeuWl7Wjuoh6AiEAk6VDp4Nco1ExVCwNFUhIuDC5D/ah/LcKI7Ts7n9JiIkq/wMI1///////////ARAEGgw2NjUzODYwOTg4NjYiDNx7esSgVZghScEBaCrTAz/ItO/GpM7FzLSHxFSZhqkag2P0cWaD1hVmcBHBgOpPGkMUzZ8jczEUtM2lx3dY3I+ZiwqZbrkuZ4hBRishlqQmC/dK+ne39sX1uADoa6IL3Bn9s3RW9FCLOa/BkuexxVl+jzogQ0JJLrw5TJOfYOWkGs5x0j0Rm4u4X1N6CmsJXdyvHBdmWdmevFxoHl9nDaJvPbBy5n6RWc21EQiiKrOpbqjmg27SPFHZl922Xko/WuICCPJQgYPacFNoupDtthtNhvM42cS1HdeH+1R0fNlzE/P1byaW+WkevNCGceKoivwI7O9Yf8TaNc7n7IBlmVLRWJENtv2zRPXJ338XIF+Eq+e+RTtOn588+eaBsQJLi1bo6xa1F53ygX7Bqz0+QDu39ceREV//RiOJjdfN81UUS7JQjc1YgN58zOsObAH7qHYdHfohCMmocWCJUHc6gKi8/6TMxJTyGAHNuPvMXWPeAsYv38ZSWp7XC0IthCuhXlyawRwjxxqN2VnQM/BFGhS60WHxzizGkBMbC1sAZ3GK1V7CaD4qdUb6CmDKVnqDiXBN/w4HAzWDxQ3xCBBOH3VkP2XflZv0tjPi9wyG3HEynXi9Owe48hVVJV/Fitoz7pa4MK2SotEGOp0BBGTcKCW6ajqCl800tyPXpXJnJCJV0hpIcohNOqYulhhQnbPfYlj3jcsg3NX1o3VLLdy901htSjJH98wL1edR7y9gZizCt0jQa3A5J7rkT/D2ij0GbVh0t+wWmdslL0JQs0yTTa9UQ3Fq3xoUow2dbv2T1yXBS13+Fn7OH1aG/B0CoJtUq9EkSICIJbYbHKm8PBPJ3HFiAFS+GwnFjA==",
+    "expiration": "2026-06-10T09:44:13.000Z"
+  },
+  "name": "primeconos-gedxfump",
+  "path": "/home/ubuntu/primeconos-gedxfump",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "DzpXJJiJBw85MdQkGHo5Aq",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "YCDykqSv8WG3zRKhimnGR8",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Reed’s Solutions",
+    "OWNER_OPEN_ID": "2cUjYc8q9VsFQXVDdB5U6U",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "dd8d2f4a-7b9b-4274-97b3-c9a35a08e73c",
+    "VITE_APP_ID": "PHGHy5iBzQLRZh8BMY8TkG",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663625913792/FMKrJYWrfCiklXtU.png",
+    "VITE_APP_TITLE": "PrimeContractorOS",
+    "VITE_FRONTEND_FORGE_API_KEY": "dXSN86DYEzoqkEqw9Lpok5",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}

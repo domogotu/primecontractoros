@@ -8,6 +8,7 @@ import { Plus, Search, FileText, ExternalLink, Loader2 } from "lucide-react";
 import ProposalForm from "@/components/ProposalForm";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import LifecycleProgress from "@/components/LifecycleProgress";
 import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
 import WhatsNext, { NextAction } from "@/components/WhatsNext";
@@ -373,6 +374,19 @@ export default function Proposals() {
           </DialogBody>
         </DialogContent>
       </Dialog>
+      <PageGuidancePanel
+        pageKey="proposals"
+        title="Proposals Help"
+        description="Manage your proposal pipeline. Each proposal is linked to an opportunity. Track status from draft through submission. When won, convert to a contract."
+        whatToDoNext={[
+          "Create proposals from pursued opportunities",
+          "Track proposal status through the submission lifecycle",
+          "Mark proposals as won or lost after decision",
+          "Convert won proposals to contracts"
+        ]}
+        helpArticleSlug="what-is-a-proposal"
+        glossaryTerms={["proposal", "opportunity", "solicitation"]}
+      />
     </PageLayout>
   );
 }

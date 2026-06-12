@@ -31,15 +31,65 @@ import {
   Hash,
   Award,
   Briefcase,
+  Plus,
+  Trash2,
+  Sparkles,
+  Loader2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
 import TrainingWalkthrough from "@/components/TrainingWalkthrough";
 import AutosaveIndicator from "@/components/AutosaveIndicator";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SamStatus = 'active' | 'expired' | 'pending' | 'not_registered';
 type ContractingModel = 'prime' | 'sub' | 'both';
+
+interface KeyPerson {
+  name: string;
+  title: string;
+  role: string;
+  email: string;
+  phone: string;
+  clearanceLevel: string;
+}
+
+interface SocioCert {
+  name: string;
+  certNumber: string;
+  expirationDate: string;
+  issuingAgency: string;
+}
+
+interface PastPerf {
+  contractNumber: string;
+  agency: string;
+  description: string;
+  contractValue: string;
+  periodOfPerformance: string;
+  pocName: string;
+  pocPhone: string;
+}
+
+interface BankingInfo {
+  bankName: string;
+  routingNumber: string;
+  accountNumber: string;
+  accountType: 'Checking' | 'Savings' | '';
+}
+
+interface InsuranceSummary {
+  generalLiability: string;
+  workersComp: string;
+  professionalLiability: string;
+  cyberLiability: string;
+}
 
 interface FormData {
   legalName: string;
@@ -141,7 +191,13 @@ const SECTIONS = [
 function isFilled(value: any): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value === 'boolean') return true;
-  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) return false;
+    // Special check for empty JSON arrays/objects
+    if (trimmed === '[]' || trimmed === '{}') return false;
+    return true;
+  }
   return false;
 }
 
@@ -163,6 +219,91 @@ function calcOverallScore(formData: FormData): number {
   return total > 0 ? Math.round((filled / total) * 100) : 0;
 }
 
+// ─── AI Guidance Component ───────────────────────────────────────────────────
+function AIGuidanceButton({ 
+  fieldName, 
+  fieldDescription, 
+  currentValue, 
+  companyName,
+  onUseSuggestion 
+}: { 
+  fieldName: string; 
+  fieldDescription: string; 
+  currentValue?: string;
+  companyName?: string;
+  onUseSuggestion: (val: string) => void;
+}) {
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  
+  const getGuidanceMutation = trpc.aiWorkflow.getFieldGuidance.useMutation({
+    onSuccess: (data) => {
+      setGuidance(data.guidance);
+    },
+    onError: () => {
+      toast.error("Failed to get AI guidance");
+    }
+  });
+
+  const handleToggle = () => {
+    if (!showGuidance && !guidance && !getGuidanceMutation.isPending) {
+      getGuidanceMutation.mutate({
+        fieldName,
+        fieldDescription,
+        currentValue,
+        companyName,
+      });
+    }
+    setShowGuidance(!showGuidance);
+  };
+
+  return (
+    <div className="mt-1">
+      <button 
+        type="button"
+        onClick={handleToggle}
+        className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+      >
+        <Sparkles className="h-3 w-3" />
+        {showGuidance ? "Hide AI Guidance" : "Get AI Guidance"}
+      </button>
+
+      {showGuidance && (
+        <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-900 shadow-sm animate-in fade-in slide-in-from-top-1">
+          {getGuidanceMutation.isPending ? (
+            <div className="flex items-center gap-2 py-1">
+              <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+              <span>Consulting contracting expert...</span>
+            </div>
+          ) : guidance ? (
+            <div className="space-y-2">
+              <p className="leading-relaxed whitespace-pre-wrap">{guidance}</p>
+              <div className="flex justify-end">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-7 px-2 text-[10px] bg-white border-blue-200 text-blue-700 hover:bg-blue-100"
+                  onClick={() => {
+                    // Try to extract a suggestion from the text if it looks like one, or just provide a starting point
+                    const lines = guidance.split('\n');
+                    const suggestionLine = lines.find(l => l.toLowerCase().includes('suggestion:') || l.toLowerCase().includes('example:'));
+                    const cleanSuggestion = suggestionLine ? suggestionLine.split(':')[1]?.trim() : guidance.substring(0, 100) + "...";
+                    onUseSuggestion(cleanSuggestion);
+                  }}
+                >
+                  Use as Draft
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p>No guidance available.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── VIEW MODE COMPONENT ─────────────────────────────────────────────────────
 function ProfileViewMode({ formData, onEdit }: { formData: FormData; onEdit: () => void }) {
   const samStatusLabel: Record<SamStatus, { text: string; color: string }> = {
@@ -178,6 +319,14 @@ function ProfileViewMode({ formData, onEdit }: { formData: FormData; onEdit: () 
     both: 'Both Prime & Sub',
   };
 
+  const parseJson = (str: string, fallback: any = []) => {
+    try {
+      return str ? JSON.parse(str) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+
   const DisplayField = ({ label, value, icon: Icon, mono }: { label: string; value: string; icon?: any; mono?: boolean }) => {
     if (!value) return null;
     return (
@@ -191,8 +340,13 @@ function ProfileViewMode({ formData, onEdit }: { formData: FormData; onEdit: () 
     );
   };
 
-  const fullAddress = [formData.address, formData.city, formData.state, formData.zip, formData.country].filter(Boolean).join(', ');
   const samInfo = samStatusLabel[formData.samStatus] || samStatusLabel.not_registered;
+  const keyPersonnel = parseJson(formData.keyPersonnel) as KeyPerson[];
+  const socioeconomicCerts = parseJson(formData.socioeconomicCerts) as SocioCert[];
+  const pastPerformance = parseJson(formData.pastPerformance) as PastPerf[];
+  const bankingInfo = parseJson(formData.bankingInfo, {}) as BankingInfo;
+  const insuranceSummary = parseJson(formData.insuranceSummary, {}) as InsuranceSummary;
+  const secondaryNaics = formData.naicsSecondary ? (formData.naicsSecondary.startsWith('[') ? parseJson(formData.naicsSecondary) : formData.naicsSecondary.split(',').map(s => s.trim())) : [];
 
   return (
     <div className="space-y-6">
@@ -208,22 +362,22 @@ function ProfileViewMode({ formData, onEdit }: { formData: FormData; onEdit: () 
               {formData.dba && <p className="text-sm text-slate-500 mt-0.5">DBA: {formData.dba}</p>}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {formData.businessStructure && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100">
                     {formData.businessStructure}
-                  </span>
+                  </Badge>
                 )}
                 {formData.businessSize && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 capitalize">
+                  <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-100 capitalize">
                     {formData.businessSize === 'small' ? 'Small Business' : formData.businessSize === 'large' ? 'Large Business' : 'Other Than Small'}
-                  </span>
+                  </Badge>
                 )}
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${samInfo.color}`}>
+                <Badge className={samInfo.color.replace('text-', 'text-').replace('bg-', 'bg-')}>
                   SAM: {samInfo.text}
-                </span>
+                </Badge>
                 {formData.contractingModel && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                  <Badge variant="outline" className="text-slate-600 border-slate-200">
                     {contractModelLabel[formData.contractingModel]}
-                  </span>
+                  </Badge>
                 )}
               </div>
             </div>
@@ -235,276 +389,251 @@ function ProfileViewMode({ formData, onEdit }: { formData: FormData; onEdit: () 
         </div>
       </div>
 
-      {/* ── Quick Stats ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {formData.yearFounded && (
-          <div className="bg-white border border-slate-200 rounded-lg p-4 text-center">
-            <Calendar className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-slate-900">{formData.yearFounded}</p>
-            <p className="text-xs text-slate-500">Founded</p>
-          </div>
-        )}
-        {formData.numberOfEmployees && (
-          <div className="bg-white border border-slate-200 rounded-lg p-4 text-center">
-            <Users className="h-5 w-5 text-purple-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-slate-900">{formData.numberOfEmployees}</p>
-            <p className="text-xs text-slate-500">Employees</p>
-          </div>
-        )}
-        {formData.annualRevenue && (
-          <div className="bg-white border border-slate-200 rounded-lg p-4 text-center">
-            <DollarSign className="h-5 w-5 text-green-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-slate-900">{formData.annualRevenue}</p>
-            <p className="text-xs text-slate-500">Annual Revenue</p>
-          </div>
-        )}
-        {formData.naicsPrimary && (
-          <div className="bg-white border border-slate-200 rounded-lg p-4 text-center">
-            <Hash className="h-5 w-5 text-orange-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-slate-900">{formData.naicsPrimary}</p>
-            <p className="text-xs text-slate-500">Primary NAICS</p>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* ── Contact Information ──────────────────────────────────────────── */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Users className="h-4 w-4 text-purple-600" />
-            Contact Information
-          </h3>
-          <div className="space-y-1 divide-y divide-slate-50">
-            <DisplayField label="Email" value={formData.email} icon={Mail} />
-            <DisplayField label="Phone" value={formData.phone} icon={Phone} />
-            <DisplayField label="Website" value={formData.website} icon={Globe} />
-            {fullAddress && <DisplayField label="Address" value={fullAddress} icon={MapPin} />}
-            {formData.defaultContactName && (
-              <div className="pt-3 mt-2 border-t border-slate-100">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Default Point of Contact</p>
-                <p className="text-sm text-slate-900">{formData.defaultContactName}</p>
-                {formData.defaultContactEmail && <p className="text-sm text-slate-600">{formData.defaultContactEmail}</p>}
-                {formData.defaultContactPhone && <p className="text-sm text-slate-600">{formData.defaultContactPhone}</p>}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Detailed Sections */}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-blue-600" /> Company Identity & Contact
+              </h3>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <DisplayField label="State of Incorporation" value={formData.stateOfIncorporation} icon={MapPin} />
+              <DisplayField label="Entity Type" value={formData.entityType} icon={Building2} />
+              <DisplayField label="Business Email" value={formData.email} icon={Mail} />
+              <DisplayField label="Business Phone" value={formData.phone} icon={Phone} />
+              <DisplayField label="Website" value={formData.website} icon={Globe} />
+              <div className="md:col-span-2">
+                <DisplayField label="Address" value={[formData.address, formData.city, formData.state, formData.zip, formData.country].filter(Boolean).join(', ')} icon={MapPin} />
               </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* ── Government Registrations ─────────────────────────────────────── */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-green-600" />
-            Government Registrations
-          </h3>
-          <div className="space-y-1 divide-y divide-slate-50">
-            <DisplayField label="UEI" value={formData.uei} icon={Hash} mono />
-            <DisplayField label="CAGE Code" value={formData.cage} icon={Hash} mono />
-            <div className="flex items-start gap-3 py-2">
-              <Shield className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">SAM.gov Status</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${samInfo.color}`}>
-                    {samInfo.text}
-                  </span>
-                  {formData.samExpirationDate && (
-                    <span className="text-xs text-slate-500">Expires: {formData.samExpirationDate}</span>
-                  )}
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-green-600" /> Registrations & NAICS
+              </h3>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <DisplayField label="UEI" value={formData.uei} icon={Hash} mono />
+                <DisplayField label="CAGE Code" value={formData.cage} icon={Hash} mono />
+                <DisplayField label="Primary NAICS" value={formData.naicsPrimary} icon={FileText} />
+                <div className="md:col-span-2">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Secondary NAICS</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.isArray(secondaryNaics) && secondaryNaics.length > 0 ? (
+                      secondaryNaics.map((code: any, i: number) => (
+                        <Badge key={i} variant="outline" className="font-mono">
+                          {typeof code === 'object' ? code.code : code}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-slate-400 italic">None specified</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            {formData.samRegistrationDate && <DisplayField label="SAM Registration Date" value={formData.samRegistrationDate} icon={Calendar} />}
-            {formData.gsaScheduleNumber && <DisplayField label="GSA Schedule" value={`${formData.gsaScheduleNumber}${formData.gsaScheduleExpiration ? ` (exp: ${formData.gsaScheduleExpiration})` : ''}`} icon={Award} />}
           </div>
-        </div>
 
-        {/* ── NAICS Codes ──────────────────────────────────────────────────── */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-orange-600" />
-            NAICS Codes
-          </h3>
-          <div className="space-y-3">
-            {formData.naicsPrimary && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Primary</p>
-                <p className="text-sm font-mono text-slate-900 mt-0.5">{formData.naicsPrimary}</p>
-              </div>
-            )}
-            {formData.naicsCodes && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">All Codes</p>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {formData.naicsCodes.split(',').map((code, i) => (
-                    <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono bg-orange-50 text-orange-800 border border-orange-200">
-                      {code.trim()}
-                    </span>
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Users className="h-4 w-4 text-teal-600" /> Key Personnel
+              </h3>
+            </div>
+            <div className="p-6">
+              {keyPersonnel.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {keyPersonnel.map((person, i) => (
+                    <Card key={i} className="border-slate-100 shadow-none">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-semibold text-slate-900">{person.name}</p>
+                            <p className="text-xs text-slate-500">{person.title}</p>
+                          </div>
+                          {person.clearanceLevel && (
+                            <Badge variant="outline" className="text-[10px] uppercase">
+                              {person.clearanceLevel}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="space-y-1 text-xs text-slate-600">
+                          {person.role && <p className="flex items-center gap-1.5"><Briefcase className="h-3 w-3" /> {person.role}</p>}
+                          {person.email && <p className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {person.email}</p>}
+                          {person.phone && <p className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {person.phone}</p>}
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </div>
-            )}
-            {!formData.naicsPrimary && !formData.naicsCodes && (
-              <p className="text-sm text-slate-400 italic">No NAICS codes entered yet.</p>
-            )}
+              ) : (
+                <p className="text-sm text-slate-400 italic text-center py-4">No key personnel listed</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-600" /> Past Performance
+              </h3>
+            </div>
+            <div className="p-6">
+              {pastPerformance.length > 0 ? (
+                <div className="space-y-4">
+                  {pastPerformance.map((perf, i) => (
+                    <div key={i} className="border-b border-slate-100 last:border-0 pb-4 last:pb-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-slate-900">{perf.agency || 'Unknown Agency'}</h4>
+                        <Badge className="bg-blue-50 text-blue-700 border-blue-100">{perf.contractValue}</Badge>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-2">Contract #: {perf.contractNumber} | Period: {perf.periodOfPerformance}</p>
+                      <p className="text-sm text-slate-700 line-clamp-2">{perf.description}</p>
+                      {perf.pocName && (
+                        <p className="text-xs text-slate-500 mt-2">POC: {perf.pocName} {perf.pocPhone && `(${perf.pocPhone})`}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic text-center py-4">No past performance records</p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* ── Certifications ───────────────────────────────────────────────── */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Star className="h-4 w-4 text-yellow-600" />
-            Certifications
-          </h3>
-          <div className="space-y-3">
-            {formData.socioeconomicCerts && (
+        <div className="space-y-6">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <Award className="h-4 w-4 text-yellow-600" /> Certifications
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
               <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Socioeconomic</p>
-                <p className="text-sm text-slate-900 mt-0.5 whitespace-pre-wrap">{formData.socioeconomicCerts}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Socioeconomic</p>
+                <div className="flex flex-wrap gap-2">
+                  {socioeconomicCerts.length > 0 ? (
+                    socioeconomicCerts.map((cert, i) => (
+                      <Badge key={i} className="bg-yellow-50 text-yellow-800 border-yellow-200">
+                        {cert.name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">None</span>
+                  )}
+                </div>
               </div>
-            )}
-            {formData.certifications && (
               <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Other Certifications</p>
-                <p className="text-sm text-slate-900 mt-0.5 whitespace-pre-wrap">{formData.certifications}</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Other Certs</p>
+                <p className="text-sm text-slate-700">{formData.certifications || 'None listed'}</p>
               </div>
-            )}
-            {!formData.socioeconomicCerts && !formData.certifications && (
-              <p className="text-sm text-slate-400 italic">No certifications entered yet.</p>
-            )}
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+              <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-red-600" /> Financial & Insurance
+              </h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Banking</p>
+                {bankingInfo.bankName ? (
+                  <div className="text-sm">
+                    <p className="font-medium text-slate-900">{bankingInfo.bankName}</p>
+                    <p className="text-slate-500 font-mono text-xs">
+                      Acct: ****{bankingInfo.accountNumber?.slice(-4) || '****'}
+                    </p>
+                  </div>
+                ) : <p className="text-xs text-slate-400 italic">No banking info</p>}
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Insurance Coverage</p>
+                <ul className="space-y-2">
+                  {Object.entries(insuranceSummary).map(([key, val]) => (
+                    val && (
+                      <li key={key} className="flex justify-between text-xs">
+                        <span className="text-slate-500 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <span className="font-medium text-slate-900">{val}</span>
+                      </li>
+                    )
+                  ))}
+                  {Object.values(insuranceSummary).every(v => !v) && (
+                    <p className="text-xs text-slate-400 italic">No insurance details</p>
+                  )}
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Bonding</p>
+                <p className="text-sm text-slate-700">{formData.bondingCapacity || 'None specified'}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* ── Capabilities & Past Performance (full width) ──────────────────── */}
-      {(formData.capabilities || formData.coreCompetencies || formData.keyPersonnel || formData.pastPerformance) && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-teal-600" />
-            Capabilities & Past Performance
-          </h3>
-          <div className="space-y-4">
-            {formData.capabilities && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Capabilities Statement</p>
-                <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap leading-relaxed">{formData.capabilities}</p>
-              </div>
-            )}
-            {formData.coreCompetencies && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Core Competencies</p>
-                <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap leading-relaxed">{formData.coreCompetencies}</p>
-              </div>
-            )}
-            {formData.keyPersonnel && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Key Personnel</p>
-                <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap font-mono text-xs">{formData.keyPersonnel}</p>
-              </div>
-            )}
-            {formData.pastPerformance && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Past Performance References</p>
-                <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap font-mono text-xs">{formData.pastPerformance}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Financial Information ──────────────────────────────────────────── */}
-      {(formData.bankingInfo || formData.bondingCapacity || formData.insuranceSummary) && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h3 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-red-600" />
-            Financial Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {formData.bondingCapacity && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bonding Capacity</p>
-                <p className="text-sm text-slate-900 mt-0.5">{formData.bondingCapacity}</p>
-              </div>
-            )}
-            {formData.bankingInfo && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Banking Info</p>
-                <p className="text-sm text-slate-700 mt-0.5 font-mono text-xs">{formData.bankingInfo}</p>
-              </div>
-            )}
-            {formData.insuranceSummary && (
-              <div className="md:col-span-2">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Insurance Summary</p>
-                <p className="text-sm text-slate-700 mt-0.5 font-mono text-xs whitespace-pre-wrap">{formData.insuranceSummary}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function BusinessProfile() {
-  const [, navigate] = useLocation();
-  const { data: profile, isLoading } = trpc.businessProfile.get.useQuery();
-  const upsertMutation = trpc.businessProfile.upsert.useMutation();
-  const utils = trpc.useUtils();
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [showCompleteness, setShowCompleteness] = useState(true);
+  const [skippedSections, setSkippedSections] = useState<Record<string, boolean>>({});
+  
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const utils = trpc.useContext();
 
-  const [formData, setFormData] = useState<FormData>({
-    legalName: '', dba: '', businessStructure: '', stateOfIncorporation: '', businessSize: '',
-    yearFounded: '', numberOfEmployees: '', annualRevenue: '', email: '', phone: '', website: '',
-    address: '', city: '', state: '', zip: '', country: 'United States', uei: '', cage: '',
-    entityType: '', samStatus: 'not_registered', samExpirationDate: '', samRegistrationDate: '',
-    gsaScheduleNumber: '', gsaScheduleExpiration: '', naicsPrimary: '', naicsSecondary: '',
-    naicsCodes: '', socioeconomicCerts: '', certifications: '', keyPersonnel: '', capabilities: '',
-    coreCompetencies: '', pastPerformance: '', bankingInfo: '', bondingCapacity: '', insuranceSummary: '',
-    contractingModel: 'prime', usesSubcontractors: false, defaultContactName: '', defaultContactEmail: '',
-    defaultContactPhone: '',
-  });
+  const profileQuery = trpc.businessProfile.get.useQuery(undefined);
 
   useEffect(() => {
-    if (profile) {
+    if (profileQuery.data) {
+      setFormData(profileQuery.data as any);
+      setIsLoading(false);
+    } else if (profileQuery.isSuccess && !(profileQuery as any).data) {
       setFormData({
-        legalName: profile.legalName || '', dba: profile.dba || '',
-        businessStructure: profile.businessStructure || '', stateOfIncorporation: profile.stateOfIncorporation || '',
-        businessSize: profile.businessSize || '', yearFounded: profile.yearFounded || '',
-        numberOfEmployees: profile.numberOfEmployees || '', annualRevenue: profile.annualRevenue || '',
-        email: profile.email || '', phone: profile.phone || '', website: profile.website || '',
-        address: profile.address || '', city: profile.city || '', state: profile.state || '',
-        zip: profile.zip || '', country: profile.country || 'United States',
-        uei: profile.uei || '', cage: profile.cage || '', entityType: profile.entityType || '',
-        samStatus: (profile.samStatus as SamStatus) || 'not_registered',
-        samExpirationDate: profile.samExpirationDate ? new Date(profile.samExpirationDate).toISOString().split('T')[0] : '',
-        samRegistrationDate: profile.samRegistrationDate ? new Date(profile.samRegistrationDate).toISOString().split('T')[0] : '',
-        gsaScheduleNumber: profile.gsaScheduleNumber || '',
-        gsaScheduleExpiration: profile.gsaScheduleExpiration ? new Date(profile.gsaScheduleExpiration).toISOString().split('T')[0] : '',
-        naicsPrimary: profile.naicsPrimary || '', naicsSecondary: profile.naicsSecondary || '',
-        naicsCodes: profile.naicsCodes || '', socioeconomicCerts: profile.socioeconomicCerts || '',
-        certifications: profile.certifications || '', keyPersonnel: profile.keyPersonnel || '',
-        capabilities: profile.capabilities || '', coreCompetencies: profile.coreCompetencies || '',
-        pastPerformance: profile.pastPerformance || '', bankingInfo: profile.bankingInfo || '',
-        bondingCapacity: profile.bondingCapacity || '', insuranceSummary: profile.insuranceSummary || '',
-        contractingModel: (profile.contractingModel as ContractingModel) || 'prime',
-        usesSubcontractors: profile.usesSubcontractors || false,
-        defaultContactName: profile.defaultContactName || '', defaultContactEmail: profile.defaultContactEmail || '',
-        defaultContactPhone: profile.defaultContactPhone || '',
+        legalName: '', dba: '', businessStructure: '', stateOfIncorporation: '',
+        businessSize: '', yearFounded: '', numberOfEmployees: '', annualRevenue: '',
+        email: '', phone: '', website: '', address: '', city: '', state: '', zip: '', country: '',
+        uei: '', cage: '', entityType: '', samStatus: 'not_registered',
+        samExpirationDate: '', samRegistrationDate: '', gsaScheduleNumber: '', gsaScheduleExpiration: '',
+        naicsPrimary: '', naicsSecondary: '[]', naicsCodes: '', socioeconomicCerts: '[]',
+        certifications: '', keyPersonnel: '[]', capabilities: '', coreCompetencies: '',
+        pastPerformance: '[]', bankingInfo: '{}', bondingCapacity: '', insuranceSummary: '{}',
+        contractingModel: 'prime', usesSubcontractors: false,
+        defaultContactName: '', defaultContactEmail: '', defaultContactPhone: ''
       });
+      setIsLoading(false);
     }
-  }, [profile]);
+  }, [profileQuery.data, profileQuery.isSuccess]);
+
+  const upsertMutation = trpc.businessProfile.upsert.useMutation();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => prev ? ({ ...prev, [name]: value }) : null);
+    setHasUnsavedChanges(true);
+  };
+
+  const updateJsonField = (name: keyof FormData, value: any) => {
+    setFormData(prev => prev ? ({ ...prev, [name]: JSON.stringify(value) }) : null);
+    setHasUnsavedChanges(true);
   };
 
   const handleSave = async () => {
+    if (!formData) return;
     setIsSaving(true);
     setHasUnsavedChanges(false);
     try {
@@ -537,10 +666,371 @@ export default function BusinessProfile() {
     }, 100);
   };
 
+  const toggleSectionSkip = (sectionId: string) => {
+    setSkippedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  const parseJson = (str: string, fallback: any = []) => {
+    try {
+      return str ? JSON.parse(str) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+
+  if (isLoading || !formData) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+
   const overallScore = calcOverallScore(formData);
   const criticalMissing = FIELD_DEFS.filter(f => f.priority === 1 && !isFilled(formData[f.key]));
 
-  if (isLoading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+  // ─── Sub-form Renderers ────────────────────────────────────────────────────
+  
+  const KeyPersonnelForm = () => {
+    const personnel = parseJson(formData.keyPersonnel) as KeyPerson[];
+    
+    const addPerson = () => {
+      const newList = [...personnel, { name: '', title: '', role: '', email: '', phone: '', clearanceLevel: '' }];
+      updateJsonField('keyPersonnel', newList);
+    };
+
+    const removePerson = (index: number) => {
+      const newList = personnel.filter((_, i) => i !== index);
+      updateJsonField('keyPersonnel', newList);
+    };
+
+    const updatePerson = (index: number, field: keyof KeyPerson, value: string) => {
+      const newList = [...personnel];
+      newList[index] = { ...newList[index], [field]: value };
+      updateJsonField('keyPersonnel', newList);
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Label>Key Personnel</Label>
+          <Button type="button" size="sm" variant="outline" onClick={addPerson} className="h-7 text-xs">
+            <Plus className="h-3 w-3 mr-1" /> Add Personnel
+          </Button>
+        </div>
+        {personnel.length === 0 && <p className="text-xs text-gray-400 italic">No personnel added yet.</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {personnel.map((person, i) => (
+            <Card key={i} className="border-gray-200 shadow-none">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-xs font-bold text-gray-500 uppercase">Person #{i + 1}</span>
+                  <button onClick={() => removePerson(i)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Name" value={person.name} onChange={e => updatePerson(i, 'name', e.target.value)} className="text-xs h-8" />
+                  <Input placeholder="Title" value={person.title} onChange={e => updatePerson(i, 'title', e.target.value)} className="text-xs h-8" />
+                  <Input placeholder="Role" value={person.role} onChange={e => updatePerson(i, 'role', e.target.value)} className="text-xs h-8" />
+                  <Input placeholder="Clearance" value={person.clearanceLevel} onChange={e => updatePerson(i, 'clearanceLevel', e.target.value)} className="text-xs h-8" />
+                  <Input placeholder="Email" value={person.email} onChange={e => updatePerson(i, 'email', e.target.value)} className="text-xs h-8 col-span-2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <AIGuidanceButton 
+          fieldName="Key Personnel" 
+          fieldDescription="List of key staff members, their roles, and security clearances."
+          companyName={formData.legalName}
+          onUseSuggestion={(val) => {
+            const newList = [...personnel, { name: 'AI Suggested', title: 'Role', role: val, email: '', phone: '', clearanceLevel: '' }];
+            updateJsonField('keyPersonnel', newList);
+          }}
+        />
+      </div>
+    );
+  };
+
+  const SocioeconomicCertsForm = () => {
+    const certs = parseJson(formData.socioeconomicCerts) as SocioCert[];
+    const options = ["8(a)", "WOSB", "EDWOSB", "SDVOSB", "HUBZone", "Small Business Joint Venture", "Self Certified Small Disadvantaged Business"];
+
+    const addCert = () => {
+      const newList = [...certs, { name: '', certNumber: '', expirationDate: '', issuingAgency: '' }];
+      updateJsonField('socioeconomicCerts', newList);
+    };
+
+    const removeCert = (index: number) => {
+      const newList = certs.filter((_, i) => i !== index);
+      updateJsonField('socioeconomicCerts', newList);
+    };
+
+    const updateCert = (index: number, field: keyof SocioCert, value: string) => {
+      const newList = [...certs];
+      newList[index] = { ...newList[index], [field]: value };
+      updateJsonField('socioeconomicCerts', newList);
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Label>Socioeconomic Certifications</Label>
+          <Button type="button" size="sm" variant="outline" onClick={addCert} className="h-7 text-xs">
+            <Plus className="h-3 w-3 mr-1" /> Add Certification
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {certs.map((cert, i) => (
+            <Card key={i} className="border-gray-200 shadow-none">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex justify-between">
+                  <select 
+                    value={cert.name} 
+                    onChange={e => updateCert(i, 'name', e.target.value)}
+                    className="text-xs font-bold bg-transparent border-none focus:ring-0 p-0"
+                  >
+                    <option value="">Select Cert...</option>
+                    {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+                  <button onClick={() => removeCert(i)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Cert Number" value={cert.certNumber} onChange={e => updateCert(i, 'certNumber', e.target.value)} className="text-xs h-8" />
+                  <Input type="date" value={cert.expirationDate} onChange={e => updateCert(i, 'expirationDate', e.target.value)} className="text-xs h-8" />
+                  <Input placeholder="Issuing Agency" value={cert.issuingAgency} onChange={e => updateCert(i, 'issuingAgency', e.target.value)} className="text-xs h-8 col-span-2" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const PastPerformanceForm = () => {
+    const items = parseJson(formData.pastPerformance) as PastPerf[];
+    
+    const addItem = () => {
+      const newList = [...items, { contractNumber: '', agency: '', description: '', contractValue: '', periodOfPerformance: '', pocName: '', pocPhone: '' }];
+      updateJsonField('pastPerformance', newList);
+    };
+
+    const removeItem = (index: number) => {
+      const newList = items.filter((_, i) => i !== index);
+      updateJsonField('pastPerformance', newList);
+    };
+
+    const updateItem = (index: number, field: keyof PastPerf, value: string) => {
+      const newList = [...items];
+      newList[index] = { ...newList[index], [field]: value };
+      updateJsonField('pastPerformance', newList);
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Label>Past Performance</Label>
+            <Switch checked={skippedSections['pastPerformance']} onCheckedChange={() => toggleSectionSkip('pastPerformance')} id="skip-pastPerf" />
+            <label htmlFor="skip-pastPerf" className="text-[10px] text-gray-500 cursor-pointer">I'll add this later</label>
+          </div>
+          {!skippedSections['pastPerformance'] && (
+            <Button type="button" size="sm" variant="outline" onClick={addItem} className="h-7 text-xs">
+              <Plus className="h-3 w-3 mr-1" /> Add Record
+            </Button>
+          )}
+        </div>
+        
+        {skippedSections['pastPerformance'] ? (
+          <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">
+            <p className="text-xs text-gray-500">Section skipped. You can come back and fill this in anytime.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item, i) => (
+              <Card key={i} className="border-gray-200 shadow-none">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-gray-500 uppercase">Contract Record #{i + 1}</span>
+                    <button onClick={() => removeItem(i)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Agency</Label>
+                      <Input value={item.agency} onChange={e => updateItem(i, 'agency', e.target.value)} className="text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Contract Number</Label>
+                      <Input value={item.contractNumber} onChange={e => updateItem(i, 'contractNumber', e.target.value)} className="text-xs h-8" />
+                    </div>
+                    <div className="md:col-span-2 space-y-1">
+                      <Label className="text-[10px]">Description of Work</Label>
+                      <Textarea value={item.description} onChange={e => updateItem(i, 'description', e.target.value)} className="text-xs" rows={2} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Value</Label>
+                      <Input value={item.contractValue} onChange={e => updateItem(i, 'contractValue', e.target.value)} placeholder="$0.00" className="text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">Period of Performance</Label>
+                      <Input value={item.periodOfPerformance} onChange={e => updateItem(i, 'periodOfPerformance', e.target.value)} placeholder="e.g. 2022-2023" className="text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">POC Name</Label>
+                      <Input value={item.pocName} onChange={e => updateItem(i, 'pocName', e.target.value)} className="text-xs h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px]">POC Phone</Label>
+                      <Input value={item.pocPhone} onChange={e => updateItem(i, 'pocPhone', e.target.value)} className="text-xs h-8" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            <AIGuidanceButton 
+              fieldName="Past Performance" 
+              fieldDescription="Records of previous contracts and projects completed by the company."
+              companyName={formData.legalName}
+              onUseSuggestion={(val) => {
+                const newList = [...items, { contractNumber: 'TBD', agency: 'Federal Agency', description: val, contractValue: '$0', periodOfPerformance: '', pocName: '', pocPhone: '' }];
+                updateJsonField('pastPerformance', newList);
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const BankingInfoForm = () => {
+    const info = parseJson(formData.bankingInfo, {}) as BankingInfo;
+    
+    const update = (field: keyof BankingInfo, value: string) => {
+      updateJsonField('bankingInfo', { ...info, [field]: value });
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label>Banking Information</Label>
+          <Switch checked={skippedSections['bankingInfo']} onCheckedChange={() => toggleSectionSkip('bankingInfo')} id="skip-banking" />
+          <label htmlFor="skip-banking" className="text-[10px] text-gray-500 cursor-pointer">I'll add this later</label>
+        </div>
+        
+        {skippedSections['bankingInfo'] ? (
+          <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">
+            <p className="text-xs text-gray-500">Section skipped. You can come back and fill this in anytime.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-[10px]">Bank Name</Label>
+              <Input value={info.bankName || ''} onChange={e => update('bankName', e.target.value)} className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Routing Number (9 digits)</Label>
+              <Input value={info.routingNumber || ''} onChange={e => update('routingNumber', e.target.value)} maxLength={9} className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Account Number</Label>
+              <Input value={info.accountNumber || ''} onChange={e => update('accountNumber', e.target.value)} className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Account Type</Label>
+              <select 
+                value={info.accountType || ''} 
+                onChange={e => update('accountType', e.target.value as any)}
+                className="w-full h-8 px-2 border border-gray-200 rounded text-xs"
+              >
+                <option value="">Select...</option>
+                <option value="Checking">Checking</option>
+                <option value="Savings">Savings</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const InsuranceSummaryForm = () => {
+    const info = parseJson(formData.insuranceSummary, {}) as InsuranceSummary;
+    
+    const update = (field: keyof InsuranceSummary, value: string) => {
+      updateJsonField('insuranceSummary', { ...info, [field]: value });
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label>Insurance Summary</Label>
+          <Switch checked={skippedSections['insurance']} onCheckedChange={() => toggleSectionSkip('insurance')} id="skip-insurance" />
+          <label htmlFor="skip-insurance" className="text-[10px] text-gray-500 cursor-pointer">I'll add this later</label>
+        </div>
+        
+        {skippedSections['insurance'] ? (
+          <div className="p-4 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">
+            <p className="text-xs text-gray-500">Section skipped. You can come back and fill this in anytime.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-[10px]">General Liability Amount</Label>
+              <Input value={info.generalLiability || ''} onChange={e => update('generalLiability', e.target.value)} placeholder="$1,000,000" className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Workers Comp Coverage</Label>
+              <Input value={info.workersComp || ''} onChange={e => update('workersComp', e.target.value)} className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Professional Liability</Label>
+              <Input value={info.professionalLiability || ''} onChange={e => update('professionalLiability', e.target.value)} className="text-xs h-8" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">Cyber Liability</Label>
+              <Input value={info.cyberLiability || ''} onChange={e => update('cyberLiability', e.target.value)} className="text-xs h-8" />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const SecondaryNaicsForm = () => {
+    const rawValue = formData.naicsSecondary || '[]';
+    const codes = parseJson(rawValue, []) as string[];
+    const [newCode, setNewCode] = useState('');
+
+    const addCode = () => {
+      if (newCode && !codes.includes(newCode)) {
+        updateJsonField('naicsSecondary', [...codes, newCode]);
+        setNewCode('');
+      }
+    };
+
+    const removeCode = (code: string) => {
+      updateJsonField('naicsSecondary', codes.filter(c => c !== code));
+    };
+
+    return (
+      <div className="space-y-3">
+        <Label htmlFor="naicsSecondary">Secondary NAICS Codes</Label>
+        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg min-h-[44px]">
+          {codes.map(code => (
+            <Badge key={code} variant="secondary" className="pl-2 pr-1 py-1 gap-1 bg-white border-slate-200 text-slate-700">
+              {code}
+              <button onClick={() => removeCode(code)} className="hover:text-red-500"><X className="h-3 w-3" /></button>
+            </Badge>
+          ))}
+          {codes.length === 0 && <span className="text-xs text-slate-400 italic">No codes added</span>}
+        </div>
+        <div className="flex gap-2">
+          <Input 
+            placeholder="Add NAICS code (e.g. 541512)" 
+            value={newCode} 
+            onChange={e => setNewCode(e.target.value)}
+            className="text-xs h-8"
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCode())}
+          />
+          <Button type="button" size="sm" onClick={addCode} className="h-8">Add</Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <PageLayout
@@ -584,10 +1074,7 @@ export default function BusinessProfile() {
         alerts={criticalMissing.length > 0 ? [{ message: `${criticalMissing.length} critical field(s) missing. Complete them to unlock full functionality.`, type: 'warning' }] : []}
       />
 
-      {/* Guidance Question Panel */}
       <GuidanceQuestionPanel pageContext="business-profile" />
-
-      {/* Training Walkthrough */}
       <TrainingWalkthrough pageContext="business-profile" />
 
       {/* ── PROFILE COMPLETENESS PANEL ─────────────────────────────────────── */}
@@ -655,7 +1142,6 @@ export default function BusinessProfile() {
               })}
             </div>
 
-            {/* Priority field list */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3">All Fields — Priority Order</h3>
               <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
@@ -693,17 +1179,72 @@ export default function BusinessProfile() {
           <section id="section-identity" ref={el => { sectionRefs.current['identity'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Building2 className="h-5 w-5 text-blue-600" />Company Identity</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label htmlFor="legalName">Legal Company Name <span className="text-red-500">*</span></Label><Input id="legalName" name="legalName" value={formData.legalName} onChange={handleInputChange} placeholder="Your company's legal name" className="mt-2" /></div>
-              <div><Label htmlFor="dba">DBA (Doing Business As)</Label><Input id="dba" name="dba" value={formData.dba} onChange={handleInputChange} placeholder="If different from legal name" className="mt-2" /></div>
-              <div><Label htmlFor="businessStructure">Business Structure</Label><select id="businessStructure" name="businessStructure" value={formData.businessStructure} onChange={handleInputChange} className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Select...</option><option value="LLC">LLC</option><option value="S-Corp">S-Corp</option><option value="C-Corp">C-Corp</option><option value="Sole Proprietor">Sole Proprietor</option><option value="Partnership">Partnership</option><option value="Nonprofit">Nonprofit</option></select></div>
-              <div><Label htmlFor="stateOfIncorporation">State of Incorporation</Label><Input id="stateOfIncorporation" name="stateOfIncorporation" value={formData.stateOfIncorporation} onChange={handleInputChange} placeholder="e.g., Delaware" className="mt-2" /></div>
-              <div><Label htmlFor="businessSize">Business Size <span className="text-red-500">*</span></Label><select id="businessSize" name="businessSize" value={formData.businessSize} onChange={handleInputChange} className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Select...</option><option value="small">Small Business</option><option value="large">Large Business</option><option value="other_than_small">Other Than Small</option></select></div>
-              <div><Label htmlFor="entityType">Entity Type</Label><Input id="entityType" name="entityType" value={formData.entityType} onChange={handleInputChange} placeholder="e.g., For-Profit" className="mt-2" /></div>
-              <div><Label htmlFor="yearFounded">Year Founded</Label><Input id="yearFounded" name="yearFounded" value={formData.yearFounded} onChange={handleInputChange} placeholder="YYYY" className="mt-2" /></div>
-              <div><Label htmlFor="numberOfEmployees">Number of Employees</Label><Input id="numberOfEmployees" name="numberOfEmployees" value={formData.numberOfEmployees} onChange={handleInputChange} placeholder="e.g., 25" className="mt-2" /></div>
-              <div><Label htmlFor="annualRevenue">Annual Revenue</Label><Input id="annualRevenue" name="annualRevenue" value={formData.annualRevenue} onChange={handleInputChange} placeholder="e.g., $5M - $10M" className="mt-2" /></div>
-              <div><Label htmlFor="contractingModel">Contracting Model</Label><select id="contractingModel" name="contractingModel" value={formData.contractingModel} onChange={handleInputChange} className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="prime">Prime Contractor</option><option value="sub">Subcontractor</option><option value="both">Both Prime & Sub</option></select></div>
-              <div className="flex items-center gap-2 mt-6"><input id="usesSubcontractors" name="usesSubcontractors" type="checkbox" checked={formData.usesSubcontractors} onChange={e => setFormData(prev => ({ ...prev, usesSubcontractors: e.target.checked }))} className="w-4 h-4" /><Label htmlFor="usesSubcontractors" className="cursor-pointer">Uses Subcontractors</Label></div>
+              <div className="space-y-1">
+                <Label htmlFor="legalName">Legal Company Name <span className="text-red-500">*</span></Label>
+                <Input id="legalName" name="legalName" value={formData.legalName} onChange={handleInputChange} placeholder="Your company's legal name" />
+                <AIGuidanceButton 
+                  fieldName="Legal Company Name" 
+                  fieldDescription="The exact name of your business as registered with the Secretary of State or other governing body."
+                  onUseSuggestion={(val) => setFormData(prev => prev ? ({ ...prev, legalName: val }) : null)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="dba">DBA (Doing Business As)</Label>
+                <Input id="dba" name="dba" value={formData.dba} onChange={handleInputChange} placeholder="If different from legal name" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="businessStructure">Business Structure</Label>
+                <select id="businessStructure" name="businessStructure" value={formData.businessStructure} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select...</option>
+                  <option value="LLC">LLC</option>
+                  <option value="S-Corp">S-Corp</option>
+                  <option value="C-Corp">C-Corp</option>
+                  <option value="Sole Proprietor">Sole Proprietor</option>
+                  <option value="Partnership">Partnership</option>
+                  <option value="Nonprofit">Nonprofit</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="stateOfIncorporation">State of Incorporation</Label>
+                <Input id="stateOfIncorporation" name="stateOfIncorporation" value={formData.stateOfIncorporation} onChange={handleInputChange} placeholder="e.g., Delaware" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="businessSize">Business Size <span className="text-red-500">*</span></Label>
+                <select id="businessSize" name="businessSize" value={formData.businessSize} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select...</option>
+                  <option value="small">Small Business</option>
+                  <option value="large">Large Business</option>
+                  <option value="other_than_small">Other Than Small</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="entityType">Entity Type</Label>
+                <Input id="entityType" name="entityType" value={formData.entityType} onChange={handleInputChange} placeholder="e.g., For-Profit" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="yearFounded">Year Founded</Label>
+                <Input id="yearFounded" name="yearFounded" value={formData.yearFounded} onChange={handleInputChange} placeholder="YYYY" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="numberOfEmployees">Number of Employees</Label>
+                <Input id="numberOfEmployees" name="numberOfEmployees" value={formData.numberOfEmployees} onChange={handleInputChange} placeholder="e.g., 25" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="annualRevenue">Annual Revenue</Label>
+                <Input id="annualRevenue" name="annualRevenue" value={formData.annualRevenue} onChange={handleInputChange} placeholder="e.g., $5M - $10M" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="contractingModel">Contracting Model</Label>
+                <select id="contractingModel" name="contractingModel" value={formData.contractingModel} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="prime">Prime Contractor</option>
+                  <option value="sub">Subcontractor</option>
+                  <option value="both">Both Prime & Sub</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 mt-6">
+                <input id="usesSubcontractors" name="usesSubcontractors" type="checkbox" checked={formData.usesSubcontractors} onChange={e => setFormData(prev => prev ? ({ ...prev, usesSubcontractors: e.target.checked }) : null)} className="w-4 h-4" />
+                <Label htmlFor="usesSubcontractors">We use subcontractors</Label>
+              </div>
             </div>
           </section>
 
@@ -711,20 +1252,44 @@ export default function BusinessProfile() {
           <section id="section-contact" ref={el => { sectionRefs.current['contact'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Users className="h-5 w-5 text-purple-600" />Contact & Address</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label htmlFor="email">Business Email <span className="text-red-500">*</span></Label><Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="company@example.com" className="mt-2" /></div>
-              <div><Label htmlFor="phone">Business Phone <span className="text-red-500">*</span></Label><Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+1 (555) 000-0000" className="mt-2" /></div>
-              <div><Label htmlFor="website">Website</Label><Input id="website" name="website" value={formData.website} onChange={handleInputChange} placeholder="https://example.com" className="mt-2" /></div>
-              <div className="md:col-span-2"><Label htmlFor="address">Street Address <span className="text-red-500">*</span></Label><Input id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="123 Main Street" className="mt-2" /></div>
-              <div><Label htmlFor="city">City <span className="text-red-500">*</span></Label><Input id="city" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" className="mt-2" /></div>
-              <div><Label htmlFor="state">State <span className="text-red-500">*</span></Label><Input id="state" name="state" value={formData.state} onChange={handleInputChange} placeholder="State" className="mt-2" /></div>
-              <div><Label htmlFor="zip">ZIP Code <span className="text-red-500">*</span></Label><Input id="zip" name="zip" value={formData.zip} onChange={handleInputChange} placeholder="12345" className="mt-2" /></div>
-              <div><Label htmlFor="country">Country</Label><Input id="country" name="country" value={formData.country} onChange={handleInputChange} placeholder="United States" className="mt-2" /></div>
+              <div className="space-y-1">
+                <Label htmlFor="email">Business Email <span className="text-red-500">*</span></Label>
+                <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="company@example.com" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="phone">Business Phone <span className="text-red-500">*</span></Label>
+                <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+1 (555) 000-0000" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="website">Website</Label>
+                <Input id="website" name="website" value={formData.website} onChange={handleInputChange} placeholder="https://example.com" />
+              </div>
+              <div className="md:col-span-2 space-y-1">
+                <Label htmlFor="address">Street Address <span className="text-red-500">*</span></Label>
+                <Input id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="123 Main Street" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="city">City <span className="text-red-500">*</span></Label>
+                <Input id="city" name="city" value={formData.city} onChange={handleInputChange} placeholder="City" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="state">State <span className="text-red-500">*</span></Label>
+                <Input id="state" name="state" value={formData.state} onChange={handleInputChange} placeholder="State" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="zip">ZIP Code <span className="text-red-500">*</span></Label>
+                <Input id="zip" name="zip" value={formData.zip} onChange={handleInputChange} placeholder="12345" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="country">Country</Label>
+                <Input id="country" name="country" value={formData.country} onChange={handleInputChange} placeholder="United States" />
+              </div>
               <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
                 <p className="text-sm font-medium text-gray-600 mb-3">Default Point of Contact</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div><Label htmlFor="defaultContactName">Contact Name</Label><Input id="defaultContactName" name="defaultContactName" value={formData.defaultContactName} onChange={handleInputChange} placeholder="Full Name" className="mt-2" /></div>
-                  <div><Label htmlFor="defaultContactEmail">Contact Email</Label><Input id="defaultContactEmail" name="defaultContactEmail" type="email" value={formData.defaultContactEmail} onChange={handleInputChange} placeholder="contact@example.com" className="mt-2" /></div>
-                  <div><Label htmlFor="defaultContactPhone">Contact Phone</Label><Input id="defaultContactPhone" name="defaultContactPhone" value={formData.defaultContactPhone} onChange={handleInputChange} placeholder="+1 (555) 000-0000" className="mt-2" /></div>
+                  <div className="space-y-1"><Label htmlFor="defaultContactName">Contact Name</Label><Input id="defaultContactName" name="defaultContactName" value={formData.defaultContactName} onChange={handleInputChange} placeholder="Full Name" /></div>
+                  <div className="space-y-1"><Label htmlFor="defaultContactEmail">Contact Email</Label><Input id="defaultContactEmail" name="defaultContactEmail" type="email" value={formData.defaultContactEmail} onChange={handleInputChange} placeholder="contact@example.com" /></div>
+                  <div className="space-y-1"><Label htmlFor="defaultContactPhone">Contact Phone</Label><Input id="defaultContactPhone" name="defaultContactPhone" value={formData.defaultContactPhone} onChange={handleInputChange} placeholder="+1 (555) 000-0000" /></div>
                 </div>
               </div>
             </div>
@@ -734,53 +1299,127 @@ export default function BusinessProfile() {
           <section id="section-registrations" ref={el => { sectionRefs.current['registrations'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Shield className="h-5 w-5 text-green-600" />Government Registrations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label htmlFor="uei">UEI <span className="text-red-500">*</span></Label><Input id="uei" name="uei" value={formData.uei} onChange={handleInputChange} placeholder="12-character from SAM.gov" className="mt-2" /><p className="text-xs text-gray-500 mt-1">Replaces DUNS. Required for all federal contracts.</p></div>
-              <div><Label htmlFor="cage">CAGE Code <span className="text-red-500">*</span></Label><Input id="cage" name="cage" value={formData.cage} onChange={handleInputChange} placeholder="5-character code" className="mt-2" /><p className="text-xs text-gray-500 mt-1">Required for DoD and many federal solicitations.</p></div>
-              <div><Label htmlFor="samStatus">SAM Status <span className="text-red-500">*</span></Label><select id="samStatus" name="samStatus" value={formData.samStatus} onChange={handleInputChange} className="mt-2 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="not_registered">Not Registered</option><option value="pending">Pending</option><option value="active">Active</option><option value="expired">Expired</option></select></div>
-              <div><Label htmlFor="samRegistrationDate">SAM Registration Date</Label><Input id="samRegistrationDate" name="samRegistrationDate" type="date" value={formData.samRegistrationDate} onChange={handleInputChange} className="mt-2" /></div>
-              <div><Label htmlFor="samExpirationDate">SAM Expiration Date <span className="text-red-500">*</span></Label><Input id="samExpirationDate" name="samExpirationDate" type="date" value={formData.samExpirationDate} onChange={handleInputChange} className="mt-2" /><p className="text-xs text-gray-500 mt-1">Expired SAM = ineligible for awards.</p></div>
-              <div><Label htmlFor="gsaScheduleNumber">GSA Schedule Number</Label><Input id="gsaScheduleNumber" name="gsaScheduleNumber" value={formData.gsaScheduleNumber} onChange={handleInputChange} placeholder="e.g., GS-35F-XXXXX" className="mt-2" /></div>
-              <div><Label htmlFor="gsaScheduleExpiration">GSA Schedule Expiration</Label><Input id="gsaScheduleExpiration" name="gsaScheduleExpiration" type="date" value={formData.gsaScheduleExpiration} onChange={handleInputChange} className="mt-2" /></div>
+              <div className="space-y-1">
+                <Label htmlFor="uei">UEI <span className="text-red-500">*</span></Label>
+                <Input id="uei" name="uei" value={formData.uei} onChange={handleInputChange} placeholder="12-character from SAM.gov" />
+                <p className="text-[10px] text-gray-500">Replaces DUNS. Required for all federal contracts.</p>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cage">CAGE Code <span className="text-red-500">*</span></Label>
+                <Input id="cage" name="cage" value={formData.cage} onChange={handleInputChange} placeholder="5-character code" />
+                <p className="text-[10px] text-gray-500">Required for DoD and many federal solicitations.</p>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="samStatus">SAM Status <span className="text-red-500">*</span></Label>
+                <select id="samStatus" name="samStatus" value={formData.samStatus} onChange={handleInputChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="not_registered">Not Registered</option>
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="expired">Expired</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="samRegistrationDate">SAM Registration Date</Label>
+                <Input id="samRegistrationDate" name="samRegistrationDate" type="date" value={formData.samRegistrationDate} onChange={handleInputChange} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="samExpirationDate">SAM Expiration Date <span className="text-red-500">*</span></Label>
+                <Input id="samExpirationDate" name="samExpirationDate" type="date" value={formData.samExpirationDate} onChange={handleInputChange} />
+                <p className="text-[10px] text-gray-500">Expired SAM = ineligible for awards.</p>
+              </div>
+              
+              <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-sm font-medium text-gray-600">GSA Schedule</p>
+                  <Switch checked={skippedSections['gsa']} onCheckedChange={() => toggleSectionSkip('gsa')} id="skip-gsa" />
+                  <label htmlFor="skip-gsa" className="text-[10px] text-gray-500 cursor-pointer">I'll add this later</label>
+                </div>
+                {!skippedSections['gsa'] ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1"><Label htmlFor="gsaScheduleNumber">GSA Schedule Number</Label><Input id="gsaScheduleNumber" name="gsaScheduleNumber" value={formData.gsaScheduleNumber} onChange={handleInputChange} placeholder="e.g., GS-35F-XXXXX" /></div>
+                    <div className="space-y-1"><Label htmlFor="gsaScheduleExpiration">GSA Schedule Expiration</Label><Input id="gsaScheduleExpiration" name="gsaScheduleExpiration" type="date" value={formData.gsaScheduleExpiration} onChange={handleInputChange} /></div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center text-xs text-gray-500">
+                    Section skipped. You can come back and fill this in anytime.
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 
           {/* NAICS Codes */}
           <section id="section-naics" ref={el => { sectionRefs.current['naics'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><FileText className="h-5 w-5 text-orange-600" />NAICS Codes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label htmlFor="naicsPrimary">Primary NAICS Code <span className="text-red-500">*</span></Label><Input id="naicsPrimary" name="naicsPrimary" value={formData.naicsPrimary} onChange={handleInputChange} placeholder="e.g., 541511" className="mt-2" /><p className="text-xs text-gray-500 mt-1">Your main industry classification.</p></div>
-              <div><Label htmlFor="naicsSecondary">Secondary NAICS (JSON)</Label><Input id="naicsSecondary" name="naicsSecondary" value={formData.naicsSecondary} onChange={handleInputChange} placeholder='[{"code":"541512","description":"..."}]' className="mt-2 font-mono text-xs" /></div>
-              <div className="md:col-span-2"><Label htmlFor="naicsCodes">All NAICS Codes (comma-separated)</Label><Input id="naicsCodes" name="naicsCodes" value={formData.naicsCodes} onChange={handleInputChange} placeholder="541511, 541512, 541519" className="mt-2" /></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <Label htmlFor="naicsPrimary">Primary NAICS Code <span className="text-red-500">*</span></Label>
+                <Input id="naicsPrimary" name="naicsPrimary" value={formData.naicsPrimary} onChange={handleInputChange} placeholder="e.g., 541511" />
+                <p className="text-[10px] text-gray-500">Your main industry classification.</p>
+              </div>
+              <SecondaryNaicsForm />
+              <div className="md:col-span-2 space-y-1">
+                <Label htmlFor="naicsCodes">All NAICS Codes (comma-separated)</Label>
+                <Input id="naicsCodes" name="naicsCodes" value={formData.naicsCodes} onChange={handleInputChange} placeholder="541511, 541512, 541519" />
+              </div>
             </div>
           </section>
 
           {/* Certifications */}
           <section id="section-certifications" ref={el => { sectionRefs.current['certifications'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Star className="h-5 w-5 text-yellow-600" />Certifications</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <div><Label htmlFor="socioeconomicCerts">Socioeconomic Certifications (JSON)</Label><Textarea id="socioeconomicCerts" name="socioeconomicCerts" value={formData.socioeconomicCerts} onChange={handleInputChange} placeholder='[{"name":"8(a)","certNumber":"...","expirationDate":"..."}]' rows={3} className="mt-2 font-mono text-xs" /><p className="text-xs text-gray-500 mt-1">8(a), WOSB, SDVOSB, HUBZone — unlock set-aside opportunities.</p></div>
-              <div><Label htmlFor="certifications">Other Certifications</Label><Textarea id="certifications" name="certifications" value={formData.certifications} onChange={handleInputChange} placeholder="ISO 9001:2015, CMMI Level 3, etc." rows={2} className="mt-2" /></div>
+            <div className="space-y-6">
+              <SocioeconomicCertsForm />
+              <div className="space-y-1">
+                <Label htmlFor="certifications">Other Certifications</Label>
+                <Textarea id="certifications" name="certifications" value={formData.certifications} onChange={handleInputChange} placeholder="ISO 9001:2015, CMMI Level 3, etc." rows={2} />
+              </div>
             </div>
           </section>
 
           {/* Capabilities */}
           <section id="section-capabilities" ref={el => { sectionRefs.current['capabilities'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-teal-600" />Capabilities & Past Performance</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <div><Label htmlFor="capabilities">Capabilities Statement <span className="text-red-500">*</span></Label><Textarea id="capabilities" name="capabilities" value={formData.capabilities} onChange={handleInputChange} placeholder="Describe your company's core capabilities..." rows={4} className="mt-2" /></div>
-              <div><Label htmlFor="coreCompetencies">Core Competencies</Label><Textarea id="coreCompetencies" name="coreCompetencies" value={formData.coreCompetencies} onChange={handleInputChange} placeholder="List key competencies..." rows={3} className="mt-2" /></div>
-              <div><Label htmlFor="keyPersonnel">Key Personnel (JSON)</Label><Textarea id="keyPersonnel" name="keyPersonnel" value={formData.keyPersonnel} onChange={handleInputChange} placeholder='[{"name":"...","title":"...","clearanceLevel":"..."}]' rows={3} className="mt-2 font-mono text-xs" /></div>
-              <div><Label htmlFor="pastPerformance">Past Performance (JSON) <span className="text-red-500">*</span></Label><Textarea id="pastPerformance" name="pastPerformance" value={formData.pastPerformance} onChange={handleInputChange} placeholder='[{"contractNumber":"...","agency":"...","description":"...","value":"..."}]' rows={4} className="mt-2 font-mono text-xs" /></div>
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <Label htmlFor="capabilities">Capabilities Statement <span className="text-red-500">*</span></Label>
+                <Textarea id="capabilities" name="capabilities" value={formData.capabilities} onChange={handleInputChange} placeholder="Describe your company's core capabilities..." rows={4} />
+                <AIGuidanceButton 
+                  fieldName="Capabilities Statement" 
+                  fieldDescription="A concise summary of your company's skills, experience, and value proposition for government clients."
+                  companyName={formData.legalName}
+                  onUseSuggestion={(val) => setFormData(prev => prev ? ({ ...prev, capabilities: val }) : null)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="coreCompetencies">Core Competencies</Label>
+                <Textarea id="coreCompetencies" name="coreCompetencies" value={formData.coreCompetencies} onChange={handleInputChange} placeholder="List key competencies..." rows={3} />
+              </div>
+              <KeyPersonnelForm />
+              <PastPerformanceForm />
             </div>
           </section>
 
           {/* Financial */}
           <section id="section-financial" ref={el => { sectionRefs.current['financial'] = el; }} className="bg-white border border-gray-200 rounded-lg p-6 scroll-mt-4">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><DollarSign className="h-5 w-5 text-red-600" />Banking & Financial</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><Label htmlFor="bondingCapacity">Bonding Capacity</Label><Input id="bondingCapacity" name="bondingCapacity" value={formData.bondingCapacity} onChange={handleInputChange} placeholder="e.g., $5M single / $10M aggregate" className="mt-2" /></div>
-              <div><Label htmlFor="bankingInfo">Banking Info (JSON)</Label><Input id="bankingInfo" name="bankingInfo" value={formData.bankingInfo} onChange={handleInputChange} placeholder='{"bankName":"...","routingNumber":"..."}' className="mt-2 font-mono text-xs" /></div>
-              <div className="md:col-span-2"><Label htmlFor="insuranceSummary">Insurance Summary (JSON)</Label><Textarea id="insuranceSummary" name="insuranceSummary" value={formData.insuranceSummary} onChange={handleInputChange} placeholder='{"generalLiability":"$1M","workersComp":"Statutory"}' rows={2} className="mt-2 font-mono text-xs" /></div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Label htmlFor="bondingCapacity">Bonding Capacity</Label>
+                    <Switch checked={skippedSections['bonding']} onCheckedChange={() => toggleSectionSkip('bonding')} id="skip-bonding" />
+                    <label htmlFor="skip-bonding" className="text-[10px] text-gray-500 cursor-pointer">I'll add this later</label>
+                  </div>
+                  {!skippedSections['bonding'] ? (
+                    <Input id="bondingCapacity" name="bondingCapacity" value={formData.bondingCapacity} onChange={handleInputChange} placeholder="e.g., $5M single / $10M aggregate" />
+                  ) : (
+                    <div className="p-2 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center text-xs text-gray-500">Skipped</div>
+                  )}
+                </div>
+              </div>
+              <BankingInfoForm />
+              <InsuranceSummaryForm />
             </div>
           </section>
 
@@ -793,6 +1432,14 @@ export default function BusinessProfile() {
           </div>
         </div>
       )}
+          <PageGuidancePanel
+        pageKey="business-profile"
+        title="Business Profile Help"
+        description="Your workspace business identity. Maintain UEI, CAGE, SAM status, NAICS codes, certifications, and capabilities. This data auto-fills into capability statements and proposals."
+        whatToDoNext={["Enter your UEI and CAGE code", "Confirm SAM registration status", "Set primary NAICS codes", "Add certifications and set-aside eligibility"]}
+        helpArticleSlug="what-is-sam"
+        glossaryTerms={["uei", "cage", "sam", "naics"]}
+      />
     </PageLayout>
   );
 }

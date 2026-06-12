@@ -53,6 +53,8 @@ import Deadlines from "./pages/Deadlines";
 import Compliance from "./pages/Compliance";
 import Glossary from "./pages/Glossary";
 import Support from "./pages/Support";
+import CustomerSupport from "./pages/CustomerSupport";
+import CustomerSupportDetail from "./pages/CustomerSupportDetail";
 import Users from "./pages/Users";
 import Alerts from "./pages/Alerts";
 import Tasks from "./pages/Tasks";
@@ -84,7 +86,6 @@ import EmailTemplates from "./pages/EmailTemplates";
 import ConsistencyCheck from "./pages/ConsistencyCheck";
 import ExternalViewer from "./pages/ExternalViewer";
 import DocumentVersions from "./pages/DocumentVersions";
-import DemoMode from "./pages/DemoMode";
 import LegalPages from "./pages/LegalPages";
 import Terms from "./pages/Terms";
 import Documentation from "./pages/Documentation";
@@ -103,6 +104,9 @@ import SAMSearch from "./pages/SAMSearch";
 import RateParityDashboard from "./pages/RateParityDashboard";
 import Training from "./pages/Training";
 import Subscription from "./pages/Subscription";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Reconciliation from "./pages/Reconciliation";
+import InviteAccept from "./pages/InviteAccept";
 
 // Wrapper to render app pages inside AppShell with per-route error boundary
 function withAppShell(Component: React.ComponentType) {
@@ -123,12 +127,15 @@ function Router() {
     <Switch>
       {/* Public pages - no sidebar, no auth required */}
       <Route path={"/"} component={Home} />
+      <Route path={"/home"} component={Home} />
       <Route path={"/features"} component={Features} />
       <Route path={"/pricing"} component={Pricing} />
       <Route path={"/help"} component={Help} />
+      <Route path={"/help-center"} component={Help} />
       <Route path={"/glossary"} component={Glossary} />
       <Route path={"/support"} component={Support} />
       <Route path={"/get-started"} component={GetStarted} />
+      <Route path={"/checkout/success"} component={CheckoutSuccess} />
       <Route path={"/login"} component={Login} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={ContactPage} />
@@ -138,6 +145,9 @@ function Router() {
       <Route path={"/platform-compliance"} component={PlatformCompliance} />
       <Route path={"/security"} component={Security} />
       
+      {/* Invite accept - public-ish route (needs auth to accept) */}
+      <Route path="/invite/accept/:token" component={InviteAccept} />
+
       {/* Platform Owner pages - has its own sidebar via PlatformRouter */}
       <Route path={"/platform/login"} component={PlatformLogin} />
       <Route path={"/platform"} component={PlatformRouter} />
@@ -174,6 +184,7 @@ function Router() {
       <Route path={"/app/payments"} component={withAppShell(Payments)} />
       <Route path={"/app/payments/:id"} component={withAppShell(PaymentDetail)} />
       <Route path={"/app/finance"} component={withAppShell(Finance)} />
+      <Route path={"/app/reconciliation"} component={withAppShell(Reconciliation)} />
       <Route path={"/app/obligations"} component={withAppShell(Obligations)} />
       <Route path={"/app/deliverables"} component={withAppShell(Deliverables)} />
       <Route path={"/app/deadlines"} component={withAppShell(Deadlines)} />
@@ -197,6 +208,8 @@ function Router() {
       <Route path={"/app/notification-preferences"} component={withAppShell(EmailNotificationPreferences)} />
       <Route path={"/app/export"} component={withAppShell(WorkspaceExport)} />
       <Route path={"/app/billing"} component={withAppShell(Billing)} />
+      <Route path={"/app/support/:id"} component={withAppShell(CustomerSupportDetail)} />
+      <Route path={"/app/support"} component={withAppShell(CustomerSupport)} />
       <Route path={"/app/users"} component={withAppShell(Users)} />
       <Route path={"/app/alerts"} component={withAppShell(Alerts)} />
       <Route path={"/app/tasks"} component={withAppShell(Tasks)} />
@@ -209,6 +222,8 @@ function Router() {
       <Route path={"/app/closeout"} component={withAppShell(Closeout)} />
       <Route path={"/app/proposals/:id/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/lessons-learned"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/lessons"} component={withAppShell(LessonsLearned)} />
+      <Route path={"/app/loss-review"} component={withAppShell(LossReview)} />
       <Route path={"/app/ai-findings"} component={withAppShell(AIFindings)} />
       
       {/* Batch 1-4: Product Completion Routes */}
@@ -226,7 +241,6 @@ function Router() {
       <Route path={"/app/consistency-check"} component={withAppShell(ConsistencyCheck)} />
       <Route path={"/app/external-viewers"} component={withAppShell(ExternalViewer)} />
       <Route path={"/app/document-versions"} component={withAppShell(DocumentVersions)} />
-      <Route path={"/app/demo-mode"} component={withAppShell(DemoMode)} />
       <Route path={"/app/subscription"} component={withAppShell(Subscription)} />
       <Route path={"/app/user-profile"} component={withAppShell(UserProfile)} />
       <Route path={"/legal"} component={LegalPages} />

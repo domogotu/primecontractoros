@@ -27,8 +27,10 @@ import {
   billingEvents,
   platformOverrides,
   onboardingProgress,
+  accessStates,
 } from "../drizzle/schema";
 import { eq, desc, and, count, sql, gte } from "drizzle-orm";
+import { updateAccessState, evaluateAccess, logBillingAudit } from "./accessGating";
 
 // ==================== PLATFORM ADMIN ROUTER ====================
 // All procedures require admin role - customer users cannot access these
@@ -422,7 +424,7 @@ export const platformAdminRouter = router({
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
             <tr><td style="padding:20px;background:rgba(59,130,246,0.1);border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
               <p style="color:#60a5fa;font-size:13px;font-weight:bold;margin:0 0 12px;">Get Started Now</p>
-              <a href="https://primecontractor-bk79t4ta.manus.space/login" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:bold;">Log In to PrimeContractorOS</a>
+              <a href="https://primecontractoros.com/login" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:bold;">Log In to PrimeContractorOS</a>
             </td></tr>
           </table>
           <p style="color:#64748b;font-size:12px;margin:24px 0 0;border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;">
@@ -789,7 +791,7 @@ export const platformAdminRouter = router({
           <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
             <tr><td style="padding:20px;background:rgba(70,210,126,0.08);border-radius:8px;border:1px solid rgba(70,210,126,0.2);">
               <p style="color:#46d27e;font-size:13px;font-weight:bold;margin:0 0 8px;">Step 2: Log In to PrimeContractorOS</p>
-              <a href="https://primecontractor-bk79t4ta.manus.space/login" style="display:inline-block;background:#46d27e;color:#0b1320;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;">Go to PrimeContractorOS</a>
+              <a href="https://primecontractoros.com/login" style="display:inline-block;background:#46d27e;color:#0b1320;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;">Go to PrimeContractorOS</a>
             </td></tr>
           </table>
           <p style="color:#64748b;font-size:12px;margin:24px 0 0;border-top:1px solid rgba(255,255,255,0.08);padding-top:20px;">
@@ -1232,6 +1234,274 @@ export const platformAdminRouter = router({
         failedPayments: records.filter((r) => r.status === "cancelled").length,
       };
     }),
+
+    // ── Access State Management ──────────────────────────────────────────────
+
+    /**
+     * listAccessStates — list all workspace access states with workspace and subscription info.
+     */
+    listAccessStates: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const rows = await db
+        .select({
+          id: accessStates.id,
+          workspaceId: accessStates.workspaceId,
+          status: accessStates.state,
+          reason: accessStates.reason,
+          grantedBy: accessStates.changedBy,
+          expiresAt: accessStates.changedAt,
+          createdAt: accessStates.createdAt,
+          updatedAt: accessStates.updatedAt,
+          workspaceName: workspaces.name,
+          workspaceOwner: users.email,
+          subscriptionStatus: subscriptions.status,
+          planName: plans.name,
+        })
+        .from(accessStates)
+        .leftJoin(workspaces, eq(accessStates.workspaceId, workspaces.id))
+        .leftJoin(users, eq(workspaces.ownerId, users.id))
+        .leftJoin(subscriptions, eq(subscriptions.workspaceId, accessStates.workspaceId))
+        .leftJoin(plans, eq(subscriptions.planId, plans.id))
+        .orderBy(desc(accessStates.updatedAt));
+      return rows;
+    }),
+
+    /**
+     * getWorkspaceBilling — detailed billing view for a single workspace.
+     */
+    getWorkspaceBilling: adminProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return null;
+
+        const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, input.workspaceId)).limit(1);
+        if (!ws) return null;
+
+        const [owner] = await db.select().from(users).where(eq(users.id, ws.ownerId)).limit(1);
+        const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.workspaceId, input.workspaceId)).limit(1);
+        const [plan] = sub ? await db.select().from(plans).where(eq(plans.id, sub.planId)).limit(1) : [null];
+        const [accessState] = await db.select().from(accessStates).where(eq(accessStates.workspaceId, input.workspaceId)).limit(1);
+        const events = await db.select().from(billingEvents)
+          .where(eq(billingEvents.workspaceId, input.workspaceId))
+          .orderBy(desc(billingEvents.createdAt)).limit(50);
+        const notes = await db.select().from(platformNotes)
+          .where(eq(platformNotes.workspaceId, input.workspaceId))
+          .orderBy(desc(platformNotes.createdAt)).limit(20);
+
+        return { workspace: ws, owner, subscription: sub, plan, accessState, billingEvents: events, notes };
+      }),
+
+    /**
+     * grantGracePeriod — set access state to grace with an expiry date.
+     */
+    grantGracePeriod: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        daysUntilExpiry: z.number().min(1).max(365),
+        reason: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + input.daysUntilExpiry);
+
+        await updateAccessState(input.workspaceId, "grace", input.reason, ctx.user.id, expiresAt);
+
+        await db.insert(platformAuditLog).values({
+          action: "grant_grace_period",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+
+        await logBillingAudit(input.workspaceId, "grace_period_granted", ctx.user.id,
+          `Grace period granted for ${input.daysUntilExpiry} days: ${input.reason}`,
+          { daysUntilExpiry: input.daysUntilExpiry, expiresAt: expiresAt.toISOString() });
+
+        return { success: true, expiresAt };
+      }),
+
+    /**
+     * suspendAccess — set access state to suspended.
+     */
+    suspendAccess: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        reason: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        await updateAccessState(input.workspaceId, "suspended", input.reason, ctx.user.id);
+
+        await db.insert(platformAuditLog).values({
+          action: "suspend_access",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+
+        await logBillingAudit(input.workspaceId, "access_suspended", ctx.user.id,
+          `Access suspended: ${input.reason}`);
+
+        return { success: true };
+      }),
+
+    /**
+     * restoreAccess — restore access to active_paid (or trial_active if no subscription).
+     */
+    restoreAccess: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        reason: z.string().min(1),
+        newStatus: z.enum(["active_paid", "trial_active", "grace", "override"]).default("active_paid"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        await updateAccessState(input.workspaceId, input.newStatus, input.reason, ctx.user.id);
+
+        await db.insert(platformAuditLog).values({
+          action: "restore_access",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+
+        await logBillingAudit(input.workspaceId, "access_restored", ctx.user.id,
+          `Access restored to ${input.newStatus}: ${input.reason}`);
+
+        return { success: true };
+      }),
+
+    /**
+     * setOverride — grant a platform override (bypasses billing check entirely).
+     */
+    setOverride: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        reason: z.string().min(1),
+        expiresAt: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const expiresAt = input.expiresAt ? new Date(input.expiresAt) : undefined;
+        await updateAccessState(input.workspaceId, "override", input.reason, ctx.user.id, expiresAt);
+
+        await db.insert(platformAuditLog).values({
+          action: "set_override",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+
+        await logBillingAudit(input.workspaceId, "override_set", ctx.user.id,
+          `Platform override set: ${input.reason}`,
+          { expiresAt: expiresAt?.toISOString() });
+
+        return { success: true };
+      }),
+
+    /**
+     * changePlan — change a workspace's subscription plan (admin override).
+     */
+    changePlanAdmin: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        planId: z.number(),
+        reason: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const [existingSub] = await db.select().from(subscriptions)
+          .where(eq(subscriptions.workspaceId, input.workspaceId)).limit(1);
+
+        if (existingSub) {
+          await db.update(subscriptions)
+            .set({ planId: input.planId, status: "active" })
+            .where(eq(subscriptions.id, existingSub.id));
+        } else {
+          await db.insert(subscriptions).values({
+            workspaceId: input.workspaceId,
+            planId: input.planId,
+            status: "active",
+            currentPeriodStart: new Date(),
+          });
+        }
+
+        // Ensure access is active
+        await updateAccessState(input.workspaceId, "active_paid", `Plan changed by admin: ${input.reason}`, ctx.user.id);
+
+        await db.insert(platformAuditLog).values({
+          action: "change_plan",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.reason,
+        });
+
+        await logBillingAudit(input.workspaceId, "plan_changed", ctx.user.id,
+          `Plan changed to ${input.planId} by admin: ${input.reason}`,
+          { newPlanId: input.planId });
+
+        return { success: true };
+      }),
+
+    /**
+     * addNote — add an internal platform note to a workspace.
+     */
+    addBillingNote: adminProcedure
+      .input(z.object({
+        workspaceId: z.number(),
+        note: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        await db.insert(platformNotes).values({
+          workspaceId: input.workspaceId,
+          note: input.note,
+          createdBy: ctx.user.id,
+        });
+
+        await db.insert(platformAuditLog).values({
+          action: "add_billing_note",
+          targetType: "workspace",
+          targetId: input.workspaceId,
+          performedBy: ctx.user.id,
+          reason: input.note.substring(0, 200),
+        });
+
+        return { success: true };
+      }),
+
+    /**
+     * getBillingEvents — get billing event history for a workspace.
+     */
+    getBillingEvents: adminProcedure
+      .input(z.object({ workspaceId: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) return [];
+        return db.select().from(billingEvents)
+          .where(eq(billingEvents.workspaceId, input.workspaceId))
+          .orderBy(desc(billingEvents.createdAt)).limit(100);
+      }),
   }),
 
   // --- Backups & Export ---

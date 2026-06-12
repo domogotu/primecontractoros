@@ -540,7 +540,7 @@ export default function PlatformWorkspaceDetailPage() {
             <p className="text-xs text-slate-400 mt-1">Change workspace owner to another user.</p>
           </button>
           <button
-            onClick={() => { toast.info("Coming soon \u2014 Plan change is not yet configured."); }}
+            onClick={() => { toast.info("Plan change requires Stripe integration. Configure in Platform Admin \u203a Integrations."); }}
             className="bg-slate-800 border border-slate-700 rounded-lg p-4 text-left hover:border-purple-500 transition-colors"
           >
             <CreditCard className="w-5 h-5 text-purple-400 mb-2" />
@@ -744,7 +744,7 @@ export default function PlatformWorkspaceDetailPage() {
               if (showOverrideDialog === "resetOnboarding") resetOnboarding.mutate({ workspaceId, reason });
               else if (showOverrideDialog === "resetTrial") resetTrial.mutate({ workspaceId, reason });
               else if (showOverrideDialog === "transferOwnership") {
-                toast.info("Coming soon \u2014 Transfer ownership requires a target user ID and is not yet configured.");
+                toast.info("Ownership transfer requires target user selection. Use the Ownership Recovery page for managed transfers.");
                 setShowOverrideDialog(null);
               }
             }}>

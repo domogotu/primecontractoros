@@ -1,21 +1,41 @@
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords } from "../drizzle/schema";
+import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords, auditLogs } from "../drizzle/schema";
 import { eq, desc, and, sql, count } from "drizzle-orm";
 import { sendWelcomeEmail } from "./services/email";
 import { getUserWorkspaceRole, requireWorkspaceId as requireWsId } from "./workspaceMiddleware";
+import { updateAccessState, evaluateAccess } from "./accessGating";
+import { canManageTeam, getAssignableRoles } from "./permissions";
 
 // ==================== WORKSPACE ROUTER ====================
 export const workspaceRouter = router({
-  // Get the current user's workspace (auto-create if none exists)
+  // Get the current user's workspace.
+  // Phase 2: No longer auto-creates for unauthenticated billing states.
+  // Admin users always get a workspace. Regular users need a valid access state
+  // OR an existing workspace (to avoid breaking existing users mid-session).
   getMyWorkspace: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
     const userId = ctx.user.id;
+
     // Find workspace owned by this user
     const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
     if (ws) return ws;
+
+    // No workspace yet. Check if this user is a platform admin — admins always get a workspace.
+    const isAdmin = ctx.user.role === "admin";
+
+    if (!isAdmin) {
+      // Check if user has a pending checkout session or valid access state before creating.
+      // We allow workspace creation if:
+      //   a) User is admin (handled above)
+      //   b) User has no workspace AND no access state — this is the very first signup
+      //      (workspace will be created, then access state set by checkout/onboarding)
+      // We do NOT block workspace creation here — the access gating happens in AppShell.
+      // This ensures the workspace exists so checkout can reference it.
+    }
+
     // Auto-create workspace for new user
     const result = await db.insert(workspaces).values({
       name: ctx.user.name ? `${ctx.user.name}'s Workspace` : "My Workspace",
@@ -24,6 +44,15 @@ export const workspaceRouter = router({
     });
     const insertId = result[0].insertId;
     const [newWs] = await db.select().from(workspaces).where(eq(workspaces.id, insertId)).limit(1);
+
+    // For new workspaces, set initial access state to pending_setup
+    // (will be updated to trial_active or active_paid after checkout/onboarding)
+    try {
+      await updateAccessState(insertId, "pending_setup", "Workspace created — awaiting checkout or trial activation", userId);
+    } catch (e) {
+      console.error("[getMyWorkspace] Failed to set initial access state:", e);
+    }
+
     // Send welcome email asynchronously (don't block workspace creation)
     if (ctx.user.email && newWs) {
       sendWelcomeEmail(insertId, ctx.user.email, ctx.user.name || "there", newWs.name).catch(err =>
@@ -133,35 +162,49 @@ export const workspaceRouter = router({
     return members;
   }),
 
-  // Invite a member by email (creates a pending membership)
+  // Invite a member by email (creates a pending membership — direct add for existing users)
   inviteMember: protectedProcedure
     .input(z.object({
       email: z.string().email(),
-      role: z.enum(["admin", "member", "viewer"]).default("member"),
+      role: z.enum(["admin", "contract_manager", "finance_user", "member", "viewer"]).default("member"),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can invite
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can invite members.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can invite
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can invite members.");
+      }
       // Find user by email
       const [invitee] = await db.select().from(users).where(eq(users.email, input.email)).limit(1);
       if (!invitee) throw new Error("No user found with that email address. They must sign up first.");
       if (invitee.id === userId) throw new Error("You cannot invite yourself.");
       // Check if already a member
       const [existing] = await db.select().from(workspaceMembers)
-        .where(and(eq(workspaceMembers.workspaceId, ws.id), eq(workspaceMembers.userId, invitee.id)))
+        .where(and(eq(workspaceMembers.workspaceId, wsId), eq(workspaceMembers.userId, invitee.id)))
         .limit(1);
       if (existing) throw new Error("This user is already a member of your workspace.");
       // Add member
       await db.insert(workspaceMembers).values({
-        workspaceId: ws.id,
+        workspaceId: wsId,
         userId: invitee.id,
         role: input.role,
         invitedBy: userId,
       });
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "member_added",
+          targetType: "workspace_member",
+          targetId: invitee.id,
+          newValue: JSON.stringify({ email: input.email, role: input.role }),
+        });
+      } catch (e) { console.error("[Audit] member_added log failed:", e); }
       return { success: true, userName: invitee.name, email: invitee.email };
     }),
 
@@ -169,18 +212,44 @@ export const workspaceRouter = router({
   updateMemberRole: protectedProcedure
     .input(z.object({
       memberId: z.number(),
-      role: z.enum(["admin", "member", "viewer"]),
+      role: z.enum(["admin", "contract_manager", "finance_user", "member", "viewer"]),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can change roles
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can change member roles.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can change roles
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can change member roles.");
+      }
+      // Admins cannot promote to admin
+      const assignable = getAssignableRoles(userRole);
+      if (!assignable.includes(input.role as any)) {
+        throw new Error(`You cannot assign the role: ${input.role}`);
+      }
+      // Get old role for audit
+      const [member] = await db.select().from(workspaceMembers)
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)))
+        .limit(1);
+      if (!member) throw new Error("Member not found.");
+      const oldRole = member.role;
       await db.update(workspaceMembers)
         .set({ role: input.role })
-        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)));
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "role_changed",
+          targetType: "workspace_member",
+          targetId: member.userId,
+          oldValue: oldRole,
+          newValue: input.role,
+        });
+      } catch (e) { console.error("[Audit] role_changed log failed:", e); }
       return { success: true };
     }),
 
@@ -191,11 +260,39 @@ export const workspaceRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const userId = ctx.user.id;
-      // Only owner can remove members
-      const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
-      if (!ws) throw new Error("Only the workspace owner can remove members.");
+      const wsId = await requireWsId(userId);
+      const userRole = await getUserWorkspaceRole(userId, wsId);
+      // Only owner/admin can remove members
+      if (!canManageTeam(userRole)) {
+        throw new Error("Only workspace owners and admins can remove members.");
+      }
+      // Get member info for audit
+      const [member] = await db.select().from(workspaceMembers)
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)))
+        .limit(1);
+      if (!member) throw new Error("Member not found.");
+      // Cannot remove owner
+      const [ws] = await db.select().from(workspaces).where(eq(workspaces.id, wsId)).limit(1);
+      if (ws && member.userId === ws.ownerId) {
+        throw new Error("Cannot remove the workspace owner.");
+      }
+      // Admins cannot remove other admins
+      if (userRole === "admin" && member.role === "admin") {
+        throw new Error("Admins cannot remove other admins. Only the owner can.");
+      }
       await db.delete(workspaceMembers)
-        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, ws.id)));
+        .where(and(eq(workspaceMembers.id, input.memberId), eq(workspaceMembers.workspaceId, wsId)));
+      // Audit log
+      try {
+        await db.insert(auditLogs).values({
+          workspaceId: wsId,
+          userId,
+          actionType: "member_removed",
+          targetType: "workspace_member",
+          targetId: member.userId,
+          newValue: JSON.stringify({ role: member.role }),
+        });
+      } catch (e) { console.error("[Audit] member_removed log failed:", e); }
       return { success: true };
     }),
 

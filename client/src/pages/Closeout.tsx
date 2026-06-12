@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -247,6 +248,14 @@ export default function Closeout() {
         </div>
       )}
     
-      </PageLayout>
+            <PageGuidancePanel
+        pageKey="closeout"
+        title="Closeout Help"
+        description="Controlled contract closeout process. Review blockers, resolve open items, upload final evidence, and create lessons learned before closing."
+        whatToDoNext={["Review all closeout blockers for each contract", "Resolve open deliverables, invoices, and compliance items", "Upload final evidence and documentation", "Create lessons learned before closing"]}
+        helpArticleSlug="what-is-closeout"
+        glossaryTerms={["closeout", "lessons-learned", "deliverable"]}
+      />
+    </PageLayout>
   );
 }

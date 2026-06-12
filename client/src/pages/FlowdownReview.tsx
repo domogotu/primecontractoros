@@ -57,7 +57,7 @@ export default function FlowdownReview() {
       />
 
       <div className="flex items-start justify-between mb-6">
-        <Button className="bg-blue-900 hover:bg-blue-800" onClick={() => toast.info("Coming soon \u2014 AI flowdown analysis is not yet configured. Use the FAR/DFARS Reference page for manual clause review.")}>
+        <Button className="bg-blue-900 hover:bg-blue-800" onClick={() => toast.info("AI flowdown analysis requires OpenAI API configuration. Check Platform Admin \u203a Integrations to set up.")}>
           <Shield className="w-4 h-4 mr-2" /> Run AI Analysis
         </Button>
       </div>

@@ -5,7 +5,8 @@ import PageGuide from "@/components/PageGuide";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileText, CheckCircle2, Clock, AlertTriangle, Shield, Calendar, DollarSign, Users, Briefcase, Package, ClipboardList, Brain, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle2, Clock, AlertTriangle, Shield, Calendar, DollarSign, Users, Briefcase, Package, ClipboardList, Brain, Loader2, FolderOpen } from "lucide-react";
+import ContractFiles from "@/components/ContractFiles";
 
 export default function ContractHubDetail() {
   const [, params] = useRoute("/app/contracts/:id/hub");
@@ -19,15 +20,18 @@ export default function ContractHubDetail() {
   if (isLoading) return <div className="p-6 flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Loading contract hub...</div>;
   if (!contract) return <div className="p-6"><p className="text-red-500">Contract not found.</p><Button variant="outline" onClick={() => navigate("/app/contracts")}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button></div>;
 
+  const cid = contractId!;
+
   const hubSections = [
-    { title: "Requirements", description: "Track contract requirements and verification", path: "/app/requirements", icon: ClipboardList, color: "bg-blue-50 text-blue-700 border-blue-200" },
-    { title: "Deliverables", description: "Manage deliverables and submission schedules", path: "/app/deliverables", icon: Package, color: "bg-green-50 text-green-700 border-green-200" },
-    { title: "Deadlines", description: "Monitor milestones and due dates", path: "/app/deadlines", icon: Calendar, color: "bg-amber-50 text-amber-700 border-amber-200" },
-    { title: "Compliance Matrix", description: "Full compliance tracking with clause references", path: "/app/compliance", icon: Shield, color: "bg-purple-50 text-purple-700 border-purple-200" },
-    { title: "Change Orders", description: "Track modifications and change orders", path: "/app/change-management", icon: Briefcase, color: "bg-orange-50 text-orange-700 border-orange-200" },
-    { title: "Finance", description: "Invoices, payments, and financial tracking", path: "/app/finance", icon: DollarSign, color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    { title: "Subcontractors", description: "Manage subs and flowdown requirements", path: "/app/subcontractors", icon: Users, color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-    { title: "AI Review", description: "AI-powered contract analysis", path: "/app/contracts/" + String(contractId || 0) + "/ai-confirmation", icon: Brain, color: "bg-rose-50 text-rose-700 border-rose-200" },
+    { title: "Requirements", description: "Track contract requirements and verification", path: `/app/requirements?contractId=${cid}`, icon: ClipboardList, color: "bg-blue-50 text-blue-700 border-blue-200" },
+    { title: "Deliverables", description: "Manage deliverables and submission schedules", path: `/app/deliverables?contractId=${cid}`, icon: Package, color: "bg-green-50 text-green-700 border-green-200" },
+    { title: "Deadlines", description: "Monitor milestones and due dates", path: `/app/deadlines?contractId=${cid}`, icon: Calendar, color: "bg-amber-50 text-amber-700 border-amber-200" },
+    { title: "Compliance Matrix", description: "Full compliance tracking with clause references", path: `/app/compliance?contractId=${cid}`, icon: Shield, color: "bg-purple-50 text-purple-700 border-purple-200" },
+    { title: "Change Orders", description: "Track modifications and change orders", path: `/app/change-management?contractId=${cid}`, icon: Briefcase, color: "bg-orange-50 text-orange-700 border-orange-200" },
+    { title: "Finance", description: "Invoices, payments, and financial tracking", path: `/app/finance?contractId=${cid}`, icon: DollarSign, color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    { title: "Subcontractors", description: "Manage subs and flowdown requirements", path: `/app/subcontractors?contractId=${cid}`, icon: Users, color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    { title: "Files", description: "Contract documents, governing docs, and versions", path: `/app/files?contractId=${cid}`, icon: FolderOpen, color: "bg-slate-50 text-slate-700 border-slate-200" },
+    { title: "AI Review", description: "AI-powered contract analysis", path: `/app/contracts/${cid}/ai-confirmation`, icon: Brain, color: "bg-rose-50 text-rose-700 border-rose-200" },
   ];
 
   return (
@@ -38,7 +42,7 @@ export default function ContractHubDetail() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{contract.title || contract.contractNumber}</h1>
-          <p className="text-sm text-gray-500">Contract Hub \u2014 Central management view</p>
+          <p className="text-sm text-gray-500">Contract Hub — Central management view</p>
         </div>
         <Badge className="ml-auto" variant={contract.status === "active" ? "default" : "secondary"}>{contract.status}</Badge>
       </div>
@@ -58,7 +62,7 @@ export default function ContractHubDetail() {
       </div>
 
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Contract Modules</h2>
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {hubSections.map((section) => {
           const Icon = section.icon;
           return (
@@ -71,13 +75,21 @@ export default function ContractHubDetail() {
         })}
       </div>
 
+      {/* Contract Files Section */}
+      <Card className="mb-6">
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FolderOpen className="w-4 h-4" /> Contract Files & Governing Documents</CardTitle></CardHeader>
+        <CardContent>
+          {contractId && <ContractFiles contractId={contractId} />}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => navigate("/app/contracts/" + contractId + "/ai-confirmation")}><Brain className="w-4 h-4 mr-1" /> Run AI Review</Button>
-          <Button size="sm" variant="outline" onClick={() => navigate("/app/contracts/" + contractId + "/closeout")}><CheckCircle2 className="w-4 h-4 mr-1" /> Start Closeout</Button>
-          <Button size="sm" variant="outline" onClick={() => navigate("/app/reports")}><FileText className="w-4 h-4 mr-1" /> Generate Report</Button>
-          <Button size="sm" variant="outline" onClick={() => navigate("/app/change-management")}><Briefcase className="w-4 h-4 mr-1" /> New Change Order</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/app/contracts/${cid}/ai-confirmation`)}><Brain className="w-4 h-4 mr-1" /> Run AI Review</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/app/contracts/${cid}/closeout`)}><CheckCircle2 className="w-4 h-4 mr-1" /> Start Closeout</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/app/reports?contractId=${cid}`)}><FileText className="w-4 h-4 mr-1" /> Generate Report</Button>
+          <Button size="sm" variant="outline" onClick={() => navigate(`/app/change-management?contractId=${cid}&create=true`)}><Briefcase className="w-4 h-4 mr-1" /> New Change Order</Button>
         </CardContent>
       </Card>
     </div>

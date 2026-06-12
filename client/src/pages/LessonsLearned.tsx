@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PageGuide from "@/components/PageGuide";
+import PageGuidancePanel from "@/components/PageGuidancePanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -803,6 +804,14 @@ export default function LessonsLearned() {
         </DialogContent>
       </Dialog>
     
-      </PageLayout>
+            <PageGuidancePanel
+        pageKey="lessons-learned"
+        title="Lessons Learned Help"
+        description="Document insights from completed contracts and lost proposals. Create template improvement suggestions to improve future work."
+        whatToDoNext={["Document what worked and what didn't on each contract", "Capture recommendations for future proposals", "Create template improvement suggestions", "Review lessons before starting new proposals"]}
+        helpArticleSlug="what-are-lessons-learned"
+        glossaryTerms={["lessons-learned", "closeout"]}
+      />
+    </PageLayout>
   );
 }

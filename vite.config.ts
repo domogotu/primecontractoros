@@ -178,6 +178,8 @@ export default defineConfig({
       ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "primecontractoros.com",
+      "www.primecontractoros.com",
     ],
     fs: {
       strict: true,

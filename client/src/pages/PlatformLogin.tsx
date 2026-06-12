@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, navigateToLogin } from "@/const";
 import { Redirect } from "wouter";
 
 /**
@@ -14,7 +14,7 @@ export default function PlatformLogin() {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      window.location.href = getLoginUrl();
+      navigateToLogin();
     }
   }, [loading, isAuthenticated]);
 
