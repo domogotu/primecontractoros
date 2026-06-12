@@ -86,7 +86,6 @@ import EmailTemplates from "./pages/EmailTemplates";
 import ConsistencyCheck from "./pages/ConsistencyCheck";
 import ExternalViewer from "./pages/ExternalViewer";
 import DocumentVersions from "./pages/DocumentVersions";
-import DemoMode from "./pages/DemoMode";
 import LegalPages from "./pages/LegalPages";
 import Terms from "./pages/Terms";
 import Documentation from "./pages/Documentation";
@@ -242,7 +241,6 @@ function Router() {
       <Route path={"/app/consistency-check"} component={withAppShell(ConsistencyCheck)} />
       <Route path={"/app/external-viewers"} component={withAppShell(ExternalViewer)} />
       <Route path={"/app/document-versions"} component={withAppShell(DocumentVersions)} />
-      <Route path={"/app/demo-mode"} component={withAppShell(DemoMode)} />
       <Route path={"/app/subscription"} component={withAppShell(Subscription)} />
       <Route path={"/app/user-profile"} component={withAppShell(UserProfile)} />
       <Route path={"/legal"} component={LegalPages} />
