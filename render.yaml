@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: primecontractoros
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm install && pnpm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # All secrets below must be set manually in Render dashboard → Environment
+      # DO NOT hardcode values here — use Render's secret management
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OAUTH_SERVER_URL
+        value: https://api.manus.im
+      - key: VITE_APP_ID
+        value: PHGHy5iBzQLRZh8BMY8TkG
+      - key: VITE_OAUTH_PORTAL_URL
+        value: https://manus.im
+      - key: OWNER_OPEN_ID
+        value: 2cUjYc8q9VsFQXVDdB5U6U
+      - key: OWNER_NAME
+        value: Reed's Solutions
+      - key: VITE_APP_TITLE
+        value: PrimeContractorOS
+      - key: VITE_APP_LOGO
+        value: https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663625913792/FMKrJYWrfCiklXtU.png
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SAM_GOV_API_KEY
+        sync: false
+      # Manus Forge API (used for AI fallback and file storage proxy)
+      # These are Manus-issued and may need to be replaced with your own services
+      - key: BUILT_IN_FORGE_API_URL
+        value: https://forge.manus.ai
+      - key: BUILT_IN_FORGE_API_KEY
+        sync: false
+      - key: VITE_FRONTEND_FORGE_API_URL
+        value: https://forge.manus.ai
+      - key: VITE_FRONTEND_FORGE_API_KEY
+        sync: false
