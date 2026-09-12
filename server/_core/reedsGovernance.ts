@@ -12,39 +12,22 @@ export type ReedsModelGovernanceContext = {
   requestedCapability?: string;
 };
 
-export type ReedsModelRun = {
-  eventId: string;
-  runId: string;
-  correlationId: string;
-  startedAt: Date;
-};
-
+export type ReedsModelRun = { eventId: string; runId: string; correlationId: string; startedAt: Date };
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID()}`;
+const hash = (value: unknown) => crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-const hash = (value: unknown) =>
-  crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
-
-/**
- * Central governance hook for every model invocation.
- * This is intentionally below aiEngine so legacy and future AI callers
- * cannot bypass event/run correlation merely by calling the shared LLM adapter.
- */
-export async function beginReedsModelRun(
-  params: unknown,
-  context: ReedsModelGovernanceContext = {},
-): Promise<ReedsModelRun> {
+/** Central lifecycle hook beneath every shared LLM invocation. */
+export async function beginReedsModelRun(params: unknown, context: ReedsModelGovernanceContext = {}): Promise<ReedsModelRun> {
   const eventId = id("evt");
   const runId = id("run");
   const correlationId = id("corr");
   const now = new Date();
   const contentHash = hash(params);
   const sensitivity = context.sensitivity || "internal";
-
   const db = await getDb();
+
   if (!db) {
-    if (process.env.REEDS_GOVERNANCE_REQUIRED === "true") {
-      throw new Error("Reeds governance database is required but unavailable");
-    }
+    if (process.env.REEDS_GOVERNANCE_REQUIRED === "true") throw new Error("Reeds governance database is required but unavailable");
     return { eventId, runId, correlationId, startedAt: now };
   }
 
@@ -59,11 +42,12 @@ export async function beginReedsModelRun(
         requested_capability, payload
       ) VALUES (
         ${eventId}, ${correlationId}, NULL, 'model.invocation.requested', '1.0',
-        ${now}, ${now}, ${context.ownerId ?? null}, ${context.workspaceId ?? null},
-        ${context.projectId ?? null}, 'system_llm_gateway', ${context.actorId ?? null},
-        ${Boolean(context.actorId)}, 'primecontractoros', 'internal', 'llm_gateway',
-        ${sensitivity}, false, false, 'governance', ${eventId}, ${contentHash},
-        false, ${context.requestedCapability || 'model.invoke'}, ${JSON.stringify({ purpose: context.purpose || 'llm invocation' })}
+        ${now}, ${now}, ${context.ownerId ?? null}, ${context.workspaceId ?? null}, ${context.projectId ?? null},
+        'system_llm_gateway', ${context.actorId ?? null}, ${Boolean(context.actorId)},
+        'primecontractoros', 'internal', 'llm_gateway', ${sensitivity}, false, false,
+        'governance', ${eventId}, ${contentHash}, false,
+        ${context.requestedCapability || 'model.invoke'},
+        ${JSON.stringify({ purpose: context.purpose || 'llm invocation' })}
       )
     `);
 
@@ -72,10 +56,9 @@ export async function beginReedsModelRun(
         run_id, event_id, correlation_id, owner_id, workspace_id, project_id,
         actor_id, purpose, state, current_stage, risk_level
       ) VALUES (
-        ${runId}, ${eventId}, ${correlationId}, ${context.ownerId ?? null},
-        ${context.workspaceId ?? null}, ${context.projectId ?? null},
-        ${context.actorId ?? null}, ${context.purpose || 'LLM invocation'},
-        'executing', 5, ${sensitivity === 'critical' || sensitivity === 'restricted' ? 'high' : 'medium'}
+        ${runId}, ${eventId}, ${correlationId}, ${context.ownerId ?? null}, ${context.workspaceId ?? null}, ${context.projectId ?? null},
+        ${context.actorId ?? null}, ${context.purpose || 'LLM invocation'}, 'executing', 5,
+        ${sensitivity === 'critical' || sensitivity === 'restricted' ? 'high' : 'medium'}
       )
     `);
   } catch (error) {
@@ -85,19 +68,17 @@ export async function beginReedsModelRun(
   return { eventId, runId, correlationId, startedAt: now };
 }
 
-export async function finishReedsModelRun(
-  run: ReedsModelRun,
-  result: unknown,
-): Promise<void> {
+export async function finishReedsModelRun(run: ReedsModelRun, result: unknown): Promise<void> {
   const db = await getDb();
   if (!db) return;
   try {
     const now = new Date();
     const resultHash = hash(result);
+    // The model response is not success-complete until independent verification passes.
     await db.execute(sql`
       UPDATE reeds_runs
-      SET state = 'verifying', current_stage = 11, completed_at = ${now}, updated_at = ${now},
-          status_reason = ${`Model response received; result hash ${resultHash}`}
+      SET state = 'verifying', current_stage = 11, updated_at = ${now},
+          status_reason = ${`Model response received; result hash ${resultHash}; awaiting verification`}
       WHERE run_id = ${run.runId}
     `);
     await db.execute(sql`
@@ -105,8 +86,8 @@ export async function finishReedsModelRun(
         audit_id, correlation_id, run_id, event_id, actor_id, actor_type,
         event_type, risk_level, reason, result, final_state
       ) VALUES (
-        ${id('audit')}, ${run.correlationId}, ${run.runId}, ${run.eventId},
-        NULL, 'system_llm_gateway', 'model.invocation.completed', 'medium',
+        ${id('audit')}, ${run.correlationId}, ${run.runId}, ${run.eventId}, NULL,
+        'system_llm_gateway', 'model.invocation.completed', 'medium',
         'LLM response returned to governed application layer',
         ${JSON.stringify({ resultHash })}, 'verifying'
       )
@@ -116,10 +97,7 @@ export async function finishReedsModelRun(
   }
 }
 
-export async function failReedsModelRun(
-  run: ReedsModelRun,
-  error: unknown,
-): Promise<void> {
+export async function failReedsModelRun(run: ReedsModelRun, error: unknown): Promise<void> {
   const db = await getDb();
   if (!db) return;
   try {
@@ -127,8 +105,7 @@ export async function failReedsModelRun(
     const message = error instanceof Error ? error.message : String(error);
     await db.execute(sql`
       UPDATE reeds_runs
-      SET state = 'failed', current_stage = 11, completed_at = ${now}, updated_at = ${now},
-          status_reason = ${message.slice(0, 2000)}
+      SET state = 'failed', current_stage = 11, completed_at = ${now}, updated_at = ${now}, status_reason = ${message.slice(0, 2000)}
       WHERE run_id = ${run.runId}
     `);
     await db.execute(sql`
@@ -136,9 +113,8 @@ export async function failReedsModelRun(
         audit_id, correlation_id, run_id, event_id, actor_id, actor_type,
         event_type, risk_level, reason, final_state
       ) VALUES (
-        ${id('audit')}, ${run.correlationId}, ${run.runId}, ${run.eventId},
-        NULL, 'system_llm_gateway', 'model.invocation.failed', 'high',
-        ${message.slice(0, 2000)}, 'failed'
+        ${id('audit')}, ${run.correlationId}, ${run.runId}, ${run.eventId}, NULL,
+        'system_llm_gateway', 'model.invocation.failed', 'high', ${message.slice(0, 2000)}, 'failed'
       )
     `);
   } catch (auditError) {
