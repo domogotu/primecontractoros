@@ -2,166 +2,29 @@
   "version": "7",
   "dialect": "mysql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1777887683966,
-      "tag": "0000_sweet_energizer",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1777892866808,
-      "tag": "0001_demonic_enchantress",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1777923121552,
-      "tag": "0002_melted_scrambler",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1777935432076,
-      "tag": "0003_lonely_lockheed",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1777944503277,
-      "tag": "0004_thankful_agent_zero",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1777947799899,
-      "tag": "0005_brave_lady_ursula",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1777948498179,
-      "tag": "0006_aromatic_thunderbolts",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1777950545171,
-      "tag": "0007_true_lorna_dane",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1778533782795,
-      "tag": "0008_true_miracleman",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1778536274178,
-      "tag": "0009_left_swarm",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "5",
-      "when": 1778537088800,
-      "tag": "0010_wide_lyja",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "5",
-      "when": 1778538212873,
-      "tag": "0011_past_blade",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "5",
-      "when": 1778539564771,
-      "tag": "0012_rainy_cable",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "5",
-      "when": 1778562450660,
-      "tag": "0013_typical_sabretooth",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "5",
-      "when": 1778562582447,
-      "tag": "0014_fat_fabian_cortez",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "5",
-      "when": 1778564549651,
-      "tag": "0015_fancy_famine",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "5",
-      "when": 1778602898561,
-      "tag": "0016_productive_ink",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "5",
-      "when": 1778609245963,
-      "tag": "0017_careful_korvac",
-      "breakpoints": true
-    },
-    {
-      "idx": 18,
-      "version": "5",
-      "when": 1778611731339,
-      "tag": "0018_keen_namora",
-      "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "5",
-      "when": 1778614917842,
-      "tag": "0019_flawless_joshua_kane",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "5",
-      "when": 1778617152316,
-      "tag": "0020_neat_grim_reaper",
-      "breakpoints": true
-    },
-    {
-      "idx": 21,
-      "version": "5",
-      "when": 1778619667539,
-      "tag": "0021_silent_steel_serpent",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "5",
-      "when": 1778650304529,
-      "tag": "0022_nasty_nightshade",
-      "breakpoints": true
-    }
+    {"idx":0,"version":"5","when":1777887683966,"tag":"0000_sweet_energizer","breakpoints":true},
+    {"idx":1,"version":"5","when":1777892866808,"tag":"0001_demonic_enchantress","breakpoints":true},
+    {"idx":2,"version":"5","when":1777923121552,"tag":"0002_melted_scrambler","breakpoints":true},
+    {"idx":3,"version":"5","when":1777935432076,"tag":"0003_lonely_lockheed","breakpoints":true},
+    {"idx":4,"version":"5","when":1777944503277,"tag":"0004_thankful_agent_zero","breakpoints":true},
+    {"idx":5,"version":"5","when":1777947799899,"tag":"0005_brave_lady_ursula","breakpoints":true},
+    {"idx":6,"version":"5","when":1777948498179,"tag":"0006_aromatic_thunderbolts","breakpoints":true},
+    {"idx":7,"version":"5","when":1777950545171,"tag":"0007_true_lorna_dane","breakpoints":true},
+    {"idx":8,"version":"5","when":1778533782795,"tag":"0008_true_miracleman","breakpoints":true},
+    {"idx":9,"version":"5","when":1778536274178,"tag":"0009_left_swarm","breakpoints":true},
+    {"idx":10,"version":"5","when":1778537088800,"tag":"0010_wide_lyja","breakpoints":true},
+    {"idx":11,"version":"5","when":1778538212873,"tag":"0011_past_blade","breakpoints":true},
+    {"idx":12,"version":"5","when":1778539564771,"tag":"0012_rainy_cable","breakpoints":true},
+    {"idx":13,"version":"5","when":1778562450660,"tag":"0013_typical_sabretooth","breakpoints":true},
+    {"idx":14,"version":"5","when":1778562582447,"tag":"0014_fat_fabian_cortez","breakpoints":true},
+    {"idx":15,"version":"5","when":1778564549651,"tag":"0015_fancy_famine","breakpoints":true},
+    {"idx":16,"version":"5","when":1778602898561,"tag":"0016_productive_ink","breakpoints":true},
+    {"idx":17,"version":"5","when":1778609245963,"tag":"0017_careful_korvac","breakpoints":true},
+    {"idx":18,"version":"5","when":1778611731339,"tag":"0018_keen_namora","breakpoints":true},
+    {"idx":19,"version":"5","when":1778614917842,"tag":"0019_flawless_joshua_kane","breakpoints":true},
+    {"idx":20,"version":"5","when":1778617152316,"tag":"0020_neat_grim_reaper","breakpoints":true},
+    {"idx":21,"version":"5","when":1778619667539,"tag":"0021_silent_steel_serpent","breakpoints":true},
+    {"idx":22,"version":"5","when":1778650304529,"tag":"0022_nasty_nightshade","breakpoints":true},
+    {"idx":23,"version":"5","when":1778710000000,"tag":"0023_reeds_governance","breakpoints":true}
   ]
 }
