@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import {
   contextualHelpItems,
@@ -53,7 +52,7 @@ export const lifecycleRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       return db
         .select()
         .from(lifecycleStatusHistory)
@@ -80,7 +79,7 @@ export const lifecycleRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db.insert(lifecycleStatusHistory).values({
         workspaceId,
         recordType: input.recordType,
@@ -101,7 +100,7 @@ export const autoPopulationRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       return db
         .select()
         .from(autoPopulationEvents)
@@ -129,7 +128,7 @@ export const autoPopulationRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db.insert(autoPopulationEvents).values({
         workspaceId,
         targetRecordType: input.targetRecordType,
@@ -148,7 +147,7 @@ export const autoPopulationRouter = router({
   getBusinessProfileAutoFill: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
-    const workspaceId = requireWorkspaceId(ctx);
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
     const [profile] = await db
       .select()
       .from(businessProfiles)
@@ -163,7 +162,7 @@ export const autoPopulationRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const [opp] = await db
         .select()
         .from(opportunities)
@@ -178,7 +177,7 @@ export const autoPopulationRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return null;
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const [prop] = await db
         .select()
         .from(proposals)
@@ -195,7 +194,7 @@ export const sourceReferencesRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       return db
         .select()
         .from(sourceReferences)
@@ -224,7 +223,7 @@ export const sourceReferencesRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db.insert(sourceReferences).values({
         workspaceId,
         ...input,
@@ -238,7 +237,7 @@ export const templateImprovementsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    const workspaceId = requireWorkspaceId(ctx);
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
     return db
       .select()
       .from(templateImprovementSuggestions)
@@ -258,7 +257,7 @@ export const templateImprovementsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db.insert(templateImprovementSuggestions).values({
         workspaceId,
         ...input,
@@ -271,7 +270,7 @@ export const templateImprovementsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(templateImprovementSuggestions)
         .set({ status: input.status })
@@ -335,7 +334,7 @@ export const dashboardDataRouter = router({
   getLifecycleSnapshot: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
-    const workspaceId = requireWorkspaceId(ctx);
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
 
     const [oppRows] = await db.select({ count: sql<number>`count(*)` }).from(opportunities).where(and(eq(opportunities.workspaceId, workspaceId), sql`${opportunities.deletedAt} IS NULL`));
     const [propRows] = await db.select({ count: sql<number>`count(*)` }).from(proposals).where(and(eq(proposals.workspaceId, workspaceId), sql`${proposals.deletedAt} IS NULL`));
@@ -364,7 +363,7 @@ export const dashboardDataRouter = router({
   getAttentionItems: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
-    const workspaceId = requireWorkspaceId(ctx);
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
     const items: Array<{ type: string; title: string; description: string; recordType?: string; recordId?: number; priority: string }> = [];
 
     // Check for contracts needing confirmation (setup status)
@@ -425,7 +424,7 @@ export const dashboardDataRouter = router({
   getSetupReadiness: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
-    const workspaceId = requireWorkspaceId(ctx);
+    const workspaceId = await requireWorkspaceId(ctx.user.id);
 
     const [profile] = await db
       .select()
@@ -437,8 +436,8 @@ export const dashboardDataRouter = router({
       hasBusinessProfile: !!profile,
       hasUEI: !!(profile?.uei),
       hasCAGE: !!(profile?.cage),
-      hasSAM: !!(profile?.samStatus && profile.samStatus !== "unknown"),
-      hasNAICS: !!(profile?.primaryNaics),
+      hasSAM: !!profile?.samStatus,
+      hasNAICS: !!profile?.naicsPrimary,
       profileComplete: false,
     };
     checks.profileComplete = checks.hasUEI && checks.hasCAGE && checks.hasSAM && checks.hasNAICS;
@@ -454,7 +453,7 @@ export const aiSuggestionsEnhancedRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       return db
         .select()
         .from(aiSuggestions)
@@ -469,7 +468,7 @@ export const aiSuggestionsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
 
       // Get the suggestion
       const [suggestion] = await db
@@ -480,24 +479,23 @@ export const aiSuggestionsEnhancedRouter = router({
       if (!suggestion) throw new Error("Suggestion not found");
 
       // Create a task from it
-      const [result] = await db.insert(tasks).values({
+      const result = await db.insert(tasks).values({
         workspaceId,
         title: suggestion.suggestionTitle,
         description: suggestion.suggestionText,
-        status: "pending",
+        status: "todo",
         priority: suggestion.priority || "medium",
         linkedRecordType: suggestion.relatedRecordType,
         linkedRecordId: suggestion.relatedRecordId,
-        createdBy: ctx.user.id,
       });
 
       // Update suggestion status
       await db
         .update(aiSuggestions)
-        .set({ status: "completed", createdTaskId: result?.insertId || null })
+        .set({ status: "completed", createdTaskId: getInsertId(result) })
         .where(eq(aiSuggestions.id, input.suggestionId));
 
-      return { success: true, taskId: result?.insertId };
+      return { success: true, taskId: getInsertId(result) };
     }),
 
   // Accept suggestion
@@ -506,7 +504,7 @@ export const aiSuggestionsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiSuggestions)
         .set({ status: "accepted", acceptedAt: new Date() })
@@ -520,7 +518,7 @@ export const aiSuggestionsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiSuggestions)
         .set({ status: "dismissed", dismissedAt: new Date() })
@@ -537,7 +535,7 @@ export const aiFindingsEnhancedRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       return db
         .select()
         .from(aiFindings)
@@ -557,7 +555,7 @@ export const aiFindingsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiFindings)
         .set({ reviewState: "approved", reviewedBy: ctx.user.id, reviewedAt: new Date() })
@@ -571,7 +569,7 @@ export const aiFindingsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiFindings)
         .set({ reviewState: "rejected", reviewedBy: ctx.user.id, reviewedAt: new Date() })
@@ -585,7 +583,7 @@ export const aiFindingsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiFindings)
         .set({ staleStatus: "stale", reviewState: "stale" })
@@ -608,7 +606,7 @@ export const aiFindingsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
 
       // Verify finding is approved
       const [finding] = await db
@@ -627,25 +625,25 @@ export const aiFindingsEnhancedRouter = router({
       let objectId: number | undefined;
 
       if (input.objectType === "requirement") {
-        const [result] = await db.insert(contractRequirements).values({
+        const result = await db.insert(contractRequirements).values({
           workspaceId,
           contractId: input.contractId,
           title: input.title,
           description: input.description || "",
           aiFindingId: input.findingId,
         });
-        objectId = result?.insertId;
+        objectId = getInsertId(result);
       } else if (input.objectType === "deliverable") {
-        const [result] = await db.insert(deliverables).values({
+        const result = await db.insert(deliverables).values({
           workspaceId,
           contractId: input.contractId,
           title: input.title,
           description: input.description || "",
           dueDate: input.dueDate ? new Date(input.dueDate) : null,
         });
-        objectId = result?.insertId;
+        objectId = getInsertId(result);
       } else if (input.objectType === "deadline") {
-        const [result] = await db.insert(deadlines).values({
+        const result = await db.insert(deadlines).values({
           workspaceId,
           title: input.title,
           description: input.description || "",
@@ -653,15 +651,15 @@ export const aiFindingsEnhancedRouter = router({
           linkedRecordType: "contract",
           linkedRecordId: input.contractId,
         });
-        objectId = result?.insertId;
+        objectId = getInsertId(result);
       } else if (input.objectType === "compliance_item") {
-        const [result] = await db.insert(complianceItems).values({
+        const result = await db.insert(complianceItems).values({
           workspaceId,
           contractId: input.contractId,
           title: input.title,
           description: input.description || "",
         });
-        objectId = result?.insertId;
+        objectId = getInsertId(result);
       }
 
       // Update finding with live object reference
@@ -681,7 +679,7 @@ export const aiFindingsEnhancedRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database not available");
-      const workspaceId = requireWorkspaceId(ctx);
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       await db
         .update(aiFindings)
         .set({ staleStatus: "stale" })

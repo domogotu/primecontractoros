@@ -24,9 +24,10 @@ function AIAnalysisPanel({ review }: { review: any }) {
   });
 
   const handleAnalyze = () => {
+    if (!review.workspaceId) { toast.error("Workspace context is missing for this loss review."); return; }
     setLoading(true);
     aiMutation.mutate({
-      workspaceId: review.workspaceId || 1,
+      workspaceId: review.workspaceId,
       proposalId: review.proposalId,
       proposalData: `Loss Review Debrief. Reason Lost: ${review.reasonLost || "Not specified"}. Competitor Info: ${review.competitorInfo || "Not specified"}. Lessons Learned: ${review.lessonsLearned || "Not specified"}. Action Items: ${review.actionItems || "Not specified"}.`,
     });
@@ -55,7 +56,7 @@ function SaveLessonPanel({ review }: { review: any }) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState(`Lesson from Proposal #${review.proposalId} Loss`);
   const [description, setDescription] = useState(review.lessonsLearned || "");
-  const createLesson = trpc.lessons.create.useMutation({
+  const createLesson = trpc.lessonsLearnedV2.create.useMutation({
     onSuccess: () => { toast.success("Lesson saved"); setShowForm(false); },
     onError: (e: any) => toast.error(e.message),
   });
@@ -75,7 +76,7 @@ function SaveLessonPanel({ review }: { review: any }) {
       <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Lesson description"
         rows={3} className="w-full px-3 py-2 border border-blue-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
       <div className="flex gap-2">
-        <Button size="sm" onClick={() => createLesson.mutate({ title, description, proposalId: review.proposalId })}
+        <Button size="sm" onClick={() => createLesson.mutate({ title, description, proposalId: review.proposalId, lessonType: "proposal_loss", linkedRecordType: "proposal", linkedRecordId: review.proposalId, linkedRecordTitle: `Proposal #${review.proposalId}` })}
           disabled={createLesson.isPending || !title.trim()}>
           {createLesson.isPending ? "Saving..." : "Save Lesson"}
         </Button>
@@ -96,6 +97,7 @@ export default function LossReview() {
   const { data: reviews = [], isLoading, refetch } = trpc.lossReviews.list.useQuery();
   const createMutation = trpc.lossReviews.create.useMutation({
     onSuccess: () => { refetch(); setShowForm(false); setForm({ proposalId: "", reviewDate: "", reasonLost: "", competitorInfo: "", lessonsLearned: "", actionItems: "" }); toast.success("Loss review created"); },
+    onError: (e: any) => toast.error(e.message || "Unable to create loss review"),
   });
   const updateMutation = trpc.lossReviews.update.useMutation({
     onSuccess: () => { refetch(); toast.success("Review updated"); },

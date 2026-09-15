@@ -1,8 +1,5 @@
-// @ts-nocheck
 import React, { useState } from "react";
-import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
 import PageLayout from "@/components/PageLayout";
 import PageGuide from "@/components/PageGuide";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -35,11 +31,9 @@ import {
 
 export default function AuditLog() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [actionFilter, setActionFilter] = useState("ALL");
+  const [actionFilter, setActionFilter] = useState("all");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -55,20 +49,37 @@ export default function AuditLog() {
   };
 
   const handleExport = () => {
-    toast({
-      title: "Export Started",
-      description: "Audit log export is being generated. You will be notified when it's ready.",
-    });
+    if (filteredLogs.length === 0) {
+      toast({ title: "Nothing to export", description: "No audit records match the current filters." });
+      return;
+    }
+    const escapeCsv = (value: unknown) => {
+      const text = value == null ? "" : typeof value === "string" ? value : JSON.stringify(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const rows = filteredLogs.map((log) => [log.id, log.timestamp, log.userId, log.action, log.entity, log.entityId, log.changes]);
+    const csv = [["Event ID", "Timestamp", "User ID", "Action", "Record Type", "Record ID", "Changes"], ...rows]
+      .map(row => row.map(escapeCsv).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `primecontractoros-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export complete", description: `${filteredLogs.length} audit records exported as CSV.` });
   };
 
-  const getActionColor = (action: string) => {
+  const getActionClass = (action: string) => {
     switch (action) {
-      case "CREATE": return "green";
-      case "UPDATE": return "blue";
-      case "DELETE": return "red";
-      case "STATUS_CHANGE": return "yellow";
-      case "LOGIN": return "purple";
-      default: return "gray";
+      case "create": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      case "update": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      case "delete": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      case "archive": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "restore": return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
+      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
     }
   };
 
@@ -78,7 +89,7 @@ export default function AuditLog() {
       (log.action || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (log.changes || "").toLowerCase().includes(searchQuery.toLowerCase());
       
-    const matchesAction = actionFilter === "ALL" || log.action.toUpperCase() === actionFilter;
+    const matchesAction = actionFilter === "all" || log.action === actionFilter;
     
     const logDate = new Date(log.timestamp);
     const matchesDateFrom = !dateFrom || logDate >= new Date(dateFrom);
@@ -97,14 +108,11 @@ export default function AuditLog() {
           whatToDoNext={[
             "Filter by specific action types or users",
             "Export logs for external compliance audits",
-            "Expand individual records to see exact before/after values"
+            "Expand individual records to inspect the recorded change payload"
           ]}
           relatedRecords={[
             { label: "User Management", path: "/app/users" },
             { label: "Settings", path: "/app/settings" }
-          ]}
-          alerts={[
-            { type: "info", message: "Audit logs are retained for 7 years to meet DCAA compliance requirements." }
           ]}
         />
 
@@ -138,7 +146,7 @@ export default function AuditLog() {
                 <ShieldAlert className="h-6 w-6 text-purple-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Security Events (30d)</p>
+                <p className="text-sm font-medium text-muted-foreground">Events (30d)</p>
                 <h3 className="text-2xl font-bold text-foreground">{logs.filter((l: any) => { const d = new Date(l.timestamp); const now = new Date(); return (now.getTime() - d.getTime()) < 30 * 24 * 60 * 60 * 1000; }).length}</h3>
               </div>
             </CardContent>
@@ -153,7 +161,7 @@ export default function AuditLog() {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by user, record, or details..."
+                    placeholder="Search by record, action, or details..."
                     className="pl-9 bg-background border-border"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -164,12 +172,12 @@ export default function AuditLog() {
                     <SelectValue placeholder="Action Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All Actions</SelectItem>
-                    <SelectItem value="CREATE">Create</SelectItem>
-                    <SelectItem value="UPDATE">Update</SelectItem>
-                    <SelectItem value="DELETE">Delete</SelectItem>
-                    <SelectItem value="STATUS_CHANGE">Status Change</SelectItem>
-                    <SelectItem value="LOGIN">Login</SelectItem>
+                    <SelectItem value="all">All Actions</SelectItem>
+                    <SelectItem value="create">Create</SelectItem>
+                    <SelectItem value="update">Update</SelectItem>
+                    <SelectItem value="delete">Delete</SelectItem>
+                    <SelectItem value="archive">Archive</SelectItem>
+                    <SelectItem value="restore">Restore</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button variant="outline" onClick={() => setShowDateFilter(!showDateFilter)}>
@@ -237,7 +245,7 @@ export default function AuditLog() {
                           <span className="truncate">User #{log.userId}</span>
                         </div>
                         <div className="col-span-2">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${getActionColor(log.action)}-100 text-${getActionColor(log.action)}-800 dark:bg-${getActionColor(log.action)}-900/30 dark:text-${getActionColor(log.action)}-400`}>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getActionClass(log.action)}`}>
                             {log.action}
                           </span>
                         </div>
@@ -268,33 +276,15 @@ export default function AuditLog() {
                                 <span className="text-muted-foreground">Event ID:</span>
                                 <span className="col-span-2 font-mono text-foreground">{log.id}</span>
                               </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                <span className="text-muted-foreground">IP Address:</span>
-                                <span className="col-span-2 font-mono text-foreground">{log.ip}</span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                <span className="text-muted-foreground">User Email:</span>
-                                <span className="col-span-2 text-foreground">{log.userEmail}</span>
-                              </div>
+
                             </div>
                           </div>
                           
                           <div>
-                            <h4 className="text-sm font-medium text-foreground mb-2">Data Changes</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-background border border-border rounded p-3">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Before</div>
-                                <pre className="text-xs text-red-400 overflow-x-auto">
-                                  {log.before ? JSON.stringify(log.before, null, 2) : "null"}
-                                </pre>
-                              </div>
-                              <div className="bg-background border border-border rounded p-3">
-                                <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">After</div>
-                                <pre className="text-xs text-green-400 overflow-x-auto">
-                                  {log.after ? JSON.stringify(log.after, null, 2) : "null"}
-                                </pre>
-                              </div>
-                            </div>
+                            <h4 className="text-sm font-medium text-foreground mb-2">Recorded Changes</h4>
+                            <pre className="text-xs text-foreground overflow-x-auto bg-background border border-border rounded p-3">
+                              {log.changes || "No change payload recorded."}
+                            </pre>
                           </div>
                         </div>
                       )}

@@ -1,0 +1,68 @@
+{
+  "id": "KpnVybT0BRJ4YozT",
+  "name": "00.01 — Common Request Schema",
+  "active": false,
+  "isArchived": false,
+  "versionId": "fea1d5c3-5a76-4113-a544-6fcec4c362d4",
+  "activeVersionId": null,
+  "triggerCount": 0,
+  "createdAt": "2026-08-06T07:34:04.308Z",
+  "updatedAt": "2026-08-06T21:50:34.131Z",
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "connections": {
+    "Request In": {
+      "main": [
+        [
+          {
+            "node": "Validate + Normalize Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "84363c6f-a5c0-49ad-aa2c-d132ee7b684d",
+      "name": "Request In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "userId", "type": "string" },
+            { "name": "input", "type": "string" },
+            { "name": "intent", "type": "string" },
+            { "name": "metadata", "type": "object" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3bcee43e-c292-4109-a366-11aea84bec6b",
+      "name": "Validate + Normalize Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst errors = [];\nconst text = (r.input ?? '').toString();\nif (!text.trim()) errors.push('input_required');\nif (text.length > 32000) errors.push('input_too_long');\n\nconst rand = () => Math.random().toString(16).slice(2, 10);\nconst normalized = {\n  requestId: r.requestId || ('req-' + Date.now().toString(16) + '-' + rand()),\n  traceId: r.traceId || ('trace-' + Date.now().toString(16) + '-' + rand()),\n  sessionId: r.sessionId || ('session-' + rand()),\n  userId: r.userId || 'anonymous',\n  input: text.trim(),\n  intent: r.intent || '',\n  metadata: r.metadata || {},\n  schemaVersion: '1.0',\n  receivedAt: new Date().toISOString(),\n};\n\nreturn {\n  valid: errors.length === 0,\n  errors,\n  request: normalized,\n  schema: 'common.request.v1',\n};"
+      }
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": null,
+  "tags": [],
+  "meta": null,
+  "parentFolderId": null
+}

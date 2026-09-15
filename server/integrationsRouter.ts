@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "./_core/trpc";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { logAudit } from "./featureRouter";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import {
   files,
   fileVersions,
@@ -97,7 +97,7 @@ export const fileStorageRouter = router({
       } as any);
 
       try { await logAudit(workspaceId, ctx.user.id, "create", "fileStorage", 0, { fileName: input.fileName, size: buffer.length }); } catch {}
-      return { id: result.insertId, fileKey, url };
+      return { id: getInsertId(result), fileKey, url };
     }),
 
   getDownloadUrl: protectedProcedure
@@ -198,7 +198,7 @@ export const fileStorageRouter = router({
             uploadedBy: ctx.user?.id || null,
             storageProvider: s3Config ? "s3" : "built-in",
           } as any);
-          results.push({ fileName: fileInput.fileName, id: result.insertId });
+          results.push({ fileName: fileInput.fileName, id: getInsertId(result) });
         } catch (err: any) {
           results.push({ fileName: fileInput.fileName, error: err.message || "Upload failed" });
         }
@@ -577,7 +577,9 @@ export const billingRouter = router({
           expand: ["subscription"],
         });
 
-        if (session.payment_status === "unpaid" && session.status !== "complete") {
+        // A Stripe redirect alone is not proof of successful activation.
+        // Require a completed Checkout Session and a settled/no-payment-required state.
+        if (session.status !== "complete" || !["paid", "no_payment_required"].includes(session.payment_status)) {
           return { success: false, error: "Payment not completed", status: "pending" as const };
         }
 
@@ -585,9 +587,19 @@ export const billingRouter = router({
         const planIdStr = session.metadata?.planId;
         const planId = planIdStr ? parseInt(planIdStr) : null;
 
-        // Find workspace for this user
-        const [ws] = await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
+        // Checkout metadata is the source of truth for the workspace being purchased.
+        // Verify that the authenticated user owns that workspace before activating it.
+        const metadataWorkspaceId = Number(session.metadata?.workspaceId || 0);
+        const [ws] = metadataWorkspaceId
+          ? await db.select().from(workspaces).where(and(eq(workspaces.id, metadataWorkspaceId), eq(workspaces.ownerId, userId))).limit(1)
+          : await db.select().from(workspaces).where(eq(workspaces.ownerId, userId)).limit(1);
         const workspaceId = ws?.id ?? null;
+        if (!workspaceId) {
+          return { success: false, error: "Checkout workspace could not be verified for this account", status: "error" as const };
+        }
+        if (metadataWorkspaceId && metadataWorkspaceId !== workspaceId) {
+          return { success: false, error: "Checkout workspace does not belong to this account", status: "error" as const };
+        }
 
         // Record checkout session
         const [existing] = await db.select().from(checkoutSessions)
@@ -613,11 +625,40 @@ export const billingRouter = router({
             .where(eq(checkoutSessions.stripeSessionId, input.sessionId));
         }
 
-        // Update access state if checkout completed
-        if (session.status === "complete" && workspaceId) {
-          await updateAccessState(workspaceId, "active_paid", "Checkout completed", userId);
-          await logBillingAudit(workspaceId, "checkout_completed", userId, `Plan ${planId} checkout completed via Stripe session ${input.sessionId}`);
+        // Persist the Stripe subscription before granting access so billing and
+        // authorization cannot drift apart. Re-verification is idempotent.
+        const stripeSubscription = typeof session.subscription === "string" ? null : session.subscription;
+        const stripeSubscriptionId = typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+        const stripeCustomerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+        if (!planId || !stripeSubscriptionId) {
+          return { success: false, error: "Stripe subscription metadata is incomplete", status: "error" as const };
         }
+        const [existingSubscription] = await db.select().from(subscriptions)
+          .where(eq(subscriptions.workspaceId, workspaceId)).limit(1);
+        const stripeSubscriptionData = stripeSubscription as any;
+        const subscriptionData = {
+          planId,
+          stripeCustomerId: stripeCustomerId || null,
+          stripeSubscriptionId,
+          status: ((stripeSubscription?.status || "active") === "trialing" ? "trialing" : "active") as "active" | "trialing",
+          currentPeriodStart: stripeSubscriptionData?.current_period_start ? new Date(stripeSubscriptionData.current_period_start * 1000) : null,
+          currentPeriodEnd: stripeSubscriptionData?.current_period_end ? new Date(stripeSubscriptionData.current_period_end * 1000) : null,
+          cancelAtPeriodEnd: stripeSubscription?.cancel_at_period_end || false,
+        };
+        if (existingSubscription) {
+          await db.update(subscriptions).set(subscriptionData).where(eq(subscriptions.id, existingSubscription.id));
+        } else {
+          await db.insert(subscriptions).values({ workspaceId, ...subscriptionData });
+        }
+        await db.update(workspaces).set({ planId }).where(eq(workspaces.id, workspaceId));
+
+        await updateAccessState(
+          workspaceId,
+          subscriptionData.status === "trialing" ? "trial_active" : "active_paid",
+          "Verified Stripe checkout completed",
+          userId
+        );
+        await logBillingAudit(workspaceId, "checkout_completed", userId, `Plan ${planId} checkout completed via Stripe session ${input.sessionId}`);
 
         // Evaluate current access
         const access = workspaceId ? await evaluateAccess(workspaceId, userId) : null;
@@ -824,7 +865,7 @@ export const templatesRouter = router({
       if (!db) throw new Error("Database not available");
       const [result] = await db.insert(templates).values({ workspaceId, ...input });
       try { await logAudit(workspaceId, ctx.user.id, "create", "templates", 0, input); } catch {}
-      return { id: result.insertId };
+      return { id: getInsertId(result) };
     }),
 
   update: protectedProcedure
@@ -870,7 +911,7 @@ export const templatesRouter = router({
         content: defaultTemplate.content,
       });
       try { await logAudit(workspaceId, ctx.user.id, "delete", "templates", 0, null); } catch {}
-      return { id: result.insertId };
+      return { id: getInsertId(result) };
     }),
 });
 
@@ -925,6 +966,14 @@ export const closeoutRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      // Verify the contract belongs to the active workspace before creating or returning closeout data.
+      const [contract] = await db
+        .select({ id: contracts.id })
+        .from(contracts)
+        .where(and(eq(contracts.id, input.contractId), eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt)))
+        .limit(1);
+      if (!contract) throw new Error("Contract not found in this workspace");
+
       // Check if closeout already exists
       const [existing] = await db
         .select()
@@ -941,7 +990,7 @@ export const closeoutRouter = router({
         initiatedBy: ctx.user?.id || null,
       });
 
-      const closeoutId = Number(record.insertId);
+      const closeoutId = getInsertId(record);
 
       // Create default checklist items (FAR 4.804 compliant)
       const defaultItems = [
@@ -975,8 +1024,17 @@ export const closeoutRouter = router({
   toggleItem: protectedProcedure
     .input(z.object({ itemId: z.number(), completed: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+
+      const [ownedItem] = await db
+        .select({ id: closeoutChecklistItems.id })
+        .from(closeoutChecklistItems)
+        .innerJoin(closeoutRecords, eq(closeoutChecklistItems.closeoutId, closeoutRecords.id))
+        .where(and(eq(closeoutChecklistItems.id, input.itemId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedItem) throw new Error("Closeout checklist item not found in this workspace");
 
       await db
         .update(closeoutChecklistItems)
@@ -1000,8 +1058,16 @@ export const closeoutRouter = router({
       description: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const [ownedItem] = await db
+        .select({ id: closeoutChecklistItems.id })
+        .from(closeoutChecklistItems)
+        .innerJoin(closeoutRecords, eq(closeoutChecklistItems.closeoutId, closeoutRecords.id))
+        .where(and(eq(closeoutChecklistItems.id, input.itemId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedItem) throw new Error("Closeout checklist item not found in this workspace");
       const { itemId, dueDate, status, ...rest } = input;
       const setData: any = { ...rest };
       if (status) {
@@ -1028,8 +1094,15 @@ export const closeoutRouter = router({
       dueDate: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const [ownedCloseout] = await db
+        .select({ id: closeoutRecords.id })
+        .from(closeoutRecords)
+        .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedCloseout) throw new Error("Closeout record not found in this workspace");
       const [result] = await db.insert(closeoutChecklistItems).values({
         closeoutId: input.closeoutId,
         label: input.label,
@@ -1040,7 +1113,7 @@ export const closeoutRouter = router({
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
         sortOrder: 99,
       });
-      return { id: result.insertId };
+      return { id: getInsertId(result) };
     }),
 
   // ===== BLOCKERS =====
@@ -1058,6 +1131,12 @@ export const closeoutRouter = router({
       const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const [ownedCloseout] = await db
+        .select({ id: closeoutRecords.id })
+        .from(closeoutRecords)
+        .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedCloseout) throw new Error("Closeout record not found in this workspace");
       const [result] = await db.insert(closeoutBlockingItems).values({
         closeoutId: input.closeoutId,
         workspaceId,
@@ -1068,8 +1147,8 @@ export const closeoutRouter = router({
         owner: input.owner || null,
         dueDate: input.dueDate ? new Date(input.dueDate) : null,
       });
-      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutBlocker", Number(result.insertId), { title: input.title }); } catch {}
-      return { id: result.insertId };
+      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutBlocker", getInsertId(result), { title: input.title }); } catch {}
+      return { id: getInsertId(result) };
     }),
 
   resolveBlocker: protectedProcedure
@@ -1119,6 +1198,47 @@ export const closeoutRouter = router({
       const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+      const [ownedCloseout] = await db
+        .select({ id: closeoutRecords.id })
+        .from(closeoutRecords)
+        .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedCloseout) throw new Error("Closeout record not found in this workspace");
+
+      if (input.linkedItemType === "checklist_item") {
+        const [ownedItem] = await db
+          .select({ id: closeoutChecklistItems.id })
+          .from(closeoutChecklistItems)
+          .innerJoin(closeoutRecords, eq(closeoutChecklistItems.closeoutId, closeoutRecords.id))
+          .where(and(
+            eq(closeoutChecklistItems.id, input.linkedItemId),
+            eq(closeoutChecklistItems.closeoutId, input.closeoutId),
+            eq(closeoutRecords.workspaceId, workspaceId),
+          ))
+          .limit(1);
+        if (!ownedItem) throw new Error("Closeout checklist item not found in this workspace");
+      } else {
+        const [ownedBlocker] = await db
+          .select({ id: closeoutBlockingItems.id })
+          .from(closeoutBlockingItems)
+          .where(and(
+            eq(closeoutBlockingItems.id, input.linkedItemId),
+            eq(closeoutBlockingItems.closeoutId, input.closeoutId),
+            eq(closeoutBlockingItems.workspaceId, workspaceId),
+          ))
+          .limit(1);
+        if (!ownedBlocker) throw new Error("Closeout blocker not found in this workspace");
+      }
+
+      if (input.fileId) {
+        const [ownedFile] = await db
+          .select({ id: files.id })
+          .from(files)
+          .where(and(eq(files.id, input.fileId), eq(files.workspaceId, workspaceId), isNull(files.deletedAt)))
+          .limit(1);
+        if (!ownedFile) throw new Error("Evidence file not found in this workspace");
+      }
+
       const [result] = await db.insert(closeoutEvidence).values({
         workspaceId,
         closeoutId: input.closeoutId,
@@ -1130,8 +1250,8 @@ export const closeoutRouter = router({
         description: input.description || null,
         uploadedBy: ctx.user?.id || null,
       });
-      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutEvidence", Number(result.insertId), { title: input.title }); } catch {}
-      return { id: result.insertId };
+      try { await logAudit(workspaceId, ctx.user.id, "create", "closeoutEvidence", getInsertId(result), { title: input.title }); } catch {}
+      return { id: getInsertId(result) };
     }),
 
   removeEvidence: protectedProcedure
@@ -1224,6 +1344,13 @@ export const closeoutRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      const [ownedCloseout] = await db
+        .select({ id: closeoutRecords.id })
+        .from(closeoutRecords)
+        .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)))
+        .limit(1);
+      if (!ownedCloseout) throw new Error("Closeout record not found in this workspace");
+
       // If trying to complete, enforce blocker check
       if (input.status === "completed") {
         const items = await db.select().from(closeoutChecklistItems).where(eq(closeoutChecklistItems.closeoutId, input.closeoutId));
@@ -1248,6 +1375,32 @@ export const closeoutRouter = router({
           completedBy: input.status === "completed" ? ctx.user?.id || null : null,
         })
         .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId)));
+
+      if (input.status === "completed") {
+        const [closeoutRecord] = await db.select({ contractId: closeoutRecords.contractId }).from(closeoutRecords)
+          .where(and(eq(closeoutRecords.id, input.closeoutId), eq(closeoutRecords.workspaceId, workspaceId))).limit(1);
+        if (closeoutRecord?.contractId) {
+          const lessonTaskTitle = "Capture lessons learned before final contract closure";
+          const [existingLessonTask] = await db.select({ id: tasks.id }).from(tasks).where(and(
+            eq(tasks.workspaceId, workspaceId),
+            eq(tasks.linkedRecordType, "contract"),
+            eq(tasks.linkedRecordId, closeoutRecord.contractId),
+            eq(tasks.title, lessonTaskTitle),
+          )).limit(1);
+          if (!existingLessonTask) {
+            await db.insert(tasks).values({
+              workspaceId,
+              title: lessonTaskTitle,
+              description: "Closeout is complete. Review performance, subcontractor execution, compliance, billing, communication, risks, and reusable improvements. Record lessons before marking the contract Closed.",
+              linkedRecordType: "contract",
+              linkedRecordId: closeoutRecord.contractId,
+              priority: "medium",
+              status: "todo",
+            });
+          }
+        }
+      }
+
       try { await logAudit(workspaceId, ctx.user.id, "update", "closeout", input.closeoutId, { status: input.status }); } catch {}
       return { success: true };
     }),
@@ -1287,6 +1440,9 @@ export const lessonsLearnedRouter = router({
         .orderBy(desc(lessonsLearned.createdAt));
 
       // Apply filters in memory for flexibility
+      if (input?.contractId) {
+        results = results.filter(r => r.contractId === input.contractId);
+      }
       if (input?.lessonType && input.lessonType !== "all") {
         results = results.filter(r => r.lessonType === input.lessonType);
       }
@@ -1346,7 +1502,7 @@ export const lessonsLearnedRouter = router({
       whatDidNotWork: z.string().optional(),
       actionTaken: z.string().optional(),
       preventionSteps: z.string().optional(),
-      linkedRecordType: z.string().optional(),
+      linkedRecordType: z.enum(["contract", "proposal", "opportunity"]).optional(),
       linkedRecordId: z.number().optional(),
       linkedRecordTitle: z.string().optional(),
       status: z.enum(["draft", "active", "archived", "applied"]).optional(),
@@ -1357,6 +1513,39 @@ export const lessonsLearnedRouter = router({
       const workspaceId = await requireWorkspaceId(ctx.user.id);
       const db = await getDb();
       if (!db) throw new Error("Database not available");
+
+      if ((input.linkedRecordType && !input.linkedRecordId) || (!input.linkedRecordType && input.linkedRecordId)) {
+        throw new Error("Linked record type and linked record ID must be provided together.");
+      }
+
+      if (input.contractId) {
+        const [ownedContract] = await db.select({ id: contracts.id }).from(contracts)
+          .where(and(eq(contracts.id, input.contractId), eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt)))
+          .limit(1);
+        if (!ownedContract) throw new Error("Contract not found in this workspace");
+      }
+      if (input.proposalId) {
+        const [ownedProposal] = await db.select({ id: proposals.id }).from(proposals)
+          .where(and(eq(proposals.id, input.proposalId), eq(proposals.workspaceId, workspaceId), isNull(proposals.deletedAt)))
+          .limit(1);
+        if (!ownedProposal) throw new Error("Proposal not found in this workspace");
+      }
+      if (input.linkedRecordType && input.linkedRecordId) {
+        if (input.linkedRecordType === "contract") {
+          const [owned] = await db.select({ id: contracts.id }).from(contracts)
+            .where(and(eq(contracts.id, input.linkedRecordId), eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt))).limit(1);
+          if (!owned) throw new Error("Linked contract not found in this workspace");
+        } else if (input.linkedRecordType === "proposal") {
+          const [owned] = await db.select({ id: proposals.id }).from(proposals)
+            .where(and(eq(proposals.id, input.linkedRecordId), eq(proposals.workspaceId, workspaceId), isNull(proposals.deletedAt))).limit(1);
+          if (!owned) throw new Error("Linked proposal not found in this workspace");
+        } else if (input.linkedRecordType === "opportunity") {
+          const [owned] = await db.select({ id: opportunities.id }).from(opportunities)
+            .where(and(eq(opportunities.id, input.linkedRecordId), eq(opportunities.workspaceId, workspaceId), isNull(opportunities.deletedAt))).limit(1);
+          if (!owned) throw new Error("Linked opportunity not found in this workspace");
+        }
+      }
+
       const [result] = await db.insert(lessonsLearned).values({
         workspaceId,
         title: input.title,
@@ -1384,7 +1573,7 @@ export const lessonsLearnedRouter = router({
         tags: input.tags || null,
       });
       try { await logAudit(workspaceId, ctx.user.id, "create", "lessonsLearned", 0, input); } catch {}
-      return { id: result.insertId };
+      return { id: getInsertId(result) };
     }),
 
   update: protectedProcedure
@@ -1404,7 +1593,7 @@ export const lessonsLearnedRouter = router({
       whatDidNotWork: z.string().optional(),
       actionTaken: z.string().optional(),
       preventionSteps: z.string().optional(),
-      linkedRecordType: z.string().optional(),
+      linkedRecordType: z.enum(["contract", "proposal", "opportunity"]).optional(),
       linkedRecordId: z.number().nullable().optional(),
       linkedRecordTitle: z.string().nullable().optional(),
       status: z.enum(["draft", "active", "archived", "applied"]).optional(),
@@ -1416,6 +1605,35 @@ export const lessonsLearnedRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const { id, ...data } = input;
+
+      if (input.linkedRecordType !== undefined || input.linkedRecordId !== undefined) {
+        const [existingLesson] = await db.select({
+          linkedRecordType: lessonsLearned.linkedRecordType,
+          linkedRecordId: lessonsLearned.linkedRecordId,
+        }).from(lessonsLearned)
+          .where(and(eq(lessonsLearned.id, id), eq(lessonsLearned.workspaceId, workspaceId)))
+          .limit(1);
+        if (!existingLesson) throw new Error("Lesson not found.");
+
+        const nextType = input.linkedRecordType ?? existingLesson.linkedRecordType;
+        const nextId = input.linkedRecordId ?? existingLesson.linkedRecordId;
+        if (nextType && nextId) {
+          if (nextType === "contract") {
+            const [owned] = await db.select({ id: contracts.id }).from(contracts)
+              .where(and(eq(contracts.id, nextId), eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt))).limit(1);
+            if (!owned) throw new Error("Linked contract not found in this workspace");
+          } else if (nextType === "proposal") {
+            const [owned] = await db.select({ id: proposals.id }).from(proposals)
+              .where(and(eq(proposals.id, nextId), eq(proposals.workspaceId, workspaceId), isNull(proposals.deletedAt))).limit(1);
+            if (!owned) throw new Error("Linked proposal not found in this workspace");
+          } else if (nextType === "opportunity") {
+            const [owned] = await db.select({ id: opportunities.id }).from(opportunities)
+              .where(and(eq(opportunities.id, nextId), eq(opportunities.workspaceId, workspaceId), isNull(opportunities.deletedAt))).limit(1);
+            if (!owned) throw new Error("Linked opportunity not found in this workspace");
+          }
+        }
+      }
+
       // Remove undefined keys
       const updateData: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data)) {
@@ -1463,7 +1681,7 @@ export const lessonsLearnedRouter = router({
       // Mark lesson as applied
       await db.update(lessonsLearned).set({ appliedToTemplateId: input.templateId, status: "applied" })
         .where(eq(lessonsLearned.id, input.lessonId));
-      try { await logAudit(workspaceId, ctx.user.id, "delete", "lessonsLearned", 0, null); } catch {}
+      try { await logAudit(workspaceId, ctx.user.id, "update", "lessonsLearned", input.lessonId, { action: "applyToTemplate", templateId: input.templateId }); } catch {}
       return { success: true };
     }),
 
@@ -1496,10 +1714,10 @@ export const lessonsLearnedRouter = router({
         linkedRecordId: lesson.id,
       });
       // Link task back to lesson
-      await db.update(lessonsLearned).set({ createdTaskId: taskResult.insertId })
+      await db.update(lessonsLearned).set({ createdTaskId: getInsertId(taskResult) })
         .where(eq(lessonsLearned.id, input.lessonId));
-      try { await logAudit(workspaceId, ctx.user.id, "delete", "lessonsLearned", 0, null); } catch {}
-      return { success: true, taskId: taskResult.insertId };
+      try { await logAudit(workspaceId, ctx.user.id, "create", "tasks", Number(getInsertId(taskResult)), { source: "lesson", lessonId: input.lessonId }); } catch {}
+      return { success: true, taskId: getInsertId(taskResult) };
     }),
 
   // Get stats/counts for the lessons page header
@@ -1514,7 +1732,7 @@ export const lessonsLearnedRouter = router({
       positive: all.filter(l => l.impact === "positive").length,
       negative: all.filter(l => l.impact === "negative").length,
       neutral: all.filter(l => l.impact === "neutral").length,
-      applied: all.filter(l => (l as any).lessonStatus === "applied" || l.appliedToTemplateId).length,
+      applied: all.filter(l => l.status === "applied" || l.appliedToTemplateId).length,
     };
   }),
 
@@ -1528,13 +1746,13 @@ export const lessonsLearnedRouter = router({
       switch (input.recordType) {
         case "contract":
           return (await db.select({ id: contracts.id, title: contracts.title }).from(contracts)
-            .where(eq(contracts.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+            .where(and(eq(contracts.workspaceId, workspaceId), isNull(contracts.deletedAt)))).map(r => ({ id: r.id, title: r.title }));
         case "proposal":
           return (await db.select({ id: proposals.id, title: proposals.title }).from(proposals)
-            .where(eq(proposals.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+            .where(and(eq(proposals.workspaceId, workspaceId), isNull(proposals.deletedAt)))).map(r => ({ id: r.id, title: r.title }));
         case "opportunity":
           return (await db.select({ id: opportunities.id, title: opportunities.title }).from(opportunities)
-            .where(eq(opportunities.workspaceId, workspaceId))).map(r => ({ id: r.id, title: r.title }));
+            .where(and(eq(opportunities.workspaceId, workspaceId), isNull(opportunities.deletedAt)))).map(r => ({ id: r.id, title: r.title }));
         default:
           return [];
       }
@@ -1584,7 +1802,7 @@ export const capabilityRouter = router({
         status: "draft",
       });
       try { await logAudit(workspaceId, ctx.user.id, "create", "capability", 0, input); } catch {}
-      return { id: result.insertId };
+      return { id: getInsertId(result) };
     }),
 
   update: protectedProcedure

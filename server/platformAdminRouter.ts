@@ -1,4 +1,5 @@
-import { adminProcedure, router } from "./_core/trpc";
+import { router } from "./_core/trpc";
+import { platformOwnerProcedure } from "./_core/platformOwnerProcedure";
 import { z } from "zod";
 import { Resend } from "resend";
 import { getDb } from "./db";
@@ -28,6 +29,7 @@ import {
   platformOverrides,
   onboardingProgress,
   accessStates,
+  adminInvites,
 } from "../drizzle/schema";
 import { eq, desc, and, count, sql, gte } from "drizzle-orm";
 import { updateAccessState, evaluateAccess, logBillingAudit } from "./accessGating";
@@ -38,7 +40,7 @@ import { updateAccessState, evaluateAccess, logBillingAudit } from "./accessGati
 export const platformAdminRouter = router({
   // --- Workspaces Directory ---
   workspaces: router({
-    list: adminProcedure.query(async () => {
+    list: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       const allWorkspaces = await db
@@ -93,7 +95,7 @@ export const platformAdminRouter = router({
       return enriched;
     }),
 
-    get: adminProcedure
+    get: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -185,7 +187,7 @@ export const platformAdminRouter = router({
         };
       }),
 
-    suspend: adminProcedure
+    suspend: platformOwnerProcedure
       .input(z.object({ id: z.number(), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -204,7 +206,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    reactivate: adminProcedure
+    reactivate: platformOwnerProcedure
       .input(z.object({ id: z.number(), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -223,7 +225,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    update: adminProcedure
+    update: platformOwnerProcedure
       .input(z.object({
         id: z.number(),
         companyName: z.string().optional(),
@@ -249,7 +251,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    getDetail: adminProcedure
+    getDetail: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -323,7 +325,7 @@ export const platformAdminRouter = router({
         };
       }),
 
-    bulkSuspend: adminProcedure
+    bulkSuspend: platformOwnerProcedure
       .input(z.object({ ids: z.array(z.number()), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -341,7 +343,7 @@ export const platformAdminRouter = router({
         return { success: true, count: input.ids.length };
       }),
 
-    bulkReactivate: adminProcedure
+    bulkReactivate: platformOwnerProcedure
       .input(z.object({ ids: z.array(z.number()), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -359,7 +361,7 @@ export const platformAdminRouter = router({
         return { success: true, count: input.ids.length };
       }),
 
-    addNote: adminProcedure
+    addNote: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number(), note: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -379,7 +381,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    deleteNote: adminProcedure
+    deleteNote: platformOwnerProcedure
       .input(z.object({ noteId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -391,7 +393,7 @@ export const platformAdminRouter = router({
   }),
 
   // --- Send Welcome Email (top-level for type inference) ---
-  sendWelcomeEmail: adminProcedure
+  sendWelcomeEmail: platformOwnerProcedure
     .input(z.object({ workspaceId: z.number() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -448,7 +450,7 @@ export const platformAdminRouter = router({
 
   // --- Users (admin view all) ---
   users: router({
-    list: adminProcedure.query(async () => {
+    list: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       const allUsers = await db
@@ -508,7 +510,7 @@ export const platformAdminRouter = router({
       return enriched;
     }),
 
-    get: adminProcedure
+    get: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -533,7 +535,7 @@ export const platformAdminRouter = router({
         return { ...user, workspace: ws || null, loginHistory };
       }),
 
-    disable: adminProcedure
+    disable: platformOwnerProcedure
       .input(z.object({ id: z.number(), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -552,7 +554,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    enable: adminProcedure
+    enable: platformOwnerProcedure
       .input(z.object({ id: z.number(), reason: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -574,7 +576,7 @@ export const platformAdminRouter = router({
 
   // --- Login Events / Activity ---
   activity: router({
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(
         z
           .object({
@@ -635,7 +637,7 @@ export const platformAdminRouter = router({
         return enriched;
       }),
 
-    stats: adminProcedure.query(async () => {
+    stats: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { total: 0, failures: 0, suspicious: 0 };
       const allEvents = await db.select().from(loginEvents);
@@ -651,7 +653,7 @@ export const platformAdminRouter = router({
 
   // --- Platform Notes ---
   notes: router({
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(
         z.object({
           workspaceId: z.number().optional(),
@@ -678,7 +680,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(
         z
           .object({
@@ -714,7 +716,7 @@ export const platformAdminRouter = router({
 
   // --- Audit Log ---
   audit: router({
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(
         z
           .object({
@@ -754,14 +756,14 @@ export const platformAdminRouter = router({
 
   // --- Onboarding Email ---
   onboarding: router({
-    sendLink: adminProcedure
+    sendLink: platformOwnerProcedure
       .input(
         z.object({
           recipientEmail: z.string().email(),
           recipientName: z.string().optional(),
         })
       )
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const resendKey = process.env.RESEND_API_KEY;
         if (!resendKey) throw new Error("RESEND_API_KEY not configured");
         const resend = new Resend(resendKey);
@@ -810,14 +812,49 @@ export const platformAdminRouter = router({
           html: htmlBody,
         });
         if (result.error) throw new Error(`Failed to send email: ${result.error.message}`);
+
+        // Record the invite so Monitor Progress reflects reality instead of mock data.
+        // Upsert by recipientEmail: first send creates the record; a later
+        // Nudge/Resend for the same email updates lastNudgedAt instead of duplicating.
+        const db = await getDb();
+        if (db) {
+          const existing = await db
+            .select()
+            .from(adminInvites)
+            .where(eq(adminInvites.recipientEmail, input.recipientEmail))
+            .limit(1);
+          if (existing.length > 0) {
+            await db
+              .update(adminInvites)
+              .set({ lastNudgedAt: new Date(), recipientName: input.recipientName || existing[0].recipientName })
+              .where(eq(adminInvites.id, existing[0].id));
+          } else {
+            await db.insert(adminInvites).values({
+              recipientEmail: input.recipientEmail,
+              recipientName: input.recipientName,
+              invitedBy: ctx.user.id,
+              status: "not_started",
+              emailId: result.data?.id,
+            });
+          }
+        }
+
         return { success: true, emailId: result.data?.id };
       }),
+
+    // Real onboarding-invite monitoring data for the Monitor Progress tab.
+    // Replaces the previously hardcoded onboardingUsers mock array.
+    list: platformOwnerProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(adminInvites).orderBy(desc(adminInvites.createdAt));
+    }),
   }),
 
   // --- Consent Records ---
   consentRecords: router({
     // Paginated list of all consent records across all users
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(z.object({
         offset: z.number().default(0),
         limit: z.number().default(50),
@@ -836,7 +873,7 @@ export const platformAdminRouter = router({
       }),
 
     // Aggregate stats: total, accepted, declined, by policy version
-    stats: adminProcedure.query(async () => {
+    stats: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return { total: 0, accepted: 0, declined: 0, byVersion: [] };
       const all = await db.select({
@@ -867,7 +904,7 @@ export const platformAdminRouter = router({
 
   // --- Workspace Health Flags ---
   healthFlags: router({
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number().optional(),
         activeOnly: z.boolean().optional(),
@@ -884,7 +921,7 @@ export const platformAdminRouter = router({
         return flags;
       }),
 
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         flagType: z.string(),
@@ -907,7 +944,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    resolve: adminProcedure
+    resolve: platformOwnerProcedure
       .input(z.object({
         id: z.number(),
         resolutionNote: z.string().optional(),
@@ -927,7 +964,7 @@ export const platformAdminRouter = router({
 
   // --- Platform Activity Log ---
   activityLog: router({
-    list: adminProcedure
+    list: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number().optional(),
         activityType: z.string().optional(),
@@ -944,7 +981,7 @@ export const platformAdminRouter = router({
         return entries;
       }),
 
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number().optional(),
         userId: z.number().optional(),
@@ -969,7 +1006,7 @@ export const platformAdminRouter = router({
   }),
 
   // --- Dashboard Metrics ---
-  dashboardMetrics: adminProcedure.query(async () => {
+  dashboardMetrics: platformOwnerProcedure.query(async () => {
     const db = await getDb();
     if (!db) return {
       totalWorkspaces: 0, activeWorkspaces: 0, suspendedWorkspaces: 0,
@@ -1016,7 +1053,7 @@ export const platformAdminRouter = router({
   }),
 
   // --- Workspace Usage/Product Activity (per workspace) ---
-  workspaceUsage: adminProcedure
+  workspaceUsage: platformOwnerProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async ({ input }) => {
       const db = await getDb();
@@ -1039,7 +1076,7 @@ export const platformAdminRouter = router({
 
   // --- Admin Overrides/Recovery ---
   overrides: router({
-    resetOnboarding: adminProcedure
+    resetOnboarding: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number(), reason: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1055,7 +1092,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    changePlan: adminProcedure
+    changePlan: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number(), planId: z.number().nullable(), reason: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1071,7 +1108,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    transferOwnership: adminProcedure
+    transferOwnership: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number(), newOwnerId: z.number(), reason: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1087,7 +1124,7 @@ export const platformAdminRouter = router({
         return { success: true };
       }),
 
-    resetTrial: adminProcedure
+    resetTrial: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number(), reason: z.string() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1106,12 +1143,12 @@ export const platformAdminRouter = router({
 
   // --- Plans Management ---
   plans: router({
-    list: adminProcedure.query(async () => {
+    list: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(plans).orderBy(desc(plans.createdAt));
     }),
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({
         name: z.string(),
         description: z.string().optional(),
@@ -1143,7 +1180,7 @@ export const platformAdminRouter = router({
         });
         return { success: true };
       }),
-    delete: adminProcedure
+    delete: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1161,12 +1198,12 @@ export const platformAdminRouter = router({
 
   // --- Discounts Management ---
   discounts: router({
-    list: adminProcedure.query(async () => {
+    list: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(discounts).orderBy(desc(discounts.createdAt));
     }),
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({
         code: z.string(),
         description: z.string().optional(),
@@ -1198,7 +1235,7 @@ export const platformAdminRouter = router({
         });
         return { success: true };
       }),
-    delete: adminProcedure
+    delete: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1216,12 +1253,12 @@ export const platformAdminRouter = router({
 
   // --- Billing Management ---
   billing: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(platformBilling);
     }),
-    stats: adminProcedure.query(async ({ ctx }) => {
+    stats: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return { total: 0, active: 0, pending: 0, failed: 0 };
       const records = await db.select().from(platformBilling);
@@ -1240,7 +1277,7 @@ export const platformAdminRouter = router({
     /**
      * listAccessStates — list all workspace access states with workspace and subscription info.
      */
-    listAccessStates: adminProcedure.query(async () => {
+    listAccessStates: platformOwnerProcedure.query(async () => {
       const db = await getDb();
       if (!db) return [];
       const rows = await db
@@ -1270,7 +1307,7 @@ export const platformAdminRouter = router({
     /**
      * getWorkspaceBilling — detailed billing view for a single workspace.
      */
-    getWorkspaceBilling: adminProcedure
+    getWorkspaceBilling: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -1296,7 +1333,7 @@ export const platformAdminRouter = router({
     /**
      * grantGracePeriod — set access state to grace with an expiry date.
      */
-    grantGracePeriod: adminProcedure
+    grantGracePeriod: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         daysUntilExpiry: z.number().min(1).max(365),
@@ -1329,7 +1366,7 @@ export const platformAdminRouter = router({
     /**
      * suspendAccess — set access state to suspended.
      */
-    suspendAccess: adminProcedure
+    suspendAccess: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         reason: z.string().min(1),
@@ -1357,7 +1394,7 @@ export const platformAdminRouter = router({
     /**
      * restoreAccess — restore access to active_paid (or trial_active if no subscription).
      */
-    restoreAccess: adminProcedure
+    restoreAccess: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         reason: z.string().min(1),
@@ -1386,7 +1423,7 @@ export const platformAdminRouter = router({
     /**
      * setOverride — grant a platform override (bypasses billing check entirely).
      */
-    setOverride: adminProcedure
+    setOverride: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         reason: z.string().min(1),
@@ -1417,7 +1454,7 @@ export const platformAdminRouter = router({
     /**
      * changePlan — change a workspace's subscription plan (admin override).
      */
-    changePlanAdmin: adminProcedure
+    changePlanAdmin: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         planId: z.number(),
@@ -1464,7 +1501,7 @@ export const platformAdminRouter = router({
     /**
      * addNote — add an internal platform note to a workspace.
      */
-    addBillingNote: adminProcedure
+    addBillingNote: platformOwnerProcedure
       .input(z.object({
         workspaceId: z.number(),
         note: z.string().min(1),
@@ -1493,7 +1530,7 @@ export const platformAdminRouter = router({
     /**
      * getBillingEvents — get billing event history for a workspace.
      */
-    getBillingEvents: adminProcedure
+    getBillingEvents: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number() }))
       .query(async ({ input }) => {
         const db = await getDb();
@@ -1506,12 +1543,12 @@ export const platformAdminRouter = router({
 
   // --- Backups & Export ---
   backups: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(backupExports);
     }),
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({ workspaceId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1535,12 +1572,12 @@ export const platformAdminRouter = router({
 
   // --- Consent Records ---
   consent: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(consentRecords);
     }),
-    stats: adminProcedure.query(async ({ ctx }) => {
+    stats: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return { total: 0, accepted: 0, declined: 0, acceptRate: 0, byVersion: [] };
       const records = await db.select().from(consentRecords);
@@ -1559,12 +1596,12 @@ export const platformAdminRouter = router({
 
   // --- Admin Tasks ---
   tasks: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return [];
       return db.select().from(adminTasks);
     }),
-    stats: adminProcedure.query(async ({ ctx }) => {
+    stats: platformOwnerProcedure.query(async ({ ctx }) => {
       const db = await getDb();
       if (!db) return { total: 0, open: 0, completed: 0, overdue: 0 };
       const records = await db.select().from(adminTasks);
@@ -1576,7 +1613,7 @@ export const platformAdminRouter = router({
         overdue: records.filter((r: any) => r.status === "open" && new Date(r.dueDate) < now).length,
       };
     }),
-    create: adminProcedure
+    create: platformOwnerProcedure
       .input(z.object({
         title: z.string(),
         description: z.string().optional(),
@@ -1597,7 +1634,7 @@ export const platformAdminRouter = router({
         });
         return { success: true };
       }),
-    complete: adminProcedure
+    complete: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
@@ -1605,7 +1642,7 @@ export const platformAdminRouter = router({
         await db.update(adminTasks).set({ status: "completed", completedAt: new Date() }).where(eq(adminTasks.id, input.id));
         return { success: true };
       }),
-    delete: adminProcedure
+    delete: platformOwnerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();

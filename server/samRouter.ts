@@ -15,11 +15,12 @@ import {
   checkForDuplicate,
 } from "./services/samImport";
 import { requireWorkspaceId } from "./workspaceMiddleware";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { opportunities, samImportLogs, opportunitySourceFiles, opportunityImportRuns } from "../drizzle/schema";
 import { logAudit } from "./featureRouter";
 import { eq, and, isNull, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { persistSamAttachment } from "./services/samAttachmentStorage";
 
 export const samRouter = router({
   // ─── Existing Search Routes ────────────────────────────────────────────────
@@ -138,34 +139,62 @@ export const samRouter = router({
         lastSyncedAt: new Date(),
       });
 
-      const opportunityId = (insertResult as any)?.[0]?.insertId;
+      const opportunityId = resolveInsertId(insertResult);
+      if (!opportunityId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Opportunity import did not return an insert id" });
 
-      // 7. Save attachments as source files
-      let attachmentWarning: string | null = null;
-      if (fetchResult.attachments && fetchResult.attachments.length > 0) {
-        let savedCount = 0;
-        for (const att of fetchResult.attachments) {
-          try {
-            await db.insert(opportunitySourceFiles).values({
-              workspaceId: wsId,
-              opportunityId,
-              fileName: att.name || "Unnamed Attachment",
-              fileUrl: att.url || null,
-              fileType: att.type || null,
-              sourceSystem: "sam.gov",
-              sourceCategory: categorizeAttachment(att.name, att.type),
-              isDownloaded: false,
-              isSourceDocument: att.type === "related_notice" || att.name?.toLowerCase().includes("solicitation"),
-            });
-            savedCount++;
-          } catch (err) {
-            console.warn("[SAM Import] Failed to save attachment:", att.name, err);
-          }
-        }
-        if (savedCount < fetchResult.attachments.length) {
-          attachmentWarning = `Opportunity imported, but ${fetchResult.attachments.length - savedCount} of ${fetchResult.attachments.length} source attachments could not be saved. Links were preserved for review.`;
+      // 7. Save attachments as source files and persist eligible source documents
+let attachmentWarning: string | null = null;
+if (fetchResult.attachments && fetchResult.attachments.length > 0) {
+  let savedCount = 0;
+  let downloadWarnings = 0;
+  for (const att of fetchResult.attachments) {
+    try {
+      const sourceFileResult = await db.insert(opportunitySourceFiles).values({
+        workspaceId: wsId,
+        opportunityId,
+        fileName: att.name || "Unnamed Attachment",
+        fileUrl: att.url || null,
+        fileType: att.type || null,
+        sourceSystem: "sam.gov",
+        sourceCategory: categorizeAttachment(att.name, att.type),
+        isDownloaded: false,
+        isSourceDocument: att.type === "related_notice" || att.name?.toLowerCase().includes("solicitation"),
+      });
+      const sourceFileId = resolveInsertId(sourceFileResult);
+      if (sourceFileId && att.url && att.type !== "related_notice") {
+        const persisted = await persistSamAttachment({
+          workspaceId: wsId,
+          opportunityId,
+          fileName: att.name || "Unnamed Attachment",
+          sourceUrl: att.url,
+          declaredType: att.type || null,
+        });
+        if (persisted.downloaded && persisted.storagePath) {
+          await db.update(opportunitySourceFiles).set({
+            isDownloaded: true,
+            downloadedFilePath: persisted.storagePath,
+            fileType: persisted.contentType || att.type || null,
+          }).where(and(
+            eq(opportunitySourceFiles.id, sourceFileId),
+            eq(opportunitySourceFiles.workspaceId, wsId),
+            eq(opportunitySourceFiles.opportunityId, opportunityId),
+          ));
+        } else if (persisted.warning) {
+          downloadWarnings++;
+          console.warn("[SAM Import] Attachment retained as source link:", att.name, persisted.warning);
         }
       }
+      savedCount++;
+    } catch (err) {
+      console.warn("[SAM Import] Failed to save attachment:", att.name, err);
+    }
+  }
+  if (savedCount < fetchResult.attachments.length) {
+    attachmentWarning = `Opportunity imported, but ${fetchResult.attachments.length - savedCount} of ${fetchResult.attachments.length} source attachments could not be saved. Available links were preserved for review.`;
+  } else if (downloadWarnings > 0) {
+    attachmentWarning = `Opportunity imported with all source links preserved; ${downloadWarnings} attachment(s) were not eligible for automatic local storage.`;
+  }
+}
 
       // 8. Log successful import
       await db.insert(samImportLogs).values({
@@ -284,7 +313,7 @@ export const samRouter = router({
         // Update opportunity sync status
         await db.update(opportunities)
           .set({ importStatus: "sync_failed" })
-          .where(eq(opportunities.id, input.opportunityId));
+          .where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.workspaceId, wsId)));
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -336,41 +365,64 @@ export const samRouter = router({
             importStatus: "synced",
             lastSyncedAt: new Date(),
           })
-          .where(eq(opportunities.id, input.opportunityId));
+          .where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.workspaceId, wsId)));
       } else {
         await db.update(opportunities)
           .set({ importStatus: "synced", lastSyncedAt: new Date() })
-          .where(eq(opportunities.id, input.opportunityId));
+          .where(and(eq(opportunities.id, input.opportunityId), eq(opportunities.workspaceId, wsId)));
       }
 
-      // Save new attachments if any
-      if (fetchResult.attachments && fetchResult.attachments.length > 0) {
-        for (const att of fetchResult.attachments) {
-          // Check if already exists
-          const [existingFile] = await db
-            .select()
-            .from(opportunitySourceFiles)
-            .where(and(
-              eq(opportunitySourceFiles.opportunityId, input.opportunityId),
-              eq(opportunitySourceFiles.fileName, att.name || "Unnamed")
-            ))
-            .limit(1);
+      // Save and persist newly discovered attachments
+if (fetchResult.attachments && fetchResult.attachments.length > 0) {
+  for (const att of fetchResult.attachments) {
+    const [existingFile] = await db
+      .select()
+      .from(opportunitySourceFiles)
+      .where(and(
+        eq(opportunitySourceFiles.workspaceId, wsId),
+        eq(opportunitySourceFiles.opportunityId, input.opportunityId),
+        eq(opportunitySourceFiles.fileName, att.name || "Unnamed")
+      ))
+      .limit(1);
 
-          if (!existingFile) {
-            await db.insert(opportunitySourceFiles).values({
-              workspaceId: wsId,
-              opportunityId: input.opportunityId,
-              fileName: att.name || "Unnamed Attachment",
-              fileUrl: att.url || null,
-              fileType: att.type || null,
-              sourceSystem: "sam.gov",
-              sourceCategory: categorizeAttachment(att.name, att.type),
-              isDownloaded: false,
-              isSourceDocument: false,
-            });
-          }
+    if (!existingFile) {
+      const sourceFileResult = await db.insert(opportunitySourceFiles).values({
+        workspaceId: wsId,
+        opportunityId: input.opportunityId,
+        fileName: att.name || "Unnamed Attachment",
+        fileUrl: att.url || null,
+        fileType: att.type || null,
+        sourceSystem: "sam.gov",
+        sourceCategory: categorizeAttachment(att.name, att.type),
+        isDownloaded: false,
+        isSourceDocument: att.type === "related_notice" || att.name?.toLowerCase().includes("solicitation"),
+      });
+      const sourceFileId = resolveInsertId(sourceFileResult);
+      if (sourceFileId && att.url && att.type !== "related_notice") {
+        const persisted = await persistSamAttachment({
+          workspaceId: wsId,
+          opportunityId: input.opportunityId,
+          fileName: att.name || "Unnamed Attachment",
+          sourceUrl: att.url,
+          declaredType: att.type || null,
+        });
+        if (persisted.downloaded && persisted.storagePath) {
+          await db.update(opportunitySourceFiles).set({
+            isDownloaded: true,
+            downloadedFilePath: persisted.storagePath,
+            fileType: persisted.contentType || att.type || null,
+          }).where(and(
+            eq(opportunitySourceFiles.id, sourceFileId),
+            eq(opportunitySourceFiles.workspaceId, wsId),
+            eq(opportunitySourceFiles.opportunityId, input.opportunityId),
+          ));
+        } else if (persisted.warning) {
+          console.warn("[SAM Resync] Attachment retained as source link:", att.name, persisted.warning);
         }
       }
+    }
+  }
+}
 
       // Log sync
       await db.insert(samImportLogs).values({
@@ -461,6 +513,11 @@ export const samRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
 
+      const dupCheck = await checkForDuplicate(db, wsId, input.noticeId, input.noticeId, input.solicitationNumber || null, input.sourceLink || null);
+      if (dupCheck.isDuplicate) {
+        return { success: false, isDuplicate: true, existingId: dupCheck.existingId, id: dupCheck.existingId || 0 };
+      }
+
       const result = await db.insert(opportunities).values({
         workspaceId: wsId,
         title: input.title,
@@ -483,7 +540,7 @@ export const samRouter = router({
       });
 
       try { await logAudit(wsId, ctx.user.id, "create", "opportunities", 0, { source: "sam.gov", noticeId: input.noticeId }); } catch {}
-      return { success: true, id: (result as any)?.[0]?.insertId || 0 };
+      return { success: true, id: resolveInsertId(result) };
     }),
 
   // ─── Bulk Import from Search Results ──────────────────────────────────────
@@ -516,7 +573,8 @@ export const samRouter = router({
         totalItems: input.opportunities.length,
         importedBy: ctx.user.id,
       });
-      const runId = (runResult as any)?.[0]?.insertId;
+      const runId = resolveInsertId(runResult);
+      if (!runId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Import run did not return an insert id" });
 
       let importedCount = 0;
       let skippedCount = 0;
@@ -554,12 +612,31 @@ export const samRouter = router({
             pursuitDecision: "undecided",
             createdBy: ctx.user.id,
           });
-          const oppId = (result as any)?.[0]?.insertId;
+          const oppId = resolveInsertId(result);
           if (oppId) importedIds.push(oppId);
           importedCount++;
         } catch (err: any) {
           console.error("[SAM Bulk Import] Failed to import:", opp.noticeId, err.message);
           failedCount++;
+        }
+      }
+
+      if (input.triggerAiReview && importedIds.length > 0) {
+        const { runOpportunityReview } = await import("./aiEngine");
+        for (const opportunityId of importedIds) {
+          try {
+            const [importedOpportunity] = await db.select().from(opportunities)
+              .where(and(eq(opportunities.id, opportunityId), eq(opportunities.workspaceId, wsId)))
+              .limit(1);
+            if (importedOpportunity) {
+              await runOpportunityReview(
+                { workspaceId: wsId, userId: ctx.user.id, recordType: "opportunity", recordId: opportunityId, runType: "opportunity_review" },
+                JSON.stringify(importedOpportunity)
+              );
+            }
+          } catch (err: any) {
+            console.error("[SAM Bulk Import] AI review failed for opportunity", opportunityId, err?.message || err);
+          }
         }
       }
 
@@ -573,7 +650,7 @@ export const samRouter = router({
         importedOpportunityIds: importedIds,
         triggeredAiReview: input.triggerAiReview,
         completedAt: new Date(),
-      }).where(eq(opportunityImportRuns.id, runId));
+      }).where(and(eq(opportunityImportRuns.id, runId), eq(opportunityImportRuns.workspaceId, wsId)));
 
       // Log
       await db.insert(samImportLogs).values({
@@ -642,6 +719,12 @@ export const samRouter = router({
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function resolveInsertId(result: unknown): number {
+  if (typeof result === "number") return result;
+  return getInsertId(result);
+}
+
 
 function categorizeAttachment(name?: string, type?: string): "source_notice" | "solicitation" | "amendment" | "attachment" | "supporting_document" | "screenshot" | "other" {
   const lower = (name || "").toLowerCase();

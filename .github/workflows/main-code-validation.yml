@@ -1,0 +1,81 @@
+name: Main code validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-code-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: primecontractoros_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/primecontractoros_test
+      JWT_SECRET: github-actions-validation-secret-32chars-minimum
+      VITE_APP_ID: github-actions-validation
+      OAUTH_SERVER_URL: https://example.invalid
+      VITE_OAUTH_PORTAL_URL: https://example.invalid
+      OWNER_EMAIL: owner@example.com
+      OWNER_OPEN_ID: github-actions-owner
+      OWNER_NAME: Validation Owner
+      OPENAI_API_KEY: sk-test-validation-placeholder
+      SAM_GOV_API_KEY: validation-placeholder
+      STRIPE_SECRET_KEY: sk_test_validation_placeholder
+      STRIPE_PUBLISHABLE_KEY: pk_test_validation_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_validation_placeholder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply test database migrations
+        run: pnpm db:push
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Test
+        run: env -u RESEND_API_KEY pnpm test
+
+      - name: Production build
+        run: pnpm build

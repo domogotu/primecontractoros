@@ -2,7 +2,7 @@ import { protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { logAudit } from "./featureRouter";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { and, eq, desc, like, or, sql } from "drizzle-orm";
 import {
   farDfarsClauses, farDfarsBookmarks, farDfarsClauseLinks,
@@ -128,12 +128,12 @@ export const farDfarsRouter = router({
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_clause", 0, input); } catch {}
       await db.insert(farDfarsReviewEvents).values({
         workspaceId: wsId,
-        clauseId: result[0].insertId,
+        clauseId: getInsertId(result),
         action: "custom_clause_created",
         newStatus: "needs_review",
         reviewerUserId: ctx.user.id,
       } as any);
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   updateCustomClause: protectedProcedure
@@ -247,7 +247,7 @@ export const farDfarsRouter = router({
         reviewerUserId: ctx.user.id,
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_link", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   updateClauseLink: protectedProcedure
@@ -314,7 +314,7 @@ export const farDfarsRouter = router({
         reviewStatus: "draft",
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_note", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   updateNote: protectedProcedure
@@ -379,7 +379,7 @@ export const farDfarsRouter = router({
         reviewerUserId: ctx.user.id,
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_flowdown", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   updateFlowdownReview: protectedProcedure
@@ -435,7 +435,7 @@ export const farDfarsRouter = router({
         matchReviewStatus: "pending",
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_source_match", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   // ==================== REVIEW EVENTS ====================
@@ -475,7 +475,7 @@ export const farDfarsRouter = router({
         workspaceId: wsId,
         userId: ctx.user.id,
       } as any);
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   deleteSavedView: protectedProcedure
@@ -611,7 +611,7 @@ export const farDfarsRouter = router({
         reviewerUserId: ctx.user.id,
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "task_from_clause", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   // ==================== CREATE COMPLIANCE ITEM FROM CLAUSE ====================
@@ -642,7 +642,7 @@ export const farDfarsRouter = router({
         workspaceId: wsId,
         clauseId: input.clauseId,
         linkedRecordType: "compliance",
-        linkedRecordId: result[0].insertId,
+        linkedRecordId: getInsertId(result),
         contractId: input.contractId,
         relevanceStatus: "needs_review",
         reviewStatus: "pending",
@@ -656,7 +656,7 @@ export const farDfarsRouter = router({
         reviewerUserId: ctx.user.id,
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "compliance_from_clause", 0, input); } catch {}
-      return { id: result[0].insertId };
+      return { id: getInsertId(result) };
     }),
 
   // ==================== EXPORT ====================
@@ -676,6 +676,6 @@ export const farDfarsRouter = router({
         createdBy: ctx.user.id,
       } as any);
       try { await logAudit(wsId, ctx.user.id, "create", "far_dfars_export", 0, input); } catch {}
-      return { id: result[0].insertId, message: "Export initiated" };
+      return { id: getInsertId(result), message: "Export initiated" };
     }),
 });

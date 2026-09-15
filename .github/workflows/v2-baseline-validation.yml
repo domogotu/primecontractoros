@@ -1,0 +1,152 @@
+name: V2 baseline validation
+
+on:
+  push:
+    branches:
+      - agent/complete-v2-mirror
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  baseline:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: primecontractoros_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/primecontractoros_test
+      JWT_SECRET: baseline-validation-only-not-a-secret
+      VITE_APP_ID: baseline-validation
+      OAUTH_SERVER_URL: https://example.invalid
+      VITE_OAUTH_PORTAL_URL: https://example.invalid
+      OWNER_OPEN_ID: baseline-owner
+      OWNER_NAME: Baseline Owner
+      OPENAI_API_KEY: sk-test-dummy-baseline-validation
+      SAM_GOV_API_KEY: baseline-test
+      STRIPE_SECRET_KEY: sk_test_baseline_validation
+      STRIPE_PUBLISHABLE_KEY: pk_test_baseline_validation
+      STRIPE_WEBHOOK_SECRET: whsec_baseline_validation
+    steps:
+      - name: Checkout mirror branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/complete-v2-mirror
+          fetch-depth: 0
+
+      - name: Enable pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+          node --version
+          pnpm --version
+
+      - name: Run baseline validation
+        id: validation
+        shell: bash
+        run: |
+          set +e
+          pnpm install --frozen-lockfile 2>&1 | tee /tmp/install.log
+          INSTALL=${PIPESTATUS[0]}
+          DB=99
+          CHECK=99
+          TEST=99
+          BUILD=99
+          if [ "$INSTALL" -eq 0 ]; then
+            pnpm db:push 2>&1 | tee /tmp/db.log
+            DB=${PIPESTATUS[0]}
+            pnpm check 2>&1 | tee /tmp/check.log
+            CHECK=${PIPESTATUS[0]}
+            env -u RESEND_API_KEY pnpm test 2>&1 | tee /tmp/test.log
+            TEST=${PIPESTATUS[0]}
+            pnpm build 2>&1 | tee /tmp/build.log
+            BUILD=${PIPESTATUS[0]}
+          else
+            echo 'Skipped because dependency install failed.' > /tmp/db.log
+            cp /tmp/db.log /tmp/check.log
+            cp /tmp/db.log /tmp/test.log
+            cp /tmp/db.log /tmp/build.log
+          fi
+          echo "install=$INSTALL" >> "$GITHUB_OUTPUT"
+          echo "db=$DB" >> "$GITHUB_OUTPUT"
+          echo "check=$CHECK" >> "$GITHUB_OUTPUT"
+          echo "test=$TEST" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Write baseline report
+        shell: bash
+        env:
+          INSTALL_STATUS: ${{ steps.validation.outputs.install }}
+          DB_STATUS: ${{ steps.validation.outputs.db }}
+          CHECK_STATUS: ${{ steps.validation.outputs.check }}
+          TEST_STATUS: ${{ steps.validation.outputs.test }}
+          BUILD_STATUS: ${{ steps.validation.outputs.build }}
+        run: |
+          mkdir -p docs
+          {
+            echo '# PrimeContractorOS V2 Baseline Validation'
+            echo
+            echo "Branch: \`agent/complete-v2-mirror\`  "
+            echo "Commit tested: \`$(git rev-parse HEAD)\`  "
+            echo "Node: \`$(node --version)\`  "
+            echo "pnpm: \`$(pnpm --version)\`"
+            echo
+            echo '## Results'
+            echo
+            echo '| Check | Exit code |'
+            echo '|---|---:|'
+            echo "| pnpm install --frozen-lockfile | $INSTALL_STATUS |"
+            echo "| pnpm db:push (ephemeral MySQL) | $DB_STATUS |"
+            echo "| pnpm check | $CHECK_STATUS |"
+            echo "| pnpm test | $TEST_STATUS |"
+            echo "| pnpm build | $BUILD_STATUS |"
+            echo
+            echo 'Exit code 0 means pass. Exit code 99 means skipped because dependency installation failed.'
+            for item in install db check test build; do
+              echo
+              echo "## ${item^} output (tail)"
+              echo
+              echo '```text'
+              tail -n 80 "/tmp/$item.log" | sed -E 's/(mysql|postgres(ql)?):\/\/[^ @]+@/[REDACTED_DB_URL]@/g; s/(sk|pk|whsec|re)_[A-Za-z0-9_-]+/[REDACTED_TOKEN]/g'
+              echo '```'
+            done
+          } > docs/BASELINE_VALIDATION_REPORT.md
+
+      - name: Commit baseline report
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/BASELINE_VALIDATION_REPORT.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs(validation): record V2 baseline build results'
+            git push origin HEAD:agent/complete-v2-mirror
+          fi
+
+      - name: Enforce baseline result
+        shell: bash
+        env:
+          INSTALL_STATUS: ${{ steps.validation.outputs.install }}
+          DB_STATUS: ${{ steps.validation.outputs.db }}
+          CHECK_STATUS: ${{ steps.validation.outputs.check }}
+          TEST_STATUS: ${{ steps.validation.outputs.test }}
+          BUILD_STATUS: ${{ steps.validation.outputs.build }}
+        run: |
+          if [ "$INSTALL_STATUS" != '0' ] || [ "$DB_STATUS" != '0' ] || [ "$CHECK_STATUS" != '0' ] || [ "$TEST_STATUS" != '0' ] || [ "$BUILD_STATUS" != '0' ]; then
+            echo 'One or more baseline checks failed. See docs/BASELINE_VALIDATION_REPORT.md.'
+            exit 1
+          fi

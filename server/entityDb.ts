@@ -1,25 +1,10 @@
-import { drizzle } from "drizzle-orm/mysql2";
 import { and, eq, desc, like } from "drizzle-orm";
+import { getDb, getInsertId } from "./db";
 import {
   files, contacts, messages, invoices, payments, tasks, alerts,
   capabilityStatements, templates, closeoutRecords, lessonsLearned,
   lossReviews, deliverables, deadlines, obligations, complianceItems, notes
 } from "../drizzle/schema";
-
-let _db: ReturnType<typeof drizzle> | null = null;
-
-async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
-  }
-  return _db;
-}
-
 // ==================== FILES ====================
 export async function listFiles(workspaceId: number, linkedRecordType?: string, linkedRecordId?: number) {
   const db = await getDb();
@@ -34,7 +19,7 @@ export async function createFile(data: { workspaceId: number; name: string; file
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(files).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateFile(id: number, workspaceId: number, data: Partial<{ name: string; category: string; linkedRecordType: string | null; linkedRecordId: number | null; isGoverningDocument: boolean; documentDate: Date | null; notes: string | null; versionNumber: number }>) {
@@ -71,7 +56,7 @@ export async function createContact(data: { workspaceId: number; firstName: stri
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(contacts).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateContact(id: number, workspaceId: number, data: Partial<{ firstName: string; lastName: string; email: string; phone: string; organization: string; title: string; role: string; notes: string }>) {
@@ -104,7 +89,7 @@ export async function createMessage(data: { workspaceId: number; subject: string
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(messages).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function deleteMessage(id: number, workspaceId: number) {
@@ -126,7 +111,7 @@ export async function createInvoice(data: { workspaceId: number; contractId?: nu
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(invoices).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateInvoice(id: number, workspaceId: number, data: Partial<{ invoiceNumber: string; amount: string; status: string; issuedDate: Date; dueDate: Date; paidDate: Date; description: string }>) {
@@ -161,7 +146,7 @@ export async function createPayment(data: { workspaceId: number; invoiceId?: num
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(payments).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function deletePayment(id: number, workspaceId: number) {
@@ -191,7 +176,7 @@ export async function createTask(data: { workspaceId: number; title: string; des
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(tasks).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateTask(id: number, workspaceId: number, data: Partial<{ title: string; description: string; status: string; priority: string; dueDate: Date; completedAt: Date }>) {
@@ -217,7 +202,7 @@ export async function createAlert(data: { workspaceId: number; title: string; me
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(alerts).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function dismissAlert(id: number, workspaceId: number) {
@@ -253,7 +238,7 @@ export async function createDeliverable(data: { workspaceId: number; contractId:
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(deliverables).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateDeliverable(id: number, workspaceId: number, data: Partial<{ title: string; description: string; status: string; dueDate: Date; submittedAt: Date; acceptedAt: Date }>) {
@@ -283,7 +268,7 @@ export async function createDeadline(data: { workspaceId: number; title: string;
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(deadlines).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateDeadline(id: number, workspaceId: number, data: Partial<{ title: string; description: string; dueDate: Date; priority: string; status: string; completedAt: Date }>) {
@@ -311,7 +296,7 @@ export async function createObligation(data: { workspaceId: number; contractId: 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(obligations).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateObligation(id: number, workspaceId: number, data: Partial<{ title: string; description: string; status: string; dueDate: Date; completedAt: Date }>) {
@@ -339,7 +324,7 @@ export async function createComplianceItem(data: { workspaceId: number; contract
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(complianceItems).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateComplianceItem(id: number, workspaceId: number, data: Partial<{ title: string; description: string; regulation: string; category: string; status: string; dueDate: Date; lastReviewDate: Date; notes: string }>) {
@@ -368,7 +353,7 @@ export async function createNote(data: { workspaceId: number; title?: string; co
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(notes).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateNote(id: number, workspaceId: number, data: Partial<{ title: string; content: string }>) {
@@ -394,7 +379,7 @@ export async function createCapabilityStatement(data: { workspaceId: number; tit
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(capabilityStatements).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateCapabilityStatement(id: number, workspaceId: number, data: Partial<{ title: string; version: string; content: string; naicsCodes: string; pastPerformance: string; differentiators: string; status: string }>) {
@@ -420,7 +405,7 @@ export async function createTemplate(data: { workspaceId: number; name: string; 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(templates).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateTemplate(id: number, workspaceId: number, data: Partial<{ name: string; category: string; content: string; isDefault: boolean }>) {
@@ -446,7 +431,7 @@ export async function createCloseoutRecord(data: { workspaceId: number; contract
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(closeoutRecords).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateCloseoutRecord(id: number, workspaceId: number, data: Partial<{ status: string; finalInvoiceSubmitted: boolean; deliverablesComplete: boolean; governmentPropertyReturned: boolean; finalReportSubmitted: boolean; notes: string; completedAt: Date }>) {
@@ -466,7 +451,7 @@ export async function createLessonLearned(data: { workspaceId: number; contractI
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(lessonsLearned).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function deleteLessonLearned(id: number, workspaceId: number) {
@@ -486,7 +471,7 @@ export async function createLossReview(data: { workspaceId: number; proposalId: 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(lossReviews).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateLossReview(id: number, workspaceId: number, data: Partial<{ reasonLost: string; competitorInfo: string; lessonsLearned: string; actionItems: string; status: string }>) {
@@ -501,7 +486,7 @@ export async function linkPaymentToInvoice(data: { invoiceId: number; paymentId:
   if (!db) throw new Error("Database not available");
   const { invoicePaymentLinks } = await import("../drizzle/schema");
   const result = await db.insert(invoicePaymentLinks).values({ ...data, createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function getPaymentLinksForInvoice(invoiceId: number) {
@@ -517,7 +502,7 @@ export async function addInvoiceStatusHistory(data: { invoiceId: number; oldStat
   if (!db) throw new Error("Database not available");
   const { invoiceStatusHistory } = await import("../drizzle/schema");
   const result = await db.insert(invoiceStatusHistory).values({ ...data, changedAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function getInvoiceStatusHistory(invoiceId: number) {
@@ -528,19 +513,19 @@ export async function getInvoiceStatusHistory(invoiceId: number) {
 }
 
 // ==================== CONTACT LINKS ====================
-export async function createContactLink(data: { contactId: number; linkedRecordType: string; linkedRecordId: number; role?: string }) {
+export async function createContactLink(data: { workspaceId: number; contactId: number; recordType: string; recordId: number; role?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const { contactLinks } = await import("../drizzle/schema");
   const result = await db.insert(contactLinks).values({ ...data, createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
-export async function getContactLinksForRecord(linkedRecordType: string, linkedRecordId: number) {
+export async function getContactLinksForRecord(workspaceId: number, recordType: string, recordId: number) {
   const db = await getDb();
   if (!db) return [];
   const { contactLinks } = await import("../drizzle/schema");
-  return db.select().from(contactLinks).where(and(eq(contactLinks.recordType, linkedRecordType), eq(contactLinks.recordId, linkedRecordId)));
+  return db.select().from(contactLinks).where(and(eq(contactLinks.workspaceId, workspaceId), eq(contactLinks.recordType, recordType), eq(contactLinks.recordId, recordId)));
 }
 
 // ==================== FOLLOWUPS ====================
@@ -549,7 +534,7 @@ export async function createFollowup(data: { contactId: number; workspaceId: num
   if (!db) throw new Error("Database not available");
   const { followups } = await import("../drizzle/schema");
   const result = await db.insert(followups).values({ ...data, status: 'pending', createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function listFollowups(workspaceId: number, contactId?: number) {
@@ -574,7 +559,7 @@ export async function createCloseoutBlocker(data: { contractId: number; workspac
   if (!db) throw new Error("Database not available");
   const { closeoutBlockingItems } = await import("../drizzle/schema");
   const result = await db.insert(closeoutBlockingItems).values({ ...data, status: 'open', createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function listCloseoutBlockers(workspaceId: number, contractId: number) {
@@ -597,7 +582,7 @@ export async function createFinanceNote(data: { workspaceId: number; recordType:
   if (!db) throw new Error("Database not available");
   const { financeNotes } = await import("../drizzle/schema");
   const result = await db.insert(financeNotes).values({ ...data, createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function listFinanceNotes(workspaceId: number, linkedRecordType: string, linkedRecordId: number) {
@@ -624,14 +609,14 @@ export async function createFileVersion(data: { fileId: number; workspaceId?: nu
     notes: data.notes,
     createdAt: new Date(),
   } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
-export async function listFileVersions(fileId: number) {
+export async function listFileVersions(fileId: number, workspaceId: number) {
   const db = await getDb();
   if (!db) return [];
   const { fileVersions } = await import("../drizzle/schema");
-  return db.select().from(fileVersions).where(eq(fileVersions.fileId, fileId)).orderBy(fileVersions.versionNumber);
+  return db.select().from(fileVersions).where(and(eq(fileVersions.fileId, fileId), eq(fileVersions.workspaceId, workspaceId))).orderBy(fileVersions.versionNumber);
 }
 
 export async function listAllFileVersionsForWorkspace(workspaceId: number) {
@@ -660,7 +645,7 @@ export async function createContractRequirement(data: { contractId: number; work
   if (!db) throw new Error("Database not available");
   const { contractRequirements } = await import("../drizzle/schema");
   const result = await db.insert(contractRequirements).values({ ...data, status: 'pending', createdAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function listContractRequirements(workspaceId: number, contractId: number) {
@@ -707,8 +692,8 @@ export async function createProposalSection(data: { proposalId: number; workspac
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const { proposalSections } = await import("../drizzle/schema");
-  const [result] = await db.insert(proposalSections).values(data as any);
-  return result.insertId;
+  const result = await db.insert(proposalSections).values(data as any);
+  return getInsertId(result);
 }
 
 export async function updateProposalSection(id: number, workspaceId: number, data: Record<string, any>) {
@@ -740,7 +725,7 @@ export async function createInvoiceLineItem(data: { invoiceId: number; workspace
   if (!db) throw new Error("Database not available");
   const { invoiceLineItems } = await import("../drizzle/schema");
   const result = await db.insert(invoiceLineItems).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateInvoiceLineItem(id: number, workspaceId: number, data: Record<string, any>) {
@@ -770,7 +755,7 @@ export async function createInvoiceChecklistItem(data: { invoiceId: number; work
   if (!db) throw new Error("Database not available");
   const { invoiceChecklistItems } = await import("../drizzle/schema");
   const result = await db.insert(invoiceChecklistItems).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateInvoiceChecklistItem(id: number, workspaceId: number, data: Record<string, any>) {
@@ -800,7 +785,7 @@ export async function createInvoiceIssue(data: { invoiceId: number; workspaceId:
   if (!db) throw new Error("Database not available");
   const { invoiceIssues } = await import("../drizzle/schema");
   const result = await db.insert(invoiceIssues).values(data as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function updateInvoiceIssue(id: number, workspaceId: number, data: Record<string, any>) {
@@ -833,7 +818,7 @@ export async function createPaymentApplication(data: { paymentId: number; invoic
   if (!db) throw new Error("Database not available");
   const { paymentApplications } = await import("../drizzle/schema");
   const result = await db.insert(paymentApplications).values({ ...data, appliedAt: new Date() } as any);
-  return { id: result[0].insertId };
+  return { id: getInsertId(result) };
 }
 
 export async function deletePaymentApplication(id: number, workspaceId: number) {

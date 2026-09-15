@@ -364,8 +364,23 @@ export default function ProposalDetail() {
     { enabled: !!proposalId }
   );
 
-  const updateStatusMutation = trpc.proposals.updateStatus.useMutation();
+  const utils = trpc.useUtils();
+  const updateStatusMutation = trpc.proposals.updateStatus.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.proposals.get.invalidate({ id: proposalId! }),
+        utils.proposals.list.invalidate(),
+      ]);
+    },
+  });
   const convertToContractMutation = trpc.proposals.convertToContract.useMutation();
+
+  // Hooks must run before any conditional return. Track the record only after data exists.
+  useEffect(() => {
+    if (proposal && proposalId) {
+      addRecord({ type: 'proposal', id: proposalId, title: proposal.title, route: `/app/proposals/${proposalId}` });
+    }
+  }, [proposal?.id, proposalId, proposal?.title, addRecord]);
 
   if (!proposalId) {
     return (
@@ -400,13 +415,6 @@ export default function ProposalDetail() {
       </PageLayout>
     );
   }
-
-  // Track this record as recently viewed
-  useEffect(() => {
-    if (proposal && proposalId) {
-      addRecord({ type: 'proposal', id: proposalId, title: proposal.title, route: `/app/proposals/${proposalId}` });
-    }
-  }, [proposal?.id]);
 
   const statusColors: Record<string, string> = {
     draft: 'bg-gray-100 text-gray-800',
@@ -515,7 +523,7 @@ export default function ProposalDetail() {
             <div className="bg-white border border-slate-200 rounded-lg p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-4">Update Status</h2>
               <div className="space-y-2">
-                {['draft', 'in_progress', 'submitted'].map(s => (
+                {['draft', 'in_progress', 'under_review', 'submitted'].map(s => (
                   <Button key={s} variant={proposal.status === s ? 'default' : 'outline'} className="w-full justify-start capitalize"
                     onClick={() => handleStatusChange(s)} disabled={updateStatusMutation.isPending}>
                     {s.replace(/_/g, ' ')}

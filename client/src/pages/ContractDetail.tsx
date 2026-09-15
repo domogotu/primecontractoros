@@ -51,8 +51,17 @@ export default function ContractDetail() {
     { enabled: !!contractId }
   );
 
-  const updateHealthMutation = trpc.contracts.updateHealth.useMutation();
   const utils = trpc.useUtils();
+  const updateHealthMutation = trpc.contracts.updateHealth.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.contracts.get.invalidate({ id: contractId! }),
+        utils.contracts.list.invalidate(),
+      ]);
+      toast.success('Contract health updated');
+    },
+    onError: (error: any) => toast.error(error.message || 'Failed to update contract health'),
+  });
 
   // CLIN form
   const [clinForm, setClinForm] = useState({ clinNumber: '', description: '', quantity: '', unitPrice: '', totalValue: '' });

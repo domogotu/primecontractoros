@@ -1,25 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
+import { AlertCircle, ExternalLink, Loader2, Plus, Search, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from "@/components/ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { Plus, Search, Target, ExternalLink, Loader2, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 import OpportunityForm from "@/components/OpportunityForm";
 import SmartIntakeOpportunity from "@/components/SmartIntakeOpportunity";
 import SamImportPanel from "@/components/SamImportPanel";
 import PageLayout from "@/components/PageLayout";
-import PageGuide from "@/components/PageGuide";
-import PageGuidancePanel from "@/components/PageGuidancePanel";
-import EmptyStateGuide from "@/components/EmptyStateGuide";
-import LifecycleProgress, { LifecyclePhase } from "@/components/LifecycleProgress";
-import AIStatusPanel, { AICheck } from "@/components/AIStatusPanel";
-import WhatsNext, { NextAction } from "@/components/WhatsNext";
-import ValidationWarnings, { ValidationWarning } from "@/components/ValidationWarnings";
-import GuidanceQuestionPanel from "@/components/GuidanceQuestionPanel";
-import TrainingWalkthrough from "@/components/TrainingWalkthrough";
-import FieldHelp from "@/components/FieldHelp";
-import { useMemo } from "react";
+import LifecycleProgress from "@/components/LifecycleProgress";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
@@ -27,21 +17,18 @@ export default function Opportunities() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSmartIntakeOpen, setIsSmartIntakeOpen] = useState(false);
+  const [showImportTools, setShowImportTools] = useState(false);
 
-  // Open create dialog when navigated here with ?create=true (e.g. from CommandPalette)
   useEffect(() => {
     const params = new URLSearchParams(searchString);
-    if (params.get("create") === "true") {
-      setIsSmartIntakeOpen(true);
-    }
+    if (params.get("create") === "true") setIsSmartIntakeOpen(true);
   }, [searchString]);
 
-  const { data: opportunities = [], isLoading, refetch: refetchOpportunities } = trpc.opportunities.list.useQuery();
-
-  const filteredOpportunities = opportunities.filter((opp) =>
-    opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (opp.agency?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
-  );
+  const {
+    data: opportunities = [],
+    isLoading,
+    refetch: refetchOpportunities,
+  } = trpc.opportunities.list.useQuery();
 
   const statusColors: Record<string, string> = {
     new: "bg-blue-100 text-blue-800",
@@ -53,15 +40,10 @@ export default function Opportunities() {
     archived: "bg-slate-100 text-slate-800",
   };
 
-  // Pipeline metrics
   const newOpps = opportunities.filter((o) => o.status === "new").length;
   const inReviewOpps = opportunities.filter((o) => o.status === "in_review").length;
   const pursuingOpps = opportunities.filter((o) => o.status === "pursue").length;
-  const holdOpps = opportunities.filter((o) => o.status === "hold").length;
-  const noPursueOpps = opportunities.filter((o) => o.status === "no_pursue").length;
-  const movedToProposalOpps = opportunities.filter((o) => o.status === "moved_to_proposal").length;
 
-  // Upcoming deadlines in next 7 days
   const upcomingDeadlines = useMemo(() => {
     const now = new Date();
     const oneWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -70,167 +52,36 @@ export default function Opportunities() {
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   }, [opportunities]);
 
-  // Overdue opportunities
   const overdueOpps = useMemo(() => {
     const now = new Date();
     return (opportunities as any[])
-      .filter((o) => o.dueDate && new Date(o.dueDate) < now && o.status !== "no_pursue" && o.status !== "moved_to_proposal" && o.status !== "archived")
+      .filter(
+        (o) =>
+          o.dueDate &&
+          new Date(o.dueDate) < now &&
+          o.status !== "no_pursue" &&
+          o.status !== "moved_to_proposal" &&
+          o.status !== "archived"
+      )
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   }, [opportunities]);
 
-  // AI Status Checks
-  const aiChecks = useMemo((): AICheck[] => {
-    const checks: AICheck[] = [];
+  const attentionCount = overdueOpps.length + upcomingDeadlines.length + inReviewOpps;
 
-    checks.push({
-      id: "pipeline-health",
-      name: "Pipeline Health",
-      status: pursuingOpps > 0 ? "verified" : "flagged",
-      message: pursuingOpps > 0 ? `${pursuingOpps} opportunity(ies) being actively pursued` : "No opportunities in pursuit status. Build your pipeline.",
-      severity: pursuingOpps > 0 ? "info" : "warning",
-    });
-
-    checks.push({
-      id: "pending-decisions",
-      name: "Pending Decisions",
-      status: inReviewOpps > 0 ? "flagged" : "verified",
-      message: inReviewOpps > 0 ? `${inReviewOpps} opportunity(ies) awaiting evaluation decision` : "All opportunities have decisions",
-      severity: inReviewOpps > 0 ? "warning" : "info",
-    });
-
-    checks.push({
-      id: "upcoming-deadlines",
-      name: "Upcoming Deadlines",
-      status: upcomingDeadlines.length > 0 ? "flagged" : "verified",
-      message: upcomingDeadlines.length > 0 ? `${upcomingDeadlines.length} deadline(s) in next 7 days` : "No critical deadlines",
-      severity: upcomingDeadlines.length > 0 ? "warning" : "info",
-    });
-
-    checks.push({
-      id: "overdue-items",
-      name: "Overdue Opportunities",
-      status: overdueOpps.length > 0 ? "flagged" : "verified",
-      message: overdueOpps.length > 0 ? `${overdueOpps.length} opportunity(ies) past due date` : "No overdue opportunities",
-      severity: overdueOpps.length > 0 ? "error" : "info",
-    });
-
-    return checks;
-  }, [pursuingOpps, inReviewOpps, upcomingDeadlines, overdueOpps]);
-
-  // Next Best Steps
-  const nextSteps = useMemo((): NextAction[] => {
-    const steps: NextAction[] = [];
-
-    if (newOpps > 0) {
-      steps.push({
-        id: "review-new",
-        title: `${newOpps} New Opportunity${newOpps > 1 ? "ies" : ""}`,
-        description: "Review new opportunities and make pursue/hold/no-pursue decisions",
-        priority: "high",
-        action: {
-          label: "Review",
-          onClick: () => setSearchTerm("new"),
-        },
-      });
-    }
-
-    if (inReviewOpps > 0) {
-      steps.push({
-        id: "decide-review",
-        title: `${inReviewOpps} Awaiting Decision`,
-        description: "Make pursue/hold/no-pursue decisions on opportunities in review",
-        priority: "high",
-        action: {
-          label: "Decide",
-          onClick: () => setSearchTerm("in_review"),
-        },
-      });
-    }
-
-    if (overdueOpps.length > 0) {
-      steps.push({
-        id: "overdue",
-        title: `${overdueOpps.length} Overdue Opportunity${overdueOpps.length > 1 ? "ies" : ""}`,
-        description: "Address overdue opportunities — archive or make decision",
-        priority: "high",
-        action: {
-          label: "Address",
-          onClick: () => navigate(`/app/opportunities/${overdueOpps[0].id}`),
-        },
-      });
-    }
-
-    if (upcomingDeadlines.length > 0) {
-      steps.push({
-        id: "upcoming",
-        title: `${upcomingDeadlines.length} Deadline${upcomingDeadlines.length > 1 ? "s" : ""} in 7 Days`,
-        description: "Prepare for upcoming proposal deadlines",
-        priority: "medium",
-        action: {
-          label: "Prepare",
-          onClick: () => navigate(`/app/opportunities/${upcomingDeadlines[0].id}`),
-        },
-      });
-    }
-
-    if (pursuingOpps > 0) {
-      steps.push({
-        id: "pursue",
-        title: `Convert to Proposals`,
-        description: `Move ${pursuingOpps} pursued opportunity(ies) to proposal development`,
-        priority: "medium",
-        action: {
-          label: "Convert",
-          onClick: () => navigate("/app/proposals"),
-        },
-      });
-    }
-
-    if (opportunities.length === 0) {
-      steps.push({
-        id: "add-first",
-        title: "Build Your Pipeline",
-        description: "Add your first opportunity from SAM.gov or a tip",
-        priority: "high",
-        action: {
-          label: "Add Opportunity",
-          onClick: () => setIsCreateDialogOpen(true),
-        },
-      });
-    }
-
-    return steps.slice(0, 6);
-  }, [newOpps, inReviewOpps, overdueOpps, upcomingDeadlines, pursuingOpps, opportunities.length, navigate]);
-
-  // Validation Warnings
-  const validationWarnings = useMemo((): ValidationWarning[] => {
-    const warnings: ValidationWarning[] = [];
-
-    if (overdueOpps.length > 0) {
-      warnings.push({
-        id: "overdue",
-        message: `${overdueOpps.length} opportunity(ies) are past their due date. Archive or make a decision immediately.`,
-        type: "error",
-        dismissible: true,
-      });
-    }
-
-    if (inReviewOpps > 0) {
-      warnings.push({
-        id: "pending-decisions",
-        message: `${inReviewOpps} opportunity(ies) are awaiting your pursue/hold/no-pursue decision.`,
-        type: "warning",
-        dismissible: true,
-      });
-    }
-
-    return warnings;
-  }, [overdueOpps, inReviewOpps]);
+  const filteredOpportunities = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return opportunities;
+    return opportunities.filter((opp: any) =>
+      [opp.title, opp.agency, opp.solicitation, opp.status]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(q))
+    );
+  }, [opportunities, searchTerm]);
 
   return (
     <PageLayout
       title="Opportunities"
-      subtitle="Track and review potential government contracting opportunities from discovery to decision"
+      subtitle="Find, evaluate, and move the right opportunities into proposal development"
       label="Pipeline"
       summaryCards={[
         { label: "Total", value: opportunities.length },
@@ -239,135 +90,200 @@ export default function Opportunities() {
         { label: "Pursuing", value: pursuingOpps, color: "text-green-600" },
       ]}
       actions={
-        <div className="flex gap-2">
-          <Button onClick={() => setIsSmartIntakeOpen(true)} variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50">
-            <Search className="w-4 h-4 mr-2" /> Smart Import
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setIsSmartIntakeOpen(true)}
+            variant="outline"
+            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+          >
+            <Search className="mr-2 h-4 w-4" /> Find / Import
           </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> New Opportunity
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="bg-green-500 text-white hover:bg-green-600"
+          >
+            <Plus className="mr-2 h-4 w-4" /> New Opportunity
           </Button>
         </div>
       }
     >
-      <PageGuide
-        title="Opportunities Pipeline"
-        description="Track and manage government contracting opportunities from discovery to decision."
-        whenToUse="When you find a new opportunity on SAM.gov, receive a tip, or need to evaluate your pipeline."
-        whatToDoNext={["Add new opportunities as you discover them", "Evaluate each opportunity with pursue/hold/no-pursue decision", "Convert pursued opportunities to proposals", "Review AI recommendations for opportunity fit"]}
-        relatedRecords={[{ label: "Proposals", path: "/app/proposals" }, { label: "Contacts", path: "/app/contacts" }, { label: "Files", path: "/app/files" }]}
-      />
-
-      {/* Validation Warnings */}
-      {validationWarnings.length > 0 && (
-        <ValidationWarnings warnings={validationWarnings} />
-      )}
-
-      {/* Lifecycle Progress */}
       <LifecycleProgress currentPhase="opportunity" />
 
-      {/* AI Status Panel */}
-      <AIStatusPanel checks={aiChecks} title="OPPORTUNITY PIPELINE STATUS" />
+      {attentionCount > 0 && (
+        <Card className="border-amber-200 bg-amber-50 p-4 md:p-5">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-700" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-semibold text-amber-950">Needs attention</h2>
+                  <p className="text-sm text-amber-800">
+                    PrimeContractorOS is surfacing only the pipeline items that may affect your next decision.
+                  </p>
+                </div>
+                <span className="mt-2 w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 sm:mt-0">
+                  {attentionCount} item{attentionCount === 1 ? "" : "s"}
+                </span>
+              </div>
 
-      {/* What's Next */}
-      <WhatsNext actions={nextSteps} />
-
-      {/* Guidance Question Panel */}
-      <GuidanceQuestionPanel pageContext="opportunities" />
-
-      {/* Training Walkthrough */}
-      <TrainingWalkthrough pageContext="opportunities" />
-
-      {/* SAM.gov Import Panel */}
-      <SamImportPanel onImportSuccess={() => { refetchOpportunities(); }} />
-
-      {/* Search */}
-      <Card className="bg-white border border-gray-200 p-4">
-        <div className="flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by title, agency, or solicitation..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+              <div className="mt-4 grid gap-2 md:grid-cols-3">
+                {overdueOpps.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/app/opportunities/${overdueOpps[0].id}`)}
+                    className="rounded-lg border border-red-200 bg-white p-3 text-left hover:bg-red-50"
+                  >
+                    <p className="text-sm font-semibold text-red-800">{overdueOpps.length} overdue</p>
+                    <p className="mt-1 text-xs text-slate-600">Review the oldest overdue opportunity first.</p>
+                  </button>
+                )}
+                {upcomingDeadlines.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/app/opportunities/${upcomingDeadlines[0].id}`)}
+                    className="rounded-lg border border-amber-200 bg-white p-3 text-left hover:bg-amber-50"
+                  >
+                    <p className="text-sm font-semibold text-amber-800">{upcomingDeadlines.length} due within 7 days</p>
+                    <p className="mt-1 text-xs text-slate-600">Confirm requirements and proposal readiness early.</p>
+                  </button>
+                )}
+                {inReviewOpps > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("in_review")}
+                    className="rounded-lg border border-blue-200 bg-white p-3 text-left hover:bg-blue-50"
+                  >
+                    <p className="text-sm font-semibold text-blue-800">{inReviewOpps} awaiting a decision</p>
+                    <p className="mt-1 text-xs text-slate-600">Review fit, risk, and missing information before deciding.</p>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
+        </Card>
+      )}
+
+      <Card className="border-gray-200 bg-white p-4 md:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="font-semibold text-slate-900">Find and capture opportunities</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Start with Smart Import for a SAM.gov URL, notice number, keyword, NAICS, PSC, agency, or other opportunity input.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setIsSmartIntakeOpen(true)}>
+              <Search className="mr-2 h-4 w-4" /> Smart Import
+            </Button>
+            <Button variant="outline" onClick={() => setShowImportTools((value) => !value)}>
+              {showImportTools ? "Hide advanced import" : "Advanced SAM.gov import"}
+            </Button>
+          </div>
+        </div>
+
+        {showImportTools && (
+          <div className="mt-4 border-t border-gray-100 pt-4">
+            <SamImportPanel onImportSuccess={() => refetchOpportunities()} />
+          </div>
+        )}
+      </Card>
+
+      <Card className="border-gray-200 bg-white p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search opportunities by title, agency, solicitation, or status"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       </Card>
 
-      {/* List */}
       {isLoading ? (
-        <Card className="bg-white border border-gray-200 p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
+        <Card className="border-gray-200 bg-white p-12 text-center">
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-gray-400" />
           <p className="text-gray-600">Loading opportunities...</p>
         </Card>
       ) : filteredOpportunities.length === 0 ? (
-        <Card className="bg-white border border-gray-200 p-12 text-center">
-          <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Opportunities Found</h3>
-          <p className="text-gray-600 mb-6">
-            {searchTerm ? "Try adjusting your search" : "Create your first opportunity to build your pipeline."}
+        <Card className="border-gray-200 bg-white p-8 text-center md:p-12">
+          <Target className="mx-auto mb-4 h-14 w-14 text-gray-300" />
+          <h3 className="text-xl font-bold text-gray-900">
+            {searchTerm ? "No matching opportunities" : "Start your opportunity pipeline"}
+          </h3>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600">
+            {searchTerm
+              ? "Try a different search term or clear the search."
+              : "Import from SAM.gov or create an opportunity manually. PrimeContractorOS will keep the record connected as it moves into proposal and contract work."}
           </p>
-          <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-green-500 hover:bg-green-600 text-white">
-            <Plus className="w-4 h-4 mr-2" /> Add Your First Opportunity
-          </Button>
+          {!searchTerm && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Button onClick={() => setIsSmartIntakeOpen(true)}>
+                <Search className="mr-2 h-4 w-4" /> Find / Import Opportunity
+              </Button>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Create Manually
+              </Button>
+            </div>
+          )}
         </Card>
       ) : (
         <div className="space-y-3">
-          {filteredOpportunities.map((opp) => {
-            const daysUntilDue = opp.dueDate ? Math.ceil((new Date(opp.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+          {filteredOpportunities.map((opp: any) => {
+            const daysUntilDue = opp.dueDate
+              ? Math.ceil((new Date(opp.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null;
             const isOverdue = daysUntilDue !== null && daysUntilDue < 0;
-            const isUrgent = daysUntilDue !== null && daysUntilDue <= 7 && daysUntilDue >= 0;
+            const isUrgent = daysUntilDue !== null && daysUntilDue >= 0 && daysUntilDue <= 7;
 
             return (
               <Card
                 key={opp.id}
                 onClick={() => navigate(`/app/opportunities/${opp.id}`)}
-                className={`bg-white border p-6 hover:shadow-md transition-shadow cursor-pointer ${
-                  isOverdue ? "border-red-300 bg-red-50" : isUrgent ? "border-amber-300 bg-amber-50" : "border-gray-200"
+                className={`cursor-pointer border bg-white p-4 transition-shadow hover:shadow-md md:p-5 ${
+                  isOverdue ? "border-red-300" : isUrgent ? "border-amber-300" : "border-gray-200"
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">{opp.title}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${statusColors[opp.status || "new"]}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="min-w-0 truncate text-base font-semibold text-gray-900 md:text-lg">{opp.title}</h3>
+                      <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${statusColors[opp.status || "new"]}`}>
                         {(opp.status || "new").replace(/_/g, " ")}
                       </span>
-                      {isOverdue && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 whitespace-nowrap">
-                          OVERDUE
-                        </span>
-                      )}
+                      {isOverdue && <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-800">Overdue</span>}
                       {isUrgent && !isOverdue && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 whitespace-nowrap">
-                          {daysUntilDue}d LEFT
-                        </span>
+                        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">{daysUntilDue}d left</span>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+
+                    <p className="mt-1 truncate text-sm text-gray-600">{opp.agency || "Agency not yet identified"}</p>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
                       <div>
-                        <p className="text-gray-500">Agency</p>
-                        <p className="font-medium text-gray-900 truncate">{opp.agency || "N/A"}</p>
+                        <p className="text-xs text-gray-500">Solicitation</p>
+                        <p className="truncate font-medium text-gray-900">{opp.solicitation || "Not captured"}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Solicitation</p>
-                        <p className="font-medium text-gray-900 truncate">{opp.solicitation || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Due Date</p>
+                        <p className="text-xs text-gray-500">Due date</p>
                         <p className={`font-medium ${isOverdue ? "text-red-700" : isUrgent ? "text-amber-700" : "text-gray-900"}`}>
-                          {opp.dueDate ? new Date(opp.dueDate).toLocaleDateString() : "N/A"}
+                          {opp.dueDate ? new Date(opp.dueDate).toLocaleDateString() : "Not captured"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500">Type</p>
-                        <p className="font-medium text-gray-900 truncate">{opp.type || "N/A"}</p>
+                        <p className="text-xs text-gray-500">Type</p>
+                        <p className="truncate font-medium text-gray-900">{opp.type || "Not captured"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Next step</p>
+                        <p className="font-medium text-gray-900">
+                          {opp.status === "pursue" ? "Prepare proposal" : opp.status === "in_review" ? "Make pursuit decision" : "Review opportunity"}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <ExternalLink className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <ExternalLink className="h-5 w-5 flex-shrink-0 text-gray-400" />
                 </div>
               </Card>
             );
@@ -375,14 +291,23 @@ export default function Opportunities() {
         </div>
       )}
 
-      {/* Smart Intake Modal */}
+      <details className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <summary className="cursor-pointer font-medium text-slate-800">How this page works</summary>
+        <div className="mt-3 space-y-2">
+          <p>Use this page to build and triage the pipeline. Open a specific opportunity for deeper AI review, requirements, documents, fit, risk, teaming, and pursuit decisions.</p>
+          <p>Background checks should stay quiet when everything is healthy. Important exceptions are surfaced in “Needs attention” so the page stays readable.</p>
+        </div>
+      </details>
+
       <SmartIntakeOpportunity
         open={isSmartIntakeOpen}
         onClose={() => setIsSmartIntakeOpen(false)}
-        onCreated={() => setIsSmartIntakeOpen(false)}
+        onCreated={() => {
+          setIsSmartIntakeOpen(false);
+          refetchOpportunities();
+        }}
       />
 
-      {/* Create Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -390,25 +315,15 @@ export default function Opportunities() {
           </DialogHeader>
           <DialogBody>
             <OpportunityForm
-              onSuccess={() => setIsCreateDialogOpen(false)}
+              onSuccess={() => {
+                setIsCreateDialogOpen(false);
+                refetchOpportunities();
+              }}
               onCancel={() => setIsCreateDialogOpen(false)}
             />
           </DialogBody>
         </DialogContent>
       </Dialog>
-      <PageGuidancePanel
-        pageKey="opportunities"
-        title="Opportunities Help"
-        description="Track and evaluate government contracting opportunities. Import from SAM.gov or create manually. Review each opportunity to make a pursue/no-pursue decision."
-        whatToDoNext={[
-          "Import opportunities from SAM.gov using the Import button",
-          "Review each opportunity's NAICS, set-aside, and due date",
-          "Make a go/no-go decision for each opportunity",
-          "Convert pursued opportunities to proposals"
-        ]}
-        helpArticleSlug="what-is-an-opportunity"
-        glossaryTerms={["opportunity", "solicitation", "set-aside", "naics"]}
-      />
     </PageLayout>
   );
 }

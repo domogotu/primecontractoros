@@ -1,0 +1,90 @@
+name: Phase 13 onboarding persistence
+on:
+  push:
+    branches: [agent/phase13-onboarding-persistence]
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: primecontractoros_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/primecontractoros_test
+      JWT_SECRET: phase13-validation-secret-that-is-long-enough
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Apply onboarding persistence fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('server/platformRouter.ts')
+          s = p.read_text()
+          s = s.replace(
+            'import { workspaces, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords, auditLogs } from "../drizzle/schema";',
+            'import { workspaces, businessProfiles, plans, discounts, platformBilling, supportTickets, platformOverrides, users, loginEvents, platformNotes, platformAuditLog, workspaceMembers, planVersions, policyVersions, backupExports, platformTasks, platformTaskRuns, billingEvents, discountUsage, consentRecords, auditLogs } from "../drizzle/schema";'
+          )
+          needle = '      certifications: z.string().optional(),\n    }))\n    .mutation(async ({ ctx, input }) => {'
+          replacement = '      certifications: z.string().optional(),\n      uei: z.string().optional(),\n    }))\n    .mutation(async ({ ctx, input }) => {'
+          if needle not in s:
+              raise SystemExit('completeOnboarding input anchor not found')
+          s = s.replace(needle, replacement, 1)
+
+          needle = '      const userId = ctx.user.id;\n      // Find or create workspace'
+          helper = '''      const userId = ctx.user.id;\n      const syncBusinessProfile = async (workspaceId: number) => {\n        const profileData = {\n          legalName: input.companyName,\n          uei: input.uei?.trim() || null,\n          naicsCodes: input.naicsCodes || null,\n          certifications: input.certifications || null,\n        };\n        const [existingProfile] = await db.select({ id: businessProfiles.id })\n          .from(businessProfiles)\n          .where(eq(businessProfiles.workspaceId, workspaceId))\n          .limit(1);\n        if (existingProfile) {\n          await db.update(businessProfiles).set(profileData)\n            .where(eq(businessProfiles.workspaceId, workspaceId));\n        } else {\n          await db.insert(businessProfiles).values({ workspaceId, ...profileData });\n        }\n      };\n      // Find or create workspace'''
+          if needle not in s:
+              raise SystemExit('completeOnboarding user anchor not found')
+          s = s.replace(needle, helper, 1)
+
+          needle = '        return { success: true, workspaceId: result[0].insertId };'
+          replacement = '        await syncBusinessProfile(result[0].insertId);\n        return { success: true, workspaceId: result[0].insertId };'
+          if needle not in s:
+              raise SystemExit('new workspace return anchor not found')
+          s = s.replace(needle, replacement, 1)
+
+          needle = '        .where(eq(workspaces.id, ws.id));\n      return { success: true, workspaceId: ws.id };'
+          replacement = '        .where(eq(workspaces.id, ws.id));\n      await syncBusinessProfile(ws.id);\n      return { success: true, workspaceId: ws.id };'
+          if needle not in s:
+              raise SystemExit('existing workspace return anchor not found')
+          s = s.replace(needle, replacement, 1)
+          p.write_text(s)
+
+          p = Path('client/src/pages/Onboarding.tsx')
+          s = p.read_text()
+          needle = '        certifications: formData.certifications || undefined,\n      });'
+          replacement = '        certifications: formData.certifications || undefined,\n        uei: formData.uei.trim() || undefined,\n      });'
+          if needle not in s:
+              raise SystemExit('onboarding mutation anchor not found')
+          s = s.replace(needle, replacement, 1)
+          p.write_text(s)
+          PY
+      - name: Verify onboarding persistence assertions
+        run: |
+          grep -q 'businessProfiles' server/platformRouter.ts
+          grep -q 'uei: z.string().optional()' server/platformRouter.ts
+          grep -q 'syncBusinessProfile' server/platformRouter.ts
+          grep -q 'uei: formData.uei.trim()' client/src/pages/Onboarding.tsx
+      - run: corepack enable && corepack prepare pnpm@10.4.1 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm drizzle-kit migrate
+      - run: pnpm check
+      - run: env -u RESEND_API_KEY pnpm test
+      - run: pnpm build
+      - name: Commit verified onboarding persistence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add server/platformRouter.ts client/src/pages/Onboarding.tsx
+          git commit -m 'fix(onboarding): persist captured business profile data' || true
+          git push

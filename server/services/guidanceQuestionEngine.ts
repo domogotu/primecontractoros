@@ -3,7 +3,7 @@
  * Generates and evaluates 70,000+ guidance questions using:
  * GUIDANCE WORD × 6 DIMENSIONS (Who/What/When/Where/Why/How) × ANSWER OUTCOME FAMILIES
  */
-import { getDb } from "../db";
+import { getDb, getInsertId } from "../db";
 import { guidanceQuestions, guidanceQuestionDismissals } from "../../drizzle/schema";
 import { eq, and, inArray, notInArray } from "drizzle-orm";
 

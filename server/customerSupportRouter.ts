@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { z } from "zod";
 import { router, protectedProcedure, adminProcedure } from "./_core/trpc";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { supportTickets, supportMessages, users } from "../drizzle/schema";
 import { eq, and, desc, ne } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
@@ -86,7 +86,7 @@ export const customerSupportRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database not available");
       const wsId = await requireWorkspaceId(ctx.user.id);
-      const [result] = await db.insert(supportTickets).values({
+      const result = await db.insert(supportTickets).values({
         workspaceId: wsId,
         userId: ctx.user.id,
         subject: input.subject,
@@ -95,17 +95,17 @@ export const customerSupportRouter = router({
         category: input.category || null,
         status: "open",
       });
-      const ticketId = result.insertId;
+      const ticketId = getInsertId(result);
       // Also create the initial message from the ticket body
       await db.insert(supportMessages).values({
-        ticketId: Number(ticketId),
+        ticketId,
         senderType: "customer",
         senderId: ctx.user.id,
         senderName: ctx.user.name || ctx.user.email || "Customer",
         content: input.body,
         isInternalNote: false,
       });
-      return { success: true, ticketId: Number(ticketId) };
+      return { success: true, ticketId };
     }),
 
   // Add a reply to an existing ticket (customer)

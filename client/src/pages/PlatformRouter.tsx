@@ -31,6 +31,7 @@ import PlatformUserDetailPage from "./PlatformUserDetail";
 import { getLoginUrl, navigateToLogin } from "@/const";
 import { useState } from "react";
 import { Menu } from "lucide-react";
+import { isPlatformOwner } from "@/lib/platformOwner";
 
 export default function PlatformRouter() {
   const [location, navigate] = useLocation();
@@ -53,12 +54,12 @@ export default function PlatformRouter() {
     return null;
   }
 
-  if (user?.role !== "admin") {
+  if (!isPlatformOwner(user)) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-slate-300 mb-6">You don't have admin permissions to access the platform management area.</p>
+          <p className="text-slate-300 mb-6">This area is reserved for the PrimeContractorOS platform owner.</p>
           <button onClick={() => navigate("/app/dashboard")} className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800">
             Go to Dashboard
           </button>

@@ -1,0 +1,1 @@
+Internal subscription bypass behavior is implemented in server/accessGating.ts. Do not grant global platform-owner authority to the Reeds Solutions business account.

@@ -3,7 +3,7 @@
  */
 import { protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { webhooks, webhookDeliveries } from "../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { enforcePermission } from "./rbacMiddleware";
@@ -68,9 +68,9 @@ export const webhookRouter = router({
         isActive: true,
       });
       try {
-        await logAudit(wsId, ctx.user.id, "create", "webhook", Number(result.insertId), input);
+        await logAudit(wsId, ctx.user.id, "create", "webhook", getInsertId(result), input);
       } catch {}
-      return { id: Number(result.insertId), secret };
+      return { id: getInsertId(result), secret };
     }),
 
   // Update a webhook

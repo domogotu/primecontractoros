@@ -84,7 +84,7 @@ export default function LessonsLearned() {
     whatDidNotWork: "",
     actionTaken: "",
     preventionSteps: "",
-    linkedRecordType: "",
+    linkedRecordType: "" as "" | "contract" | "proposal" | "opportunity",
     linkedRecordId: undefined as number | undefined,
     linkedRecordTitle: "",
     visibility: "workspace" as "workspace" | "team" | "private",
@@ -194,9 +194,9 @@ export default function LessonsLearned() {
       return;
     }
     if (editingLesson) {
-      updateMutation.mutate({ id: editingLesson.id, ...formData, linkedRecordId: formData.linkedRecordId || undefined });
+      updateMutation.mutate({ id: editingLesson.id, ...formData, linkedRecordType: formData.linkedRecordType || undefined, linkedRecordId: formData.linkedRecordId || undefined });
     } else {
-      createMutation.mutate({ ...formData, linkedRecordId: formData.linkedRecordId || undefined });
+      createMutation.mutate({ ...formData, linkedRecordType: formData.linkedRecordType || undefined, linkedRecordId: formData.linkedRecordId || undefined });
     }
   }
 
@@ -693,7 +693,7 @@ export default function LessonsLearned() {
               <Label className="font-medium">Link to Record (Optional)</Label>
               <div className="grid grid-cols-2 gap-3">
                 <Select value={formData.linkedRecordType || "none"} onValueChange={(v) => {
-                  const val = v === "none" ? "" : v;
+                  const val = (v === "none" ? "" : v) as "" | "contract" | "proposal" | "opportunity";
                   setFormData({ ...formData, linkedRecordType: val, linkedRecordId: undefined, linkedRecordTitle: "" });
                   setLinkRecordType(val);
                 }}>

@@ -1,0 +1,152 @@
+name: Mirror production into V2
+
+on:
+  push:
+    branches:
+      - agent/complete-v2-mirror
+    paths:
+      - .github/workflows/mirror-production.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout V2 branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/complete-v2-mirror
+          fetch-depth: 0
+
+      - name: Checkout production reference
+        uses: actions/checkout@v4
+        with:
+          repository: domogotu/primecontractoros
+          ref: main
+          path: _production_reference
+          fetch-depth: 1
+
+      - name: Capture production baseline
+        id: baseline
+        shell: bash
+        run: |
+          echo "sha=$(git -C _production_reference rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "files=$(find _production_reference -type f -not -path '*/.git/*' | wc -l | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Safety scan production source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _production_reference
+          matches="$(grep -RInE --exclude-dir=.git --exclude-dir=.manus --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build --exclude='*.md' --exclude='.env.example' --exclude='.project-config.json' \
+            '(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9_-]{20,}|re_[A-Za-z0-9_-]{20,}|mysql://[^[:space:]]+:[^[:space:]]+@|postgres(ql)?://[^[:space:]]+:[^[:space:]]+@)' . || true)"
+          matches="$(printf '%s\n' "$matches" | grep -v 're_test_dummy_key_for_testing' || true)"
+          if [ -n "$matches" ]; then
+            printf '%s\n' "$matches"
+            echo 'Potential literal secret detected in production source. Mirror aborted before copy.' >&2
+            exit 1
+          fi
+
+      - name: Preserve V2-only controls and modernized files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/v2-preserve
+          for p in CLAUDE.md MIGRATION_REGISTER.md README.md docs unified-ai-ecosystem .github; do
+            if [ -e "$p" ]; then
+              mkdir -p "/tmp/v2-preserve/$(dirname "$p")"
+              cp -a "$p" "/tmp/v2-preserve/$p"
+            fi
+          done
+          for p in drizzle/schema.ts server/platformAdminRouter.ts client/src/pages/PlatformOnboarding.tsx; do
+            if [ -e "$p" ]; then
+              mkdir -p "/tmp/v2-preserve/$(dirname "$p")"
+              cp -a "$p" "/tmp/v2-preserve/$p"
+            fi
+          done
+
+      - name: Mirror production application tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a _production_reference/ ./ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.manus/' \
+            --exclude '.project-config.json' \
+            --exclude '.env' \
+            --exclude '.env.*' \
+            --exclude 'node_modules/' \
+            --exclude 'dist/' \
+            --exclude 'build/' \
+            --exclude '.next/' \
+            --exclude '.cache/' \
+            --exclude 'coverage/' \
+            --exclude 'uploads/' \
+            --exclude '*.db' \
+            --exclude '*.sqlite' \
+            --exclude '*.sqlite3' \
+            --exclude 'CLAUDE.md' \
+            --exclude 'README.md' \
+            --exclude 'docs/' \
+            --exclude 'drizzle/schema.ts' \
+            --exclude 'server/platformAdminRouter.ts' \
+            --exclude 'client/src/pages/PlatformOnboarding.tsx'
+          rm -rf _production_reference
+
+      - name: Restore V2-only controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp -a /tmp/v2-preserve/. ./
+
+      - name: Write mirror baseline report
+        shell: bash
+        env:
+          PROD_SHA: ${{ steps.baseline.outputs.sha }}
+          PROD_FILES: ${{ steps.baseline.outputs.files }}
+        run: |
+          cat > docs/MIRROR_BASELINE_REPORT.md <<EOF
+          # PrimeContractorOS V2 Mirror Baseline
+
+          Production reference: \`domogotu/primecontractoros\`  
+          Production branch: \`main\`  
+          Production commit: \`$PROD_SHA\`  
+          Production file count before exclusions: \`$PROD_FILES\`
+
+          ## Preserved V2-only assets
+
+          - \`CLAUDE.md\`
+          - \`MIGRATION_REGISTER.md\`
+          - \`README.md\`
+          - \`docs/\`
+          - \`unified-ai-ecosystem/\`
+          - \`.github/\`
+          - \`drizzle/schema.ts\`
+          - \`server/platformAdminRouter.ts\`
+          - \`client/src/pages/PlatformOnboarding.tsx\`
+
+          ## Excluded from production mirror
+
+          Git metadata, Manus database/query artifacts, \`.project-config.json\` because it contains a credential-bearing database URL, environment files, dependencies, build outputs, caches, coverage, uploads, and local database files.
+
+          This commit establishes the runnable-source mirror baseline. Build/typecheck/test results must be recorded separately and failures must be treated as baseline evidence rather than silently repaired.
+          EOF
+
+      - name: Commit mirrored source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No mirror changes detected.'
+            exit 0
+          fi
+          git commit -m "chore(migration): mirror production source into V2"
+          git push origin HEAD:agent/complete-v2-mirror

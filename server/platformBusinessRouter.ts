@@ -11,7 +11,7 @@
 
 import { adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import {
   planVersions,
   policyVersions,
@@ -280,8 +280,8 @@ export const platformTasksRouter = router({
       await db
         .update(platformTaskRuns)
         .set({ status: "success", completedAt, durationMs })
-        .where(eq(platformTaskRuns.id, run[0].insertId));
-      return { success: true, runId: run[0].insertId };
+        .where(eq(platformTaskRuns.id, getInsertId(run)));
+      return { success: true, runId: getInsertId(run) };
     }),
 
   taskRuns: adminProcedure

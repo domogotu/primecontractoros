@@ -1,10 +1,10 @@
 // @ts-nocheck
 /**
  * AI Workflow Buttons Component
- * 
+ *
  * Reusable component that renders context-specific AI action buttons
  * for different record types (contracts, files, opportunities, proposals, invoices, dashboard).
- * 
+ *
  * Core rule: AI reads, organizes, compares, and suggests. The user reviews and approves.
  */
 
@@ -21,7 +21,7 @@ interface AIWorkflowButtonsProps {
   context: WorkflowContext;
   recordId?: number;
   recordTitle?: string;
-  compact?: boolean; // show as icon-only buttons
+  compact?: boolean;
 }
 
 const WORKFLOW_ACTIONS: Record<WorkflowContext, Array<{ id: string; label: string; icon: any; description: string }>> = {
@@ -40,9 +40,12 @@ const WORKFLOW_ACTIONS: Record<WorkflowContext, Array<{ id: string; label: strin
     { id: "mark_governing", label: "Mark as Governing Source", icon: CheckCircle2, description: "Flag this file as the governing document" },
   ],
   opportunity: [
-    { id: "opportunity_review", label: "AI Opportunity Review", icon: Brain, description: "Assess this opportunity for fit and readiness" },
-    { id: "check_missing", label: "Check Missing Source Info", icon: AlertTriangle, description: "Identify missing information needed for a decision" },
-    { id: "recommend_action", label: "Recommend Action", icon: Lightbulb, description: "Get a Pursue / Hold / No Pursue recommendation" },
+    {
+      id: "opportunity_review",
+      label: "Analyze Opportunity",
+      icon: Brain,
+      description: "Analyze this opportunity for fit, readiness, missing information, risk, and a recommended pursuit direction. The recommendation is advisory and still requires your decision.",
+    },
   ],
   proposal: [
     { id: "recommend_framework", label: "Recommend Framework", icon: Lightbulb, description: "Suggest the best proposal framework" },
@@ -66,7 +69,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
   const [runningAction, setRunningAction] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
 
-  // Contract scan mutation
   const contractScan = trpc.aiWorkflow.runs.contractScan.useMutation({
     onSuccess: (data: any) => {
       toast.success(`Contract scan started. ${data.findingsCount || 0} findings generated.`);
@@ -75,7 +77,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
     onError: (err: any) => { toast.error(err.message || "Scan failed"); setRunningAction(null); },
   });
 
-  // File analysis mutation
   const fileAnalysis = trpc.aiWorkflow.runs.fileAnalysis.useMutation({
     onSuccess: (data: any) => {
       toast.success(`File analysis complete. ${data.findingsCount || 0} findings generated.`);
@@ -84,16 +85,14 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
     onError: (err: any) => { toast.error(err.message || "Analysis failed"); setRunningAction(null); },
   });
 
-  // Opportunity review mutation
   const opportunityReview = trpc.aiWorkflow.runs.opportunityReview.useMutation({
     onSuccess: (data: any) => {
-      toast.success(`Opportunity review complete. Recommendation: ${data.recommendation || "See suggestions"}`);
+      toast.success(`Opportunity analysis complete. Recommendation: ${data.recommendation || "Review the generated findings"}`);
       setRunningAction(null);
     },
     onError: (err: any) => { toast.error(err.message || "Review failed"); setRunningAction(null); },
   });
 
-  // Proposal review mutation
   const proposalReview = trpc.aiWorkflow.runs.proposalReview.useMutation({
     onSuccess: (data: any) => {
       toast.success(`Proposal review complete. ${data.suggestionsCount || 0} suggestions generated.`);
@@ -102,7 +101,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
     onError: (err: any) => { toast.error(err.message || "Review failed"); setRunningAction(null); },
   });
 
-  // Invoice review mutation
   const invoiceReview = trpc.aiWorkflow.runs.invoiceReview.useMutation({
     onSuccess: (data: any) => {
       toast.success(`Invoice review complete. ${data.findingsCount || 0} findings generated.`);
@@ -111,7 +109,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
     onError: (err: any) => { toast.error(err.message || "Review failed"); setRunningAction(null); },
   });
 
-  // Workspace summary mutation
   const workspaceSummary = trpc.aiWorkflow.runs.workspaceSummary.useMutation({
     onSuccess: () => {
       toast.success("Workspace summary generated. Check AI Suggestions.");
@@ -140,8 +137,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
         fileAnalysis.mutate({ fileId: recordId!, analysisType: actionId });
         break;
       case "opportunity_review":
-      case "check_missing":
-      case "recommend_action":
         opportunityReview.mutate({ opportunityId: recordId! });
         break;
       case "recommend_framework":
@@ -165,8 +160,6 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
         setRunningAction(null);
         break;
       case "compare_versions":
-        contractScan.mutate({ contractId: recordId! });
-        break;
       case "create_tasks":
         contractScan.mutate({ contractId: recordId! });
         break;
@@ -202,16 +195,11 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
             </Button>
           );
         })}
-        {/* Confirmation Dialog */}
         <Dialog open={!!showConfirm} onOpenChange={() => setShowConfirm(null)}>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm AI Action</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Confirm AI Action</DialogTitle></DialogHeader>
             <DialogBody>
-              <p className="text-sm text-slate-600 mb-4">
-                {actions.find(a => a.id === showConfirm)?.description}
-              </p>
+              <p className="text-sm text-slate-600 mb-4">{actions.find(a => a.id === showConfirm)?.description}</p>
               <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded border border-amber-200">
                 AI can help identify likely issues, obligations, and missing information, but it does not replace legal advice, contracting officer direction, or human review.
               </p>
@@ -250,22 +238,13 @@ export default function AIWorkflowButtons({ context, recordId, recordTitle, comp
           );
         })}
       </div>
-      {/* Confirmation Dialog */}
       <Dialog open={!!showConfirm} onOpenChange={() => setShowConfirm(null)}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm AI Action</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Confirm AI Action</DialogTitle></DialogHeader>
           <DialogBody>
-            <p className="text-sm text-slate-600 mb-2">
-              <strong>{actions.find(a => a.id === showConfirm)?.label}</strong>
-            </p>
-            <p className="text-sm text-slate-600 mb-4">
-              {actions.find(a => a.id === showConfirm)?.description}
-            </p>
-            {recordTitle && (
-              <p className="text-sm text-slate-500 mb-4">Target: <strong>{recordTitle}</strong></p>
-            )}
+            <p className="text-sm text-slate-600 mb-2"><strong>{actions.find(a => a.id === showConfirm)?.label}</strong></p>
+            <p className="text-sm text-slate-600 mb-4">{actions.find(a => a.id === showConfirm)?.description}</p>
+            {recordTitle && <p className="text-sm text-slate-500 mb-4">Target: <strong>{recordTitle}</strong></p>}
             <p className="text-xs text-amber-700 bg-amber-50 p-3 rounded border border-amber-200">
               AI can help identify likely issues, obligations, and missing information, but it does not replace legal advice, contracting officer direction, or human review.
             </p>

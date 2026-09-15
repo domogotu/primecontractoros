@@ -954,6 +954,24 @@ export const platformAuditLog = mysqlTable("platformAuditLog", {
 export type PlatformAuditLogEntry = typeof platformAuditLog.$inferSelect;
 export type InsertPlatformAuditLogEntry = typeof platformAuditLog.$inferInsert;
 
+// Admin Invites — tracks onboarding emails sent to prospective team members/contributors
+// via PlatformOnboarding.tsx (Send Invite tab). Distinct from onboardingProgress, which
+// tracks a customer WORKSPACE's own setup wizard, not admin-sent team invites.
+export const adminInvites = mysqlTable("admin_invites", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientEmail: varchar("recipientEmail", { length: 255 }).notNull(),
+  recipientName: varchar("recipientName", { length: 255 }),
+  invitedBy: int("invitedBy").notNull(),
+  status: mysqlEnum("status", ["not_started", "in_progress", "stuck", "completed"]).default("not_started").notNull(),
+  emailId: varchar("emailId", { length: 255 }), // Resend email id from send result
+  lastNudgedAt: timestamp("lastNudgedAt"),
+  lastActivityAt: timestamp("lastActivityAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AdminInvite = typeof adminInvites.$inferSelect;
+export type InsertAdminInvite = typeof adminInvites.$inferInsert;
+
 // Legal Acceptances
 export const legalAcceptances = mysqlTable("legal_acceptances", {
   id: int("id").autoincrement().primaryKey(),

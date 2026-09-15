@@ -15,6 +15,8 @@ export default function PlatformOnboardingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const invitesQuery = trpc.platformAdmin.onboarding.list.useQuery();
+
   const sendLink = trpc.platformAdmin.onboarding.sendLink.useMutation({
     onSuccess: () => {
       setSuccessEmail(email);
@@ -22,6 +24,7 @@ export default function PlatformOnboardingPage() {
       setName("");
       setErrorMsg(null);
       toast.success("Onboarding link sent successfully");
+      invitesQuery.refetch();
     },
     onError: (err: { message: string }) => {
       setErrorMsg(err.message);
@@ -37,14 +40,24 @@ export default function PlatformOnboardingPage() {
     sendLink.mutate({ recipientEmail: email.trim(), recipientName: name.trim() || undefined });
   };
 
-  // Mock onboarding progress data for monitoring dashboard
-  const onboardingUsers = [
-    { id: 1, name: "Sarah Johnson", email: "sarah@example.com", invitedAt: "2026-05-01", status: "completed", stepsCompleted: 5, totalSteps: 5, lastActivity: "2026-05-03" },
-    { id: 2, name: "Mike Chen", email: "mike@example.com", invitedAt: "2026-05-05", status: "in_progress", stepsCompleted: 3, totalSteps: 5, lastActivity: "2026-05-10" },
-    { id: 3, name: "Lisa Park", email: "lisa@example.com", invitedAt: "2026-05-08", status: "in_progress", stepsCompleted: 1, totalSteps: 5, lastActivity: "2026-05-08" },
-    { id: 4, name: "Tom Wilson", email: "tom@example.com", invitedAt: "2026-05-10", status: "stuck", stepsCompleted: 2, totalSteps: 5, lastActivity: "2026-05-10" },
-    { id: 5, name: "Amy Davis", email: "amy@example.com", invitedAt: "2026-05-11", status: "not_started", stepsCompleted: 0, totalSteps: 5, lastActivity: "\u2014" },
-  ];
+  // Real invite records from admin_invites, populated by sendLink on the backend.
+  // Each row is a person an admin actually invited, not sample data.
+  const onboardingUsers = (invitesQuery.data ?? []).map((inv) => ({
+    id: inv.id,
+    name: inv.recipientName || inv.recipientEmail,
+    email: inv.recipientEmail,
+    invitedAt: new Date(inv.createdAt).toISOString().slice(0, 10),
+    status: inv.status,
+    // Step counts aren't tracked yet (no post-invite activity signal exists),
+    // so we show invited/not-invited rather than fabricating a step count.
+    stepsCompleted: inv.status === "completed" ? 1 : 0,
+    totalSteps: 1,
+    lastActivity: inv.lastActivityAt
+      ? new Date(inv.lastActivityAt).toISOString().slice(0, 10)
+      : inv.lastNudgedAt
+        ? new Date(inv.lastNudgedAt).toISOString().slice(0, 10)
+        : "—",
+  }));
 
   const filteredUsers = onboardingUsers.filter(u => {
     if (filterStatus !== "all" && u.status !== filterStatus) return false;
@@ -200,7 +213,13 @@ export default function PlatformOnboardingPage() {
                   ))}
                 </tbody>
               </table>
-              {filteredUsers.length === 0 && <div className="p-8 text-center text-slate-400">No users match the current filters.</div>}
+              {invitesQuery.isLoading && <div className="p-8 text-center text-slate-400">Loading invites…</div>}
+              {!invitesQuery.isLoading && onboardingUsers.length === 0 && (
+                <div className="p-8 text-center text-slate-400">No onboarding invites have been sent yet. Use the Send Invite tab to invite your first team member.</div>
+              )}
+              {!invitesQuery.isLoading && onboardingUsers.length > 0 && filteredUsers.length === 0 && (
+                <div className="p-8 text-center text-slate-400">No users match the current filters.</div>
+              )}
             </div>
           </>
         )}

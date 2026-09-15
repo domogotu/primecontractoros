@@ -16,6 +16,10 @@ export default function ContractHubDetail() {
     { id: contractId! },
     { enabled: !!contractId }
   );
+  const { data: operations } = trpc.contractOperations.summary.useQuery(
+    { contractId: contractId! },
+    { enabled: !!contractId }
+  );
 
   if (isLoading) return <div className="p-6 flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Loading contract hub...</div>;
   if (!contract) return <div className="p-6"><p className="text-red-500">Contract not found.</p><Button variant="outline" onClick={() => navigate("/app/contracts")}><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button></div>;
@@ -60,6 +64,37 @@ export default function ContractHubDetail() {
         <Card className="border-l-4 border-l-amber-500"><CardContent className="p-4"><p className="text-xs text-gray-500 uppercase">Start Date</p><p className="text-lg font-bold">{contract.startDate ? new Date(contract.startDate).toLocaleDateString() : "\u2014"}</p></CardContent></Card>
         <Card className="border-l-4 border-l-purple-500"><CardContent className="p-4"><p className="text-xs text-gray-500 uppercase">End Date</p><p className="text-lg font-bold">{contract.endDate ? new Date(contract.endDate).toLocaleDateString() : "\u2014"}</p></CardContent></Card>
       </div>
+
+      {operations && (
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="w-4 h-4" /> Operations & Invoice Readiness
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="rounded-md border p-3"><p className="text-xs text-gray-500">Governing Docs</p><p className="text-xl font-bold">{operations.documents.governing}</p></div>
+              <div className="rounded-md border p-3"><p className="text-xs text-gray-500">Deliverables</p><p className="text-xl font-bold">{operations.deliverables.accepted}/{operations.deliverables.total}</p><p className="text-xs text-gray-500">accepted</p></div>
+              <div className="rounded-md border p-3"><p className="text-xs text-gray-500">Open Tasks</p><p className="text-xl font-bold">{operations.tasks.open}</p></div>
+              <div className="rounded-md border p-3"><p className="text-xs text-gray-500">Pending Mods</p><p className="text-xl font-bold">{operations.modifications.pending}</p></div>
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              {operations.invoiceReadiness.status === "blocked" ? <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" /> : <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />}
+              <div>
+                <p className="font-medium">Invoice readiness: {operations.invoiceReadiness.status === "blocked" ? "Blocked" : "Manager review required"}</p>
+                <p className="text-sm text-gray-600">{operations.invoiceReadiness.message}</p>
+                {operations.invoiceReadiness.blockers.length > 0 && (
+                  <ul className="mt-2 text-sm text-gray-700 list-disc pl-5 space-y-1">
+                    {operations.invoiceReadiness.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}
+                  </ul>
+                )}
+                <p className="text-xs text-gray-500 mt-2">QASP identified: {operations.documents.qaspIdentified ? "Yes" : "Not identified / may not apply"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Contract Modules</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">

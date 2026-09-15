@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getDb } from "../db";
+import { getDb, getInsertId } from "../db";
 import { emailNotifications, workspaceSettings } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { ENV } from "../_core/env";
@@ -229,7 +229,7 @@ export async function sendEmail(
 
   if (!config) {
     // No email configured - just log to database
-    return { success: true, id: `db-only-${notification.insertId}` };
+    return { success: true, id: `db-only-${getInsertId(notification)}` };
   }
 
   try {
@@ -245,7 +245,7 @@ export async function sendEmail(
     await db
       .update(emailNotifications)
       .set({ status: "sent", sentAt: new Date() })
-      .where(eq(emailNotifications.id, Number(notification.insertId)));
+      .where(eq(emailNotifications.id, getInsertId(notification)));
 
     return { success: true, id: result.data?.id };
   } catch (error: any) {
@@ -253,7 +253,7 @@ export async function sendEmail(
     await db
       .update(emailNotifications)
       .set({ status: "failed", errorMessage: error.message })
-      .where(eq(emailNotifications.id, Number(notification.insertId)));
+      .where(eq(emailNotifications.id, getInsertId(notification)));
 
     return { success: false };
   }

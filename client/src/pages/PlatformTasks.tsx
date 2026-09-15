@@ -139,7 +139,7 @@ export default function PlatformTasks() {
                 title: formData.title,
                 description: formData.description,
                 priority: formData.priority as "low" | "medium" | "high" | "urgent",
-                dueDate: formData.dueDate,
+                dueDate: formData.dueDate || undefined,
               })}
                 disabled={createMutation.isPending || !formData.title}
                 className="bg-green-900 text-white hover:bg-green-800"
@@ -220,7 +220,7 @@ export default function PlatformTasks() {
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-3">
-                    <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                    <span>Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}</span>
                     {isOverdue && <span className="text-red-400 font-medium">Overdue</span>}
                   </div>
 

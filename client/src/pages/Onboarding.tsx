@@ -52,6 +52,7 @@ export default function Onboarding() {
         contractingModel: formData.contractingModel || undefined,
         naicsCodes: [formData.primaryNaics, formData.additionalNaics].filter(Boolean).join(', ') || undefined,
         certifications: formData.certifications || undefined,
+        uei: formData.uei.trim() || undefined,
       });
       toast.success("Welcome to PrimeContractorOS! Your workspace is ready.");
       navigate('/app/dashboard', { replace: true });

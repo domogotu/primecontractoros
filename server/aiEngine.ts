@@ -10,7 +10,7 @@
  */
 
 import { invokeLLM } from "./_core/llm";
-import { getDb } from "./db";
+import { getDb, getInsertId } from "./db";
 import { aiRuns, aiFindings, aiSuggestions, aiUsageLogs, aiExtractedObligations } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -348,7 +348,7 @@ async function createRun(ctx: AiRunContext): Promise<number> {
     runType: ctx.runType,
     status: "processing",
   });
-  return result.insertId;
+  return getInsertId(result);
 }
 
 /** Mark a run as completed */

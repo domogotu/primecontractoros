@@ -2,11 +2,12 @@ import { useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, navigateToLogin } from "@/const";
 import { Redirect } from "wouter";
+import { isPlatformOwner } from "@/lib/platformOwner";
 
 /**
  * PlatformLogin now redirects to Manus OAuth.
- * Platform admin access is determined by user role === 'admin'.
- * If already authenticated as admin, redirect to /platform.
+ * Platform owner access is reserved for the canonical owner account.
+ * If already authenticated as the platform owner, redirect to /platform.
  * Otherwise, redirect to Manus OAuth login.
  */
 export default function PlatformLogin() {
@@ -29,16 +30,16 @@ export default function PlatformLogin() {
     );
   }
 
-  if (isAuthenticated && user?.role === "admin") {
+  if (isAuthenticated && isPlatformOwner(user)) {
     return <Redirect to="/platform" />;
   }
 
-  if (isAuthenticated && user?.role !== "admin") {
+  if (isAuthenticated && !isPlatformOwner(user)) {
     return (
       <div className="min-h-screen bg-blue-900 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
           <h1 className="text-2xl font-bold text-blue-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">Your account does not have platform admin permissions.</p>
+          <p className="text-gray-600 mb-6">This area is reserved for the PrimeContractorOS platform owner.</p>
           <a href="/app/dashboard" className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 inline-block">
             Go to Dashboard
           </a>

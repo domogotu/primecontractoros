@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { router, protectedProcedure } from "./_core/trpc";
 import { getDb } from "./db";
-import { generatedDocuments, flowdownReviews, customerAdoption, businessProfiles, users, workspaceSettings } from "../drizzle/schema";
+import { generatedDocuments, flowdownReviews, customerAdoption, businessProfiles, users, workspaceSettings, contracts } from "../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { requireWorkspaceId } from "./workspaceMiddleware";
 import { enforcePermission } from "./rbacMiddleware";
@@ -23,7 +23,8 @@ export const documentGenerationRouter = router({
   }),
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
     const db = await getDb();
-    const rows = await db.select().from(generatedDocuments).where(eq(generatedDocuments.id, input.id));
+    const wsId = await requireWorkspaceId(ctx.user.id);
+    const rows = await db.select().from(generatedDocuments).where(and(eq(generatedDocuments.id, input.id), eq(generatedDocuments.workspaceId, wsId)));
     return rows[0] || null;
   }),
 });
@@ -36,7 +37,10 @@ export const flowdownReviewsRouter = router({
   }),
   create: protectedProcedure.input(z.object({ contractId: z.number(), clauseReference: z.string(), clauseText: z.string().optional(), flowdownRequired: z.boolean().optional(), notes: z.string().optional() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
+    if (!db) throw new Error("Database not available");
     const { wsId } = await enforcePermission(ctx.user.id, "write");
+    const [contract] = await db.select({ id: contracts.id }).from(contracts).where(and(eq(contracts.id, input.contractId), eq(contracts.workspaceId, wsId))).limit(1);
+    if (!contract) throw new Error("Contract not found in this workspace");
     await db.insert(flowdownReviews).values({ contractId: input.contractId, workspaceId: wsId, clauseReference: input.clauseReference, clauseText: input.clauseText || null, flowdownRequired: input.flowdownRequired || false, notes: input.notes || null, reviewStatus: "pending", reviewedBy: ctx.user.id });
     try { await logAudit(wsId, ctx.user.id, "create", "flowdownReviews", 0, input); } catch {}
     return { success: true };
@@ -45,7 +49,7 @@ export const flowdownReviewsRouter = router({
     const db = await getDb();
     const { wsId } = await enforcePermission(ctx.user.id, "write");
     const { id, ...data } = input;
-    await db.update(flowdownReviews).set(data).where(eq(flowdownReviews.id, id));
+    await db.update(flowdownReviews).set(data).where(and(eq(flowdownReviews.id, id), eq(flowdownReviews.workspaceId, wsId)));
     try { await logAudit(wsId, ctx.user.id, "update", "flowdownReviews", id, input); } catch {}
     return { success: true };
   }),
@@ -167,11 +171,12 @@ export const userProfileRouter = router({
     let wsId: number | null = null;
     try { wsId = await requireWorkspaceId(ctx.user.id); } catch {}
     const extSettings: Record<string, string | null> = {};
+    const profilePrefix = `up.${ctx.user.id}.`;
     if (wsId) {
       const settings = await db.select().from(workspaceSettings)
         .where(eq(workspaceSettings.workspaceId, wsId));
       for (const s of settings) {
-        if (s.settingKey.startsWith('up.')) {
+        if (s.settingKey.startsWith(profilePrefix)) {
           extSettings[s.settingKey] = s.settingValue;
         }
       }
@@ -184,17 +189,17 @@ export const userProfileRouter = router({
       accountStatus: user.accountStatus || 'active',
       createdAt: user.createdAt,
       // Extended settings
-      jobTitle: extSettings['up.jobTitle'] || '',
-      phone: extSettings['up.phone'] || '',
-      bio: extSettings['up.bio'] || '',
-      linkedIn: extSettings['up.linkedIn'] || '',
-      guidancePreference: extSettings['up.guidancePreference'] || 'detailed',
-      reminderPreference: extSettings['up.reminderPreference'] || 'daily',
-      timezone: extSettings['up.timezone'] || 'America/New_York',
-      notifyOpportunities: extSettings['up.notifyOpportunities'] !== 'false',
-      notifyDeadlines: extSettings['up.notifyDeadlines'] !== 'false',
-      notifyCompliance: extSettings['up.notifyCompliance'] !== 'false',
-      notifyMarketing: extSettings['up.notifyMarketing'] === 'true',
+      jobTitle: extSettings[`${profilePrefix}jobTitle`] || '',
+      phone: extSettings[`${profilePrefix}phone`] || '',
+      bio: extSettings[`${profilePrefix}bio`] || '',
+      linkedIn: extSettings[`${profilePrefix}linkedIn`] || '',
+      guidancePreference: extSettings[`${profilePrefix}guidancePreference`] || 'detailed',
+      reminderPreference: extSettings[`${profilePrefix}reminderPreference`] || 'daily',
+      timezone: extSettings[`${profilePrefix}timezone`] || 'America/New_York',
+      notifyOpportunities: extSettings[`${profilePrefix}notifyOpportunities`] !== 'false',
+      notifyDeadlines: extSettings[`${profilePrefix}notifyDeadlines`] !== 'false',
+      notifyCompliance: extSettings[`${profilePrefix}notifyCompliance`] !== 'false',
+      notifyMarketing: extSettings[`${profilePrefix}notifyMarketing`] === 'true',
     };
   }),
 
@@ -227,18 +232,19 @@ export const userProfileRouter = router({
       let wsId: number | null = null;
       try { wsId = await requireWorkspaceId(ctx.user.id); } catch {}
       if (wsId) {
+        const profilePrefix = `up.${ctx.user.id}.`;
         const settingEntries: [string, string][] = [];
-        if (input.jobTitle !== undefined) settingEntries.push(['up.jobTitle', input.jobTitle]);
-        if (input.phone !== undefined) settingEntries.push(['up.phone', input.phone]);
-        if (input.bio !== undefined) settingEntries.push(['up.bio', input.bio]);
-        if (input.linkedIn !== undefined) settingEntries.push(['up.linkedIn', input.linkedIn]);
-        if (input.guidancePreference !== undefined) settingEntries.push(['up.guidancePreference', input.guidancePreference]);
-        if (input.reminderPreference !== undefined) settingEntries.push(['up.reminderPreference', input.reminderPreference]);
-        if (input.timezone !== undefined) settingEntries.push(['up.timezone', input.timezone]);
-        if (input.notifyOpportunities !== undefined) settingEntries.push(['up.notifyOpportunities', String(input.notifyOpportunities)]);
-        if (input.notifyDeadlines !== undefined) settingEntries.push(['up.notifyDeadlines', String(input.notifyDeadlines)]);
-        if (input.notifyCompliance !== undefined) settingEntries.push(['up.notifyCompliance', String(input.notifyCompliance)]);
-        if (input.notifyMarketing !== undefined) settingEntries.push(['up.notifyMarketing', String(input.notifyMarketing)]);
+        if (input.jobTitle !== undefined) settingEntries.push([`${profilePrefix}jobTitle`, input.jobTitle]);
+        if (input.phone !== undefined) settingEntries.push([`${profilePrefix}phone`, input.phone]);
+        if (input.bio !== undefined) settingEntries.push([`${profilePrefix}bio`, input.bio]);
+        if (input.linkedIn !== undefined) settingEntries.push([`${profilePrefix}linkedIn`, input.linkedIn]);
+        if (input.guidancePreference !== undefined) settingEntries.push([`${profilePrefix}guidancePreference`, input.guidancePreference]);
+        if (input.reminderPreference !== undefined) settingEntries.push([`${profilePrefix}reminderPreference`, input.reminderPreference]);
+        if (input.timezone !== undefined) settingEntries.push([`${profilePrefix}timezone`, input.timezone]);
+        if (input.notifyOpportunities !== undefined) settingEntries.push([`${profilePrefix}notifyOpportunities`, String(input.notifyOpportunities)]);
+        if (input.notifyDeadlines !== undefined) settingEntries.push([`${profilePrefix}notifyDeadlines`, String(input.notifyDeadlines)]);
+        if (input.notifyCompliance !== undefined) settingEntries.push([`${profilePrefix}notifyCompliance`, String(input.notifyCompliance)]);
+        if (input.notifyMarketing !== undefined) settingEntries.push([`${profilePrefix}notifyMarketing`, String(input.notifyMarketing)]);
 
         for (const [key, value] of settingEntries) {
           const [existing] = await db.select().from(workspaceSettings)

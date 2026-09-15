@@ -2,7 +2,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Mock the db module with chainable query builder
 const mockExecute = vi.fn().mockResolvedValue([]);
-const mockLimit = vi.fn().mockReturnValue({ execute: mockExecute });
+const mockLimitResult = Object.assign(Promise.resolve([]), { execute: mockExecute, then: (resolve: any, reject?: any) => Promise.resolve([]).then(resolve, reject) });
+const mockLimit = vi.fn().mockReturnValue(mockLimitResult);
 const mockOrderBy = vi.fn().mockReturnValue({ limit: mockLimit, execute: mockExecute });
 const mockWhereResult = Object.assign(Promise.resolve([]), { orderBy: mockOrderBy, limit: mockLimit, execute: mockExecute, then: (resolve: any, reject?: any) => Promise.resolve([]).then(resolve, reject) });
 const mockWhere = vi.fn().mockReturnValue(mockWhereResult);

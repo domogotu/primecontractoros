@@ -3,7 +3,11 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { COOKIE_NAME } from "@shared/const";
 import { registerOAuthRoutes } from "./oauth";
+import { validateProductionCoreEnv } from "./env";
+import { logOwnerBootstrapDiagnostic } from "./ownerBootstrapDiagnostic";
+import { getSessionCookieOptions } from "./cookies";
 import { secureHeaders, authRateLimit, apiRateLimit, inputSizeLimit } from "../middleware/security";
 import { registerStorageProxy } from "./storageProxy";
 import { stripeWebhookRouter } from "../stripeWebhook";
@@ -33,8 +37,31 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  validateProductionCoreEnv();
+
+  // Temporary, read-only diagnostic used to identify the freshly-created
+  // platform-owner OAuth identity after the production factory reset.
+  await logOwnerBootstrapDiagnostic();
+
   const app = express();
   const server = createServer(app);
+
+  // Render and other production hosts use this endpoint to determine whether
+  // the web process itself is alive. Keep it dependency-free so database or
+  // third-party incidents do not cause a healthy process to be restarted.
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+  // Fresh-start helper: explicitly clear any old Manus/PrimeContractorOS
+  // session left in the browser, then send the user to the normal login page.
+  // This is intentionally public because logging out must work even when the
+  // current session references a user that was removed during a factory reset.
+  app.get("/logout", (req, res) => {
+    res.clearCookie(COOKIE_NAME, getSessionCookieOptions(req));
+    res.redirect(302, "/login");
+  });
+
   // Security headers
   app.use(secureHeaders);
   // Stripe webhook must be registered BEFORE body parsers (needs raw body)
@@ -69,15 +96,22 @@ async function startServer() {
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  const isProduction = process.env.NODE_ENV === "production";
+  // In production the hosting provider routes traffic to the exact PORT it
+  // assigns. Falling forward to a different port can make the service look
+  // deployed while it is unreachable. The fallback scan remains dev-only.
+  const port = isProduction ? preferredPort : await findAvailablePort(preferredPort);
 
-  if (port !== preferredPort) {
+  if (!isProduction && port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on port ${port}`);
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(error => {
+  console.error("Failed to start server:", error);
+  process.exitCode = 1;
+});

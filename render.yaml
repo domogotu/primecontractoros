@@ -4,8 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm install && pnpm run build
-    startCommand: node dist/index.js
+    buildCommand: corepack enable && corepack prepare pnpm@10.4.1 --activate && pnpm install --frozen-lockfile --prod=false && pnpm run build
+    startCommand: node scripts/reconcile-owner-roles.mjs && node scripts/diagnose-internal-workspace.mjs && pnpm drizzle-kit migrate && node dist/index.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -26,6 +26,8 @@ services:
         value: https://manus.im
       - key: OWNER_OPEN_ID
         value: 2cUjYc8q9VsFQXVDdB5U6U
+      - key: OWNER_EMAIL
+        value: dominiquereed35@gmail.com
       - key: OWNER_NAME
         value: Reed's Solutions
       - key: VITE_APP_TITLE
