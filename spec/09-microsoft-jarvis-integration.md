@@ -1,5 +1,3 @@
-[Reading 257 lines from start (total: 257 lines, 0 remaining)]
-
 # Microsoft JARVIS Integration Specification
 
 ## Purpose
@@ -257,5 +255,3 @@ Verification must cover:
 - dormant-until-invoked behavior
 - no large local model deployment
 - no fabricated provider/test results
-
-[executed on device: DESKTOP-4F2EK6J (3d7a56ea-2527-47b8-b4b3-9666c27d2e24)]
