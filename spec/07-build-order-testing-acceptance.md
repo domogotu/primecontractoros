@@ -113,6 +113,15 @@ Connect all subsystems through Master Orchestrator, Intent Engine, Planner, Capa
 
 Map the JARVIS four-stage orchestration pattern into this phase: task planning, model selection, task execution, and response generation. Keep all stages behind the existing contracts, security, permissions, resource controls, memory, logging, and validation layers.
 
+Current production-side JARVIS-compatible Master Orchestrator workflow sequence:
+- 02.01 — JARVIS Plan Normalizer: converts Microsoft-style plans into the common task-plan contract while preserving dependencies.
+- 02.02 — JARVIS Model/Provider Selector: filters providers/models by readiness, capability, permissions, resource state, and policy.
+- 02.03 — JARVIS Task Execution Coordinator: creates gateway-bound execution envelopes and never performs direct external execution.
+- 02.04 — JARVIS Result Collector: collects actual gateway results, preserves task status/provenance, and prepares temporal-memory events.
+- 02.05 — JARVIS Response Synthesis Handoff: prepares validated results for the response-generation/grounding layer without fabricating execution results.
+
+All five workflows remain inactive until the surrounding runtime, gateway, scheduler, memory, validation, logging, and UI integrations are complete. Final verification remains deferred until the remaining JARVIS build groups are implemented.
+
 ### Final phase — Starter Chat Workflow
 Build **Unified AI Ecosystem — Real-Time Q&A Starter** only after the architecture is represented.
 
