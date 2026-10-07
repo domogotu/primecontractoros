@@ -1,0 +1,51 @@
+[Reading 47 lines from start (total: 47 lines, 0 remaining)]
+
+{
+  "name": "02.02 — Master Orchestrator — JARVIS Model Provider Selector",
+  "active": false,
+  "isArchived": false,
+  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "connections": {
+    "Plan In": {
+      "main": [[{ "node": "Select Eligible Providers and Models", "type": "main", "index": 0 }]]
+    }
+  },
+  "nodes": [
+    {
+      "id": "plan-in",
+      "name": "Plan In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "jobId", "type": "string" },
+            { "name": "plan", "type": "object" },
+            { "name": "providerRegistry", "type": "array" },
+            { "name": "resourceState", "type": "object" },
+            { "name": "policy", "type": "object" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "select",
+      "name": "Select Eligible Providers and Models",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst plan = r.plan || {};\nconst registry = Array.isArray(r.providerRegistry) ? r.providerRegistry : [];\nconst resource = r.resourceState || {};\nconst policy = r.policy || {};\nconst errors = [];\nconst tasks = Array.isArray(plan.tasks) ? plan.tasks : [];\n\nconst eligible = registry.filter(p => {\n  if (!p || p.enabled !== true) return false;\n  if (p.health && !['healthy','operational'].includes(String(p.health).toLowerCase())) return false;\n  if (p.credentialsReady === false || p.endpointReady === false) return false;\n  if (p.permissionAllowed === false) return false;\n  if (p.maintenance === true) return false;\n  return true;\n});\n\nconst memoryPressure = Number(resource.memoryPressure ?? 0);\nconst cpuPressure = Number(resource.cpuPressure ?? 0);\nconst networkAvailable = resource.networkAvailable !== false;\nconst allowRemote = policy.allowRemote !== false;\nconst maxPressure = Number(policy.maxPressure ?? 85);\n\nfunction candidateFor(task) {\n  const required = new Set(Array.isArray(task.capabilityRequirements) ? task.capabilityRequirements.map(String) : []);\n  const requestedProviders = new Set(Array.isArray(task.candidateProviders) ? task.candidateProviders.map(String) : []);\n  const requestedModels = new Set(Array.isArray(task.candidateModels) ? task.candidateModels.map(String) : []);\n  const candidates = eligible.filter(p => {\n    const caps = new Set(Array.isArray(p.capabilities) ? p.capabilities.map(String) : []);\n    const capabilityMatch = required.size === 0 || [...required].every(x => caps.has(x));\n    const providerMatch = requestedProviders.size === 0 || requestedProviders.has(String(p.providerId ?? p.name));\n    const modelMatch = requestedModels.size === 0 || (Array.isArray(p.models) && p.models.some(m => requestedModels.has(String(m))));\n    const remote = String(p.executionMode ?? 'remote').toLowerCase() === 'remote';\n    return capabilityMatch && providerMatch && modelMatch && (allowRemote || !remote) && (networkAvailable || !remote);\n  });\n  candidates.sort((a,b) => Number(a.priority ?? 999) - Number(b.priority ?? 999));\n  if (!candidates.length) return { status: 'unavailable', reason: 'no_eligible_provider_or_model' };\n  if (cpuPressure >= maxPressure || memoryPressure >= maxPressure) return { status: 'deferred', reason: 'resource_pressure', candidates: candidates.map(x => String(x.providerId ?? x.name)) };\n  const p = candidates[0];\n  return { status: 'selected', providerId: p.providerId ?? p.name, model: p.selectedModel ?? (Array.isArray(p.models) ? p.models[0] : null), executionMode: p.executionMode ?? 'remote' };\n}\n\nconst selections = tasks.map(task => ({ taskId: task.taskId, selection: candidateFor(task) }));\nconst failed = selections.filter(x => x.selection.status === 'unavailable');\nconst deferred = selections.filter(x => x.selection.status === 'deferred');\nif (!tasks.length) errors.push('plan_tasks_required');\nif (failed.length) errors.push('provider_selection_unavailable');\n\nreturn {\n  valid: errors.length === 0,\n  errors,\n  schema: 'jarvis.compatible.model-selection.v1',\n  requestId: r.requestId, traceId: r.traceId, sessionId: r.sessionId, jobId: r.jobId || null,\n  stage: 'model-selection',\n  selections,\n  eligibleProviderCount: eligible.length,\n  deferredCount: deferred.length,\n  resourceGate: { cpuPressure, memoryPressure, networkAvailable, maxPressure },\n  executionAllowed: errors.length === 0 && deferred.length === 0,\n  executionReason: errors.length ? 'selection_failed' : deferred.length ? 'resource_gate_deferred' : 'selection_complete; execution still requires permission, approval, scheduler, and tool gateway',\n  selectedAt: new Date().toISOString()\n};"
+      }
+    }
+  ]
+}
+
+[executed on device: DESKTOP-4F2EK6J (3d7a56ea-2527-47b8-b4b3-9666c27d2e24)]
