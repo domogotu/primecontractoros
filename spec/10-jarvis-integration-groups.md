@@ -61,6 +61,24 @@ Administrative control exposes enable/disable, routing priority, provider eligib
 ## Group 26
 Provider testing performs safe read-only adapter/readiness checks. It must never create mock accounts, fake results, or perform uncontrolled external actions.
 
+## Cross-cutting JARVIS runtime connections
+
+### Resource-aware scheduler/watchdog
+Every executable task must carry a resource decision. The scheduler evaluates CPU, memory, disk, network, power, workload priority, estimated demand, and concurrent JARVIS work. Under pressure it may queue, downgrade, route remotely when permitted, or defer. The watchdog must stop or downgrade unsafe work rather than bypassing policy.
+
+### Temporal memory
+Task lifecycle transitions are emitted as structured events: created, planned, selected, started, completed, partial, failed, retry, fallback, approval requested/received, cancelled, and final outcome. Store state references and permitted summaries rather than secrets or unrestricted raw prompts/responses.
+
+### Voice
+Voice is an input adapter into the existing router. It does not invoke the JARVIS orchestration path directly. The router decides whether the request enters the JARVIS-compatible planner.
+
+### UI status/control
+Expose enabled state, current task, stage, provider/model, resource state, queue, approval state, fallback state, readiness, errors, and warnings. Administrative controls remain behind the existing authorization path.
+
+### Runtime execution path
+The final connected path is:
+voice/UI/request → existing router → task planner → model/provider selection → capability/tool gateways → resource scheduler → execution → result collection → validation/grounding → temporal memory and audit → response/UI.
+
 ## Activation rule
 All artifacts remain inactive until the complete runtime path is connected. Final verification is deferred until all remaining groups are implemented.
 
