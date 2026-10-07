@@ -1,0 +1,47 @@
+{
+  "name": "02.05 — Master Orchestrator — JARVIS Response Synthesis Handoff",
+  "active": false,
+  "isArchived": false,
+  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "connections": {
+    "Collected Results In": {
+      "main": [[{ "node": "Build Response Synthesis Request", "type": "main", "index": 0 }]]
+    }
+  },
+  "nodes": [
+    {
+      "id": "collected-results-in",
+      "name": "Collected Results In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "jobId", "type": "string" },
+            { "name": "originalInput", "type": "string" },
+            { "name": "responseHandoff", "type": "object" },
+            { "name": "groundingState", "type": "object" },
+            { "name": "memoryState", "type": "object" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "build-synthesis-request",
+      "name": "Build Response Synthesis Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {}; const h = r.responseHandoff && typeof r.responseHandoff === 'object' ? r.responseHandoff : {}; const grounding = r.groundingState && typeof r.groundingState === 'object' ? r.groundingState : {}; const memory = r.memoryState && typeof r.memoryState === 'object' ? r.memoryState : {}; const results = Array.isArray(h.results) ? h.results : []; const usable = results.filter(x => x && x.result !== null && x.result !== undefined); const validationPassed = h.validation?.passed === true || grounding.passed === true || grounding.valid === true; const blocked = h.finalResponseAllowed !== true || !validationPassed; const provenance = usable.map(x => ({ taskId: x.taskId, provider: x.provider ?? null, model: x.model ?? null, tool: x.tool ?? null, status: x.status, sourceVerified: Boolean(x.provider || x.tool || x.model) })); const instructions = blocked ? 'Do not present unvalidated execution as completed. Report only verified state and identify what remains blocked or requires validation.' : 'Synthesize only from collected, validated results. Preserve provenance and distinguish completed, partial, failed, cancelled, and unavailable work.'; return { schema: 'jarvis.compatible.response-synthesis-request.v1', requestId: r.requestId, traceId: r.traceId, sessionId: r.sessionId, jobId: r.jobId || null, stage: 'response-generation', originalInput: r.originalInput ?? null, synthesis: { instructions, results: usable, provenance, outcome: h.outcome ?? 'unknown', counts: h.counts ?? {} }, validation: { required: true, passed: validationPassed, groundingState: grounding }, temporalMemory: { enabled: memory.enabled === true, state: memory }, finalResponseAllowed: !blocked, fabricatedExecutionClaimsAllowed: false, responseGeneratorDispatchRequired: true, directExecution: false, generatedAt: new Date().toISOString() };"
+      }
+    }
+  ]
+}
