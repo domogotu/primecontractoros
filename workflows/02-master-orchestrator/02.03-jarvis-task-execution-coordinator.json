@@ -1,0 +1,53 @@
+[Reading 49 lines from start (total: 49 lines, 0 remaining)]
+
+{
+  "name": "02.03 — Master Orchestrator — JARVIS Task Execution Coordinator",
+  "active": false,
+  "isArchived": false,
+  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "connections": {
+    "Selection In": {
+      "main": [[{ "node": "Build Execution Envelopes", "type": "main", "index": 0 }]]
+    }
+  },
+  "nodes": [
+    {
+      "id": "selection-in",
+      "name": "Selection In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "jobId", "type": "string" },
+            { "name": "plan", "type": "object" },
+            { "name": "selections", "type": "array" },
+            { "name": "runtimeTaskState", "type": "object" },
+            { "name": "resourceDecision", "type": "object" },
+            { "name": "permissionState", "type": "object" },
+            { "name": "approvalState", "type": "object" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "build-envelopes",
+      "name": "Build Execution Envelopes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst plan = r.plan || {};\nconst tasks = Array.isArray(plan.tasks) ? plan.tasks : [];\nconst selections = Array.isArray(r.selections) ? r.selections : [];\nconst runtime = r.runtimeTaskState && typeof r.runtimeTaskState === 'object' ? r.runtimeTaskState : {};\nconst resource = r.resourceDecision && typeof r.resourceDecision === 'object' ? r.resourceDecision : {};\nconst permission = r.permissionState && typeof r.permissionState === 'object' ? r.permissionState : {};\nconst approval = r.approvalState && typeof r.approvalState === 'object' ? r.approvalState : {};\n\nconst selectionByTask = new Map(selections.map(x => [String(x.taskId), x.selection || {}]));\nconst stateByTask = new Map(Object.entries(runtime));\nconst envelopes = [];\nconst errors = [];\n\nfunction state(taskId) { return String(stateByTask.get(String(taskId))?.status ?? stateByTask.get(String(taskId)) ?? 'pending').toLowerCase(); }\nfunction depsSatisfied(task) {\n  const deps = Array.isArray(task.dep) ? task.dep : (Array.isArray(task.dependencies) ? task.dependencies : []);\n  return deps.every(d => ['completed','succeeded','success','skipped'].includes(state(d)));\n}\nfunction permissionAllowed(task) {\n  const v = permission[String(task.taskId)] ?? permission.default ?? permission.status ?? permission.allowed;\n  return v === true || ['allowed','approved','granted'].includes(String(v ?? '').toLowerCase());\n}\nfunction approvalAllowed(task) {\n  if (task.approvalRequired !== true && task.requiresApproval !== true) return true;\n  const v = approval[String(task.taskId)] ?? approval.default ?? approval.status ?? approval.approved;\n  return v === true || ['approved','allowed'].includes(String(v ?? '').toLowerCase());\n}\nfunction resourceAllowed(task) {\n  const v = resource[String(task.taskId)] ?? resource.default ?? resource.status ?? resource.allowed;\n  if (v === undefined) return resource.defer !== true && resource.allowed !== false;\n  return v === true || ['allowed','approved','ready','proceed'].includes(String(v).toLowerCase());\n}\n\nfor (const task of tasks) {\n  const taskId = String(task.taskId ?? '');\n  const sel = selectionByTask.get(taskId) || {};\n  let status = 'ready_for_gateway';\n  let reason = 'all coordinator gates satisfied';\n  if (!taskId) { status = 'blocked_invalid_task'; reason = 'task_id_required'; }\n  else if (sel.status === 'unavailable' || sel.providerId == null) { status = 'provider_unavailable'; reason = sel.reason || 'no_selected_provider'; }\n  else if (sel.status === 'deferred') { status = 'deferred_resource'; reason = sel.reason || 'provider_selection_deferred'; }\n  else if (!resourceAllowed(task)) { status = 'deferred_resource'; reason = 'resource_gate_not_ready'; }\n  else if (!permissionAllowed(task)) { status = 'blocked_permission'; reason = 'permission_not_allowed'; }\n  else if (!approvalAllowed(task)) { status = 'blocked_approval'; reason = 'approval_required'; }\n  else if (!depsSatisfied(task)) { status = 'blocked_dependency'; reason = 'dependency_not_satisfied'; }\n\n  envelopes.push({\n    requestId: r.requestId, traceId: r.traceId, sessionId: r.sessionId, jobId: r.jobId || null,\n    taskId, task: task.task ?? null, args: task.args ?? {}, dependencies: task.dep ?? task.dependencies ?? [],\n    selectedProvider: sel.providerId ?? null, selectedModel: sel.model ?? null, executionMode: sel.executionMode ?? null,\n    selectedTool: task.selectedTool ?? task.tool ?? null,\n    permissionState: permission[taskId] ?? permission.default ?? permission.status ?? null,\n    approvalState: approval[taskId] ?? approval.default ?? approval.status ?? null,\n    resourceDecision: resource[taskId] ?? resource.default ?? resource.status ?? resource.allowed ?? null,\n    status, reason, directExecution: false, gatewayDispatchRequired: status === 'ready_for_gateway',\n    timing: { createdAt: new Date().toISOString() }, retryHistory: [], fallbackHistory: []\n  });\n}\n\nif (!tasks.length) errors.push('plan_tasks_required');\nconst readyCount = envelopes.filter(x => x.status === 'ready_for_gateway').length;\nreturn {\n  valid: errors.length === 0, errors, schema: 'jarvis.compatible.execution-plan.v1',\n  requestId: r.requestId, traceId: r.traceId, sessionId: r.sessionId, jobId: r.jobId || null, stage: 'task-execution-coordination',\n  envelopes, readyCount, taskCount: envelopes.length, directExecution: false, gatewayDispatchRequired: readyCount > 0,\n  executionAllowed: readyCount > 0,\n  executionReason: readyCount > 0 ? 'ready tasks must be dispatched through existing gateway; coordinator performs no direct execution' : 'no task is currently dispatchable',\n  generatedAt: new Date().toISOString()\n};"
+      }
+    }
+  ]
+}
+
+[executed on device: DESKTOP-4F2EK6J (3d7a56ea-2527-47b8-b4b3-9666c27d2e24)]
