@@ -1,0 +1,48 @@
+{
+  "name": "02.04 — Master Orchestrator — JARVIS Result Collector",
+  "active": false,
+  "isArchived": false,
+  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "connections": {
+    "Execution Results In": {
+      "main": [[{ "node": "Collect and Prepare Response Handoff", "type": "main", "index": 0 }]]
+    }
+  },
+  "nodes": [
+    {
+      "id": "execution-results-in",
+      "name": "Execution Results In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "jobId", "type": "string" },
+            { "name": "plan", "type": "object" },
+            { "name": "envelopes", "type": "array" },
+            { "name": "executionResults", "type": "array" },
+            { "name": "validationState", "type": "object" },
+            { "name": "memoryState", "type": "object" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "collect-results",
+      "name": "Collect and Prepare Response Handoff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst envelopes = Array.isArray(r.envelopes) ? r.envelopes : [];\nconst results = Array.isArray(r.executionResults) ? r.executionResults : [];\nconst validation = r.validationState && typeof r.validationState === 'object' ? r.validationState : {};\nconst memory = r.memoryState && typeof r.memoryState === 'object' ? r.memoryState : {};\n\nconst resultByTask = new Map(results.map(x => [String(x.taskId ?? x.id ?? ''), x]));\nconst collected = [];\nconst warnings = [];\nconst errors = [];\n\nfunction normalizeStatus(value) { const s = String(value ?? 'unknown').toLowerCase(); if (['completed','succeeded','success'].includes(s)) return 'completed'; if (['partial','partially_completed'].includes(s)) return 'partial'; if (['failed','error'].includes(s)) return 'failed'; if (['cancelled','canceled'].includes(s)) return 'cancelled'; return s; }\nfor (const envelope of envelopes) {\n  const taskId = String(envelope.taskId ?? ''); const actual = resultByTask.get(taskId);\n  if (!taskId) { errors.push('task_id_required'); continue; }\n  if (envelope.status !== 'ready_for_gateway') { collected.push({ taskId, status: envelope.status, reason: envelope.reason ?? null, executed: false, provider: envelope.selectedProvider ?? null, model: envelope.selectedModel ?? null, result: null }); continue; }\n  if (!actual) { warnings.push('missing_execution_result:' + taskId); collected.push({ taskId, status: 'not_returned', reason: 'gateway_result_not_returned', executed: false, provider: envelope.selectedProvider ?? null, model: envelope.selectedModel ?? null, result: null }); continue; }\n  collected.push({ taskId, status: normalizeStatus(actual.status), executed: actual.executed === true, provider: actual.providerId ?? actual.provider ?? envelope.selectedProvider ?? null, model: actual.model ?? envelope.selectedModel ?? null, tool: actual.tool ?? envelope.selectedTool ?? null, result: actual.result ?? actual.output ?? null, error: actual.error ?? null, timing: actual.timing ?? null, retryHistory: Array.isArray(actual.retryHistory) ? actual.retryHistory : [], fallbackHistory: Array.isArray(actual.fallbackHistory) ? actual.fallbackHistory : [] });\n}\nconst completed = collected.filter(x => x.status === 'completed').length; const partial = collected.filter(x => x.status === 'partial').length; const failed = collected.filter(x => x.status === 'failed').length; const blocked = collected.filter(x => !['completed','partial','failed','cancelled'].includes(x.status)).length;\nconst validationStatus = String(validation.status ?? validation.state ?? 'not_run').toLowerCase(); const validationPassed = validationStatus === 'passed' || validation.valid === true;\nlet outcome = 'no_result'; if (collected.length && failed === 0 && blocked === 0 && partial === 0) outcome = 'completed'; else if (completed > 0 || partial > 0) outcome = failed > 0 || blocked > 0 ? 'partial_with_issues' : 'partial'; else if (failed > 0) outcome = 'failed'; else if (blocked > 0) outcome = 'blocked';\nif (!validationPassed && collected.some(x => x.executed === true)) warnings.push('response_validation_required_before_final_response');\nconst memoryEvents = collected.map(x => ({ event: x.status === 'completed' ? 'task_completed' : x.status === 'failed' ? 'task_failed' : 'task_result_collected', taskId: x.taskId, requestId: r.requestId, traceId: r.traceId, jobId: r.jobId || null, provider: x.provider, model: x.model, status: x.status, persistResult: memory.persistResults === true }));\nreturn { valid: errors.length === 0, errors, warnings, schema: 'jarvis.compatible.response-handoff.v1', requestId: r.requestId, traceId: r.traceId, sessionId: r.sessionId, jobId: r.jobId || null, stage: 'response-generation-handoff', outcome, results: collected, counts: { total: collected.length, completed, partial, failed, blocked }, validation: { status: validationStatus, passed: validationPassed, state: validation }, temporalMemoryEvents: memoryEvents, responseGenerationRequired: collected.length > 0, finalResponseAllowed: validationPassed && errors.length === 0 && collected.length > 0, fabricatedExecutionClaimsAllowed: false, directExecution: false, generatedAt: new Date().toISOString() };"
+      }
+    }
+  ]
+}
