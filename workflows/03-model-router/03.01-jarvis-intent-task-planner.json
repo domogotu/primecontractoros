@@ -1,0 +1,11 @@
+{
+  "name":"03.01 — JARVIS Intent and Task Planner",
+  "active":false,
+  "isArchived":false,
+  "settings":{"executionOrder":"v1","availableInMCP":true},
+  "connections":{"Request In":{"main":[[{"node":"Build JARVIS Task Plan","type":"main","index":0}]]}},
+  "nodes":[
+    {"id":"request-in","name":"Request In","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.2,"position":[0,0],"parameters":{"inputSource":"workflowInputs","workflowInputs":{"values":[{"name":"requestId","type":"string"},{"name":"traceId","type":"string"},{"name":"sessionId","type":"string"},{"name":"input","type":"string"},{"name":"intent","type":"string"},{"name":"context","type":"object"}]}}},
+    {"id":"build-plan","name":"Build JARVIS Task Plan","type":"n8n-nodes-base.code","typeVersion":2,"position":[300,0],"parameters":{"mode":"runOnceForEachItem","language":"javaScript","jsCode":"const r=$json||{}; const input=String(r.input??'').trim(); const intent=String(r.intent??'').trim(); const context=r.context&&typeof r.context==='object'?r.context:{}; const riskTerms=['delete','send','purchase','pay','publish','deploy','change','credential','permission']; const risk=riskTerms.some(t=>input.toLowerCase().includes(t))?'elevated':'normal'; const task={id:String(r.requestId||'request')+'-0',task:'analyze_request',args:{input,intent},dep:[],capabilityRequirements:Array.isArray(context.requiredCapabilities)?context.requiredCapabilities:[],complexity:risk==='elevated'?'high':'normal',risk,executionMode:'planned_only'}; return {schema:'jarvis.compatible.task-plan.v1',requestId:r.requestId,traceId:r.traceId,sessionId:r.sessionId,intent:intent||'unclassified',tasks:[task],planning:{decomposed:true,dependencyGraphValid:true,risk,requiresApproval:risk==='elevated'},executionAllowed:false,reason:'downstream model selection, permission, approval, scheduler, and gateway gates required',directExecution:false};"}}}
+  ]
+}
