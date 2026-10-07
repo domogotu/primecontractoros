@@ -1,0 +1,52 @@
+[Reading 48 lines from start (total: 48 lines, 0 remaining)]
+
+{
+  "name": "02.01 — Master Orchestrator — JARVIS Plan Normalizer",
+  "active": false,
+  "isArchived": false,
+  "settings": { "executionOrder": "v1", "availableInMCP": true },
+  "connections": {
+    "Orchestrator In": {
+      "main": [[{ "node": "Normalize JARVIS Plan", "type": "main", "index": 0 }]]
+    }
+  },
+  "nodes": [
+    {
+      "id": "orchestrator-in",
+      "name": "Orchestrator In",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            { "name": "requestId", "type": "string" },
+            { "name": "traceId", "type": "string" },
+            { "name": "sessionId", "type": "string" },
+            { "name": "jobId", "type": "string" },
+            { "name": "input", "type": "string" },
+            { "name": "jarvisPlan", "type": "object" },
+            { "name": "resourceDecision", "type": "object" },
+            { "name": "permissionState", "type": "string" },
+            { "name": "approvalState", "type": "string" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "normalize-plan",
+      "name": "Normalize JARVIS Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst plan = r.jarvisPlan || {};\nconst rawTasks = Array.isArray(plan.tasks) ? plan.tasks : [];\nconst errors = [];\nif (!r.requestId) errors.push('requestId_required');\nif (!r.traceId) errors.push('traceId_required');\nif (!r.sessionId) errors.push('sessionId_required');\nif (!rawTasks.length) errors.push('jarvisPlan.tasks_required');\n\nconst ids = new Set();\nconst tasks = rawTasks.map((t, index) => {\n  const taskId = String(t.taskId ?? t.id ?? ('task-' + index));\n  if (ids.has(taskId)) errors.push('duplicate_task_id:' + taskId);\n  ids.add(taskId);\n  const dependencies = Array.isArray(t.dependencies) ? t.dependencies : (Array.isArray(t.dep) ? t.dep.filter(x => x !== -1).map(String) : []);\n  return {\n    taskId,\n    name: String(t.name ?? t.task ?? ''),\n    input: t.input ?? t.args ?? {},\n    dependencies,\n    capabilityRequirements: Array.isArray(t.capabilityRequirements) ? t.capabilityRequirements : [],\n    candidateProviders: Array.isArray(t.candidateProviders) ? t.candidateProviders : [],\n    candidateModels: Array.isArray(t.candidateModels) ? t.candidateModels : [],\n    executionMode: t.executionMode ?? 'unselected',\n    status: 'planned'\n  };\n});\n\nfor (const task of tasks) {\n  for (const dep of task.dependencies) {\n    if (!ids.has(String(dep))) errors.push('unknown_dependency:' + task.taskId + ':' + String(dep));\n  }\n}\n\nconst normalized = {\n  schema: 'jarvis.compatible.task-plan.v1',\n  requestId: r.requestId,\n  traceId: r.traceId,\n  sessionId: r.sessionId,\n  jobId: r.jobId || null,\n  source: 'microsoft-jarvis-compatible-orchestration',\n  stage: 'task-planning',\n  tasks,\n  resourceDecision: r.resourceDecision || { status: 'not-evaluated' },\n  permissionState: r.permissionState || 'not-evaluated',\n  approvalState: r.approvalState || 'not-evaluated',\n  executionAllowed: false,\n  executionReason: 'plan-normalization-only; execution must pass provider, permission, approval, resource, and tool gateways',\n  normalizedAt: new Date().toISOString()\n};\n\nreturn { valid: errors.length === 0, errors, plan: normalized };"
+      }
+    }
+  ]
+}
+
+[executed on device: DESKTOP-4F2EK6J (3d7a56ea-2527-47b8-b4b3-9666c27d2e24)]
